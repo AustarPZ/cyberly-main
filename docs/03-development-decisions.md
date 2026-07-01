@@ -4,7 +4,7 @@
 - The root React app is legacy and must not be extended.
 - The project will retain React + Express + MySQL.
 - The architecture will be a modular monolith.
-- Login will eventually use email and password.
+- Login uses email and password.
 - The first production roles are `user` and `admin`.
 - Public admin registration is prohibited.
 - Public registration creates user accounts only.
@@ -19,7 +19,8 @@
 - Users outside the target group may use the general platform.
 - Malaysian teenagers aged 13-17 remain the main research target group.
 - Login must not request age again.
-- Stored age and learner-profile information must be loaded after authentication.
+- Stored user account fields are loaded after authentication.
+- Learner-profile fields are persisted separately from authentication identity in `learner_profiles`.
 - Users may later update age through profile settings.
 - Adaptive difficulty must be based primarily on assessment performance and learner mastery, not age category.
 - ILMU is primary for Malaysian conversational and localisation tasks.
@@ -31,5 +32,19 @@
 - The admin portal will include AI provider usage and estimated cost monitoring.
 - Database changes are managed through versioned SQL migrations and the `schema_migrations` table.
 - No ORM is used in the migration foundation.
-- Legacy `username` and `password` columns remain temporarily for compatibility until authentication is repaired.
-- Backend age-group mapping is available as a utility, but registration/login do not use it yet.
+- Legacy `username` and `password` columns remain temporarily for compatibility, but current `/api/auth/*` routes do not depend on them.
+- Backend age-group mapping is used during registration and rejects invalid ages through validation.
+- The newer `v6_App.jsx` file is the preferred UI reference, but it must not be copied blindly.
+- Registration step 1 collects email, display name, password, and age.
+- Login uses email and password only.
+- Onboarding profile fields are not persisted until the learner profile phase.
+- Direct browser-to-provider AI calls are prohibited; chatbot UI remains a preview until the backend AI Gateway phase.
+- Authentication uses MySQL-backed server-side sessions through `express-session`.
+- Session cookies are HTTP-only, `sameSite=lax`, locally `secure=false`, and should be `secure=true` in production.
+- Session payloads store only `userId` and `role`.
+- Registration and login regenerate sessions to reduce fixation risk.
+- Authentication requests are rate-limited server-side.
+- Age and education level remain separate. Education level is stored only when the learner provides it.
+- Self-reported familiarity is stored as a preference signal, not as an adaptive-learning mastery score.
+- Learner-profile rows are deleted with their user through `ON DELETE CASCADE` to avoid orphaned personal data.
+- Display name and age editing are deferred to a future account settings endpoint.

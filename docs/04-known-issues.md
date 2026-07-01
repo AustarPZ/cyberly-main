@@ -2,24 +2,21 @@
 
 - Duplicate frontend apps exist.
 - `client/` is official, while the root React app is legacy.
-- Frontend/backend authentication contract is broken.
-- Registration sends `name` while the backend expects `username`.
-- Frontend registration expects a returned user object while the backend returns only a message.
-- Login uses in-memory mock data instead of `/api/login`.
-- No persistent authentication exists.
-- No backend route protection exists.
-- AI calls are made directly from the client.
+- Resolved Phase 1B.1 issue: frontend/backend authentication now uses `/api/auth/register`, `/api/auth/login`, `/api/auth/me`, and `/api/auth/logout`.
+- Resolved Phase 1B.1 issue: MySQL-backed server sessions now provide persistent authentication.
+- Resolved Phase 1B.1 issue: backend route protection exists through `requireAuth` and `requireRole`.
+- Resolved Phase 1B.1 issue: direct browser AI-provider calls are disabled.
 - Resolved baseline issue: a lightweight SQL migration system now exists.
-- No app tests exist.
+- A focused backend auth verification script exists, but broad unit, frontend, and end-to-end test coverage is still missing.
 - Resource and progress data are hard-coded.
 - No admin portal exists.
-- Current registration does not create a row in the `users` table.
-- Current age input previously accepted invalid values.
-- Current login incorrectly depends on temporary profile information instead of loading stored data.
+- Admin provisioning is not implemented; `/api/admin/ping` only verifies role protection.
 - Accessibility risks exist around icon-heavy controls, state-only navigation, and limited ARIA/focus handling.
 - Maintainability risks exist because most frontend logic and styling live in a single large `App.jsx` file.
 - Resolved baseline issue: `client/` production build was blocked by an ESLint plugin conflict between root and client dependency trees. The generated root `node_modules/` folder was removed, and the normal `client/` build now completes.
 - Resolved baseline issue: backend MySQL connection previously failed when no `server/.env` password was loaded. Local `server/.env` now loads, and the backend connects to `cyberwell`.
-- Current build warning: `client/src/App.jsx` has a React Hook dependency warning in the chat widget effect.
-- Authentication routes still use the legacy schema contract and have not been repaired.
+- Current build warning: Create React App reports a Node `fs.F_OK` deprecation warning during production build.
 - Migration rollback is not implemented yet.
+- Resolved Phase 1B.2 issue: learner-profile onboarding fields are now persisted and restored.
+- Account-field editing for display name and age is deferred.
+- Chatbot UI is present, but live AI replies are disabled until the backend AI Gateway is implemented.

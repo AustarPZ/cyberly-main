@@ -16,6 +16,7 @@
   "scripts": {
     "start": "BROWSER=firefox react-scripts start",
     "build": "react-scripts build",
+    "test:profile-mappings": "node scripts/test-profile-mappings.js",
     "test": "react-scripts test",
     "eject": "react-scripts eject"
   },

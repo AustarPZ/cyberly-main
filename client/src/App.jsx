@@ -1,4 +1,5 @@
 import { useState, createContext, useContext, useRef, useEffect } from "react";
+import profileMappings from "./profileMappings";
 
 // ─── Design tokens ────────────────────────────────────────────────
 /*const COLORS = {
@@ -309,128 +310,193 @@ footer strong { color: #fff; }
 const AppCtx = createContext(null);
 function useApp() { return useContext(AppCtx); }
 
-// ─── Auth Database (in-memory, session-scoped) ────────────────────
-// Stores: { [username_lower]: { passwordHash, salt, profile } }
-// In production, replace with your backend API calls.
-const _db = {};
+const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
 
-async function _hashPassword(password, salt) {
-  const enc = new TextEncoder();
-  const keyMaterial = await crypto.subtle.importKey(
-    "raw", enc.encode(password), "PBKDF2", false, ["deriveBits"]
-  );
-  const bits = await crypto.subtle.deriveBits(
-    { name: "PBKDF2", salt: enc.encode(salt), iterations: 100_000, hash: "SHA-256" },
-    keyMaterial, 256
-  );
-  return Array.from(new Uint8Array(bits)).map(b => b.toString(16).padStart(2, "0")).join("");
+const {
+  EDUCATION_LEVELS,
+  LANGUAGES,
+  FAMILIARITY,
+  HELP_OPTIONS,
+  LEARNING_STYLES,
+  labelFor,
+  labelsFor,
+} = profileMappings;
+
+function normalizeProfile(profileData) {
+  const profile = profileData || {};
+  return {
+    exists: Boolean(profile.exists),
+    aiNickname: profile.aiNickname || "",
+    educationLevel: profile.educationLevel || "",
+    preferredLanguage: profile.preferredLanguage || "",
+    familiarityLevel: profile.familiarityLevel || "",
+    helpTopics: Array.isArray(profile.helpTopics) ? profile.helpTopics : [],
+    learningStyle: profile.learningStyle || "",
+    onboardingCompleted: Boolean(profile.onboardingCompleted),
+    onboardingCompletedAt: profile.onboardingCompletedAt || null,
+    profileLastConfirmedAt: profile.profileLastConfirmedAt || null,
+  };
+}
+
+function normalizeSessionUser(userData, profileData) {
+  const learnerProfile = normalizeProfile(profileData || userData?.profile || userData?.learnerProfile);
+  return {
+    ...userData,
+    profile: learnerProfile,
+    name: userData?.displayName || userData?.name || learnerProfile.aiNickname || "Learner",
+    aiNickname: learnerProfile.aiNickname || userData?.displayName || userData?.name || "Learner",
+    helpTopics: learnerProfile.helpTopics || [],
+    helpTopicLabels: labelsFor(HELP_OPTIONS, learnerProfile.helpTopics),
+    language: labelFor(LANGUAGES, learnerProfile.preferredLanguage, "English"),
+    familiarity: labelFor(FAMILIARITY, learnerProfile.familiarityLevel, "Beginner"),
+    learningStyle: labelFor(LEARNING_STYLES, learnerProfile.learningStyle),
+    educationLevel: labelFor(EDUCATION_LEVELS, learnerProfile.educationLevel),
+    learnerProfilePersisted: learnerProfile.exists,
+    onboardingCompleted: learnerProfile.onboardingCompleted,
+  };
 }
 
 // Returns { ok: true } or { ok: false, error: string }
-async function dbRegister(profile) {
+async function dbRegister(account) {
   try {
-    // 1. Send the user's profile data to your secure Node.js backend
-    // (Make sure the URL matches the port your backend is running on)
-    const response = await fetch('http://localhost:5000/api/register', {
+    const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
       method: 'POST',
+      credentials: 'include',
       headers: {
         'Content-Type': 'application/json',
       },
-      // We send the whole profile (name, age, password, etc.) as a JSON string
-      body: JSON.stringify(profile) 
+      body: JSON.stringify({
+        email: account.email,
+        displayName: account.displayName,
+        password: account.password,
+        age: account.age,
+      })
     });
 
-    // 2. Wait for the backend to reply
-    const data = await response.json();
+    const data = await response.json().catch(() => ({}));
 
-    // 3. If the backend rejected it (e.g., username taken, database error)
     if (!response.ok) {
-      // It passes the backend's specific error message directly to your UI
       return { ok: false, error: data.message || "Failed to register. Please try again." };
     }
 
-    // 4. Success! The backend saved the user and sent back the safe profile data
-    return { ok: true, user: data.user };
+    return { ok: true, user: data.user, profile: data.profile };
 
   } catch (error) {
-    // This catches issues like the backend server being turned off
     console.error("Registration error:", error);
     return { ok: false, error: "Network error. Could not connect to the server." };
   }
 }
 
-// Returns { ok: true, user } or { ok: false, error: string }
-async function dbLogin(name, password) {
-  const key = name.trim().toLowerCase();
-  const record = _db[key];
-  if (!record) return { ok: false, error: "No account found with that name. Check your spelling or sign up." };
-  const hash = await _hashPassword(password, record.salt);
-  if (hash !== record.passwordHash) return { ok: false, error: "Incorrect password. Please try again." };
-  return { ok: true, user: record.profile };
+async function dbLogin(email, password) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
+      method: "POST",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    });
+
+    const data = await response.json();
+    if (!response.ok) {
+      return { ok: false, error: data.message || "Unable to sign in." };
+    }
+
+    return { ok: true, user: data.user, profile: data.profile };
+  } catch {
+    return { ok: false, error: "Network error. Could not connect to the server." };
+  }
+}
+
+async function dbMe() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
+      method: "GET",
+      credentials: "include",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false };
+    return { ok: true, user: data.user, profile: data.profile };
+  } catch {
+    return { ok: false };
+  }
+}
+
+async function dbSaveProfile(profile) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/profile`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(profile),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) {
+      return { ok: false, error: data.message || "Unable to save learner profile.", errors: data.errors || {} };
+    }
+    return { ok: true, profile: data.profile };
+  } catch {
+    return { ok: false, error: "Network error. Could not save learner profile." };
+  }
+}
+
+async function dbLogout() {
+  try {
+    await fetch(`${API_BASE_URL}/api/auth/logout`, {
+      method: "POST",
+      credentials: "include",
+    });
+  } catch {
+    // Local state still clears even if the network request fails.
+  }
 }
 
 // ─── Helpers ──────────────────────────────────────────────────────
 function getAgeGroup(age) {
-  if (age < 13) return { label: "Child (under 13)", key: "child" };
-  if (age < 18) return { label: "Teen (13–17)", key: "teen" };
-  if (age < 25) return { label: "Young adult (18–24)", key: "youngAdult" };
-  return { label: "Adult (25+)", key: "adult" };
+  const value = Number(age);
+  if (!Number.isInteger(value) || value < 1 || value > 120) {
+    return { label: "Invalid age", key: "invalid" };
+  }
+  if (value <= 12) return { label: "Child (1–12)", key: "child" };
+  if (value <= 17) return { label: "Teen (13–17)", key: "teen" };
+  if (value <= 24) return { label: "Young adult (18–24)", key: "young_adult" };
+  return { label: "Adult (25–120)", key: "adult" };
 }
-
-const SCHOOL_YEARS = ["Form 1", "Form 2", "Form 3", "Form 4", "Form 5"];
-const LANGUAGES = ["English", "Bahasa Melayu", "中文", "Mixed"];
-const FAMILIARITY = ["Beginner", "Intermediate", "Advanced"];
-const HELP_OPTIONS = [
-  "Staying safe online",
-  "Learning cybersecurity",
-  "Avoiding scams",
-  "Protecting privacy",
-  "Understanding cyber threats",
-  "Exploring cybersecurity careers",
-];
-const LEARNING_STYLES = [
-  "Step-by-step guidance",
-  "Short explanations",
-  "Quizzes & challenges",
-];
 
 // ─── AI helper ────────────────────────────────────────────────────
 async function askClaude(messages, systemPrompt) {
-  const response = await fetch("https://agentic.ilmu.my/v1/messages", {
-    method: "POST",
-    headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({
-      model: "claude-sonnet-4-6",
-      max_tokens: 1024,
-      system: systemPrompt,
-      messages,
-    }),
-  });
-  if (!response.ok) {
-    const err = await response.json().catch(() => ({}));
-    throw new Error(err.error?.message || "API request failed");
-  }
-  const data = await response.json();
-  return data.content?.[0]?.text || "Sorry, I couldn't generate a response. Please try again.";
+  void messages;
+  void systemPrompt;
+  return "CyberGuard chat is ready visually, but live AI replies are disabled until the backend AI Gateway phase. Your message is kept only in this page session for now.";
 }
 
 // ─────────────────────────────────────────────────────────────────
-// STEP 1 — Account credentials (name, age, password)  [ORIGINAL]
+// STEP 1 — Account credentials
 // ─────────────────────────────────────────────────────────────────
 function StepCredentials({ data, onChange, errors }) {
   return (
     <>
       <div className="auth-title">Create your account</div>
-      <div className="auth-sub">Let's start with the basics.</div>
+      <div className="auth-sub">Account details stay with your user account. Learning preferences are saved after onboarding.</div>
 
       <div className="field">
-        <label>Name</label>
+        <label>Email</label>
+        <input
+          type="email"
+          placeholder="you@example.com"
+          value={data.email}
+          onChange={e => onChange("email", e.target.value)}
+        />
+        {errors.email && <div className="field-error">{errors.email}</div>}
+      </div>
+
+      <div className="field">
+        <label>Display name</label>
         <input
           placeholder="Your name"
-          value={data.name}
-          onChange={e => onChange("name", e.target.value)}
+          value={data.displayName}
+          onChange={e => onChange("displayName", e.target.value)}
         />
-        {errors.name && <div className="field-error">{errors.name}</div>}
+        {errors.displayName && <div className="field-error">{errors.displayName}</div>}
       </div>
 
       <div className="field">
@@ -448,7 +514,7 @@ function StepCredentials({ data, onChange, errors }) {
         <label>Password</label>
         <input
           type="password"
-          placeholder="At least 4 characters"
+          placeholder="At least 8 characters"
           value={data.password}
           onChange={e => onChange("password", e.target.value)}
         />
@@ -481,20 +547,20 @@ function StepNickname({ data, onChange, errors }) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// STEP 3 — School year
+// STEP 3 — Education level
 // ─────────────────────────────────────────────────────────────────
-function StepSchoolYear({ data, onChange }) {
+function StepEducationLevel({ data, onChange }) {
   return (
     <>
-      <div className="q-label">2. What school year are you in?</div>
+      <div className="q-label">2. What education level best fits you?</div>
       <div className="opt-grid">
-        {SCHOOL_YEARS.map(yr => (
+        {EDUCATION_LEVELS.map(level => (
           <button
-            key={yr}
-            className={`opt-btn full-width ${data.schoolYear === yr ? "selected" : ""}`}
-            onClick={() => onChange("schoolYear", yr)}
+            key={level.value}
+            className={`opt-btn full-width ${data.educationLevel === level.value ? "selected" : ""}`}
+            onClick={() => onChange("educationLevel", level.value)}
           >
-            {yr}
+            {level.label}
           </button>
         ))}
       </div>
@@ -512,11 +578,11 @@ function StepLanguage({ data, onChange }) {
       <div className="opt-grid">
         {LANGUAGES.map(lang => (
           <button
-            key={lang}
-            className={`opt-btn full-width ${data.language === lang ? "selected" : ""}`}
-            onClick={() => onChange("language", lang)}
+            key={lang.value}
+            className={`opt-btn full-width ${data.language === lang.value ? "selected" : ""}`}
+            onClick={() => onChange("language", lang.value)}
           >
-            {lang}
+            {lang.label}
           </button>
         ))}
       </div>
@@ -528,24 +594,19 @@ function StepLanguage({ data, onChange }) {
 // STEP 5 — Cybersecurity familiarity
 // ─────────────────────────────────────────────────────────────────
 function StepFamiliarity({ data, onChange }) {
-  const descriptions = {
-    Beginner:     "I'm just getting started — the basics are new to me.",
-    Intermediate: "I know the fundamentals and want to go deeper.",
-    Advanced:     "I'm confident and looking for advanced challenges.",
-  };
   return (
     <>
       <div className="q-label">4. How familiar are you with cybersecurity?</div>
       <div className="opt-grid">
         {FAMILIARITY.map(lvl => (
           <button
-            key={lvl}
-            className={`opt-btn full-width ${data.familiarity === lvl ? "selected" : ""}`}
-            onClick={() => onChange("familiarity", lvl)}
+            key={lvl.value}
+            className={`opt-btn full-width ${data.familiarity === lvl.value ? "selected" : ""}`}
+            onClick={() => onChange("familiarity", lvl.value)}
           >
-            <strong>{lvl}</strong>
-            <div style={{ fontSize: "0.78rem", color: data.familiarity === lvl ? "inherit" : "#888", marginTop: "0.2rem", fontWeight: 400 }}>
-              {descriptions[lvl]}
+            <strong>{lvl.label}</strong>
+            <div style={{ fontSize: "0.78rem", color: data.familiarity === lvl.value ? "inherit" : "#888", marginTop: "0.2rem", fontWeight: 400 }}>
+              {lvl.desc}
             </div>
           </button>
         ))}
@@ -575,12 +636,12 @@ function StepHelpTopics({ data, onChange }) {
       <div className="chip-grid">
         {HELP_OPTIONS.map(topic => (
           <button
-            key={topic}
-            className={`chip-btn ${selected.includes(topic) ? "selected" : ""}`}
-            onClick={() => toggle(topic)}
-            disabled={selected.length >= 3 && !selected.includes(topic)}
+            key={topic.value}
+            className={`chip-btn ${selected.includes(topic.value) ? "selected" : ""}`}
+            onClick={() => toggle(topic.value)}
+            disabled={selected.length >= 3 && !selected.includes(topic.value)}
           >
-            {topic}
+            {topic.label}
           </button>
         ))}
       </div>
@@ -595,22 +656,17 @@ function StepHelpTopics({ data, onChange }) {
 // STEP 7 — Learning style
 // ─────────────────────────────────────────────────────────────────
 function StepLearningStyle({ data, onChange }) {
-  const icons = {
-    "Step-by-step guidance": "🗺️",
-    "Short explanations":    "⚡",
-    "Quizzes & challenges":  "🎯",
-  };
   return (
     <>
       <div className="q-label">6. How do you prefer learning?</div>
       <div className="opt-grid">
         {LEARNING_STYLES.map(style => (
           <button
-            key={style}
-            className={`opt-btn full-width ${data.learningStyle === style ? "selected" : ""}`}
-            onClick={() => onChange("learningStyle", style)}
+            key={style.value}
+            className={`opt-btn full-width ${data.learningStyle === style.value ? "selected" : ""}`}
+            onClick={() => onChange("learningStyle", style.value)}
           >
-            {icons[style]} {style}
+            {style.icon} {style.label}
           </button>
         ))}
       </div>
@@ -625,7 +681,7 @@ const TOTAL_STEPS = 7;
 const STEP_LABELS = [
   "Account",
   "Nickname",
-  "School Year",
+  "Education",
   "Language",
   "Experience",
   "Goals",
@@ -635,12 +691,15 @@ const STEP_LABELS = [
 function RegisterPage({ onSwitch }) {
   const { login } = useApp();
   const [step, setStep] = useState(1);
+  const [registeredUser, setRegisteredUser] = useState(null);
   const [form, setForm] = useState({
-    // Step 1 — credentials (original fields)
-    name: "", age: "", password: "",
+    email: "",
+    displayName: "",
+    age: "",
+    password: "",
     // Step 2–7 — onboarding
     aiNickname: "",
-    schoolYear: "",
+    educationLevel: "",
     language: "",
     familiarity: "",
     helpTopics: [],
@@ -658,16 +717,19 @@ function RegisterPage({ onSwitch }) {
   function validate() {
     const e = {};
     if (step === 1) {
-      if (!form.name.trim()) e.name = "Name is required.";
-      if (!form.age || isNaN(form.age) || +form.age < 5 || +form.age > 120)
-        e.age = "Please enter a valid age (5–120).";
-      if (!form.password || form.password.length < 4)
-        e.password = "Password must be at least 4 characters.";
+      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))
+        e.email = "Please enter a valid email address.";
+      if (!form.displayName.trim() || form.displayName.trim().length > 100)
+        e.displayName = "Display name is required and must be 100 characters or fewer.";
+      if (!form.age || isNaN(form.age) || !Number.isInteger(+form.age) || +form.age < 1 || +form.age > 120)
+        e.age = "Please enter a whole-number age from 1 to 120.";
+      if (!form.password || form.password.length < 8 || !/[A-Za-z]/.test(form.password) || !/[0-9]/.test(form.password))
+        e.password = "Password must be at least 8 characters and include a letter and a number.";
     }
     if (step === 2) {
       if (!form.aiNickname.trim()) e.aiNickname = "Please enter a nickname for the AI to use.";
     }
-    if (step === 3 && !form.schoolYear) e.schoolYear = "Please pick a school year.";
+    if (step === 3 && !form.educationLevel) e.educationLevel = "Please pick an education level.";
     if (step === 4 && !form.language)   e.language   = "Please pick a language.";
     if (step === 5 && !form.familiarity) e.familiarity = "Please pick your level.";
     if (step === 6 && form.helpTopics.length === 0) e.helpTopics = "Pick at least one topic.";
@@ -685,25 +747,50 @@ function RegisterPage({ onSwitch }) {
 
   function back() { setStep(s => s - 1); }
 
+  function buildLearnerProfilePayload() {
+    return {
+      aiNickname: form.aiNickname.trim(),
+      educationLevel: form.educationLevel,
+      preferredLanguage: form.language,
+      familiarityLevel: form.familiarity,
+      helpTopics: form.helpTopics,
+      learningStyle: form.learningStyle,
+      onboardingCompleted: true,
+    };
+  }
+
   async function handleSubmit() {
     setLoading(true);
     try {
-      const result = await dbRegister({
-        name:          form.name,
-        age:           +form.age,
-        password:      form.password,
-        aiNickname:    form.aiNickname,
-        schoolYear:    form.schoolYear,
-        language:      form.language,
-        familiarity:   form.familiarity,
-        helpTopics:    form.helpTopics,
-        learningStyle: form.learningStyle,
-      });
-      if (!result.ok) {
-        setErrors({ form: result.error });
-      } else {
-        login(result.user);
+      let accountUser = registeredUser;
+
+      if (!accountUser) {
+        const result = await dbRegister({
+          email:       form.email.trim(),
+          displayName: form.displayName.trim(),
+          age:         +form.age,
+          password:    form.password,
+        });
+
+        if (!result.ok) {
+          setErrors({ form: result.error });
+          return;
+        }
+
+        accountUser = result.user;
+        setRegisteredUser(result.user);
       }
+
+      const profileResult = await dbSaveProfile(buildLearnerProfilePayload());
+      if (!profileResult.ok) {
+        setErrors({
+          form: "Your account was created, but your learner profile was not saved. Please retry saving your profile before continuing.",
+          ...profileResult.errors,
+        });
+        return;
+      }
+
+      login(accountUser, profileResult.profile);
     } catch {
       setErrors({ form: "Something went wrong. Please try again." });
     } finally {
@@ -736,7 +823,7 @@ function RegisterPage({ onSwitch }) {
         {/* Step content */}
         {step === 1 && <StepCredentials data={form} onChange={set} errors={errors} />}
         {step === 2 && <StepNickname    data={form} onChange={set} errors={errors} />}
-        {step === 3 && <StepSchoolYear  data={form} onChange={set} errors={errors} />}
+        {step === 3 && <StepEducationLevel data={form} onChange={set} errors={errors} />}
         {step === 4 && <StepLanguage    data={form} onChange={set} errors={errors} />}
         {step === 5 && <StepFamiliarity data={form} onChange={set} errors={errors} />}
         {step === 6 && <StepHelpTopics  data={form} onChange={set} errors={errors} />}
@@ -755,9 +842,9 @@ function RegisterPage({ onSwitch }) {
             disabled={loading}
           >
             {loading
-              ? "Setting up…"
+              ? (registeredUser ? "Saving profile…" : "Setting up…")
               : step === TOTAL_STEPS
-                ? "🚀 Let's go!"
+                ? (registeredUser ? "Retry saving profile" : "🚀 Let's go!")
                 : "Continue →"}
           </button>
         </div>
@@ -773,18 +860,18 @@ function RegisterPage({ onSwitch }) {
 }
 
 // ─────────────────────────────────────────────────────────────────
-// LOGIN PAGE  [ORIGINAL — unchanged logic]
+// LOGIN PAGE
 // ─────────────────────────────────────────────────────────────────
 function LoginPage({ onSwitch }) {
   const { login } = useApp();
-  const [form, setForm] = useState({ name: "", password: "" });
+  const [form, setForm] = useState({ email: "", password: "" });
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
   function validate() {
     const e = {};
-    if (!form.name.trim()) e.name = "Name is required.";
-    if (!form.password)    e.password = "Password is required.";
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) e.email = "Valid email is required.";
+    if (!form.password) e.password = "Password is required.";
     return e;
   }
 
@@ -793,11 +880,11 @@ function LoginPage({ onSwitch }) {
     if (Object.keys(errs).length) { setErrors(errs); return; }
     setLoading(true);
     try {
-      const result = await dbLogin(form.name, form.password);
+      const result = await dbLogin(form.email.trim(), form.password);
       if (!result.ok) {
         setErrors({ form: result.error });
       } else {
-        login(result.user);
+        login(result.user, result.profile);
       }
     } catch {
       setErrors({ form: "Something went wrong. Please try again." });
@@ -814,17 +901,18 @@ function LoginPage({ onSwitch }) {
           <div className="auth-logo-name">Cyberly</div>
         </div>
         <div className="auth-title">Welcome back</div>
-        <div className="auth-sub">Sign in to continue your cyber learning journey.</div>
+        <div className="auth-sub">Sign in with your email and password to continue.</div>
 
         <div className="field">
-          <label>Name</label>
+          <label>Email</label>
           <input
-            placeholder="Your name"
-            value={form.name}
-            onChange={e => { setForm(f => ({ ...f, name: e.target.value })); setErrors({}); }}
+            type="email"
+            placeholder="you@example.com"
+            value={form.email}
+            onChange={e => { setForm(f => ({ ...f, email: e.target.value })); setErrors({}); }}
             onKeyDown={e => e.key === "Enter" && handleSubmit()}
           />
-          {errors.name && <div className="field-error">{errors.name}</div>}
+          {errors.email && <div className="field-error">{errors.email}</div>}
         </div>
         <div className="field">
           <label>Password</label>
@@ -889,18 +977,18 @@ function AuthGate() {
 // ─── Build AI system prompt from user profile ─────────────────────
 function buildSystemPrompt(user) {
   const group = getAgeGroup(user.age);
-  const topics = user.helpTopics?.join(", ") || "general cybersecurity";
+  const topics = user.helpTopicLabels?.join(", ") || "general cybersecurity";
   const lang   = user.language      || "English";
   const level  = user.familiarity   || "Beginner";
   const style  = user.learningStyle || "Short explanations";
   const nick   = user.aiNickname    || user.name;
-  const year   = user.schoolYear    || "";
+  const educationLevel = user.educationLevel || "";
 
   return `You are CyberGuard, a friendly cybersecurity AI assistant for Malaysian students on the Cyberly platform.
 
 User profile:
 - Call them: ${nick}
-- Age group: ${group.label}${year ? ` (${year})` : ""}
+- Age group: ${group.label}${educationLevel ? ` (${educationLevel})` : ""}
 - Language preference: ${lang}
 - Cybersecurity level: ${level}
 - Topics of interest: ${topics}
@@ -1144,6 +1232,7 @@ function DashboardPage() {
 
   const quickActions = [
     { icon: "📚", label: "Browse Resources",  desc: "Guides on scams, privacy & more", page: "resources", color: "#E3F2FD", accent: "#1E88E5" },
+    { icon: "👤", label: "Edit Profile",       desc: "Update your learner preferences", page: "profile",   color: "#E1F5EE", accent: "#1D9E75" },
     { icon: "ℹ️",  label: "About the Project", desc: "Meet the team behind Cyberly",  page: "about",     color: "#F3E5F5", accent: "#8E24AA" },
     { icon: "📊", label: "My Progress",        desc: "See your learning stats & topics", page: "progress",  color: "#FFF8E1", accent: "#F59E0B" },
     { icon: "🏠",  label: "Back to Home",      desc: "Return to the landing page",      page: "home",      color: "#E8F5E9", accent: "#43A047" },
@@ -1174,7 +1263,7 @@ function DashboardPage() {
               Welcome back, {nick} 👋
             </h1>
             <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.9rem" }}>
-              {group.label} · {user.familiarity || "Beginner"} level{user.schoolYear ? ` · ${user.schoolYear}` : ""}
+              {group.label} · {user.familiarity || "Beginner"} level{user.educationLevel ? ` · ${user.educationLevel}` : ""}
             </p>
           </div>
           <div style={{ display: "flex", gap: "0.75rem" }}>
@@ -1204,11 +1293,14 @@ function DashboardPage() {
                 <span style={{ margin: "0 0.5rem" }}>·</span>
                 <span>📖 {user.learningStyle}</span>
                 <span style={{ margin: "0 0.5rem" }}>·</span>
-                <span>🎯 {user.helpTopics.join(", ")}</span>
+                <span>🎯 {user.helpTopicLabels.join(", ")}</span>
+              </div>
+              <div style={{ fontSize: "0.76rem", color: "#5f6f69", marginTop: "0.45rem" }}>
+                Learner preferences are saved to your profile and restored after refresh or login.
               </div>
             </div>
-            <button onClick={() => go("resources")} style={{ background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1.1rem", fontSize: "0.82rem", fontWeight: 600, cursor: "pointer", flexShrink: 0 }}>
-              Explore resources →
+            <button onClick={() => go("profile")} style={{ background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1.1rem", fontSize: "0.82rem", fontWeight: 600, cursor: "pointer", flexShrink: 0 }}>
+              Edit profile →
             </button>
           </div>
         )}
@@ -1254,10 +1346,10 @@ function DashboardPage() {
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem", marginBottom: "0.75rem" }}>
           <div>
             <p className="section-title" style={{ fontSize: "1.1rem", margin: 0 }}>🛡 CyberGuard AI</p>
-            <p className="section-sub" style={{ margin: "0.25rem 0 0" }}>Ask anything about staying safe online.</p>
+            <p className="section-sub" style={{ margin: "0.25rem 0 0" }}>Preview the chat interface. Live AI replies will use the backend AI Gateway in a later phase.</p>
           </div>
           <span style={{ background: "var(--teal-lt)", color: "var(--teal)", fontSize: "0.72rem", fontWeight: 600, borderRadius: 99, padding: "0.25rem 0.75rem" }}>
-            Personalised to your profile
+            Saved profile preview
           </span>
         </div>
         <AgentPanel />
@@ -1281,7 +1373,7 @@ function AgentPanel() {
   useEffect(() => {
     setMessages([{
       role: "ai",
-      text: `Hi ${nick}! I'm CyberGuard — your personal cybersecurity guide. What would you like to learn today? 🛡`,
+      text: `Hi ${nick}! CyberGuard's chat interface is ready, but live AI replies will be enabled after the backend AI Gateway phase.`,
     }]);
   }, [nick]);
 
@@ -1861,6 +1953,167 @@ function AboutPage() {
   );
 }
 
+// ─── Page: Profile ───────────────────────────────────────────────
+function ProfilePage() {
+  const { user, go, updateProfile } = useApp();
+  const [form, setForm] = useState(() => ({
+    aiNickname: user?.profile?.aiNickname || user?.displayName || "",
+    educationLevel: user?.profile?.educationLevel || "",
+    preferredLanguage: user?.profile?.preferredLanguage || "",
+    familiarityLevel: user?.profile?.familiarityLevel || "",
+    helpTopics: user?.profile?.helpTopics || [],
+    learningStyle: user?.profile?.learningStyle || "",
+  }));
+  const [errors, setErrors] = useState({});
+  const [saving, setSaving] = useState(false);
+  const [saved, setSaved] = useState(false);
+
+  if (!user) { go("login"); return null; }
+
+  function set(key, value) {
+    setForm(current => ({ ...current, [key]: value }));
+    setErrors(current => ({ ...current, [key]: undefined, form: undefined }));
+    setSaved(false);
+  }
+
+  function toggleTopic(topic) {
+    const selected = form.helpTopics || [];
+    if (selected.includes(topic)) {
+      set("helpTopics", selected.filter(item => item !== topic));
+    } else if (selected.length < 3) {
+      set("helpTopics", [...selected, topic]);
+    }
+  }
+
+  async function save() {
+    setSaving(true);
+    setSaved(false);
+    const result = await dbSaveProfile({
+      ...form,
+      onboardingCompleted: true,
+    });
+    setSaving(false);
+
+    if (!result.ok) {
+      setErrors({ form: result.error, ...result.errors });
+      return;
+    }
+
+    updateProfile(result.profile);
+    setSaved(true);
+  }
+
+  const fieldSet = [
+    { key: "educationLevel", label: "Education level", options: EDUCATION_LEVELS },
+    { key: "preferredLanguage", label: "Preferred language", options: LANGUAGES },
+    { key: "familiarityLevel", label: "Cybersecurity familiarity", options: FAMILIARITY },
+    { key: "learningStyle", label: "Learning style", options: LEARNING_STYLES },
+  ];
+
+  return (
+    <div>
+      <div style={{ background: "linear-gradient(135deg, var(--teal) 0%, #1a5c4a 100%)", padding: "2.5rem 1.5rem", color: "#fff" }}>
+        <div style={{ maxWidth: 900, margin: "0 auto" }}>
+          <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.6)", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.4rem" }}>
+            Learner Profile
+          </div>
+          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 600, marginBottom: "0.35rem" }}>
+            Shape your Cyberly experience
+          </h1>
+          <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.9rem", lineHeight: 1.6 }}>
+            These preferences are saved separately from your account identity. Age and education level stay separate.
+          </p>
+        </div>
+      </div>
+
+      <div className="section" style={{ maxWidth: 900 }}>
+        <button
+          onClick={() => go(user.onboardingCompleted ? "dashboard" : "login")}
+          style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "none", border: "none", cursor: "pointer", color: "#555", fontSize: "0.875rem", fontWeight: 500, padding: 0, marginBottom: "1.5rem" }}
+        >
+          ← Back
+        </button>
+
+        {!user.onboardingCompleted && (
+          <div className="card" style={{ marginBottom: "1rem", background: "var(--coral-lt)", border: "1px solid rgba(216,90,48,0.25)" }}>
+            <div style={{ fontWeight: 700, color: "var(--coral)", marginBottom: "0.25rem" }}>Finish onboarding</div>
+            <div style={{ fontSize: "0.86rem", color: "#5f4036", lineHeight: 1.6 }}>
+              Your account is signed in, but your learner profile is incomplete. Save this profile to continue to the dashboard.
+            </div>
+          </div>
+        )}
+
+        <div className="card">
+          <div className="field">
+            <label>AI nickname</label>
+            <input
+              value={form.aiNickname}
+              maxLength={50}
+              onChange={event => set("aiNickname", event.target.value)}
+              placeholder="What should CyberGuard call you?"
+            />
+            {errors.aiNickname && <div className="field-error">{errors.aiNickname}</div>}
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem" }}>
+            {fieldSet.map(field => (
+              <div className="field" key={field.key}>
+                <label>{field.label}</label>
+                <select
+                  value={form[field.key]}
+                  onChange={event => set(field.key, event.target.value)}
+                  style={{ width: "100%", border: "1.5px solid rgba(0,0,0,0.13)", borderRadius: 10, padding: "0.65rem 0.9rem", fontFamily: "'DM Sans', sans-serif", fontSize: "0.9rem", background: "#fff" }}
+                >
+                  <option value="">Choose one</option>
+                  {field.options.map(option => (
+                    <option key={option.value} value={option.value}>{option.label}</option>
+                  ))}
+                </select>
+                {errors[field.key] && <div className="field-error">{errors[field.key]}</div>}
+              </div>
+            ))}
+          </div>
+
+          <div className="field">
+            <label>Help topics</label>
+            <div className="chip-grid">
+              {HELP_OPTIONS.map(topic => (
+                <button
+                  key={topic.value}
+                  className={`chip-btn ${form.helpTopics.includes(topic.value) ? "selected" : ""}`}
+                  onClick={() => toggleTopic(topic.value)}
+                  disabled={form.helpTopics.length >= 3 && !form.helpTopics.includes(topic.value)}
+                  type="button"
+                >
+                  {topic.label}
+                </button>
+              ))}
+            </div>
+            <div className="chip-limit-note">{form.helpTopics.length}/3 selected</div>
+            {errors.helpTopics && <div className="field-error">{errors.helpTopics}</div>}
+          </div>
+
+          {errors.form && <div className="field-error" style={{ marginBottom: "0.75rem" }}>{errors.form}</div>}
+          {saved && <div style={{ color: "var(--teal)", fontSize: "0.85rem", fontWeight: 600, marginBottom: "0.75rem" }}>Profile saved.</div>}
+
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
+            <button className="btn-primary" style={{ flex: "0 0 auto", minWidth: 180 }} onClick={save} disabled={saving}>
+              {saving ? "Saving…" : "Save profile"}
+            </button>
+            {user.onboardingCompleted && (
+              <button className="btn-ghost" onClick={() => go("dashboard")}>Dashboard</button>
+            )}
+          </div>
+
+          <div style={{ fontSize: "0.76rem", color: "#777", marginTop: "1rem", lineHeight: 1.6 }}>
+            Display name and age editing are deferred to a future account settings endpoint. Age is not inferred from education level, and neither is treated as learning ability.
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 
 // ─── Page: Progress ──────────────────────────────────────────────
 function ProgressPage() {
@@ -1873,7 +2126,7 @@ function ProgressPage() {
   const lang   = user.language    || "English";
   const style  = user.learningStyle || "Not set";
 
-  const allTopics = ["Phishing", "Online Scams", "Misinformation & Fake News", "AI-Generated Content", "Deepfakes", "Privacy & Personal Data", "Cyberbullying", "Password Security", "Digital Citizenship"];
+  const allTopics = HELP_OPTIONS;
 
   const levelMap = { Beginner: 1, Intermediate: 2, Advanced: 3 };
   const levelVal = levelMap[level] || 1;
@@ -1954,16 +2207,16 @@ function ProgressPage() {
           <p className="section-sub" style={{ marginBottom: "1rem" }}>Based on your profile — explore guides for each one.</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "0.75rem" }}>
             {allTopics.map(t => {
-              const active = topics.includes(t);
+              const active = topics.includes(t.value);
               return (
-                <div key={t} style={{
+                <div key={t.value} style={{
                   background: active ? "var(--teal-lt)" : "#f9f9f9",
                   border: active ? "1px solid rgba(29,158,117,0.3)" : "1px solid rgba(0,0,0,0.07)",
                   borderRadius: 10, padding: "0.75rem 1rem",
                   display: "flex", alignItems: "center", gap: "0.6rem",
                 }}>
                   <span style={{ fontSize: "1rem" }}>{active ? "✅" : "⬜"}</span>
-                  <span style={{ fontSize: "0.85rem", fontWeight: active ? 600 : 400, color: active ? "var(--teal)" : "#888" }}>{t}</span>
+                  <span style={{ fontSize: "0.85rem", fontWeight: active ? 600 : 400, color: active ? "var(--teal)" : "#888" }}>{t.label}</span>
                 </div>
               );
             })}
@@ -2013,9 +2266,9 @@ function ChatWidget() {
     if (!user || messages.length > 0) return;
     setMessages([{
       role: "ai",
-      text: `Hi ${nick}! Quick question about cybersecurity? I'm here to help. 🛡`,
+      text: `Hi ${nick}! This chat UI is ready, but live CyberGuard replies will be enabled after the backend AI Gateway phase.`,
     }]);
-  }, [user, open]);
+  }, [user, open, messages.length, nick]);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
@@ -2060,7 +2313,7 @@ function ChatWidget() {
           <div className="chat-messages">
             {!user ? (
               <div className="chat-login-prompt">
-                <p>Sign in to chat with CyberGuard AI — responses are personalised to your profile.</p>
+                <p>Sign in to preview the CyberGuard chat interface with your session profile.</p>
                 <button onClick={() => { setOpen(false); go("login"); }}>Sign in / Sign up</button>
               </div>
             ) : (
@@ -2137,7 +2390,7 @@ function Footer() {
     <footer>
       <p>Built with care · <strong>Cyberly</strong> · {new Date().getFullYear()}</p>
       <p style={{ marginTop: "0.4rem", fontSize: "0.78rem" }}>
-        Age-aware agentic AI powered by Claude · cybersecurity education for everyone.
+        Cyber wellness education for everyone · AI Gateway coming in a later phase.
       </p>
     </footer>
   );
@@ -2147,17 +2400,37 @@ function Footer() {
 export default function App() {
   const [page, setPage] = useState("home");
   const [user, setUser] = useState(null);
+  const [checkingSession, setCheckingSession] = useState(true);
 
-  function login(userData) {
-    setUser(userData);
-    setPage("dashboard");
+  useEffect(() => {
+    let active = true;
+    dbMe().then(result => {
+      if (!active) return;
+      if (result.ok) {
+        const restoredUser = normalizeSessionUser(result.user, result.profile);
+        setUser(restoredUser);
+        setPage(restoredUser.onboardingCompleted ? "dashboard" : "profile");
+      }
+      setCheckingSession(false);
+    });
+    return () => { active = false; };
+  }, []);
+
+  function login(userData, profileData) {
+    const nextUser = normalizeSessionUser(userData, profileData);
+    setUser(nextUser);
+    setPage(nextUser.onboardingCompleted ? "dashboard" : "profile");
   }
-  function logout() {
+  function updateProfile(profileData) {
+    setUser(current => current ? normalizeSessionUser(current, profileData) : current);
+  }
+  async function logout() {
+    await dbLogout();
     setUser(null);
     setPage("home");
   }
 
-  const ctx = { page, go: setPage, user, login, logout };
+  const ctx = { page, go: setPage, user, login, logout, updateProfile };
 
   const PAGES = {
     home:      <HomePage />,
@@ -2165,6 +2438,7 @@ export default function App() {
     resources: <ResourcesPage />,
     about:     <AboutPage />,
     progress:  <ProgressPage />,
+    profile:   <ProfilePage />,
     login:     <AuthGate />,
   };
 
@@ -2173,13 +2447,17 @@ export default function App() {
       <style>{globalStyle}</style>
       <Navbar page={page} />
       <main className="page-wrap">
-        {PAGES[page] ?? <HomePage />}
+        {checkingSession ? (
+          <div className="section">
+            <p className="section-title">Loading Cyberly…</p>
+            <p className="section-sub">Checking your session.</p>
+          </div>
+        ) : (PAGES[page] ?? <HomePage />)}
       </main>
       <Footer />
-      <ChatWidget />
+      {!checkingSession && <ChatWidget />}
     </AppCtx.Provider>
   );
 }
 
 // --------------------- MYSQL 
-

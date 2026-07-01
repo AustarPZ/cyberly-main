@@ -56,7 +56,38 @@ Temporary legacy compatibility columns:
 - `username`
 - `password`
 
-These are retained until the authentication routes are repaired.
+These are retained while legacy source remains in the project. Current `/api/auth/*` routes do not store plaintext passwords and do not depend on legacy password values.
+
+## Sessions Table Design
+
+Phase 1B.1 adds a `sessions` table for server-side authentication sessions:
+
+- `sid`: session identifier primary key
+- `expires`: session expiry timestamp
+- `data`: JSON session payload
+
+The application stores only minimal session data: `userId` and `role`.
+
+## Learner Profiles Table Design
+
+Phase 1B.2 adds `learner_profiles` with one row per user:
+
+- `id`: unsigned auto-increment primary key
+- `user_id`: unique foreign key to `users.id`
+- `ai_nickname`: optional display nickname for learning interactions
+- `education_level`: `form_1`, `form_2`, `form_3`, `form_4`, `form_5`, `other`, or `prefer_not_to_say`
+- `preferred_language`: `english`, `bahasa_melayu`, `chinese`, or `mixed`
+- `familiarity_level`: `beginner`, `intermediate`, or `advanced`
+- `help_topics`: validated JSON array with up to three approved topic identifiers
+- `learning_style`: `step_by_step`, `short_explanations`, or `quizzes_and_challenges`
+- `onboarding_completed`: boolean completion flag
+- `onboarding_completed_at`: timestamp set the first time onboarding is completed
+- `profile_last_confirmed_at`: timestamp updated when the profile is confirmed or saved
+- `created_at`, `updated_at`
+
+`learner_profiles.user_id` uses `ON DELETE CASCADE` so deleting a user also deletes that user's learner preferences and avoids orphaned personal data.
+
+The table does not store assessment results, recommendation state, chat history, or inferred learning ability.
 
 ## Age-Group Rules
 
@@ -81,16 +112,16 @@ Age and age group must not be used as the main measure of learning ability. Adap
 - `active`: account can be used.
 - `disabled`: account should be blocked by future authentication middleware.
 
-Authentication middleware is not implemented yet.
+Authentication middleware blocks missing sessions. Role middleware currently protects `/api/admin/ping` and can be reused for future admin APIs.
 
 ## Legacy Compatibility Decisions
 
 The existing manually-created `users` table contained zero rows when migrations were introduced. It already had `id`, `username`, `age`, `password`, `email`, `role`, and timestamps.
 
-The migration keeps `username` and `password` temporarily because current backend routes still reference them. It adds `display_name`, `password_hash`, `age_group`, and `account_status` for the future email/password authentication schema.
+The migration keeps `username` and `password` temporarily because legacy source remains in the project. It adds `display_name`, `password_hash`, `age_group`, and `account_status` for the email/password authentication schema.
 
-Compatibility triggers populate future columns from legacy fields during inserts and update `age_group` when age changes. These triggers are temporary and should be revisited during the authentication repair phase.
+Compatibility triggers populate safe defaults from legacy fields during inserts and update `age_group` when age changes. The current trigger no longer copies legacy password values into `password_hash`.
 
 ## Rollback Limitation
 
-Rollback is not implemented in Phase 1B.0. Production database changes require a verified backup before applying migrations.
+Rollback is not implemented yet. Production database changes require a verified backup before applying migrations.

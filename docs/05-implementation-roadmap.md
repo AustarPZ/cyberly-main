@@ -11,12 +11,16 @@
    - Future work: rollback strategy and production backup workflow.
 
 3. Authentication Repair
-   - Align frontend and backend field contracts.
-   - Move login to email and password.
-   - Add persistent session or token handling.
+   - Completed foundation: frontend calls `/api/auth/register` and `/api/auth/login`.
+   - Completed foundation: login uses email and password.
+   - Completed foundation: persistent MySQL-backed server sessions.
+   - Completed foundation: session restore, logout, auth guards, role guard, and focused auth verification.
 
 4. Learner Profile Persistence
-   - Store age, age category, school year, language, familiarity, learning goals, and learning style.
+   - Completed foundation: one learner profile per user.
+   - Completed foundation: seven-step onboarding saves education level, language, familiarity, help topics, learning style, and AI nickname.
+   - Completed foundation: profile restore after refresh and later login.
+   - Future work: account settings for display name and age editing.
 
 5. Assessment System
    - Add assessment questions, attempts, answers, scoring, and baseline cyber wellness profile.
@@ -40,7 +44,8 @@
    - Add workflow state, learning goals, next-step planning, and recommendation handoff.
 
 11. Admin Portal
-   - Add admin authentication, role checks, and management views.
+   - Add secure admin provisioning and management views.
+   - Reuse the existing role-check middleware for protected admin APIs.
 
 12. AI Usage And Cost Monitoring
    - Track provider, model, tokens or units, latency, and estimated cost.
