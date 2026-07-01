@@ -1,0 +1,31 @@
+# Development Decisions
+
+- `client/` is the official frontend.
+- The root React app is legacy and must not be extended.
+- The project will retain React + Express + MySQL.
+- The architecture will be a modular monolith.
+- Login will eventually use email and password.
+- The first production roles are `user` and `admin`.
+- Public admin registration is prohibited.
+- Public registration creates user accounts only.
+- The first admin will later be created through a secure seed or setup process.
+- Additional admins may only be created by an authorised admin.
+- Age must be a whole number from 1 to 120.
+- Age categories are:
+  - 1-12: child
+  - 13-17: teen
+  - 18-24: young adult
+  - 25-120: adult
+- Users outside the target group may use the general platform.
+- Malaysian teenagers aged 13-17 remain the main research target group.
+- Login must not request age again.
+- Stored age and learner-profile information must be loaded after authentication.
+- Users may later update age through profile settings.
+- Adaptive difficulty must be based primarily on assessment performance and learner mastery, not age category.
+- ILMU is primary for Malaysian conversational and localisation tasks.
+- OpenAI supports structured reasoning and fallback.
+- Gemini remains optional for future multimodal analysis.
+- Ollama is excluded from the MVP.
+- CSV is the primary research export format.
+- JSON is available for technical/debug exports.
+- The admin portal will include AI provider usage and estimated cost monitoring.

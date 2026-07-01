@@ -1,0 +1,23 @@
+# Known Issues
+
+- Duplicate frontend apps exist.
+- `client/` is official, while the root React app is legacy.
+- Frontend/backend authentication contract is broken.
+- Registration sends `name` while the backend expects `username`.
+- Frontend registration expects a returned user object while the backend returns only a message.
+- Login uses in-memory mock data instead of `/api/login`.
+- No persistent authentication exists.
+- No backend route protection exists.
+- AI calls are made directly from the client.
+- No database migrations exist.
+- No app tests exist.
+- Resource and progress data are hard-coded.
+- No admin portal exists.
+- Current registration does not create a row in the `users` table.
+- Current age input previously accepted invalid values.
+- Current login incorrectly depends on temporary profile information instead of loading stored data.
+- Accessibility risks exist around icon-heavy controls, state-only navigation, and limited ARIA/focus handling.
+- Maintainability risks exist because most frontend logic and styling live in a single large `App.jsx` file.
+- Resolved baseline issue: `client/` production build was blocked by an ESLint plugin conflict between root and client dependency trees. The generated root `node_modules/` folder was removed, and the normal `client/` build now completes.
+- Resolved baseline issue: backend MySQL connection previously failed when no `server/.env` password was loaded. Local `server/.env` now loads, and the backend connects to `cyberwell`.
+- Current build warning: `client/src/App.jsx` has a React Hook dependency warning in the chat widget effect.
