@@ -9,7 +9,7 @@
 - No persistent authentication exists.
 - No backend route protection exists.
 - AI calls are made directly from the client.
-- No database migrations exist.
+- Resolved baseline issue: a lightweight SQL migration system now exists.
 - No app tests exist.
 - Resource and progress data are hard-coded.
 - No admin portal exists.
@@ -21,3 +21,5 @@
 - Resolved baseline issue: `client/` production build was blocked by an ESLint plugin conflict between root and client dependency trees. The generated root `node_modules/` folder was removed, and the normal `client/` build now completes.
 - Resolved baseline issue: backend MySQL connection previously failed when no `server/.env` password was loaded. Local `server/.env` now loads, and the backend connects to `cyberwell`.
 - Current build warning: `client/src/App.jsx` has a React Hook dependency warning in the chat widget effect.
+- Authentication routes still use the legacy schema contract and have not been repaired.
+- Migration rollback is not implemented yet.

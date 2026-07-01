@@ -42,6 +42,24 @@ npm start
 
 The backend expects MySQL to be available and the `cyberwell` database to exist.
 
+## Database Migrations
+
+Run migration status:
+
+```bash
+cd server
+npm run migrate:status
+```
+
+Apply pending migrations:
+
+```bash
+cd server
+npm run migrate
+```
+
+Migrations are stored in `server/migrations/` and tracked in the `schema_migrations` table. Rollback is not implemented yet; take a database backup before production changes.
+
 ## Baseline Notes
 
 - The official frontend is `client/`.
@@ -50,6 +68,6 @@ The backend expects MySQL to be available and the `cyberwell` database to exist.
 - `client/` production build has been verified successfully.
 - `server/.env` loads locally without committing or printing secrets.
 - The backend has been verified connecting to the local `cyberwell` MySQL database.
+- The `users` table is now under migration management while preserving legacy `username` and `password` columns for current backend compatibility.
 - Authentication is not production-ready yet.
-- Database migrations are not configured yet.
 - AI provider calls will later be routed through the backend.

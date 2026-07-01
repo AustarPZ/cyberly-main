@@ -7,9 +7,8 @@
    - Add project documentation and environment templates.
 
 2. Database Migration Management
-   - Add migration tooling.
-   - Capture the current `cyberwell` schema.
-   - Add repeatable local setup instructions.
+   - Completed foundation: migration tooling, `schema_migrations`, and aligned `users` schema.
+   - Future work: rollback strategy and production backup workflow.
 
 3. Authentication Repair
    - Align frontend and backend field contracts.

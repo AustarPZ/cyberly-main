@@ -4,6 +4,9 @@
 
 - `client/`: official React frontend.
 - `server/`: Express backend with MySQL access through `mysql2`.
+- `server/migrations/`: versioned SQL migrations.
+- `server/scripts/migrate.js`: migration runner and status checker.
+- `server/src/database/`: database pool, migration helpers, and age-group utility.
 - `src/` and root `public/`: legacy React frontend retained for reference only.
 - MySQL database: `cyberwell`.
 
@@ -39,7 +42,8 @@ The backend currently attempts to connect to:
 - Login uses in-memory mock data instead of `/api/login`.
 - Learner profile fields are not persisted.
 - AI calls are made from the frontend instead of through a backend gateway.
-- No migration system exists.
+- Migration tooling now exists for backend database changes.
+- Authentication routes have not yet been updated to the new schema.
 
 ## Verified Connection Status
 
@@ -50,3 +54,13 @@ Read-only verification using `SELECT DATABASE()` confirmed the selected database
 ## Verified Frontend Build Status
 
 The official `client/` production build completes successfully after removing generated root dependencies. The build still reports one React Hook dependency warning in `client/src/App.jsx`, but no blocking build errors remain.
+
+## Migration Status
+
+The lightweight SQL migration system is installed. Applied migrations:
+
+- `001_create_schema_migrations.sql`
+- `002_align_users_table.sql`
+- `003_preserve_legacy_users_compatibility.sql`
+
+The `users` table is aligned for future email/password authentication while preserving legacy `username` and `password` columns until the auth routes are repaired.

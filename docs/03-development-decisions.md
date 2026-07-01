@@ -29,3 +29,7 @@
 - CSV is the primary research export format.
 - JSON is available for technical/debug exports.
 - The admin portal will include AI provider usage and estimated cost monitoring.
+- Database changes are managed through versioned SQL migrations and the `schema_migrations` table.
+- No ORM is used in the migration foundation.
+- Legacy `username` and `password` columns remain temporarily for compatibility until authentication is repaired.
+- Backend age-group mapping is available as a utility, but registration/login do not use it yet.
