@@ -20,3 +20,5 @@
 - Resolved Phase 1B.2 issue: learner-profile onboarding fields are now persisted and restored.
 - Account-field editing for display name and age is deferred.
 - Chatbot UI is present, but live AI replies are disabled until the backend AI Gateway is implemented.
+- Retakes, admin/research reset, post-test questionnaires, adaptive recommendations, and scenario activities are not implemented yet.
+- The initial assessment has deterministic baseline feedback only; it does not personalize learning paths yet.

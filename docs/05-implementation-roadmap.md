@@ -23,11 +23,13 @@
    - Future work: account settings for display name and age editing.
 
 5. Assessment System
-   - Add assessment questions, attempts, answers, scoring, and baseline cyber wellness profile.
+   - Completed foundation: fixed 12-question Initial Cyber Wellness Assessment.
+   - Completed foundation: backend scoring, measured level, topic scores, in-progress resume, and completed result restore.
+   - Future work: post-test questionnaires, controlled retakes, admin/research reset, and richer assessment analytics.
 
 6. Progress And Recommendation
    - Track activity and mastery.
-   - Generate adaptive recommendations from performance and learner progress.
+   - Generate adaptive recommendations from assessment performance and learner progress in a later phase.
 
 7. Scenario Engine
    - Add scenario content, branching decisions, scoring, and attempts.

@@ -52,10 +52,15 @@ Phase 1B.1 implements server-side authentication with MySQL-backed sessions:
 - Logout: `POST /api/auth/logout`
 - Admin authorization check: `GET /api/admin/ping`
 - Learner profile read/update: `GET /api/profile`, `PUT /api/profile`
+- Initial assessment: `GET /api/assessments/initial`, `POST /api/assessments/initial/attempts`
+- Assessment attempts: `GET /api/assessment-attempts/:attemptId`, `PUT /api/assessment-attempts/:attemptId/answers`, `POST /api/assessment-attempts/:attemptId/submit`
+- Initial assessment result/status: `GET /api/assessments/initial/result`, `GET /api/assessments/initial/status`
 
 Session cookies are HTTP-only, use `sameSite=lax`, and are sent by the official frontend with `credentials: include`. Public registration always creates `role=user`; admin self-registration is not allowed. Passwords are stored with bcrypt hashes only.
 
 Seven-step onboarding preferences are saved to `learner_profiles` after account creation. The session still stores only `userId` and `role`.
+
+The initial cyber wellness assessment uses a fixed 12-question versioned question bank and deterministic backend scoring. Assessment data is stored outside `users`, `learner_profiles`, and sessions.
 
 ## Database Migrations
 
@@ -84,13 +89,15 @@ Migrations are stored in `server/migrations/` and tracked in the `schema_migrati
 - `client/` production build has been verified successfully.
 - `server/.env` loads locally without committing or printing secrets.
 - The backend has been verified connecting to the local `cyberwell` MySQL database.
-- The `users`, `sessions`, and `learner_profiles` tables are now under migration management while preserving legacy `username` and `password` columns temporarily.
+- The `users`, `sessions`, `learner_profiles`, and assessment tables are now under migration management while preserving legacy `username` and `password` columns temporarily.
 - Frontend registration calls `POST /api/auth/register`; login calls `POST /api/auth/login`.
 - Frontend startup calls `GET /api/auth/me` to restore an existing session, and logout calls `POST /api/auth/logout`.
 - Seven-step onboarding preferences are persisted with `PUT /api/profile` and restored through `GET /api/auth/me`.
 - Profile editing is available for learner-profile fields. Display name and age editing are deferred to a future account settings endpoint.
+- The initial assessment is available after onboarding, can be done later, resumes saved answers, and preserves the first completed result.
 - AI provider calls will later be routed through the backend.
 - Browser-side direct AI provider calls are disabled.
+- No AI is used for assessment questions, scoring, or result feedback.
 
 ## Verification
 
@@ -100,6 +107,7 @@ npm run migrate:status
 npm run migrate
 npm run test:auth
 npm run test:profile
+npm run test:assessment
 ```
 
 ```bash

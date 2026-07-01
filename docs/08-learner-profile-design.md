@@ -89,3 +89,7 @@ If age editing is added later, the backend must validate age from 1 to 120 and r
 - Future assessment-derived ability should be stored separately.
 - Profile APIs never accept `userId`; they use the authenticated session user.
 - Deleting a user cascades deletion of that user's learner profile.
+
+## Assessment Separation
+
+The Initial Cyber Wellness Assessment stores measured ability in dedicated assessment tables. It does not overwrite `familiarity_level`, and it does not infer ability from age or education level.

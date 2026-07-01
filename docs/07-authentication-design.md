@@ -69,4 +69,6 @@ Seven-step onboarding data is preserved only in the current frontend session aft
 
 `GET /api/auth/me` returns the safe user and normalized learner profile. The learner profile is loaded from MySQL for restoration convenience, but it is not stored in the server-side session.
 
+Assessment records are also not stored in the session. Assessment APIs use the session `userId` only to authorize access to attempts and results.
+
 `server/scripts/test-auth.js` verifies registration, login, session restore, logout, duplicate email handling, invalid age rejection, weak password rejection, role enforcement, safe response shape, password hashing, and cleanup of the named Phase 1B.1 test account.

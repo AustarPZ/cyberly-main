@@ -439,6 +439,78 @@ async function dbSaveProfile(profile) {
   }
 }
 
+async function dbGetInitialAssessment() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/assessments/initial`, {
+      method: "GET",
+      credentials: "include",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, error: data.message || "Unable to load assessment." };
+    return { ok: true, ...data };
+  } catch {
+    return { ok: false, error: "Network error. Could not load assessment." };
+  }
+}
+
+async function dbGetAssessmentStatus() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/assessments/initial/status`, {
+      method: "GET",
+      credentials: "include",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, error: data.message || "Unable to load assessment status." };
+    return { ok: true, ...data };
+  } catch {
+    return { ok: false, error: "Network error. Could not load assessment status." };
+  }
+}
+
+async function dbStartInitialAttempt() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/assessments/initial/attempts`, {
+      method: "POST",
+      credentials: "include",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, error: data.message || "Unable to start assessment." };
+    return { ok: true, ...data };
+  } catch {
+    return { ok: false, error: "Network error. Could not start assessment." };
+  }
+}
+
+async function dbSaveAssessmentAnswer(attemptId, questionId, selectedOptionKey) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/assessment-attempts/${attemptId}/answers`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ questionId, selectedOptionKey }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, error: data.message || "Unable to save answer." };
+    return { ok: true, ...data };
+  } catch {
+    return { ok: false, error: "Network error. Could not save answer." };
+  }
+}
+
+async function dbSubmitAssessment(attemptId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/assessment-attempts/${attemptId}/submit`, {
+      method: "POST",
+      credentials: "include",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, error: data.message || "Unable to submit assessment." };
+    return { ok: true, result: data };
+  } catch {
+    return { ok: false, error: "Network error. Could not submit assessment." };
+  }
+}
+
 async function dbLogout() {
   try {
     await fetch(`${API_BASE_URL}/api/auth/logout`, {
@@ -790,7 +862,7 @@ function RegisterPage({ onSwitch }) {
         return;
       }
 
-      login(accountUser, profileResult.profile);
+      login(accountUser, profileResult.profile, "assessment");
     } catch {
       setErrors({ form: "Something went wrong. Please try again." });
     } finally {
@@ -1224,6 +1296,21 @@ function HomePage() {
 function DashboardPage() {
   const { user, go } = useApp();
   const [tipIndex] = useState(() => Math.floor(Math.random() * 4));
+  const [assessmentStatus, setAssessmentStatus] = useState({ loading: true, status: "pending" });
+
+  useEffect(() => {
+    let active = true;
+    if (!user) return () => { active = false; };
+    dbGetAssessmentStatus().then(result => {
+      if (!active) return;
+      if (result.ok) {
+        setAssessmentStatus({ loading: false, status: result.status, result: result.result, attempt: result.attempt });
+      } else {
+        setAssessmentStatus({ loading: false, status: "unknown", error: result.error });
+      }
+    });
+    return () => { active = false; };
+  }, [user]);
 
   if (!user) { go("login"); return null; }
 
@@ -1232,6 +1319,7 @@ function DashboardPage() {
 
   const quickActions = [
     { icon: "📚", label: "Browse Resources",  desc: "Guides on scams, privacy & more", page: "resources", color: "#E3F2FD", accent: "#1E88E5" },
+    { icon: "🧭", label: "Initial Assessment", desc: "Set your measured baseline", page: "assessment", color: "#FFF3E0", accent: "#FB8C00" },
     { icon: "👤", label: "Edit Profile",       desc: "Update your learner preferences", page: "profile",   color: "#E1F5EE", accent: "#1D9E75" },
     { icon: "ℹ️",  label: "About the Project", desc: "Meet the team behind Cyberly",  page: "about",     color: "#F3E5F5", accent: "#8E24AA" },
     { icon: "📊", label: "My Progress",        desc: "See your learning stats & topics", page: "progress",  color: "#FFF8E1", accent: "#F59E0B" },
@@ -1304,6 +1392,29 @@ function DashboardPage() {
             </button>
           </div>
         )}
+
+        <div className="card" style={{ marginBottom: "2rem", background: "#fff8e1", border: "1px solid #ffe082", display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
+          <div style={{ flex: 1, minWidth: 220 }}>
+            <div style={{ fontWeight: 700, color: "#e65100", marginBottom: "0.25rem" }}>
+              {assessmentStatus.status === "completed"
+                ? "Initial assessment completed"
+                : assessmentStatus.status === "in_progress"
+                  ? "Initial assessment in progress"
+                  : "Initial assessment pending"}
+            </div>
+            <div style={{ fontSize: "0.86rem", color: "#5f4a1d", lineHeight: 1.6 }}>
+              {assessmentStatus.loading && "Checking assessment status..."}
+              {!assessmentStatus.loading && assessmentStatus.status === "completed" && (
+                <>Measured level: <strong>{assessmentStatus.result?.attempt?.measuredLevel}</strong> · Score: <strong>{assessmentStatus.result?.attempt?.totalScore}/{assessmentStatus.result?.attempt?.maximumScore}</strong></>
+              )}
+              {!assessmentStatus.loading && assessmentStatus.status === "in_progress" && "Resume your saved answers and continue when ready."}
+              {!assessmentStatus.loading && assessmentStatus.status !== "completed" && assessmentStatus.status !== "in_progress" && "Do it now or later. Adaptive recommendations are not active until this baseline exists."}
+            </div>
+          </div>
+          <button onClick={() => go("assessment")} style={{ background: "#FB8C00", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>
+            {assessmentStatus.status === "completed" ? "View results" : assessmentStatus.status === "in_progress" ? "Resume" : "Start / do later"}
+          </button>
+        </div>
 
         {/* Daily tip */}
         <div style={{
@@ -1953,6 +2064,266 @@ function AboutPage() {
   );
 }
 
+// ─── Page: Initial Assessment ────────────────────────────────────
+function AssessmentPage() {
+  const { user, go } = useApp();
+  const [assessment, setAssessment] = useState(null);
+  const [questions, setQuestions] = useState([]);
+  const [attempt, setAttempt] = useState(null);
+  const [answers, setAnswers] = useState({});
+  const [result, setResult] = useState(null);
+  const [current, setCurrent] = useState(0);
+  const [loading, setLoading] = useState(true);
+  const [saving, setSaving] = useState(false);
+  const [submitting, setSubmitting] = useState(false);
+  const [error, setError] = useState("");
+
+  useEffect(() => {
+    let active = true;
+    if (!user) return () => { active = false; };
+    async function load() {
+      setLoading(true);
+      setError("");
+      const [assessmentResult, statusResult] = await Promise.all([
+        dbGetInitialAssessment(),
+        dbGetAssessmentStatus(),
+      ]);
+      if (!active) return;
+      if (!assessmentResult.ok) {
+        setError(assessmentResult.error);
+        setLoading(false);
+        return;
+      }
+      setAssessment(assessmentResult.assessment);
+      setQuestions(assessmentResult.questions);
+      if (statusResult.ok && statusResult.status === "completed") {
+        setResult(statusResult.result);
+        setAttempt(statusResult.result?.attempt || null);
+      } else if (statusResult.ok && statusResult.status === "in_progress") {
+        setAttempt(statusResult.attempt);
+        setAnswers(Object.fromEntries((statusResult.attempt?.answers || []).map(answer => [answer.questionId, answer.selectedOptionKey])));
+      }
+      setLoading(false);
+    }
+    load();
+    return () => { active = false; };
+  }, [user]);
+
+  if (!user) { go("login"); return null; }
+
+  async function start() {
+    setLoading(true);
+    setError("");
+    const response = await dbStartInitialAttempt();
+    setLoading(false);
+    if (!response.ok) {
+      setError(response.error);
+      return;
+    }
+    if (response.completed) {
+      setResult(response);
+      setAttempt(response.attempt);
+      return;
+    }
+    setAttempt(response.attempt);
+    setAnswers(Object.fromEntries((response.attempt?.answers || []).map(answer => [answer.questionId, answer.selectedOptionKey])));
+  }
+
+  async function selectAnswer(questionId, optionKey) {
+    if (!attempt || attempt.status !== "in_progress") return;
+    setSaving(true);
+    setError("");
+    setAnswers(currentAnswers => ({ ...currentAnswers, [questionId]: optionKey }));
+    const response = await dbSaveAssessmentAnswer(attempt.id, questionId, optionKey);
+    setSaving(false);
+    if (!response.ok) {
+      setError(response.error);
+      setAnswers(currentAnswers => {
+        const next = { ...currentAnswers };
+        delete next[questionId];
+        return next;
+      });
+    } else {
+      setAttempt(response.attempt);
+    }
+  }
+
+  async function submit() {
+    if (!attempt || submitting) return;
+    if (Object.keys(answers).length !== questions.length) {
+      setError("Please answer all questions before submitting.");
+      return;
+    }
+    const confirmed = window.confirm("Submit your initial assessment? This baseline result will be preserved.");
+    if (!confirmed) return;
+    setSubmitting(true);
+    setError("");
+    const response = await dbSubmitAssessment(attempt.id);
+    setSubmitting(false);
+    if (!response.ok) {
+      setError(response.error);
+      return;
+    }
+    setResult(response.result);
+    setAttempt(response.result.attempt);
+  }
+
+  function renderIntro() {
+    return (
+      <div className="section" style={{ maxWidth: 850 }}>
+        <div className="card" style={{ background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)" }}>
+          <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🧭</div>
+          <h1 className="section-title">{assessment?.title || "Initial Cyber Wellness Assessment"}</h1>
+          <p className="section-sub" style={{ marginBottom: "1rem" }}>
+            A 12-question baseline check that helps future Cyberly lessons understand your measured cyber wellness level.
+          </p>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.75rem", marginBottom: "1.5rem" }}>
+            {[
+              ["12", "single-choice questions"],
+              ["5-10", "minutes"],
+              ["0", "negative marks"],
+              ["4", "topic areas"],
+            ].map(([value, label]) => (
+              <div key={label} style={{ background: "#fff", borderRadius: 10, padding: "0.9rem", textAlign: "center" }}>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", color: "var(--teal)", fontWeight: 700, fontSize: "1.2rem" }}>{value}</div>
+                <div style={{ fontSize: "0.78rem", color: "#666" }}>{label}</div>
+              </div>
+            ))}
+          </div>
+          <p style={{ fontSize: "0.86rem", color: "#42524d", lineHeight: 1.7, marginBottom: "1rem" }}>
+            Your self-reported familiarity stays separate from this measured result. No AI is used for questions, scoring, or feedback.
+          </p>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
+            <button className="btn-primary" style={{ flex: "0 0 auto", minWidth: 190 }} onClick={start} disabled={loading}>
+              {attempt ? "Resume assessment" : "Start assessment"}
+            </button>
+            <button className="btn-ghost" onClick={() => go("dashboard")}>Do later</button>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  function renderAttempt() {
+    const question = questions[current];
+    const selected = answers[question?.id];
+    const answeredCount = Object.keys(answers).length;
+    const progress = Math.round(((current + 1) / questions.length) * 100);
+
+    return (
+      <div className="section" style={{ maxWidth: 860 }}>
+        <button className="btn-ghost" style={{ marginBottom: "1rem" }} onClick={() => go("dashboard")}>Dashboard</button>
+        <div className="card">
+          <div className="auth-progress" style={{ marginBottom: "1.25rem" }}>
+            <div className="auth-progress-track">
+              <div className="auth-progress-fill" style={{ width: `${progress}%` }} />
+            </div>
+            <div className="auth-progress-label">
+              <span>Question {current + 1} of {questions.length}</span>
+              <span>{answeredCount}/{questions.length} answered {saving ? "· saving..." : ""}</span>
+            </div>
+          </div>
+          <div className="res-tag">{question?.topicLabel}</div>
+          <h2 className="section-title" style={{ fontSize: "1.25rem" }}>{question?.prompt}</h2>
+          <div className="opt-grid" style={{ marginTop: "1rem" }}>
+            {question?.options.map(option => (
+              <button
+                key={option.key}
+                className={`opt-btn full-width ${selected === option.key ? "selected" : ""}`}
+                onClick={() => selectAnswer(question.id, option.key)}
+                aria-pressed={selected === option.key}
+              >
+                <strong>{option.key}.</strong> {option.text}
+              </button>
+            ))}
+          </div>
+          <div className="auth-nav">
+            <button className="btn-ghost" onClick={() => setCurrent(index => Math.max(0, index - 1))} disabled={current === 0}>Previous</button>
+            {current < questions.length - 1 ? (
+              <button className="btn-primary" onClick={() => setCurrent(index => Math.min(questions.length - 1, index + 1))}>Next</button>
+            ) : (
+              <button className="btn-primary" onClick={submit} disabled={submitting || answeredCount !== questions.length}>
+                {submitting ? "Submitting..." : "Submit assessment"}
+              </button>
+            )}
+          </div>
+          {answeredCount !== questions.length && current === questions.length - 1 && (
+            <div style={{ fontSize: "0.8rem", color: "#777", marginTop: "0.75rem" }}>Answer all questions before final submission.</div>
+          )}
+        </div>
+      </div>
+    );
+  }
+
+  function renderResult() {
+    const attemptResult = result?.attempt;
+    const strengths = (result?.topicScores || []).filter(topic => topic.classification === "strength");
+    const improvements = (result?.topicScores || []).filter(topic => topic.classification === "improvement");
+    return (
+      <div className="section" style={{ maxWidth: 980 }}>
+        <div className="card" style={{ marginBottom: "1.5rem", background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)" }}>
+          <div style={{ fontSize: "0.78rem", color: "var(--teal)", fontWeight: 700, textTransform: "uppercase" }}>Initial result</div>
+          <h1 className="section-title" style={{ marginTop: "0.25rem" }}>{attemptResult?.measuredLevel} · {attemptResult?.percentage}%</h1>
+          <p className="section-sub" style={{ marginBottom: "1rem" }}>
+            Score {attemptResult?.totalScore}/{attemptResult?.maximumScore}. This measured level is based only on your answers.
+          </p>
+          <button className="btn-primary" style={{ flex: "0 0 auto" }} onClick={() => go("dashboard")}>Back to dashboard</button>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+          {(result?.topicScores || []).map(topic => (
+            <div key={topic.topicCode} className="card" style={{ padding: "1.1rem" }}>
+              <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.35rem" }}>{topic.topicLabel}</div>
+              <div style={{ fontSize: "1.2rem", fontWeight: 700 }}>{topic.correctCount}/{topic.totalCount} · {topic.percentage}%</div>
+              <div style={{ fontSize: "0.78rem", color: "#777", marginTop: "0.3rem" }}>{topic.classification === "strength" ? "Relative strength" : "Area to improve"}</div>
+            </div>
+          ))}
+        </div>
+
+        <div className="card" style={{ marginBottom: "1.5rem" }}>
+          <div style={{ fontWeight: 700, marginBottom: "0.5rem" }}>Strengths</div>
+          <div style={{ fontSize: "0.86rem", color: "#555", lineHeight: 1.7 }}>
+            {strengths.length ? strengths.map(topic => topic.topicLabel).join(", ") : "No topic crossed the strength threshold yet. That is okay; this is a starting baseline."}
+          </div>
+          <div style={{ fontWeight: 700, margin: "1rem 0 0.5rem" }}>Areas to improve</div>
+          <div style={{ fontSize: "0.86rem", color: "#555", lineHeight: 1.7 }}>
+            {improvements.length ? improvements.map(topic => topic.topicLabel).join(", ") : "All topics met the current strength threshold."}
+          </div>
+        </div>
+
+        <p className="section-title" style={{ fontSize: "1.1rem" }}>Question review</p>
+        <div style={{ display: "grid", gap: "0.9rem" }}>
+          {(result?.review || []).map(item => (
+            <div key={item.questionId} className="card" style={{ padding: "1rem" }}>
+              <div className="res-tag">{item.topicLabel}</div>
+              <div style={{ fontWeight: 700, marginBottom: "0.55rem" }}>{item.prompt}</div>
+              <div style={{ fontSize: "0.84rem", color: item.isCorrect ? "var(--teal)" : "var(--coral)", fontWeight: 700, marginBottom: "0.35rem" }}>
+                Your answer: {item.selectedOptionKey} · Correct answer: {item.correctOptionKey}
+              </div>
+              <div style={{ fontSize: "0.84rem", color: "#555", lineHeight: 1.6 }}>{item.explanation}</div>
+            </div>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{ background: "linear-gradient(135deg, #1a2e1a 0%, #2d4a2d 100%)", padding: "2.5rem 1.5rem", color: "#fff" }}>
+        <div style={{ maxWidth: 980, margin: "0 auto" }}>
+          <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.55)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>Baseline Assessment</div>
+          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.5rem, 3vw, 2.2rem)", marginTop: "0.35rem" }}>Initial Cyber Wellness Assessment</h1>
+        </div>
+      </div>
+      {error && <div className="section" style={{ paddingBottom: 0 }}><div className="field-error">{error}</div></div>}
+      {loading ? (
+        <div className="section"><p className="section-title">Loading assessment...</p></div>
+      ) : result ? renderResult() : attempt ? renderAttempt() : renderIntro()}
+    </div>
+  );
+}
+
 // ─── Page: Profile ───────────────────────────────────────────────
 function ProfilePage() {
   const { user, go, updateProfile } = useApp();
@@ -2356,6 +2727,7 @@ function ChatWidget() {
 const NAV_ITEMS = [
   { id: "home",      label: "Home"      },
   { id: "dashboard", label: "Dashboard" },
+  { id: "assessment", label: "Assessment" },
   { id: "resources", label: "Resources" },
   { id: "about",     label: "About"     },
 ];
@@ -2416,10 +2788,10 @@ export default function App() {
     return () => { active = false; };
   }, []);
 
-  function login(userData, profileData) {
+  function login(userData, profileData, preferredPage) {
     const nextUser = normalizeSessionUser(userData, profileData);
     setUser(nextUser);
-    setPage(nextUser.onboardingCompleted ? "dashboard" : "profile");
+    setPage(preferredPage || (nextUser.onboardingCompleted ? "dashboard" : "profile"));
   }
   function updateProfile(profileData) {
     setUser(current => current ? normalizeSessionUser(current, profileData) : current);
@@ -2435,6 +2807,7 @@ export default function App() {
   const PAGES = {
     home:      <HomePage />,
     dashboard: <DashboardPage />,
+    assessment: <AssessmentPage />,
     resources: <ResourcesPage />,
     about:     <AboutPage />,
     progress:  <ProgressPage />,

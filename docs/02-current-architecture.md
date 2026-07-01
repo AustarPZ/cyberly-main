@@ -8,9 +8,11 @@
 - `server/scripts/migrate.js`: migration runner and status checker.
 - `server/scripts/test-auth.js`: Phase 1B.1 authentication verification script.
 - `server/scripts/test-profile.js`: Phase 1B.2 learner-profile persistence and authorization verification script.
+- `server/scripts/test-assessment.js`: Phase 1C.1 initial assessment verification script.
 - `server/src/database/`: database pool, migration helpers, and age-group utility.
 - `server/src/auth/`: authentication validation, route guards, and MySQL session-store adapter.
 - `server/src/profile/`: learner-profile routes, service, repository, validation, and response mapping.
+- `server/src/assessment/`: assessment routes, service, repository, validation, scoring, and response mapping.
 - `src/` and root `public/`: legacy React frontend retained for reference only.
 - MySQL database: `cyberwell`.
 
@@ -46,6 +48,7 @@ The backend currently attempts to connect to:
 - Migration tooling now exists for backend database changes.
 - Admin portal UI and admin-user provisioning are not implemented.
 - Resource, progress, and learning content are still mostly static frontend data.
+- Adaptive recommendations are not active yet; the initial assessment only records a baseline.
 
 ## Verified Connection Status
 
@@ -67,6 +70,13 @@ Frontend authentication calls:
 - `POST /api/auth/logout`
 - `GET /api/profile`
 - `PUT /api/profile`
+- `GET /api/assessments/initial`
+- `POST /api/assessments/initial/attempts`
+- `GET /api/assessment-attempts/:attemptId`
+- `PUT /api/assessment-attempts/:attemptId/answers`
+- `POST /api/assessment-attempts/:attemptId/submit`
+- `GET /api/assessments/initial/result`
+- `GET /api/assessments/initial/status`
 
 Backend authentication uses MySQL-backed `express-session` cookies. Session data is intentionally minimal: `userId` and `role`. Cookies are HTTP-only, `sameSite=lax`, locally `secure=false`, and expected to become `secure=true` in production.
 
@@ -89,3 +99,7 @@ The `users` table is aligned for email/password authentication. Legacy `username
 The `sessions` table stores server-side session state and expiry timestamps.
 
 The `learner_profiles` table stores one profile per user with a cascading foreign key to `users.id`.
+
+The assessment tables store versioned assessment definitions, fixed published questions, attempts, answers, topic scores, and deterministic measured ability levels. Correct answers and explanations are hidden until submission.
+
+Commit `23cd62f` contains both Phase 1B.1 authentication completion and Phase 1B.2 learner-profile persistence.

@@ -89,6 +89,27 @@ Phase 1B.2 adds `learner_profiles` with one row per user:
 
 The table does not store assessment results, recommendation state, chat history, or inferred learning ability.
 
+## Initial Assessment Tables
+
+Phase 1C.1 adds:
+
+- `assessment_definitions`: versioned assessment metadata. Version 1 of `initial-cyber-wellness-v1` is published with 12 questions.
+- `assessment_questions`: fixed question bank with topic, options JSON, correct option, explanation, difficulty, display order, and status.
+- `assessment_attempts`: user-owned attempt records with status, score, percentage, measured level, and timestamps.
+- `assessment_answers`: one selected option per question per attempt. Correctness and awarded score are calculated by the backend.
+- `assessment_topic_scores`: topic-level correct count, total count, and percentage per completed attempt.
+
+Assessment attempt rows cascade when a user is deleted. Answers and topic scores cascade when an attempt is deleted. Assessment definitions and questions use restrictive deletion rules so completed baseline records are not silently broken.
+
+Measured levels:
+
+- `0-39`: beginner
+- `40-69`: developing
+- `70-84`: intermediate
+- `85-100`: advanced
+
+Measured level is not stored in `users` or `learner_profiles`.
+
 ## Age-Group Rules
 
 - `1-12`: `child`

@@ -16,6 +16,9 @@ const { requireAuth, requireRole } = require('./src/auth/middleware');
 const { createProfileRepository } = require('./src/profile/profile.repository');
 const { createProfileService } = require('./src/profile/profile.service');
 const { createProfileRouter } = require('./src/profile/profile.routes');
+const { createAssessmentRepository } = require('./src/assessment/assessment.repository');
+const { createAssessmentService } = require('./src/assessment/assessment.service');
+const { createAssessmentRouter } = require('./src/assessment/assessment.routes');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -26,6 +29,8 @@ const isProduction = process.env.NODE_ENV === 'production';
 const pool = createPool();
 const profileRepository = createProfileRepository(pool);
 const profileService = createProfileService(profileRepository);
+const assessmentRepository = createAssessmentRepository(pool);
+const assessmentService = createAssessmentService(assessmentRepository);
 
 app.set('trust proxy', 1);
 app.use(cors({ origin: clientOrigin, credentials: true }));
@@ -44,6 +49,7 @@ app.use(session({
     resave: false,
 }));
 app.use('/api/profile', createProfileRouter(profileService));
+app.use(createAssessmentRouter(assessmentService));
 
 const rateLimitBuckets = new Map();
 
