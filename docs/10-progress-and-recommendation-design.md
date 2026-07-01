@@ -2,7 +2,7 @@
 
 ## Purpose
 
-Phase 1C.2 adds measured progress records and transparent rule-based recommendations. It does not add AI, scenarios, chatbot persistence, admin UI, or cost monitoring.
+Phase 1C.2 added measured progress records and transparent rule-based recommendations. Phase 1D.1 extends those records with completed scenario outcomes. This area still does not add AI, chatbot persistence, admin UI, or cost monitoring.
 
 ## Ability Signals
 
@@ -10,7 +10,7 @@ Authoritative ability signals:
 
 - completed initial assessment topic scores
 - future learning activity outcomes
-- future scenario outcomes
+- completed scenario outcomes
 - future admin/research adjustments
 
 Non-authoritative profile fields:
@@ -41,7 +41,7 @@ Mastery thresholds:
 
 Recommendation selection:
 
-- Select the lowest scoring assessment topic.
+- Select the lowest current mastery topic.
 - Break ties by fixed priority:
   1. `phishing_and_scams`
   2. `password_and_account_security`
@@ -72,9 +72,18 @@ All routes require authentication and only operate on the current session user.
 
 ## Frontend Behavior
 
-The dashboard and progress page show measured progress when available. The recommendation call-to-action opens the matching static resource category where practical.
+The dashboard and progress page show measured progress when available. The recommendation call-to-action prefers a matching scenario where available, then falls back to matching static resource content.
 
 Viewing resources does not currently update mastery. Learning-activity progress updates are deferred until a real learning activity model exists.
+
+Completed scenarios apply conservative prototype mastery deltas exactly once:
+
+- `0-39`: +0
+- `40-69`: +2
+- `70-84`: +4
+- `85-100`: +6
+
+Mastery remains capped at 100. These deltas require later empirical validation.
 
 ## Verification
 

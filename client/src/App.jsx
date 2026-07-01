@@ -567,6 +567,137 @@ async function dbMarkRecommendationCompleted(id) {
   }
 }
 
+async function dbGetScenarios(filters = {}) {
+  try {
+    const params = new URLSearchParams();
+    if (filters.topicCode) params.set("topicCode", filters.topicCode);
+    if (filters.difficulty) params.set("difficulty", filters.difficulty);
+    const response = await fetch(`${API_BASE_URL}/api/scenarios${params.toString() ? `?${params}` : ""}`, {
+      method: "GET",
+      credentials: "include",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, error: data.message || "Unable to load scenarios." };
+    return { ok: true, ...data };
+  } catch {
+    return { ok: false, error: "Network error. Could not load scenarios." };
+  }
+}
+
+async function dbGetScenario(slug) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/scenarios/${slug}`, {
+      method: "GET",
+      credentials: "include",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, error: data.message || "Unable to load scenario." };
+    return { ok: true, ...data };
+  } catch {
+    return { ok: false, error: "Network error. Could not load scenario." };
+  }
+}
+
+async function dbStartScenario(slug) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/scenarios/${slug}/attempts`, {
+      method: "POST",
+      credentials: "include",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, error: data.message || "Unable to start scenario." };
+    return { ok: true, ...data };
+  } catch {
+    return { ok: false, error: "Network error. Could not start scenario." };
+  }
+}
+
+async function dbGetScenarioAttempt(attemptId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/scenario-attempts/${attemptId}`, {
+      method: "GET",
+      credentials: "include",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, error: data.message || "Unable to restore scenario." };
+    return { ok: true, ...data };
+  } catch {
+    return { ok: false, error: "Network error. Could not restore scenario." };
+  }
+}
+
+async function dbSaveScenarioDecision(attemptId, stepId, selectedOptionKey) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/scenario-attempts/${attemptId}/decisions`, {
+      method: "PUT",
+      credentials: "include",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ stepId, selectedOptionKey }),
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, error: data.message || "Unable to save decision." };
+    return { ok: true, ...data };
+  } catch {
+    return { ok: false, error: "Network error. Could not save decision." };
+  }
+}
+
+async function dbCompleteScenario(attemptId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/scenario-attempts/${attemptId}/complete`, {
+      method: "POST",
+      credentials: "include",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, error: data.message || "Unable to complete scenario." };
+    return { ok: true, result: data };
+  } catch {
+    return { ok: false, error: "Network error. Could not complete scenario." };
+  }
+}
+
+async function dbGetScenarioResult(attemptId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/scenario-attempts/${attemptId}/result`, {
+      method: "GET",
+      credentials: "include",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, error: data.message || "Unable to load scenario result." };
+    return { ok: true, result: data };
+  } catch {
+    return { ok: false, error: "Network error. Could not load scenario result." };
+  }
+}
+
+async function dbGetRecommendedScenarios() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/scenarios/recommended`, {
+      method: "GET",
+      credentials: "include",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, error: data.message || "Unable to load recommended scenarios." };
+    return { ok: true, ...data };
+  } catch {
+    return { ok: false, error: "Network error. Could not load recommended scenarios." };
+  }
+}
+
+async function dbGetScenarioDashboard() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/scenarios/dashboard`, {
+      method: "GET",
+      credentials: "include",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, error: data.message || "Unable to load scenario activity." };
+    return { ok: true, ...data };
+  } catch {
+    return { ok: false, error: "Network error. Could not load scenario activity." };
+  }
+}
+
 async function dbLogout() {
   try {
     await fetch(`${API_BASE_URL}/api/auth/logout`, {
@@ -604,8 +735,19 @@ const LEVEL_LABELS = {
   advanced: "Advanced",
 };
 
+const SCENARIO_RESULT_LABELS = {
+  needs_review: "Needs review",
+  developing: "Developing",
+  proficient: "Proficient",
+  strong: "Strong",
+};
+
 function levelLabel(level) {
   return LEVEL_LABELS[level] || "Not measured";
+}
+
+function scenarioResultLabel(level) {
+  return SCENARIO_RESULT_LABELS[level] || "Not completed";
 }
 
 function topicLabel(topicCode, fallback) {
@@ -1377,6 +1519,7 @@ function DashboardPage() {
   const [assessmentStatus, setAssessmentStatus] = useState({ loading: true, status: "pending" });
   const [progressState, setProgressState] = useState({ loading: true, progress: null });
   const [recommendationState, setRecommendationState] = useState({ loading: true, recommendation: null });
+  const [scenarioState, setScenarioState] = useState({ loading: true, recommended: [], dashboard: null });
 
   useEffect(() => {
     let active = true;
@@ -1388,6 +1531,21 @@ function DashboardPage() {
       } else {
         setAssessmentStatus({ loading: false, status: "unknown", error: result.error });
       }
+    });
+    return () => { active = false; };
+  }, [user]);
+
+  useEffect(() => {
+    let active = true;
+    if (!user) return () => { active = false; };
+    Promise.all([dbGetRecommendedScenarios(), dbGetScenarioDashboard()]).then(([recommendedResult, dashboardResult]) => {
+      if (!active) return;
+      setScenarioState({
+        loading: false,
+        recommended: recommendedResult.ok ? recommendedResult.scenarios : [],
+        dashboard: dashboardResult.ok ? dashboardResult : null,
+        error: recommendedResult.ok && dashboardResult.ok ? null : (recommendedResult.error || dashboardResult.error),
+      });
     });
     return () => { active = false; };
   }, [user]);
@@ -1414,12 +1572,16 @@ function DashboardPage() {
   const summary = progressState.progress?.summary;
   const topicsMeasured = progressState.progress?.topics || [];
   const recommendation = recommendationState.recommendation;
+  const recommendedScenario = scenarioState.recommended?.[0];
+  const scenarioDashboard = scenarioState.dashboard;
 
   async function followRecommendation() {
     if (recommendation?.id) {
       await dbMarkRecommendationViewed(recommendation.id);
     }
-    if (recommendation?.topicCode) {
+    if (recommendedScenario) {
+      go("scenarios");
+    } else if (recommendation?.topicCode) {
       openRecommendedResource(recommendation.topicCode);
     } else {
       go("assessment");
@@ -1429,6 +1591,7 @@ function DashboardPage() {
   const quickActions = [
     { icon: "📚", label: "Browse Resources",  desc: "Guides on scams, privacy & more", page: "resources", color: "#E3F2FD", accent: "#1E88E5" },
     { icon: "🧭", label: "Initial Assessment", desc: "Set your measured baseline", page: "assessment", color: "#FFF3E0", accent: "#FB8C00" },
+    { icon: "🎮", label: "Practice Scenarios", desc: "Make safe choices in realistic moments", page: "scenarios", color: "#E8F5E9", accent: "#2E7D32" },
     { icon: "👤", label: "Edit Profile",       desc: "Update your learner preferences", page: "profile",   color: "#E1F5EE", accent: "#1D9E75" },
     { icon: "ℹ️",  label: "About the Project", desc: "Meet the team behind Cyberly",  page: "about",     color: "#F3E5F5", accent: "#8E24AA" },
     { icon: "📊", label: "My Progress",        desc: "See your learning stats & topics", page: "progress",  color: "#FFF8E1", accent: "#F59E0B" },
@@ -1563,11 +1726,60 @@ function DashboardPage() {
                   {recommendation.reasonText}
                 </div>
                 <button onClick={followRecommendation} style={{ background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1rem", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
-                  {recommendation.topicCode ? "Open recommended guides" : "Start assessment"}
+                  {recommendedScenario ? "Practice with scenario" : recommendation.topicCode ? "Read resource" : "Start assessment"}
                 </button>
               </>
             ) : (
               <div style={{ fontSize: "0.86rem", color: "#666" }}>No active recommendation yet.</div>
+            )}
+          </div>
+        </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
+          <div className="card" style={{ border: "1px solid rgba(0,0,0,0.07)" }}>
+            <div style={{ fontWeight: 700, color: "#2E7D32", marginBottom: "0.35rem" }}>Scenario practice</div>
+            {scenarioState.loading ? (
+              <div style={{ fontSize: "0.86rem", color: "#666" }}>Loading scenario activity...</div>
+            ) : (
+              <>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0.75rem", marginBottom: "0.85rem" }}>
+                  <div>
+                    <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.45rem", fontWeight: 700, color: "#1a1a18" }}>{scenarioDashboard?.completedCount || 0}</div>
+                    <div style={{ fontSize: "0.74rem", color: "#777" }}>Completed</div>
+                  </div>
+                  <div>
+                    <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.45rem", fontWeight: 700, color: "#1a1a18" }}>{scenarioDashboard?.inProgress ? "1" : "0"}</div>
+                    <div style={{ fontSize: "0.74rem", color: "#777" }}>In progress</div>
+                  </div>
+                </div>
+                {scenarioDashboard?.latestCompleted && (
+                  <div style={{ fontSize: "0.82rem", color: "#555", lineHeight: 1.55, marginBottom: "0.8rem" }}>
+                    Latest: <strong>{scenarioDashboard.latestCompleted.title}</strong> · {scenarioResultLabel(scenarioDashboard.latestCompleted.resultLevel)}
+                  </div>
+                )}
+                <button onClick={() => go("scenarios")} style={{ background: "#2E7D32", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1rem", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
+                  {scenarioDashboard?.inProgress ? "Continue scenario" : "Open scenario library"}
+                </button>
+              </>
+            )}
+          </div>
+
+          <div className="card" style={{ background: "#E8F5E9", border: "1px solid rgba(46,125,50,0.18)" }}>
+            <div style={{ fontWeight: 700, color: "#2E7D32", marginBottom: "0.35rem" }}>Recommended scenario</div>
+            {scenarioState.loading ? (
+              <div style={{ fontSize: "0.86rem", color: "#666" }}>Finding a matching scenario...</div>
+            ) : recommendedScenario ? (
+              <>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.02rem", marginBottom: "0.35rem" }}>{recommendedScenario.title}</div>
+                <div style={{ fontSize: "0.82rem", color: "#445", lineHeight: 1.55, marginBottom: "0.8rem" }}>
+                  {topicLabel(recommendedScenario.topicCode)} · {levelLabel(recommendedScenario.difficulty)} · {recommendedScenario.estimatedMinutes} min
+                </div>
+                <button onClick={() => go("scenarios")} style={{ background: "#2E7D32", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1rem", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
+                  Practice with scenario
+                </button>
+              </>
+            ) : (
+              <div style={{ fontSize: "0.86rem", color: "#666", lineHeight: 1.6 }}>Complete the assessment to unlock scenario recommendations.</div>
             )}
           </div>
         </div>
@@ -2526,6 +2738,292 @@ function AssessmentPage() {
   );
 }
 
+// ─── Page: Scenarios ──────────────────────────────────────────────
+function ScenariosPage() {
+  const { user, go } = useApp();
+  const [filters, setFilters] = useState({ topicCode: "", difficulty: "" });
+  const [library, setLibrary] = useState({ loading: true, scenarios: [], recommended: [] });
+  const [view, setView] = useState({ mode: "library" });
+  const [selectedChoice, setSelectedChoice] = useState("");
+  const [decisionFeedback, setDecisionFeedback] = useState(null);
+  const [error, setError] = useState(null);
+  const [busy, setBusy] = useState(false);
+
+  useEffect(() => {
+    let active = true;
+    if (!user) return () => { active = false; };
+    Promise.all([
+      dbGetScenarios({ topicCode: filters.topicCode, difficulty: filters.difficulty }),
+      dbGetRecommendedScenarios(),
+    ]).then(([scenarioResult, recommendedResult]) => {
+      if (!active) return;
+      setLibrary({
+        loading: false,
+        scenarios: scenarioResult.ok ? scenarioResult.scenarios : [],
+        recommended: recommendedResult.ok ? recommendedResult.scenarios : [],
+        error: scenarioResult.ok ? null : scenarioResult.error,
+      });
+    });
+    return () => { active = false; };
+  }, [user, filters.topicCode, filters.difficulty]);
+
+  if (!user) { go("login"); return null; }
+
+  const recommendedIds = new Set((library.recommended || []).map(item => item.id));
+
+  async function openIntro(slug) {
+    setBusy(true);
+    setError(null);
+    const result = await dbGetScenario(slug);
+    setBusy(false);
+    if (!result.ok) return setError(result.error);
+    setView({ mode: "intro", scenario: result.scenario, firstStep: result.firstStep });
+  }
+
+  async function startScenario(slug) {
+    setBusy(true);
+    setError(null);
+    const result = await dbStartScenario(slug);
+    setBusy(false);
+    if (!result.ok) return setError(result.error);
+    setSelectedChoice("");
+    setDecisionFeedback(null);
+    setView({ mode: "attempt", ...result });
+  }
+
+  async function openAttempt(attemptId) {
+    setBusy(true);
+    setError(null);
+    const result = await dbGetScenarioAttempt(attemptId);
+    setBusy(false);
+    if (!result.ok) return setError(result.error);
+    setSelectedChoice("");
+    setDecisionFeedback(null);
+    setView({ mode: "attempt", ...result });
+  }
+
+  async function submitDecision() {
+    if (!view.currentStep || !selectedChoice || busy) return;
+    setBusy(true);
+    setError(null);
+    const result = await dbSaveScenarioDecision(view.attempt.id, view.currentStep.id, selectedChoice);
+    setBusy(false);
+    if (!result.ok) return setError(result.error);
+    setDecisionFeedback(result.decision);
+    setView(current => ({
+      ...current,
+      attempt: { ...current.attempt, ...result.attempt },
+      nextStep: result.nextStep,
+      readyToComplete: result.readyToComplete,
+    }));
+  }
+
+  async function continueAfterFeedback() {
+    if (view.nextStep) {
+      setView(current => ({ ...current, currentStep: current.nextStep, nextStep: null }));
+      setDecisionFeedback(null);
+      setSelectedChoice("");
+      return;
+    }
+    await completeScenario();
+  }
+
+  async function completeScenario() {
+    setBusy(true);
+    setError(null);
+    const result = await dbCompleteScenario(view.attempt.id);
+    setBusy(false);
+    if (!result.ok) return setError(result.error);
+    setView({ mode: "result", ...result.result });
+  }
+
+  async function openResult(attemptId) {
+    setBusy(true);
+    setError(null);
+    const result = await dbGetScenarioResult(attemptId);
+    setBusy(false);
+    if (!result.ok) return setError(result.error);
+    setView({ mode: "result", ...result.result });
+  }
+
+  const filterBar = (
+    <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
+      <select value={filters.topicCode} onChange={event => setFilters(current => ({ ...current, topicCode: event.target.value }))} style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 10, padding: "0.55rem 0.75rem" }}>
+        <option value="">All topics</option>
+        {Object.entries(PROGRESS_TOPIC_META).map(([value, meta]) => <option key={value} value={value}>{meta.label}</option>)}
+      </select>
+      <select value={filters.difficulty} onChange={event => setFilters(current => ({ ...current, difficulty: event.target.value }))} style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 10, padding: "0.55rem 0.75rem" }}>
+        <option value="">All difficulty</option>
+        {["beginner", "developing", "intermediate", "advanced"].map(value => <option key={value} value={value}>{levelLabel(value)}</option>)}
+      </select>
+    </div>
+  );
+
+  function renderLibrary() {
+    return (
+      <>
+        {filterBar}
+        {library.loading ? (
+          <div className="card">Loading scenarios...</div>
+        ) : (
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "1rem" }}>
+            {library.scenarios.map(scenario => {
+              const latest = scenario.latestAttempt;
+              const isRecommended = recommendedIds.has(scenario.id);
+              return (
+                <div key={scenario.id} className="card" style={{ border: isRecommended ? "1px solid rgba(46,125,50,0.35)" : "1px solid rgba(0,0,0,0.07)" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.65rem" }}>
+                    <span style={{ color: "#2E7D32", fontWeight: 700, fontSize: "0.78rem" }}>{topicLabel(scenario.topicCode)}</span>
+                    {isRecommended && <span style={{ background: "#E8F5E9", color: "#2E7D32", borderRadius: 99, padding: "0.18rem 0.55rem", fontSize: "0.7rem", fontWeight: 700 }}>Recommended</span>}
+                  </div>
+                  <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.05rem", marginBottom: "0.4rem" }}>{scenario.title}</div>
+                  <div style={{ color: "#666", fontSize: "0.84rem", lineHeight: 1.55, marginBottom: "0.8rem" }}>{scenario.summary}</div>
+                  <div style={{ fontSize: "0.78rem", color: "#777", marginBottom: "0.9rem" }}>{levelLabel(scenario.difficulty)} · {scenario.estimatedMinutes} min · {scenario.totalSteps} decisions</div>
+                  <div style={{ display: "flex", gap: "0.55rem", flexWrap: "wrap" }}>
+                    {latest?.status === "in_progress" ? (
+                      <button onClick={() => openAttempt(latest.id)} className="btn-primary" style={{ minWidth: 0, padding: "0.55rem 0.9rem" }}>Resume</button>
+                    ) : (
+                      <button onClick={() => openIntro(scenario.slug)} className="btn-primary" style={{ minWidth: 0, padding: "0.55rem 0.9rem" }}>Start</button>
+                    )}
+                    {latest?.status === "completed" && (
+                      <button onClick={() => openResult(latest.id)} className="btn-ghost">Result</button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        )}
+      </>
+    );
+  }
+
+  function renderIntro() {
+    const scenario = view.scenario;
+    return (
+      <div className="card" style={{ maxWidth: 760, margin: "0 auto" }}>
+        <button className="btn-ghost" onClick={() => setView({ mode: "library" })} style={{ marginBottom: "1rem" }}>Back</button>
+        <div style={{ color: "#2E7D32", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.35rem" }}>{topicLabel(scenario.topicCode)}</div>
+        <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", marginBottom: "0.5rem" }}>{scenario.title}</h2>
+        <p style={{ color: "#555", lineHeight: 1.65 }}>{scenario.summary}</p>
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", fontSize: "0.82rem", color: "#666", margin: "1rem 0" }}>
+          <span>{levelLabel(scenario.difficulty)}</span>
+          <span>{scenario.estimatedMinutes} minutes</span>
+          <span>{scenario.totalSteps} decisions</span>
+        </div>
+        <div style={{ background: "#fff8e1", border: "1px solid #ffe082", borderRadius: 12, padding: "0.9rem", fontSize: "0.84rem", color: "#5f4a1d", lineHeight: 1.6, marginBottom: "1rem" }}>
+          Choices are final once submitted. Feedback appears after each decision, and scoring is calculated by the backend.
+        </div>
+        <button className="btn-primary" onClick={() => startScenario(scenario.slug)} disabled={busy}>Start scenario</button>
+      </div>
+    );
+  }
+
+  function renderAttempt() {
+    const step = view.currentStep;
+    if (!step) {
+      return (
+        <div className="card" style={{ maxWidth: 760, margin: "0 auto" }}>
+          <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", marginBottom: "0.5rem" }}>Ready to complete</h2>
+          <p style={{ color: "#555", lineHeight: 1.6 }}>All decisions are submitted. Complete the scenario to calculate your result and apply progress.</p>
+          <button className="btn-primary" onClick={completeScenario} disabled={busy}>Complete scenario</button>
+        </div>
+      );
+    }
+    return (
+      <div className="card" style={{ maxWidth: 820, margin: "0 auto" }}>
+        <div style={{ color: "#2E7D32", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.35rem" }}>
+          Step {step.stepOrder} of {view.scenario.totalSteps}
+        </div>
+        <div style={{ background: "#edf3ef", borderRadius: 99, height: 8, overflow: "hidden", marginBottom: "1rem" }}>
+          <div style={{ width: `${((step.stepOrder - 1) / view.scenario.totalSteps) * 100}%`, background: "#2E7D32", height: "100%" }} />
+        </div>
+        <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", marginBottom: "0.65rem" }}>{view.scenario.title}</h2>
+        <p style={{ color: "#333", lineHeight: 1.7, marginBottom: "0.8rem" }}>{step.situationText}</p>
+        <div style={{ fontWeight: 700, marginBottom: "0.75rem" }}>{step.promptText}</div>
+        <div style={{ display: "grid", gap: "0.65rem", marginBottom: "1rem" }}>
+          {step.options.map(option => (
+            <button
+              key={option.key}
+              type="button"
+              disabled={Boolean(decisionFeedback)}
+              onClick={() => setSelectedChoice(option.key)}
+              style={{ textAlign: "left", background: selectedChoice === option.key ? "var(--teal-lt)" : "#fff", border: selectedChoice === option.key ? "1px solid var(--teal)" : "1px solid rgba(0,0,0,0.1)", borderRadius: 12, padding: "0.85rem 1rem", cursor: decisionFeedback ? "default" : "pointer", fontSize: "0.9rem", lineHeight: 1.5 }}
+            >
+              <strong>{option.key}.</strong> {option.text}
+            </button>
+          ))}
+        </div>
+        {!decisionFeedback ? (
+          <button className="btn-primary" disabled={!selectedChoice || busy} onClick={submitDecision}>Submit choice</button>
+        ) : (
+          <div style={{ background: "#E8F5E9", border: "1px solid rgba(46,125,50,0.22)", borderRadius: 12, padding: "1rem" }}>
+            <div style={{ fontWeight: 700, color: "#2E7D32", marginBottom: "0.35rem" }}>Feedback</div>
+            <div style={{ fontSize: "0.88rem", color: "#333", lineHeight: 1.65, marginBottom: "0.55rem" }}>{decisionFeedback.feedback}</div>
+            <div style={{ fontSize: "0.82rem", color: "#566", lineHeight: 1.6, marginBottom: "0.85rem" }}>{decisionFeedback.safetyExplanation}</div>
+            <button className="btn-primary" onClick={continueAfterFeedback} disabled={busy}>{view.nextStep ? "Continue" : "Complete scenario"}</button>
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  function renderResult() {
+    const result = view;
+    return (
+      <div className="card" style={{ maxWidth: 900, margin: "0 auto" }}>
+        <div style={{ color: "#2E7D32", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.35rem" }}>Scenario result</div>
+        <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", marginBottom: "0.5rem" }}>{result.scenario.title}</h2>
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "0.75rem", margin: "1rem 0" }}>
+          <div><strong>{result.attempt.totalScore}/{result.attempt.maximumScore}</strong><div style={{ color: "#777", fontSize: "0.76rem" }}>Score</div></div>
+          <div><strong>{result.attempt.percentage}%</strong><div style={{ color: "#777", fontSize: "0.76rem" }}>Percentage</div></div>
+          <div><strong>{scenarioResultLabel(result.attempt.resultLevel)}</strong><div style={{ color: "#777", fontSize: "0.76rem" }}>Result</div></div>
+          <div><strong>+{result.progressImpact?.masteryDelta || 0}</strong><div style={{ color: "#777", fontSize: "0.76rem" }}>Mastery delta</div></div>
+        </div>
+        <div style={{ display: "grid", gap: "0.85rem", margin: "1.25rem 0" }}>
+          {result.review.map(item => (
+            <div key={item.id} style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "1rem" }}>
+              <div style={{ fontWeight: 700, marginBottom: "0.35rem" }}>Step {item.stepOrder}: choice {item.selectedOptionKey}</div>
+              <div style={{ fontSize: "0.86rem", color: "#333", lineHeight: 1.6 }}>{item.feedback}</div>
+              <div style={{ fontSize: "0.8rem", color: "#666", lineHeight: 1.55, marginTop: "0.35rem" }}>{item.safetyExplanation}</div>
+            </div>
+          ))}
+        </div>
+        {result.recommendation && (
+          <div style={{ background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)", borderRadius: 12, padding: "1rem", marginBottom: "1rem" }}>
+            <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.25rem" }}>Updated recommendation</div>
+            <div style={{ fontSize: "0.86rem", color: "#455", lineHeight: 1.6 }}>{result.recommendation.reasonText}</div>
+          </div>
+        )}
+        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+          <button className="btn-primary" onClick={() => setView({ mode: "library" })}>Scenario library</button>
+          <button className="btn-ghost" onClick={() => go("dashboard")}>Dashboard</button>
+          <button className="btn-ghost" onClick={() => go("resources")}>Resources</button>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div>
+      <div style={{ background: "linear-gradient(135deg, #1a2e1a 0%, #2d4a2d 100%)", padding: "2.5rem 1.5rem", color: "#fff" }}>
+        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
+          <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.55)", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.4rem" }}>Scenario Practice</div>
+          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 600, marginBottom: "0.35rem" }}>Practice cyber choices</h1>
+          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "0.9rem", lineHeight: 1.6 }}>Short realistic situations with immediate feedback after each final choice.</p>
+        </div>
+      </div>
+      <div className="section">
+        <button className="btn-ghost" onClick={() => view.mode === "library" ? go("dashboard") : setView({ mode: "library" })} style={{ marginBottom: "1.5rem" }}>
+          ← Back
+        </button>
+        {error && <div className="field-error" style={{ marginBottom: "1rem" }}>{error}</div>}
+        {view.mode === "intro" ? renderIntro() : view.mode === "attempt" ? renderAttempt() : view.mode === "result" ? renderResult() : renderLibrary()}
+      </div>
+    </div>
+  );
+}
+
 // ─── Page: Profile ───────────────────────────────────────────────
 function ProfilePage() {
   const { user, go, updateProfile } = useApp();
@@ -2853,8 +3351,13 @@ function ProgressPage() {
             </div>
             <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
               <button onClick={() => recommendation.topicCode ? openRecommendedResource(recommendation.topicCode) : go("assessment")} style={{ background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>
-                {recommendation.topicCode ? "Open guides" : "Start assessment"}
+                {recommendation.topicCode ? "Read resource" : "Start assessment"}
               </button>
+              {recommendation.topicCode && (
+                <button onClick={() => go("scenarios")} style={{ background: "#2E7D32", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>
+                  Practice scenario
+                </button>
+              )}
               {recommendation.topicCode && recommendation.status !== "completed" && (
                 <button onClick={completeRecommendation} style={{ background: "#fff", color: "var(--teal)", border: "1px solid rgba(29,158,117,0.3)", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>
                   Mark complete
@@ -3020,6 +3523,7 @@ const NAV_ITEMS = [
   { id: "home",      label: "Home"      },
   { id: "dashboard", label: "Dashboard" },
   { id: "assessment", label: "Assessment" },
+  { id: "scenarios", label: "Scenarios" },
   { id: "resources", label: "Resources" },
   { id: "about",     label: "About"     },
 ];
@@ -3120,6 +3624,7 @@ export default function App() {
     home:      <HomePage />,
     dashboard: <DashboardPage />,
     assessment: <AssessmentPage />,
+    scenarios: <ScenariosPage />,
     resources: <ResourcesPage />,
     about:     <AboutPage />,
     progress:  <ProgressPage />,

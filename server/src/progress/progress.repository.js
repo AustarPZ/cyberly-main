@@ -71,6 +71,67 @@ function createProgressRepository(pool) {
     );
   }
 
+  async function applyScenarioTopicProgress(userId, topic, connection) {
+    await db(connection).query(
+      `INSERT INTO learner_topic_progress (
+          user_id,
+          topic_code,
+          current_level,
+          mastery_percentage,
+          source_type,
+          source_reference_id,
+          activity_count,
+          last_activity_at
+       )
+       VALUES (?, ?, ?, ?, 'scenario', ?, 1, CURRENT_TIMESTAMP)
+       ON DUPLICATE KEY UPDATE
+          mastery_percentage = LEAST(100, mastery_percentage + ?),
+          current_level = CASE
+            WHEN LEAST(100, mastery_percentage + ?) >= 85 THEN 'advanced'
+            WHEN LEAST(100, mastery_percentage + ?) >= 70 THEN 'intermediate'
+            WHEN LEAST(100, mastery_percentage + ?) >= 40 THEN 'developing'
+            ELSE 'beginner'
+          END,
+          source_type = 'scenario',
+          source_reference_id = VALUES(source_reference_id),
+          activity_count = activity_count + 1,
+          last_activity_at = CURRENT_TIMESTAMP`,
+      [
+        userId,
+        topic.topicCode,
+        topic.currentLevel,
+        topic.masteryPercentage,
+        topic.sourceReferenceId,
+        topic.masteryDelta,
+        topic.masteryDelta,
+        topic.masteryDelta,
+        topic.masteryDelta,
+      ]
+    );
+  }
+
+  async function createScenarioProgressEvent(userId, event, connection) {
+    const [result] = await db(connection).query(
+      `INSERT IGNORE INTO scenario_progress_events (
+          user_id,
+          scenario_attempt_id,
+          topic_code,
+          mastery_delta
+       )
+       VALUES (?, ?, ?, ?)`,
+      [userId, event.scenarioAttemptId, event.topicCode, event.masteryDelta]
+    );
+    return result.affectedRows === 1;
+  }
+
+  async function getScenarioProgressEvent(scenarioAttemptId, connection) {
+    const [rows] = await db(connection).query(
+      'SELECT * FROM scenario_progress_events WHERE scenario_attempt_id = ? LIMIT 1',
+      [scenarioAttemptId]
+    );
+    return rows[0] || null;
+  }
+
   async function listTopicProgress(userId, connection) {
     const [rows] = await db(connection).query(
       `SELECT *
@@ -219,11 +280,14 @@ function createProgressRepository(pool) {
 
   return {
     createRecommendation,
+    applyScenarioTopicProgress,
+    createScenarioProgressEvent,
     findAttemptForUser,
     findLatestCompletedInitialAttempt,
     findRecommendationById,
     getCurrentRecommendation,
     getSummary,
+    getScenarioProgressEvent,
     listTopicProgress,
     listTopicScoresForAttempt,
     markRecommendationCompleted,

@@ -22,6 +22,9 @@ const { createAssessmentRouter } = require('./src/assessment/assessment.routes')
 const { createProgressRepository } = require('./src/progress/progress.repository');
 const { createProgressService } = require('./src/progress/progress.service');
 const { createProgressRouter } = require('./src/progress/progress.routes');
+const { createScenarioRepository } = require('./src/scenario/scenario.repository');
+const { createScenarioService } = require('./src/scenario/scenario.service');
+const { createScenarioRouter } = require('./src/scenario/scenario.routes');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -36,6 +39,8 @@ const assessmentRepository = createAssessmentRepository(pool);
 const progressRepository = createProgressRepository(pool);
 const progressService = createProgressService(progressRepository);
 const assessmentService = createAssessmentService(assessmentRepository, progressService);
+const scenarioRepository = createScenarioRepository(pool);
+const scenarioService = createScenarioService(scenarioRepository, progressService);
 
 app.set('trust proxy', 1);
 app.use(cors({ origin: clientOrigin, credentials: true }));
@@ -56,6 +61,7 @@ app.use(session({
 app.use('/api/profile', createProfileRouter(profileService));
 app.use(createAssessmentRouter(assessmentService));
 app.use(createProgressRouter(progressService));
+app.use(createScenarioRouter(scenarioService));
 
 const rateLimitBuckets = new Map();
 

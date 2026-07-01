@@ -57,6 +57,8 @@ Phase 1B.1 implements server-side authentication with MySQL-backed sessions:
 - Initial assessment result/status: `GET /api/assessments/initial/result`, `GET /api/assessments/initial/status`
 - Progress: `GET /api/progress`, `POST /api/progress/sync-initial-assessment`
 - Recommendations: `GET /api/recommendations/current`, `POST /api/recommendations/:id/viewed`, `POST /api/recommendations/:id/completed`
+- Scenarios: `GET /api/scenarios`, `GET /api/scenarios/recommended`, `GET /api/scenarios/dashboard`, `GET /api/scenarios/:slug`
+- Scenario attempts: `POST /api/scenarios/:slug/attempts`, `GET /api/scenario-attempts/:attemptId`, `PUT /api/scenario-attempts/:attemptId/decisions`, `POST /api/scenario-attempts/:attemptId/complete`, `GET /api/scenario-attempts/:attemptId/result`
 
 Session cookies are HTTP-only, use `sameSite=lax`, and are sent by the official frontend with `credentials: include`. Public registration always creates `role=user`; admin self-registration is not allowed. Passwords are stored with bcrypt hashes only.
 
@@ -65,6 +67,8 @@ Seven-step onboarding preferences are saved to `learner_profiles` after account 
 The initial cyber wellness assessment uses a fixed 12-question versioned question bank and deterministic backend scoring. Assessment data is stored outside `users`, `learner_profiles`, and sessions.
 
 Progress tracking now stores topic mastery, an overall summary, and recommendation history outside `users`, `learner_profiles`, and sessions. Recommendations are deterministic and based on measured assessment topic scores only. They do not use age, age group, education level, or self-reported familiarity as measured ability.
+
+The scenario engine uses a fixed approved bank of eight published Malaysian-context cyber wellness scenarios. Scenario scoring, immediate feedback, final results, progress deltas, and recommendation refreshes are deterministic and handled by the backend.
 
 ## Database Migrations
 
@@ -95,6 +99,7 @@ Migrations are stored in `server/migrations/` and tracked in the `schema_migrati
 - The backend has been verified connecting to the local `cyberwell` MySQL database.
 - The `users`, `sessions`, `learner_profiles`, and assessment tables are now under migration management while preserving legacy `username` and `password` columns temporarily.
 - Progress and recommendation tables are under migration management through `007_create_progress_and_recommendations.sql`.
+- Scenario definitions, steps, attempts, decisions, and scenario progress events are under migration management through `008_create_scenario_engine.sql`.
 - Frontend registration calls `POST /api/auth/register`; login calls `POST /api/auth/login`.
 - Frontend startup calls `GET /api/auth/me` to restore an existing session, and logout calls `POST /api/auth/logout`.
 - Seven-step onboarding preferences are persisted with `PUT /api/profile` and restored through `GET /api/auth/me`.
@@ -102,7 +107,7 @@ Migrations are stored in `server/migrations/` and tracked in the `schema_migrati
 - The initial assessment is available after onboarding, can be done later, resumes saved answers, and preserves the first completed result.
 - AI provider calls will later be routed through the backend.
 - Browser-side direct AI provider calls are disabled.
-- No AI is used for assessment questions, scoring, result feedback, progress tracking, or recommendations.
+- No AI is used for assessment questions, scenario content, scoring, feedback, progress tracking, or recommendations.
 
 ## Verification
 
@@ -114,6 +119,7 @@ npm run test:auth
 npm run test:profile
 npm run test:assessment
 npm run test:progress
+npm run test:scenario
 ```
 
 ```bash

@@ -21,5 +21,7 @@
 - Resolved Phase 1B.2 issue: learner-profile onboarding fields are now persisted and restored.
 - Account-field editing for display name and age is deferred.
 - Chatbot UI is present, but live AI replies are disabled until the backend AI Gateway is implemented.
-- Retakes, admin/research reset, post-test questionnaires, scenario activities, and learning-activity mastery updates are not implemented yet.
-- Recommendations are deterministic and rule-based. They currently use the initial assessment topic scores only; resource viewing does not update mastery.
+- Retakes, admin/research reset, post-test questionnaires, and learning-activity mastery updates are not implemented yet.
+- Resolved Phase 1D.1 issue: scenario activities are now implemented with fixed content, deterministic scoring, immediate post-decision feedback, resume support, and idempotent progress updates.
+- Recommendations are deterministic and rule-based. They currently use assessment and completed-scenario mastery; resource viewing does not update mastery.
+- Scenario content approval is migration-seeded only. No admin content workflow exists yet.

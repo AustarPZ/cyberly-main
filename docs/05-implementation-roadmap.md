@@ -33,7 +33,8 @@
    - Future work: update mastery from learning activities, scenario attempts, and admin/research adjustments.
 
 7. Scenario Engine
-   - Add scenario content, branching decisions, scoring, and attempts.
+   - Completed foundation: eight fixed published scenarios, attempts, final decisions, immediate feedback, deterministic scoring, result restore, and progress sync.
+   - Future work: richer branching, more scenario versions, admin content approval, controlled content experiments, and post-scenario reflection.
 
 8. AI Gateway
    - Move provider calls server-side.

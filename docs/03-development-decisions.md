@@ -55,3 +55,13 @@
 - The first completed initial assessment is preserved for baseline integrity; reset and controlled retakes are deferred.
 - Correct answers and explanations are not exposed before final submission.
 - Commit `23cd62f` contains both Phase 1B.1 authentication completion and Phase 1B.2 learner-profile persistence.
+
+## Phase 1D.1 Scenario Engine
+
+- Scenario content is fixed and migration-seeded. No runtime AI generation is used.
+- Public scenario listing remains authenticated-only for this phase so attempts and completion state can be shown safely.
+- Decisions are final after submission. This supports experiment integrity and avoids changing scored history.
+- Hidden option score, outcome code, feedback, and safety explanation are not returned until the learner submits that step.
+- Scenario completion updates progress only once through `scenario_progress_events`.
+- Scenario mastery deltas are conservative prototype rules and require later empirical validation.
+- Recommendation matching is deterministic and prefers matching scenarios before resources when available.

@@ -15,6 +15,7 @@
 - `server/src/profile/`: learner-profile routes, service, repository, validation, and response mapping.
 - `server/src/assessment/`: assessment routes, service, repository, validation, scoring, and response mapping.
 - `server/src/progress/`: progress routes, service, repository, deterministic recommendation rules, and response mapping.
+- `server/src/scenario/`: scenario routes, service, repository, scoring, validation, and response mapping.
 - `src/` and root `public/`: legacy React frontend retained for reference only.
 - MySQL database: `cyberwell`.
 
@@ -51,6 +52,7 @@ The backend currently attempts to connect to:
 - Admin portal UI and admin-user provisioning are not implemented.
 - Resource learning content is still static frontend data.
 - Progress records and the current recommendation are now generated from completed initial assessment topic scores.
+- Scenario attempts and decisions are now stored in MySQL. Completed scenarios update progress once through scenario progress events.
 
 ## Verified Connection Status
 
@@ -84,6 +86,15 @@ Frontend authentication calls:
 - `GET /api/recommendations/current`
 - `POST /api/recommendations/:id/viewed`
 - `POST /api/recommendations/:id/completed`
+- `GET /api/scenarios`
+- `GET /api/scenarios/recommended`
+- `GET /api/scenarios/dashboard`
+- `GET /api/scenarios/:slug`
+- `POST /api/scenarios/:slug/attempts`
+- `GET /api/scenario-attempts/:attemptId`
+- `PUT /api/scenario-attempts/:attemptId/decisions`
+- `POST /api/scenario-attempts/:attemptId/complete`
+- `GET /api/scenario-attempts/:attemptId/result`
 
 Backend authentication uses MySQL-backed `express-session` cookies. Session data is intentionally minimal: `userId` and `role`. Cookies are HTTP-only, `sameSite=lax`, locally `secure=false`, and expected to become `secure=true` in production.
 
@@ -102,6 +113,7 @@ The lightweight SQL migration system is installed. Applied migrations:
 - `005_create_learner_profiles.sql`
 - `006_create_initial_assessment_system.sql`
 - `007_create_progress_and_recommendations.sql`
+- `008_create_scenario_engine.sql`
 
 The `users` table is aligned for email/password authentication. Legacy `username` and `password` columns remain nullable for compatibility with old source, but current `/api/auth/*` routes use `email`, `display_name`, `age`, `age_group`, `password_hash`, `role`, and `account_status`.
 
@@ -112,5 +124,7 @@ The `learner_profiles` table stores one profile per user with a cascading foreig
 The assessment tables store versioned assessment definitions, fixed published questions, attempts, answers, topic scores, and deterministic measured ability levels. Correct answers and explanations are hidden until submission.
 
 The progress tables store one topic-progress row per user/topic, one summary row per user, and recommendation history. Current recommendations are deterministic and based on measured topic scores only; they do not use age, age group, education level, or self-reported familiarity as ability measures.
+
+The scenario tables store a fixed published scenario bank, in-progress/completed attempts, final decisions, and idempotent scenario progress events. Scenario feedback is hidden until a decision is submitted.
 
 Commit `23cd62f` contains both Phase 1B.1 authentication completion and Phase 1B.2 learner-profile persistence.

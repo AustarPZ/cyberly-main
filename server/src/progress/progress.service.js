@@ -128,7 +128,66 @@ function createProgressService(repository) {
     return { recommendation: mapRecommendation(recommendation) };
   }
 
+  async function applyScenarioCompletion(userId, scenarioResult, externalConnection) {
+    const runner = async (connection) => {
+      const existingEvent = await repository.getScenarioProgressEvent(scenarioResult.scenarioAttemptId, connection);
+      if (existingEvent) {
+        return {
+          applied: false,
+          masteryDelta: existingEvent.mastery_delta,
+          summary: mapProgressSummary(await repository.getSummary(userId, connection)),
+          topics: (await repository.listTopicProgress(userId, connection)).map(mapTopicProgress),
+          recommendation: mapRecommendation(await repository.getCurrentRecommendation(userId, connection)),
+        };
+      }
+
+      const masteryDelta = scenarioResult.masteryDelta;
+      const wasCreated = await repository.createScenarioProgressEvent(userId, {
+        scenarioAttemptId: scenarioResult.scenarioAttemptId,
+        topicCode: scenarioResult.topicCode,
+        masteryDelta,
+      }, connection);
+
+      if (wasCreated) {
+        await repository.applyScenarioTopicProgress(userId, {
+          topicCode: scenarioResult.topicCode,
+          currentLevel: getLevelForPercentage(masteryDelta),
+          masteryPercentage: masteryDelta,
+          masteryDelta,
+          sourceReferenceId: scenarioResult.scenarioAttemptId,
+        }, connection);
+      }
+
+      const topicProgressRows = await repository.listTopicProgress(userId, connection);
+      const summary = calculateSummary(topicProgressRows);
+      await repository.upsertSummary(userId, summary, connection);
+
+      const recommendation = selectRecommendation(topicProgressRows.map(topic => ({
+        topicCode: topic.topic_code,
+        percentage: topic.mastery_percentage,
+        sourceReferenceId: scenarioResult.scenarioAttemptId,
+      })));
+      recommendation.sourceType = 'scenario';
+      recommendation.sourceReferenceId = scenarioResult.scenarioAttemptId;
+
+      await repository.supersedeActiveRecommendations(userId, connection);
+      const savedRecommendation = await repository.createRecommendation(userId, recommendation, connection);
+
+      return {
+        applied: wasCreated,
+        masteryDelta,
+        summary: mapProgressSummary(await repository.getSummary(userId, connection)),
+        topics: topicProgressRows.map(mapTopicProgress),
+        recommendation: mapRecommendation(savedRecommendation),
+      };
+    };
+
+    if (externalConnection) return runner(externalConnection);
+    return repository.withTransaction(runner);
+  }
+
   return {
+    applyScenarioCompletion,
     getCurrentRecommendation,
     getProgress,
     markCompleted,

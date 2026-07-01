@@ -149,6 +149,41 @@ Recommendation rules are deterministic:
 
 Age, age group, education level, and self-reported familiarity are not used as ability measures.
 
+## Scenario Engine Tables
+
+Phase 1D.1 adds:
+
+- `scenario_definitions`: fixed approved scenario metadata with slug, topic, difficulty, version, status, estimated minutes, and total step count.
+- `scenario_steps`: ordered step prompts and option JSON.
+- `scenario_attempts`: user-owned attempt state with current step, score, percentage, result level, and timestamps.
+- `scenario_decisions`: one final selected option per attempt and step.
+- `scenario_progress_events`: one progress-application marker per completed scenario attempt.
+
+Scenario statuses:
+
+- `draft`
+- `published`
+- `archived`
+
+Attempt statuses:
+
+- `in_progress`
+- `completed`
+- `abandoned`
+
+Scenario result levels:
+
+- `needs_review`
+- `developing`
+- `proficient`
+- `strong`
+
+The seed bank contains exactly eight published scenarios, two per cyber wellness topic. Each seeded scenario currently has three ordered steps.
+
+`scenario_progress_events.scenario_attempt_id` is unique so scenario completion can update mastery at most once per attempt.
+
+Scenario attempts and progress events cascade when a user is deleted. Scenario definitions use restrictive relationships for attempts so historical results are not silently broken.
+
 ## Age-Group Rules
 
 - `1-12`: `child`

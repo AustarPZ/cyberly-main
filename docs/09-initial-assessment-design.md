@@ -60,7 +60,7 @@ All routes require authentication. Attempts are accessible only by their owning 
 
 ## Progress Sync
 
-Submitting the initial assessment now also syncs measured progress and generates a rule-based current recommendation in the same transaction.
+Submitting the initial assessment syncs measured progress and generates a rule-based current recommendation in the same transaction.
 
 The sync writes:
 
@@ -69,6 +69,8 @@ The sync writes:
 - one active `learner_recommendations` row
 
 Re-syncing preserves exactly one topic-progress row per topic and supersedes any active/viewed recommendation before creating the latest active recommendation.
+
+Scenario completion can later adjust topic mastery from this baseline through conservative positive deltas. The initial assessment baseline remains preserved in assessment tables.
 
 ## Retake Policy
 
