@@ -511,6 +511,62 @@ async function dbSubmitAssessment(attemptId) {
   }
 }
 
+async function dbGetProgress() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/progress`, {
+      method: "GET",
+      credentials: "include",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, error: data.message || "Unable to load progress." };
+    return { ok: true, ...data };
+  } catch {
+    return { ok: false, error: "Network error. Could not load progress." };
+  }
+}
+
+async function dbGetCurrentRecommendation() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/recommendations/current`, {
+      method: "GET",
+      credentials: "include",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, error: data.message || "Unable to load recommendation." };
+    return { ok: true, ...data };
+  } catch {
+    return { ok: false, error: "Network error. Could not load recommendation." };
+  }
+}
+
+async function dbMarkRecommendationViewed(id) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/recommendations/${id}/viewed`, {
+      method: "POST",
+      credentials: "include",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, error: data.message || "Unable to update recommendation." };
+    return { ok: true, ...data };
+  } catch {
+    return { ok: false, error: "Network error. Could not update recommendation." };
+  }
+}
+
+async function dbMarkRecommendationCompleted(id) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/recommendations/${id}/completed`, {
+      method: "POST",
+      credentials: "include",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, error: data.message || "Unable to complete recommendation." };
+    return { ok: true, ...data };
+  } catch {
+    return { ok: false, error: "Network error. Could not complete recommendation." };
+  }
+}
+
 async function dbLogout() {
   try {
     await fetch(`${API_BASE_URL}/api/auth/logout`, {
@@ -532,6 +588,28 @@ function getAgeGroup(age) {
   if (value <= 17) return { label: "Teen (13–17)", key: "teen" };
   if (value <= 24) return { label: "Young adult (18–24)", key: "young_adult" };
   return { label: "Adult (25–120)", key: "adult" };
+}
+
+const PROGRESS_TOPIC_META = {
+  phishing_and_scams: { label: "Phishing and scams", category: "Scams", icon: "🎣" },
+  password_and_account_security: { label: "Password and account security", category: "Passwords", icon: "🔐" },
+  privacy_and_personal_information: { label: "Privacy and personal information", category: "Privacy", icon: "🕵️" },
+  misinformation_and_deepfakes: { label: "Misinformation and deepfakes", category: "Misinformation", icon: "🧠" },
+};
+
+const LEVEL_LABELS = {
+  beginner: "Beginner",
+  developing: "Developing",
+  intermediate: "Intermediate",
+  advanced: "Advanced",
+};
+
+function levelLabel(level) {
+  return LEVEL_LABELS[level] || "Not measured";
+}
+
+function topicLabel(topicCode, fallback) {
+  return PROGRESS_TOPIC_META[topicCode]?.label || fallback || "Recommended topic";
 }
 
 // ─── AI helper ────────────────────────────────────────────────────
@@ -1294,9 +1372,11 @@ function HomePage() {
 
 // ─── Page: Dashboard ──────────────────────────────────────────────
 function DashboardPage() {
-  const { user, go } = useApp();
+  const { user, go, openRecommendedResource } = useApp();
   const [tipIndex] = useState(() => Math.floor(Math.random() * 4));
   const [assessmentStatus, setAssessmentStatus] = useState({ loading: true, status: "pending" });
+  const [progressState, setProgressState] = useState({ loading: true, progress: null });
+  const [recommendationState, setRecommendationState] = useState({ loading: true, recommendation: null });
 
   useEffect(() => {
     let active = true;
@@ -1312,10 +1392,39 @@ function DashboardPage() {
     return () => { active = false; };
   }, [user]);
 
+  useEffect(() => {
+    let active = true;
+    if (!user) return () => { active = false; };
+    Promise.all([dbGetProgress(), dbGetCurrentRecommendation()]).then(([progressResult, recommendationResult]) => {
+      if (!active) return;
+      setProgressState(progressResult.ok
+        ? { loading: false, progress: progressResult }
+        : { loading: false, progress: null, error: progressResult.error });
+      setRecommendationState(recommendationResult.ok
+        ? { loading: false, recommendation: recommendationResult.recommendation }
+        : { loading: false, recommendation: null, error: recommendationResult.error });
+    });
+    return () => { active = false; };
+  }, [user]);
+
   if (!user) { go("login"); return null; }
 
   const nick  = user.aiNickname || user.name;
   const group = getAgeGroup(user.age);
+  const summary = progressState.progress?.summary;
+  const topicsMeasured = progressState.progress?.topics || [];
+  const recommendation = recommendationState.recommendation;
+
+  async function followRecommendation() {
+    if (recommendation?.id) {
+      await dbMarkRecommendationViewed(recommendation.id);
+    }
+    if (recommendation?.topicCode) {
+      openRecommendedResource(recommendation.topicCode);
+    } else {
+      go("assessment");
+    }
+  }
 
   const quickActions = [
     { icon: "📚", label: "Browse Resources",  desc: "Guides on scams, privacy & more", page: "resources", color: "#E3F2FD", accent: "#1E88E5" },
@@ -1415,6 +1524,76 @@ function DashboardPage() {
             {assessmentStatus.status === "completed" ? "View results" : assessmentStatus.status === "in_progress" ? "Resume" : "Start / do later"}
           </button>
         </div>
+
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
+          <div className="card" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.07)" }}>
+            <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.35rem" }}>Measured progress</div>
+            {progressState.loading ? (
+              <div style={{ fontSize: "0.86rem", color: "#666" }}>Loading your measured baseline...</div>
+            ) : summary?.exists ? (
+              <>
+                <div style={{ display: "flex", alignItems: "flex-end", gap: "0.45rem", marginBottom: "0.65rem" }}>
+                  <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "2rem", fontWeight: 700, color: "#1a1a18" }}>{summary.overallMasteryPercentage}%</span>
+                  <span style={{ fontSize: "0.82rem", color: "#666", paddingBottom: "0.35rem" }}>{levelLabel(summary.measuredLevel)}</span>
+                </div>
+                <div style={{ background: "#edf3ef", borderRadius: 99, height: 10, overflow: "hidden", marginBottom: "0.7rem" }}>
+                  <div style={{ width: `${summary.overallMasteryPercentage}%`, height: "100%", background: "var(--teal)", borderRadius: 99 }} />
+                </div>
+                <div style={{ fontSize: "0.8rem", color: "#666" }}>
+                  {summary.completedTopicCount} measured topics · Based on assessment results, not profile preferences.
+                </div>
+              </>
+            ) : (
+              <div style={{ fontSize: "0.86rem", color: "#666", lineHeight: 1.6 }}>
+                Complete the initial assessment to create measured progress.
+              </div>
+            )}
+          </div>
+
+          <div className="card" style={{ background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.18)" }}>
+            <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.35rem" }}>Recommended next step</div>
+            {recommendationState.loading ? (
+              <div style={{ fontSize: "0.86rem", color: "#666" }}>Checking recommendation...</div>
+            ) : recommendation ? (
+              <>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.05rem", marginBottom: "0.35rem", color: "#1a1a18" }}>
+                  {recommendation.topicCode ? topicLabel(recommendation.topicCode, recommendation.topicLabel) : "Initial assessment"}
+                </div>
+                <div style={{ fontSize: "0.84rem", color: "#3e5149", lineHeight: 1.55, marginBottom: "0.85rem" }}>
+                  {recommendation.reasonText}
+                </div>
+                <button onClick={followRecommendation} style={{ background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1rem", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
+                  {recommendation.topicCode ? "Open recommended guides" : "Start assessment"}
+                </button>
+              </>
+            ) : (
+              <div style={{ fontSize: "0.86rem", color: "#666" }}>No active recommendation yet.</div>
+            )}
+          </div>
+        </div>
+
+        {topicsMeasured.length > 0 && (
+          <div style={{ marginBottom: "2rem" }}>
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap" }}>
+              <p className="section-title" style={{ fontSize: "1.1rem", margin: 0 }}>Topic mastery</p>
+              <button onClick={() => go("progress")} style={{ background: "transparent", color: "var(--teal)", border: "none", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>View progress →</button>
+            </div>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "0.75rem" }}>
+              {topicsMeasured.map(topic => (
+                <div key={topic.topicCode} className="card" style={{ padding: "1rem" }}>
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.55rem" }}>
+                    <span style={{ fontWeight: 700, fontSize: "0.86rem" }}>{PROGRESS_TOPIC_META[topic.topicCode]?.icon} {topicLabel(topic.topicCode, topic.topicLabel)}</span>
+                    <span style={{ color: "var(--teal)", fontWeight: 700, fontSize: "0.82rem" }}>{topic.masteryPercentage}%</span>
+                  </div>
+                  <div style={{ background: "#edf3ef", borderRadius: 99, height: 8, overflow: "hidden" }}>
+                    <div style={{ width: `${topic.masteryPercentage}%`, height: "100%", background: "var(--teal)", borderRadius: 99 }} />
+                  </div>
+                  <div style={{ fontSize: "0.74rem", color: "#777", marginTop: "0.45rem" }}>{levelLabel(topic.currentLevel)}</div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
 
         {/* Daily tip */}
         <div style={{
@@ -1662,14 +1841,23 @@ const TOPIC_COLORS = {
   Beginner:          { bg: "#E8F5E9", text: "#2E7D32", dot: "#66BB6A" },
 };
 
+const RESOURCE_CATEGORIES = ["All", ...Array.from(new Set(TOPICS.map(t => t.category)))];
+
 function ResourcesPage() {
-  const { go } = useApp();
+  const { go, resourceFocusTopic, clearResourceFocus } = useApp();
   const [selected, setSelected]   = useState(null);
   const [filter,   setFilter]     = useState("All");
   const topic = TOPICS.find(t => t.id === selected);
 
-  const categories = ["All", ...Array.from(new Set(TOPICS.map(t => t.category)))];
+  const categories = RESOURCE_CATEGORIES;
   const filtered   = filter === "All" ? TOPICS : TOPICS.filter(t => t.category === filter);
+  const focusedCategory = resourceFocusTopic ? PROGRESS_TOPIC_META[resourceFocusTopic]?.category : null;
+
+  useEffect(() => {
+    if (focusedCategory && categories.includes(focusedCategory)) {
+      setFilter(focusedCategory);
+    }
+  }, [focusedCategory, categories]);
 
   const BackBtn = () => (
     <button
@@ -1722,6 +1910,20 @@ function ResourcesPage() {
 
       <div className="section">
         <BackBtn />
+
+        {focusedCategory && (
+          <div className="card" style={{ marginBottom: "1rem", background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)", display: "flex", gap: "0.85rem", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}>
+            <div>
+              <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.2rem" }}>Recommended focus</div>
+              <div style={{ fontSize: "0.84rem", color: "#455", lineHeight: 1.55 }}>
+                Showing guides for {topicLabel(resourceFocusTopic)} based on your measured assessment result.
+              </div>
+            </div>
+            <button onClick={() => { clearResourceFocus(); setFilter("All"); }} style={{ background: "#fff", color: "var(--teal)", border: "1px solid rgba(29,158,117,0.3)", borderRadius: 10, padding: "0.5rem 0.9rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" }}>
+              Show all guides
+            </button>
+          </div>
+        )}
 
         {/* Category filter pills */}
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1.75rem" }}>
@@ -2488,28 +2690,57 @@ function ProfilePage() {
 
 // ─── Page: Progress ──────────────────────────────────────────────
 function ProgressPage() {
-  const { user, go } = useApp();
+  const { user, go, openRecommendedResource } = useApp();
+  const [progressState, setProgressState] = useState({ loading: true, progress: null });
+  const [recommendationState, setRecommendationState] = useState({ loading: true, recommendation: null });
+
+  useEffect(() => {
+    let active = true;
+    if (!user) return () => { active = false; };
+    Promise.all([dbGetProgress(), dbGetCurrentRecommendation()]).then(([progressResult, recommendationResult]) => {
+      if (!active) return;
+      setProgressState(progressResult.ok
+        ? { loading: false, progress: progressResult }
+        : { loading: false, progress: null, error: progressResult.error });
+      setRecommendationState(recommendationResult.ok
+        ? { loading: false, recommendation: recommendationResult.recommendation }
+        : { loading: false, recommendation: null, error: recommendationResult.error });
+    });
+    return () => { active = false; };
+  }, [user]);
+
   if (!user) { go("login"); return null; }
 
   const nick  = user.aiNickname || user.name;
   const topics = user.helpTopics || [];
-  const level  = user.familiarity || "Beginner";
+  const profileLevel  = user.familiarity || "Beginner";
   const lang   = user.language    || "English";
   const style  = user.learningStyle || "Not set";
 
   const allTopics = HELP_OPTIONS;
 
-  const levelMap = { Beginner: 1, Intermediate: 2, Advanced: 3 };
-  const levelVal = levelMap[level] || 1;
+  const summary = progressState.progress?.summary;
+  const measuredTopics = progressState.progress?.topics || [];
+  const recommendation = recommendationState.recommendation;
+  const measuredLevel = levelLabel(summary?.measuredLevel);
+  const measuredValue = summary?.overallMasteryPercentage || 0;
 
   const badges = [
     { icon: "🛡", label: "Joined Cyberly",     earned: true  },
-    { icon: "💬", label: "First AI Chat",         earned: true  },
+    { icon: "💬", label: "Chat Preview Open",     earned: true  },
     { icon: "📚", label: "Explored Resources",    earned: topics.length > 0 },
     { icon: "🎯", label: "Set Learning Goals",    earned: topics.length > 0 },
     { icon: "🌐", label: "Multilingual Learner",  earned: lang !== "English" },
-    { icon: "🏆", label: "Intermediate Achiever", earned: levelVal >= 2 },
+    { icon: "🏆", label: "Measured Baseline",     earned: Boolean(summary?.exists) },
   ];
+
+  async function completeRecommendation() {
+    if (!recommendation?.id) return;
+    const result = await dbMarkRecommendationCompleted(recommendation.id);
+    if (result.ok) {
+      setRecommendationState({ loading: false, recommendation: result.recommendation });
+    }
+  }
 
   return (
     <div>
@@ -2520,7 +2751,9 @@ function ProgressPage() {
           <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 600, marginBottom: "0.3rem" }}>
             {nick}'s Learning Journey 📊
           </h1>
-          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.9rem" }}>{level} level · {lang} · {style}</p>
+          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.9rem" }}>
+            {summary?.exists ? `${measuredLevel} measured level` : `${profileLevel} profile familiarity`} · {lang} · {style}
+          </p>
         </div>
       </div>
 
@@ -2539,7 +2772,7 @@ function ProgressPage() {
         {/* Profile snapshot */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "1rem", marginBottom: "2.5rem" }}>
           {[
-            { icon: "🎓", label: "Level",    value: level },
+            { icon: "🎓", label: "Measured level", value: progressState.loading ? "Loading" : measuredLevel },
             { icon: "🌐", label: "Language", value: lang },
             { icon: "📖", label: "Style",    value: style },
             { icon: "🎯", label: "Topics",   value: `${topics.length} selected` },
@@ -2554,23 +2787,82 @@ function ProgressPage() {
 
         {/* Skill level bar */}
         <div style={{ marginBottom: "2.5rem" }}>
-          <p className="section-title" style={{ fontSize: "1.1rem" }}>Skill Level</p>
-          <p className="section-sub" style={{ marginBottom: "1rem" }}>Your current cybersecurity knowledge level.</p>
+          <p className="section-title" style={{ fontSize: "1.1rem" }}>Measured Mastery</p>
+          <p className="section-sub" style={{ marginBottom: "1rem" }}>Calculated from completed assessment topic scores, not from age, education level, or self-reported familiarity.</p>
           <div className="card" style={{ padding: "1.5rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-              <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>{level}</span>
-              <span style={{ fontSize: "0.85rem", color: "#888" }}>{levelVal}/3</span>
-            </div>
-            <div style={{ background: "#eee", borderRadius: 99, height: 10, overflow: "hidden" }}>
-              <div style={{ background: "var(--teal)", width: `${(levelVal / 3) * 100}%`, height: "100%", borderRadius: 99, transition: "width 0.6s ease" }} />
-            </div>
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.5rem" }}>
-              {["Beginner", "Intermediate", "Advanced"].map((l, i) => (
-                <span key={l} style={{ fontSize: "0.72rem", color: i + 1 <= levelVal ? "var(--teal)" : "#bbb", fontWeight: i + 1 <= levelVal ? 600 : 400 }}>{l}</span>
+            {progressState.loading ? (
+              <div style={{ fontSize: "0.86rem", color: "#666" }}>Loading progress...</div>
+            ) : summary?.exists ? (
+              <>
+                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
+                  <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>{measuredLevel}</span>
+                  <span style={{ fontSize: "0.85rem", color: "#888" }}>{measuredValue}%</span>
+                </div>
+                <div style={{ background: "#eee", borderRadius: 99, height: 10, overflow: "hidden" }}>
+                  <div style={{ background: "var(--teal)", width: `${measuredValue}%`, height: "100%", borderRadius: 99, transition: "width 0.6s ease" }} />
+                </div>
+                <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.5rem" }}>
+                  {["Beginner", "Developing", "Intermediate", "Advanced"].map(l => (
+                    <span key={l} style={{ fontSize: "0.72rem", color: l === measuredLevel ? "var(--teal)" : "#bbb", fontWeight: l === measuredLevel ? 700 : 400 }}>{l}</span>
+                  ))}
+                </div>
+              </>
+            ) : (
+              <div style={{ fontSize: "0.86rem", color: "#666", lineHeight: 1.6 }}>
+                No measured baseline yet. Complete the initial assessment to unlock progress tracking.
+                <button onClick={() => go("assessment")} style={{ display: "block", marginTop: "0.85rem", background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>Start assessment</button>
+              </div>
+            )}
+          </div>
+        </div>
+
+        {measuredTopics.length > 0 && (
+          <div style={{ marginBottom: "2.5rem" }}>
+            <p className="section-title" style={{ fontSize: "1.1rem" }}>Assessment Topics</p>
+            <p className="section-sub" style={{ marginBottom: "1rem" }}>Topic-level mastery from your initial cyber wellness assessment.</p>
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "1rem" }}>
+              {measuredTopics.map(topic => (
+                <div key={topic.topicCode} className="card">
+                  <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem", alignItems: "flex-start", marginBottom: "0.65rem" }}>
+                    <div>
+                      <div style={{ fontSize: "1.25rem", marginBottom: "0.25rem" }}>{PROGRESS_TOPIC_META[topic.topicCode]?.icon || "📘"}</div>
+                      <div style={{ fontWeight: 700, fontSize: "0.92rem" }}>{topicLabel(topic.topicCode, topic.topicLabel)}</div>
+                    </div>
+                    <div style={{ color: "var(--teal)", fontWeight: 800 }}>{topic.masteryPercentage}%</div>
+                  </div>
+                  <div style={{ background: "#edf3ef", borderRadius: 99, height: 9, overflow: "hidden", marginBottom: "0.55rem" }}>
+                    <div style={{ width: `${topic.masteryPercentage}%`, background: "var(--teal)", height: "100%", borderRadius: 99 }} />
+                  </div>
+                  <div style={{ fontSize: "0.78rem", color: "#666" }}>
+                    {levelLabel(topic.currentLevel)} · Source: initial assessment
+                  </div>
+                </div>
               ))}
             </div>
           </div>
-        </div>
+        )}
+
+        {recommendation && (
+          <div className="card" style={{ marginBottom: "2.5rem", background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)" }}>
+            <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.3rem" }}>Current recommendation</div>
+            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.05rem", marginBottom: "0.4rem" }}>
+              {recommendation.topicCode ? topicLabel(recommendation.topicCode, recommendation.topicLabel) : "Initial assessment"}
+            </div>
+            <div style={{ fontSize: "0.86rem", color: "#3e5149", lineHeight: 1.6, marginBottom: "1rem" }}>
+              {recommendation.reasonText}
+            </div>
+            <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
+              <button onClick={() => recommendation.topicCode ? openRecommendedResource(recommendation.topicCode) : go("assessment")} style={{ background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>
+                {recommendation.topicCode ? "Open guides" : "Start assessment"}
+              </button>
+              {recommendation.topicCode && recommendation.status !== "completed" && (
+                <button onClick={completeRecommendation} style={{ background: "#fff", color: "var(--teal)", border: "1px solid rgba(29,158,117,0.3)", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>
+                  Mark complete
+                </button>
+              )}
+            </div>
+          </div>
+        )}
 
         {/* Topics of interest */}
         <div style={{ marginBottom: "2.5rem" }}>
@@ -2773,6 +3065,7 @@ export default function App() {
   const [page, setPage] = useState("home");
   const [user, setUser] = useState(null);
   const [checkingSession, setCheckingSession] = useState(true);
+  const [resourceFocusTopic, setResourceFocusTopic] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -2799,10 +3092,29 @@ export default function App() {
   async function logout() {
     await dbLogout();
     setUser(null);
+    setResourceFocusTopic(null);
     setPage("home");
   }
+  function openRecommendedResource(topicCode) {
+    setResourceFocusTopic(topicCode);
+    setPage("resources");
+  }
+  function go(nextPage) {
+    if (nextPage !== "resources") setResourceFocusTopic(null);
+    setPage(nextPage);
+  }
 
-  const ctx = { page, go: setPage, user, login, logout, updateProfile };
+  const ctx = {
+    page,
+    go,
+    user,
+    login,
+    logout,
+    updateProfile,
+    resourceFocusTopic,
+    openRecommendedResource,
+    clearResourceFocus: () => setResourceFocusTopic(null),
+  };
 
   const PAGES = {
     home:      <HomePage />,

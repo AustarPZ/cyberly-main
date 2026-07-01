@@ -28,8 +28,9 @@
    - Future work: post-test questionnaires, controlled retakes, admin/research reset, and richer assessment analytics.
 
 6. Progress And Recommendation
-   - Track activity and mastery.
-   - Generate adaptive recommendations from assessment performance and learner progress in a later phase.
+   - Completed foundation: topic progress, learner progress summary, recommendation history, and current recommendation APIs.
+   - Completed foundation: deterministic recommendations from initial assessment topic scores.
+   - Future work: update mastery from learning activities, scenario attempts, and admin/research adjustments.
 
 7. Scenario Engine
    - Add scenario content, branching decisions, scoring, and attempts.

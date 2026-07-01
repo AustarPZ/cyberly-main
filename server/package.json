@@ -8,6 +8,7 @@
     "test:auth": "node scripts/test-auth.js",
     "test:profile": "node scripts/test-profile.js",
     "test:assessment": "node scripts/test-assessment.js",
+    "test:progress": "node scripts/test-progress.js",
     "start": "node server.js",
     "migrate": "node scripts/migrate.js",
     "migrate:status": "node scripts/migrate.js --status"

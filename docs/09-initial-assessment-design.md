@@ -58,6 +58,18 @@ No score, percentage, correctness flag, awarded score, or topic score is trusted
 
 All routes require authentication. Attempts are accessible only by their owning user.
 
+## Progress Sync
+
+Submitting the initial assessment now also syncs measured progress and generates a rule-based current recommendation in the same transaction.
+
+The sync writes:
+
+- four `learner_topic_progress` rows, one per topic
+- one `learner_progress_summary` row
+- one active `learner_recommendations` row
+
+Re-syncing preserves exactly one topic-progress row per topic and supersedes any active/viewed recommendation before creating the latest active recommendation.
+
 ## Retake Policy
 
 The first completed initial assessment is preserved. Starting the assessment after completion returns the existing completed result instead of silently creating a new attempt. Admin/research reset and controlled retakes are deferred.
@@ -78,4 +90,4 @@ The result screen shows total score, percentage, measured level, topic scores, s
 
 ## Limitations
 
-No AI scoring, recommendations, scenario activities, post-test questionnaires, or admin review tools are included in Phase 1C.1.
+No AI scoring, scenario activities, post-test questionnaires, or admin review tools are included. Rule-based recommendations are handled separately in Phase 1C.2.

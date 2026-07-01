@@ -110,6 +110,45 @@ Measured levels:
 
 Measured level is not stored in `users` or `learner_profiles`.
 
+## Progress And Recommendation Tables
+
+Phase 1C.2 adds:
+
+- `learner_topic_progress`: one row per user and assessment topic. Stores the current measured level, mastery percentage, source type, optional source reference, activity count, and last activity timestamp.
+- `learner_progress_summary`: one row per user. Stores overall mastery percentage, measured level, completed topic count, total activity count, and last progress timestamp.
+- `learner_recommendations`: recommendation history. Stores the recommendation type, topic, recommended level, reason code/text, source, status, and viewed/completed timestamps.
+
+All three tables cascade when the owning user is deleted.
+
+`learner_topic_progress` uses a unique `(user_id, topic_code)` key so re-syncing the initial assessment updates the existing four topic rows instead of duplicating them.
+
+Recommendation history is preserved. When a new recommendation is generated, active or viewed recommendations for that user become `superseded`; the latest active row is the current recommendation.
+
+Current progress source types:
+
+- `initial_assessment`
+- `learning_activity`
+- `scenario`
+- `admin_adjustment`
+
+The current implementation writes `initial_assessment` only. Learning activity, scenario, and admin adjustment writes are reserved for later phases.
+
+Current recommendation statuses:
+
+- `active`
+- `viewed`
+- `completed`
+- `superseded`
+
+Recommendation rules are deterministic:
+
+- Topic mastery uses the same thresholds as assessment measured levels.
+- The recommended topic is the lowest scoring topic.
+- Ties use this fixed order: phishing and scams, password/account security, privacy/personal information, misinformation/deepfakes.
+- If no completed assessment exists, the recommendation asks the learner to complete the initial assessment.
+
+Age, age group, education level, and self-reported familiarity are not used as ability measures.
+
 ## Age-Group Rules
 
 - `1-12`: `child`

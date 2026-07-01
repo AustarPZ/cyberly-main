@@ -8,7 +8,8 @@
 - Resolved Phase 1B.1 issue: direct browser AI-provider calls are disabled.
 - Resolved baseline issue: a lightweight SQL migration system now exists.
 - A focused backend auth verification script exists, but broad unit, frontend, and end-to-end test coverage is still missing.
-- Resource and progress data are hard-coded.
+- Resource article content is hard-coded in the frontend.
+- Resolved Phase 1C.2 issue: measured progress records and current recommendations are now stored in MySQL and exposed through authenticated APIs.
 - No admin portal exists.
 - Admin provisioning is not implemented; `/api/admin/ping` only verifies role protection.
 - Accessibility risks exist around icon-heavy controls, state-only navigation, and limited ARIA/focus handling.
@@ -20,5 +21,5 @@
 - Resolved Phase 1B.2 issue: learner-profile onboarding fields are now persisted and restored.
 - Account-field editing for display name and age is deferred.
 - Chatbot UI is present, but live AI replies are disabled until the backend AI Gateway is implemented.
-- Retakes, admin/research reset, post-test questionnaires, adaptive recommendations, and scenario activities are not implemented yet.
-- The initial assessment has deterministic baseline feedback only; it does not personalize learning paths yet.
+- Retakes, admin/research reset, post-test questionnaires, scenario activities, and learning-activity mastery updates are not implemented yet.
+- Recommendations are deterministic and rule-based. They currently use the initial assessment topic scores only; resource viewing does not update mastery.

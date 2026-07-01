@@ -9,7 +9,7 @@ function httpError(status, message, errors) {
   return error;
 }
 
-function createAssessmentService(repository) {
+function createAssessmentService(repository, progressService = null) {
   async function getInitialAssessment() {
     const assessment = await repository.getPublishedInitialAssessment();
     if (!assessment) throw httpError(404, 'Initial assessment is not available.');
@@ -114,6 +114,9 @@ function createAssessmentService(repository) {
       await repository.updateAnswerScores(attempt.id, score.scoredAnswers, connection);
       await repository.replaceTopicScores(attempt.id, score.topicScores, connection);
       const completedAttempt = await repository.completeAttempt(attempt.id, score, connection);
+      if (progressService) {
+        await progressService.syncInitialAssessment(userId, completedAttempt.id, connection);
+      }
       const scoredAnswers = await repository.listAnswers(attempt.id, connection);
       const topicScores = await repository.listTopicScores(attempt.id, connection);
       return mapCompletedResult(completedAttempt, questions, scoredAnswers, topicScores);

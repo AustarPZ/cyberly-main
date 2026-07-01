@@ -9,10 +9,12 @@
 - `server/scripts/test-auth.js`: Phase 1B.1 authentication verification script.
 - `server/scripts/test-profile.js`: Phase 1B.2 learner-profile persistence and authorization verification script.
 - `server/scripts/test-assessment.js`: Phase 1C.1 initial assessment verification script.
+- `server/scripts/test-progress.js`: Phase 1C.2 progress and recommendation verification script.
 - `server/src/database/`: database pool, migration helpers, and age-group utility.
 - `server/src/auth/`: authentication validation, route guards, and MySQL session-store adapter.
 - `server/src/profile/`: learner-profile routes, service, repository, validation, and response mapping.
 - `server/src/assessment/`: assessment routes, service, repository, validation, scoring, and response mapping.
+- `server/src/progress/`: progress routes, service, repository, deterministic recommendation rules, and response mapping.
 - `src/` and root `public/`: legacy React frontend retained for reference only.
 - MySQL database: `cyberwell`.
 
@@ -47,8 +49,8 @@ The backend currently attempts to connect to:
 - Live AI calls are disabled until a backend gateway exists.
 - Migration tooling now exists for backend database changes.
 - Admin portal UI and admin-user provisioning are not implemented.
-- Resource, progress, and learning content are still mostly static frontend data.
-- Adaptive recommendations are not active yet; the initial assessment only records a baseline.
+- Resource learning content is still static frontend data.
+- Progress records and the current recommendation are now generated from completed initial assessment topic scores.
 
 ## Verified Connection Status
 
@@ -77,6 +79,11 @@ Frontend authentication calls:
 - `POST /api/assessment-attempts/:attemptId/submit`
 - `GET /api/assessments/initial/result`
 - `GET /api/assessments/initial/status`
+- `GET /api/progress`
+- `POST /api/progress/sync-initial-assessment`
+- `GET /api/recommendations/current`
+- `POST /api/recommendations/:id/viewed`
+- `POST /api/recommendations/:id/completed`
 
 Backend authentication uses MySQL-backed `express-session` cookies. Session data is intentionally minimal: `userId` and `role`. Cookies are HTTP-only, `sameSite=lax`, locally `secure=false`, and expected to become `secure=true` in production.
 
@@ -93,6 +100,8 @@ The lightweight SQL migration system is installed. Applied migrations:
 - `003_preserve_legacy_users_compatibility.sql`
 - `004_harden_users_and_create_sessions.sql`
 - `005_create_learner_profiles.sql`
+- `006_create_initial_assessment_system.sql`
+- `007_create_progress_and_recommendations.sql`
 
 The `users` table is aligned for email/password authentication. Legacy `username` and `password` columns remain nullable for compatibility with old source, but current `/api/auth/*` routes use `email`, `display_name`, `age`, `age_group`, `password_hash`, `role`, and `account_status`.
 
@@ -101,5 +110,7 @@ The `sessions` table stores server-side session state and expiry timestamps.
 The `learner_profiles` table stores one profile per user with a cascading foreign key to `users.id`.
 
 The assessment tables store versioned assessment definitions, fixed published questions, attempts, answers, topic scores, and deterministic measured ability levels. Correct answers and explanations are hidden until submission.
+
+The progress tables store one topic-progress row per user/topic, one summary row per user, and recommendation history. Current recommendations are deterministic and based on measured topic scores only; they do not use age, age group, education level, or self-reported familiarity as ability measures.
 
 Commit `23cd62f` contains both Phase 1B.1 authentication completion and Phase 1B.2 learner-profile persistence.
