@@ -13,10 +13,12 @@
     "web-vitals": "^2.1.4"
   },
   "scripts": {
-    "start": "react-scripts start",
-    "build": "react-scripts build",
-    "test": "react-scripts test",
-    "eject": "react-scripts eject"
+  "dev": "concurrently -k -n SERVER,CLIENT -c auto \"npm run dev:server\" \"npm run dev:client\"",
+  "dev:server": "npm --prefix server start",
+  "dev:client": "npm --prefix client start",
+  "build": "npm --prefix client run build",
+  "migrate": "npm --prefix server run migrate",
+  "migrate:status": "npm --prefix server run migrate:status"
   },
   "eslintConfig": {
     "extends": [
@@ -35,5 +37,8 @@
       "last 1 firefox version",
       "last 1 safari version"
     ]
+  },
+  "devDependencies": {
+    "concurrently": "^10.0.3"
   }
 }
