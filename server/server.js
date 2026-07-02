@@ -25,6 +25,9 @@ const { createProgressRouter } = require('./src/progress/progress.routes');
 const { createScenarioRepository } = require('./src/scenario/scenario.repository');
 const { createScenarioService } = require('./src/scenario/scenario.service');
 const { createScenarioRouter } = require('./src/scenario/scenario.routes');
+const { createAccountRepository } = require("./src/account/account.repository");
+const { createAccountService } = require("./src/account/account.service");
+const { createAccountRouter } = require("./src/account/account.routes");
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -35,6 +38,8 @@ const isProduction = process.env.NODE_ENV === 'production';
 const pool = createPool();
 const profileRepository = createProfileRepository(pool);
 const profileService = createProfileService(profileRepository);
+const accountRepository = createAccountRepository(pool);
+const accountService = createAccountService(accountRepository);
 const assessmentRepository = createAssessmentRepository(pool);
 const progressRepository = createProgressRepository(pool);
 const progressService = createProgressService(progressRepository);
@@ -59,6 +64,7 @@ app.use(session({
     resave: false,
 }));
 app.use('/api/profile', createProfileRouter(profileService));
+app.use("/api/account", createAccountRouter(accountService));
 app.use(createAssessmentRouter(assessmentService));
 app.use(createProgressRouter(progressService));
 app.use(createScenarioRouter(scenarioService));

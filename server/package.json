@@ -5,6 +5,7 @@
   "main": "server.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
+    "test:account": "node scripts/test-account.js",
     "test:auth": "node scripts/test-auth.js",
     "test:profile": "node scripts/test-profile.js",
     "test:assessment": "node scripts/test-assessment.js",

@@ -343,8 +343,9 @@ function normalizeSessionUser(userData, profileData) {
   return {
     ...userData,
     profile: learnerProfile,
-    name: userData?.displayName || userData?.name || learnerProfile.aiNickname || "Learner",
-    aiNickname: learnerProfile.aiNickname || userData?.displayName || userData?.name || "Learner",
+    name: userData?.displayName || userData?.name || "Learner",
+    displayName: userData?.displayName || userData?.name || "Learner",
+    aiNickname: learnerProfile.aiNickname || "",
     helpTopics: learnerProfile.helpTopics || [],
     helpTopicLabels: labelsFor(HELP_OPTIONS, learnerProfile.helpTopics),
     language: labelFor(LANGUAGES, learnerProfile.preferredLanguage, "English"),
@@ -436,6 +437,46 @@ async function dbSaveProfile(profile) {
     return { ok: true, profile: data.profile };
   } catch {
     return { ok: false, error: "Network error. Could not save learner profile." };
+  }
+}
+
+async function dbSaveAccount(account) {
+  try {
+    const response = await fetch(
+      `${API_BASE_URL}/api/account`,
+      {
+        method: "PUT",
+        credentials: "include",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(account),
+      }
+    );
+
+    const data = await response.json().catch(() => ({}));
+
+    if (!response.ok) {
+      return {
+        ok: false,
+        error:
+          data.message ||
+          "Unable to save account information.",
+        errors: data.errors || {},
+      };
+    }
+
+    return {
+      ok: true,
+      account: data.account,
+    };
+  } catch {
+    return {
+      ok: false,
+      error:
+        "Network error. Could not save account information.",
+      errors: {},
+    };
   }
 }
 
@@ -1870,8 +1911,9 @@ function AgentPanel() {
   const [error,    setError]    = useState(null);
   const endRef = useRef(null);
 
-  const nick = user?.aiNickname || user?.name || "there";
+  const nick = user?.aiNickname || user?.displayName || user?.name || "there";
 
+  
   useEffect(() => {
     setMessages([{
       role: "ai",
@@ -3026,7 +3068,7 @@ function ScenariosPage() {
 
 // ─── Page: Profile ───────────────────────────────────────────────
 function ProfilePage() {
-  const { user, go, updateProfile } = useApp();
+  const { user, go, updateProfile, updateAccount } = useApp();
   const [form, setForm] = useState(() => ({
     aiNickname: user?.profile?.aiNickname || user?.displayName || "",
     educationLevel: user?.profile?.educationLevel || "",
@@ -3035,6 +3077,16 @@ function ProfilePage() {
     helpTopics: user?.profile?.helpTopics || [],
     learningStyle: user?.profile?.learningStyle || "",
   }));
+  const [accountForm, setAccountForm] = useState(() => ({
+    displayName:
+      user?.displayName ||
+      user?.name ||
+      "",
+    age: user?.age || "",
+  }));
+  const [accountErrors, setAccountErrors] = useState({});
+  const [accountSaving, setAccountSaving] = useState(false);
+  const [accountSaved, setAccountSaved] = useState(false);
   const [errors, setErrors] = useState({});
   const [saving, setSaving] = useState(false);
   const [saved, setSaved] = useState(false);
@@ -3056,7 +3108,58 @@ function ProfilePage() {
     }
   }
 
+  function setAccount(key, value) {
+    setAccountForm(current => ({
+      ...current,
+      [key]: value,
+    }));
+
+    setAccountErrors(current => ({
+      ...current,
+      [key]: undefined,
+      form: undefined,
+      forbidden: undefined,
+    }));
+
+    setAccountSaved(false);
+  }
+
+  async function saveAccount() {
+    if (accountSaving) return;
+
+    setAccountSaving(true);
+    setAccountSaved(false);
+    setAccountErrors({});
+
+    const result = await dbSaveAccount({
+      displayName: accountForm.displayName,
+      age: Number(accountForm.age),
+    });
+
+    setAccountSaving(false);
+
+    if (!result.ok) {
+      setAccountErrors({
+        form: result.error,
+        ...result.errors,
+      });
+      return;
+    }
+
+    updateAccount(result.account);
+
+    setAccountForm({
+      displayName:
+        result.account.displayName || "",
+      age:
+        result.account.age || "",
+    });
+
+    setAccountSaved(true);
+  }
+
   async function save() {
+    if(saving) return;
     setSaving(true);
     setSaved(false);
     const result = await dbSaveProfile({
@@ -3113,6 +3216,105 @@ function ProfilePage() {
             </div>
           </div>
         )}
+
+        <div className="card" style={{ marginBottom: "1rem" }}>
+          <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, marginBottom: "1rem" }} >Account Information</div>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem" }}>
+            <div className="field">
+              <label>Email</label>
+              <input value={user?.email || ""} readOnly />
+            </div>
+
+            <div className="field">
+              <label>Display name</label>
+              <input
+                value={accountForm.displayName}
+                maxLength={50}
+                onChange={event =>
+                  setAccount(
+                    "displayName",
+                    event.target.value
+                  )
+                }
+                placeholder="Your display name"
+              />
+
+              {accountErrors.displayName && (
+                <div className="field-error">
+                  {accountErrors.displayName}
+                </div>
+              )}
+            </div>
+
+            <div className="field">
+              <label>Age</label>
+              <input
+                type="number"
+                min="1"
+                max="120"
+                value={accountForm.age}
+                onChange={event =>
+                  setAccount(
+                    "age",
+                    event.target.value
+                  )
+                }
+              />
+
+              {accountErrors.age && (
+                <div className="field-error">
+                  {accountErrors.age}
+                </div>
+              )}
+            </div>
+
+            <div className="field">
+              <label>Age group</label>
+              <input
+                value={user?.ageGroup || ""}
+                readOnly
+              />
+            </div>
+          </div>
+
+          {(accountErrors.form ||
+            accountErrors.forbidden) && (
+            <div
+              className="field-error"
+              style={{ marginBottom: "0.75rem" }}
+            >
+              {accountErrors.form ||
+                accountErrors.forbidden}
+            </div>
+          )}
+
+          {accountSaved && (
+            <div
+              style={{
+                color: "var(--teal)",
+                fontSize: "0.85rem",
+                fontWeight: 600,
+                marginBottom: "0.75rem",
+              }}
+            >
+              Account saved.
+            </div>
+          )}
+
+          <button
+            className="btn-primary"
+            style={{
+              flex: "0 0 auto",
+              minWidth: 180,
+            }}
+            onClick={saveAccount}
+            disabled={accountSaving}
+          >
+            {accountSaving
+              ? "Saving..."
+              : "Save account"}
+          </button>
+        </div>
 
         <div className="card">
           <div className="field">
@@ -3426,15 +3628,15 @@ function ChatWidget() {
   const [loading,  setLoading]  = useState(false);
   const endRef = useRef(null);
 
-  const nick = user?.aiNickname || user?.name;
+  const displayName = user?.displayName || user?.name;
 
   useEffect(() => {
     if (!user || messages.length > 0) return;
     setMessages([{
       role: "ai",
-      text: `Hi ${nick}! This chat UI is ready, but live CyberGuard replies will be enabled after the backend AI Gateway phase.`,
+      text: `Hi ${displayName}! This chat UI is ready, but live CyberGuard replies will be enabled after the backend AI Gateway phase.`,
     }]);
-  }, [user, open, messages.length, nick]);
+  }, [user, open, messages.length, displayName]);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
@@ -3472,7 +3674,7 @@ function ChatWidget() {
             <div>
               💬 Cyber Wellness Assistant
               <div className="chat-header-sub">
-                {user ? `${nick} · ${group.label}` : "Guest"}
+                {user ? `${displayName} · ${group.label}` : "Guest"}
               </div>
             </div>
           </div>
@@ -3530,7 +3732,7 @@ const NAV_ITEMS = [
 
 function Navbar({ page }) {
   const { go, user, logout } = useApp();
-  const nick = user?.aiNickname || user?.name;
+  const displayName = user?.displayName || user?.name;
   return (
     <nav className="navbar">
       <div className="nav-logo" onClick={() => go("home")} style={{ cursor: "pointer" }}>🛡 <span>Cyberly</span></div>
@@ -3541,8 +3743,8 @@ function Navbar({ page }) {
       ))}
       {user ? (
         <div className="nav-user">
-          <div className="nav-avatar">{(nick || "U")[0].toUpperCase()}</div>
-          <span>{nick}</span>
+          <div className="nav-avatar">{(displayName || "U")[0].toUpperCase()}</div>
+          <span>{displayName}</span>
           <button className="nav-logout" onClick={logout}>Sign out</button>
         </div>
       ) : (
@@ -3593,6 +3795,32 @@ export default function App() {
   function updateProfile(profileData) {
     setUser(current => current ? normalizeSessionUser(current, profileData) : current);
   }
+  function updateAccount(accountData) {
+    setUser(current => {
+      if (!current) return current;
+
+      return {
+        ...current,
+        ...accountData,
+        name:
+          accountData.displayName ??
+          current.name,
+
+        displayName:
+          accountData.displayName ??
+          current.displayName ??
+          current.name,
+
+        age:
+          accountData.age ??
+          current.age,
+
+        ageGroup:
+          accountData.ageGroup ??
+          current.ageGroup,
+      };
+    });
+  }  
   async function logout() {
     await dbLogout();
     setUser(null);
@@ -3615,6 +3843,7 @@ export default function App() {
     login,
     logout,
     updateProfile,
+    updateAccount,
     resourceFocusTopic,
     openRecommendedResource,
     clearResourceFocus: () => setResourceFocusTopic(null),
