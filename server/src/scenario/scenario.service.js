@@ -13,6 +13,7 @@ const {
   normalizeSlug,
   validateDecisionInput,
 } = require('./scenario.validation');
+const { normalizeLocale } = require('../i18n/locale');
 
 const DIFFICULTY_ORDER = ['beginner', 'developing', 'intermediate', 'advanced'];
 
@@ -24,10 +25,11 @@ function httpError(status, message, errors) {
 }
 
 function createScenarioService(repository, progressService) {
-  async function listScenarios(userId, filters = {}) {
+  async function listScenarios(userId, filters = {}, localeInput) {
+    const locale = normalizeLocale(localeInput);
     const topicCode = filters.topicCode && isValidTopicCode(filters.topicCode) ? filters.topicCode : null;
     const difficulty = filters.difficulty && isValidDifficulty(filters.difficulty) ? filters.difficulty : null;
-    const rows = await repository.listPublishedScenarios({ topicCode, difficulty }, userId);
+    const rows = await repository.listPublishedScenarios({ topicCode, difficulty }, userId, locale);
     return {
       scenarios: rows.map(row => mapScenarioMeta(row, {
         latestAttempt: row.latest_attempt_id ? {
@@ -40,10 +42,11 @@ function createScenarioService(repository, progressService) {
     };
   }
 
-  async function getScenario(slug) {
-    const scenario = await repository.findPublishedBySlug(normalizeSlug(slug));
+  async function getScenario(slug, localeInput) {
+    const locale = normalizeLocale(localeInput);
+    const scenario = await repository.findPublishedBySlug(normalizeSlug(slug), locale);
     if (!scenario) throw httpError(404, 'Scenario was not found.');
-    const firstStep = await repository.findStepByOrder(scenario.id, 1);
+    const firstStep = await repository.findStepByOrder(scenario.id, 1, locale);
     return {
       scenario: mapScenarioMeta(scenario),
       firstStep: mapSafeStep(firstStep),
@@ -51,13 +54,14 @@ function createScenarioService(repository, progressService) {
     };
   }
 
-  async function startOrResume(userId, slug) {
+  async function startOrResume(userId, slug, localeInput) {
+    const locale = normalizeLocale(localeInput);
     return repository.withTransaction(async (connection) => {
-      const scenario = await repository.findPublishedBySlug(normalizeSlug(slug), connection);
+      const scenario = await repository.findPublishedBySlug(normalizeSlug(slug), locale, connection);
       if (!scenario) throw httpError(404, 'Scenario was not found.');
       let attempt = await repository.findInProgressAttempt(userId, scenario.id, connection);
       if (!attempt) attempt = await repository.createAttempt(userId, scenario.id, connection);
-      const steps = await repository.listSteps(scenario.id, connection);
+      const steps = await repository.listSteps(scenario.id, locale, connection);
       const decisions = await repository.listDecisions(attempt.id, connection);
       const currentStep = decisions.length === steps.length
         ? null
@@ -66,11 +70,12 @@ function createScenarioService(repository, progressService) {
     });
   }
 
-  async function getAttempt(userId, attemptId) {
+  async function getAttempt(userId, attemptId, localeInput) {
+    const locale = normalizeLocale(localeInput);
     const attempt = await repository.findAttemptById(Number(attemptId));
     if (!attempt || attempt.user_id !== userId) throw httpError(404, 'Scenario attempt was not found.');
-    const scenario = await repository.findScenarioById(attempt.scenario_id);
-    const steps = await repository.listSteps(scenario.id);
+    const scenario = await repository.findScenarioById(attempt.scenario_id, locale);
+    const steps = await repository.listSteps(scenario.id, locale);
     const decisions = await repository.listDecisions(attempt.id);
     const currentStep = attempt.status === 'completed' || decisions.length === steps.length
       ? null
@@ -78,7 +83,8 @@ function createScenarioService(repository, progressService) {
     return mapAttempt(attempt, scenario, currentStep, decisions, steps);
   }
 
-  async function saveDecision(userId, attemptId, body) {
+  async function saveDecision(userId, attemptId, body, localeInput) {
+    const locale = normalizeLocale(localeInput);
     const validation = validateDecisionInput(body);
     if (!validation.ok) throw httpError(400, 'Decision details are invalid.', validation.errors);
 
@@ -87,8 +93,8 @@ function createScenarioService(repository, progressService) {
       if (!attempt || attempt.user_id !== userId) throw httpError(404, 'Scenario attempt was not found.');
       if (attempt.status !== 'in_progress') throw httpError(409, 'Scenario attempt is already completed.');
 
-      const scenario = await repository.findScenarioById(attempt.scenario_id, connection);
-      const step = await repository.findStep(validation.value.stepId, connection);
+      const scenario = await repository.findScenarioById(attempt.scenario_id, locale, connection);
+      const step = await repository.findStep(validation.value.stepId, locale, connection);
       if (!step || step.scenario_id !== scenario.id) throw httpError(400, 'Step does not belong to this scenario.');
       if (Number(step.step_order) !== Number(attempt.current_step_order)) {
         throw httpError(409, 'Complete the current scenario step before moving ahead.');
@@ -108,7 +114,7 @@ function createScenarioService(repository, progressService) {
       }, connection);
 
       const nextStepOrder = option.nextStepOrder || (Number(step.step_order) < Number(scenario.total_steps) ? Number(step.step_order) + 1 : null);
-      const nextStep = nextStepOrder ? await repository.findStepByOrder(scenario.id, nextStepOrder, connection) : null;
+      const nextStep = nextStepOrder ? await repository.findStepByOrder(scenario.id, nextStepOrder, locale, connection) : null;
       const updatedAttempt = await repository.updateCurrentStep(attempt.id, nextStep ? nextStep.step_order : scenario.total_steps, connection);
 
       return {
@@ -124,12 +130,13 @@ function createScenarioService(repository, progressService) {
     });
   }
 
-  async function completeAttempt(userId, attemptId) {
+  async function completeAttempt(userId, attemptId, localeInput) {
+    const locale = normalizeLocale(localeInput);
     return repository.withTransaction(async (connection) => {
       const attempt = await repository.findAttemptById(Number(attemptId), connection);
       if (!attempt || attempt.user_id !== userId) throw httpError(404, 'Scenario attempt was not found.');
-      const scenario = await repository.findScenarioById(attempt.scenario_id, connection);
-      const steps = await repository.listSteps(scenario.id, connection);
+      const scenario = await repository.findScenarioById(attempt.scenario_id, locale, connection);
+      const steps = await repository.listSteps(scenario.id, locale, connection);
       const decisions = await repository.listDecisions(attempt.id, connection);
 
       if (attempt.status === 'completed') {
@@ -169,14 +176,15 @@ function createScenarioService(repository, progressService) {
     });
   }
 
-  async function getResult(userId, attemptId) {
+  async function getResult(userId, attemptId, localeInput) {
+    const locale = normalizeLocale(localeInput);
     const attempt = await repository.findAttemptById(Number(attemptId));
     if (!attempt || attempt.user_id !== userId || attempt.status !== 'completed') {
       throw httpError(404, 'Completed scenario result was not found.');
     }
-    const scenario = await repository.findScenarioById(attempt.scenario_id);
+    const scenario = await repository.findScenarioById(attempt.scenario_id, locale);
     const [steps, decisions, progressEvent, currentRecommendation] = await Promise.all([
-      repository.listSteps(scenario.id),
+      repository.listSteps(scenario.id, locale),
       repository.listDecisions(attempt.id),
       repository.getProgressEventForAttempt(attempt.id),
       progressService.getCurrentRecommendation(userId),
@@ -187,12 +195,13 @@ function createScenarioService(repository, progressService) {
     }, currentRecommendation.recommendation);
   }
 
-  async function getRecommendedScenarios(userId) {
+  async function getRecommendedScenarios(userId, localeInput) {
+    const locale = normalizeLocale(localeInput);
     const currentRecommendation = await progressService.getCurrentRecommendation(userId);
     const recommendation = currentRecommendation.recommendation;
     if (!recommendation?.topicCode) return { recommendation, scenarios: [] };
 
-    const all = (await repository.listPublishedScenarios({ topicCode: recommendation.topicCode }, userId))
+    const all = (await repository.listPublishedScenarios({ topicCode: recommendation.topicCode }, userId, locale))
       .map(row => mapScenarioMeta(row, {
         latestAttempt: row.latest_attempt_id ? {
           id: row.latest_attempt_id,
@@ -216,8 +225,9 @@ function createScenarioService(repository, progressService) {
     return { recommendation, scenarios: ranked.slice(0, 2) };
   }
 
-  async function getScenarioDashboard(userId) {
-    const stats = await repository.listCompletedScenarioStats(userId);
+  async function getScenarioDashboard(userId, localeInput) {
+    const locale = normalizeLocale(localeInput);
+    const stats = await repository.listCompletedScenarioStats(userId, locale);
     return {
       completedCount: Number(stats.completedCount || 0),
       latestCompleted: stats.latestCompleted ? {

@@ -3,7 +3,46 @@ function createScenarioRepository(pool) {
     return connection || pool;
   }
 
-  async function listPublishedScenarios(filters = {}, userId, connection) {
+  function localizeOptions(optionsValue, translations, locale) {
+    const options = Array.isArray(optionsValue) ? optionsValue : JSON.parse(optionsValue || '[]');
+    return options.map(option => {
+      const translated = translations.get(option.key) || {};
+      return {
+        ...option,
+        text: translated[locale]?.text || translated.en?.text || option.text,
+        feedback: translated[locale]?.feedback || translated.en?.feedback || option.feedback,
+        safetyExplanation: translated[locale]?.safety_explanation || translated.en?.safety_explanation || option.safetyExplanation,
+      };
+    });
+  }
+
+  async function localizeSteps(rows, locale, connection) {
+    if (!rows.length) return rows;
+    const stepIds = rows.map(row => row.id);
+    const [optionTranslations] = await db(connection).query(
+      `SELECT step_id, option_key, locale, text, feedback, safety_explanation
+       FROM scenario_option_translations
+       WHERE step_id IN (?) AND locale IN (?, 'en')`,
+      [stepIds, locale]
+    );
+    const optionsByStep = new Map();
+    for (const translation of optionTranslations) {
+      const stepMap = optionsByStep.get(Number(translation.step_id)) || new Map();
+      const optionTranslationsByLocale = stepMap.get(translation.option_key) || {};
+      optionTranslationsByLocale[translation.locale] = translation;
+      stepMap.set(translation.option_key, optionTranslationsByLocale);
+      optionsByStep.set(Number(translation.step_id), stepMap);
+    }
+
+    return rows.map(row => ({
+      ...row,
+      situation_text: row.requested_situation_text || row.english_situation_text || row.situation_text,
+      prompt_text: row.requested_prompt_text || row.english_prompt_text || row.prompt_text,
+      options_json: localizeOptions(row.options_json, optionsByStep.get(Number(row.id)) || new Map(), locale),
+    }));
+  }
+
+  async function listPublishedScenarios(filters = {}, userId, locale = 'en', connection) {
     const conditions = ["sd.status = 'published'"];
     const params = [];
     if (filters.topicCode) {
@@ -17,11 +56,17 @@ function createScenarioRepository(pool) {
 
     const [rows] = await db(connection).query(
       `SELECT sd.*,
+              COALESCE(requested.title, english.title, sd.title) AS title,
+              COALESCE(requested.summary, english.summary, sd.summary) AS summary,
               latest.id AS latest_attempt_id,
               latest.status AS latest_attempt_status,
               latest.result_level AS latest_result_level,
               latest.percentage AS latest_percentage
        FROM scenario_definitions sd
+       LEFT JOIN scenario_definition_translations requested
+         ON requested.scenario_id = sd.id AND requested.locale = ?
+       LEFT JOIN scenario_definition_translations english
+         ON english.scenario_id = sd.id AND english.locale = 'en'
        LEFT JOIN (
          SELECT sa.*
          FROM scenario_attempts sa
@@ -39,59 +84,101 @@ function createScenarioRepository(pool) {
           'privacy_and_personal_information',
           'misinformation_and_deepfakes'
        ), FIELD(sd.difficulty, 'beginner', 'developing', 'intermediate', 'advanced'), sd.id`,
-      [userId, ...params]
+      [locale, userId, ...params]
     );
     return rows;
   }
 
-  async function findPublishedBySlug(slug, connection) {
+  async function findPublishedBySlug(slug, locale = 'en', connection) {
     const [rows] = await db(connection).query(
-      `SELECT *
-       FROM scenario_definitions
-       WHERE slug = ? AND status = 'published'
-       ORDER BY version DESC
+      `SELECT sd.*,
+              COALESCE(requested.title, english.title, sd.title) AS title,
+              COALESCE(requested.summary, english.summary, sd.summary) AS summary
+       FROM scenario_definitions sd
+       LEFT JOIN scenario_definition_translations requested
+         ON requested.scenario_id = sd.id AND requested.locale = ?
+       LEFT JOIN scenario_definition_translations english
+         ON english.scenario_id = sd.id AND english.locale = 'en'
+       WHERE sd.slug = ? AND sd.status = 'published'
+       ORDER BY sd.version DESC
        LIMIT 1`,
-      [slug]
+      [locale, slug]
     );
     return rows[0] || null;
   }
 
-  async function findScenarioById(id, connection) {
+  async function findScenarioById(id, locale = 'en', connection) {
     const [rows] = await db(connection).query(
-      'SELECT * FROM scenario_definitions WHERE id = ? LIMIT 1',
-      [id]
-    );
-    return rows[0] || null;
-  }
-
-  async function listSteps(scenarioId, connection) {
-    const [rows] = await db(connection).query(
-      `SELECT *
-       FROM scenario_steps
-       WHERE scenario_id = ?
-       ORDER BY step_order`,
-      [scenarioId]
-    );
-    return rows;
-  }
-
-  async function findStep(stepId, connection) {
-    const [rows] = await db(connection).query(
-      'SELECT * FROM scenario_steps WHERE id = ? LIMIT 1',
-      [stepId]
-    );
-    return rows[0] || null;
-  }
-
-  async function findStepByOrder(scenarioId, stepOrder, connection) {
-    const [rows] = await db(connection).query(
-      `SELECT *
-       FROM scenario_steps
-       WHERE scenario_id = ? AND step_order = ?
+      `SELECT sd.*,
+              COALESCE(requested.title, english.title, sd.title) AS title,
+              COALESCE(requested.summary, english.summary, sd.summary) AS summary
+       FROM scenario_definitions sd
+       LEFT JOIN scenario_definition_translations requested
+         ON requested.scenario_id = sd.id AND requested.locale = ?
+       LEFT JOIN scenario_definition_translations english
+         ON english.scenario_id = sd.id AND english.locale = 'en'
+       WHERE sd.id = ?
        LIMIT 1`,
-      [scenarioId, stepOrder]
+      [locale, id]
     );
     return rows[0] || null;
+  }
+
+  async function listSteps(scenarioId, locale = 'en', connection) {
+    const [rows] = await db(connection).query(
+      `SELECT ss.*,
+              requested.situation_text AS requested_situation_text,
+              requested.prompt_text AS requested_prompt_text,
+              english.situation_text AS english_situation_text,
+              english.prompt_text AS english_prompt_text
+       FROM scenario_steps ss
+       LEFT JOIN scenario_step_translations requested
+         ON requested.step_id = ss.id AND requested.locale = ?
+       LEFT JOIN scenario_step_translations english
+         ON english.step_id = ss.id AND english.locale = 'en'
+       WHERE ss.scenario_id = ?
+       ORDER BY ss.step_order`,
+      [locale, scenarioId]
+    );
+    return localizeSteps(rows, locale, connection);
+  }
+
+  async function findStep(stepId, locale = 'en', connection) {
+    const [rows] = await db(connection).query(
+      `SELECT ss.*,
+              requested.situation_text AS requested_situation_text,
+              requested.prompt_text AS requested_prompt_text,
+              english.situation_text AS english_situation_text,
+              english.prompt_text AS english_prompt_text
+       FROM scenario_steps ss
+       LEFT JOIN scenario_step_translations requested
+         ON requested.step_id = ss.id AND requested.locale = ?
+       LEFT JOIN scenario_step_translations english
+         ON english.step_id = ss.id AND english.locale = 'en'
+       WHERE ss.id = ?
+       LIMIT 1`,
+      [locale, stepId]
+    );
+    return (await localizeSteps(rows, locale, connection))[0] || null;
+  }
+
+  async function findStepByOrder(scenarioId, stepOrder, locale = 'en', connection) {
+    const [rows] = await db(connection).query(
+      `SELECT ss.*,
+              requested.situation_text AS requested_situation_text,
+              requested.prompt_text AS requested_prompt_text,
+              english.situation_text AS english_situation_text,
+              english.prompt_text AS english_prompt_text
+       FROM scenario_steps ss
+       LEFT JOIN scenario_step_translations requested
+         ON requested.step_id = ss.id AND requested.locale = ?
+       LEFT JOIN scenario_step_translations english
+         ON english.step_id = ss.id AND english.locale = 'en'
+       WHERE ss.scenario_id = ? AND ss.step_order = ?
+       LIMIT 1`,
+      [locale, scenarioId, stepOrder]
+    );
+    return (await localizeSteps(rows, locale, connection))[0] || null;
   }
 
   async function findInProgressAttempt(userId, scenarioId, connection) {
@@ -198,7 +285,7 @@ function createScenarioRepository(pool) {
     return rows[0] || null;
   }
 
-  async function listCompletedScenarioStats(userId, connection) {
+  async function listCompletedScenarioStats(userId, locale = 'en', connection) {
     const [rows] = await db(connection).query(
       `SELECT COUNT(*) AS completed_count
        FROM scenario_attempts
@@ -206,22 +293,38 @@ function createScenarioRepository(pool) {
       [userId]
     );
     const [latest] = await db(connection).query(
-      `SELECT sa.*, sd.title, sd.slug, sd.topic_code, sd.difficulty
+      `SELECT sa.*,
+              COALESCE(requested.title, english.title, sd.title) AS title,
+              sd.slug,
+              sd.topic_code,
+              sd.difficulty
        FROM scenario_attempts sa
        JOIN scenario_definitions sd ON sd.id = sa.scenario_id
+       LEFT JOIN scenario_definition_translations requested
+         ON requested.scenario_id = sd.id AND requested.locale = ?
+       LEFT JOIN scenario_definition_translations english
+         ON english.scenario_id = sd.id AND english.locale = 'en'
        WHERE sa.user_id = ? AND sa.status = 'completed'
        ORDER BY sa.completed_at DESC, sa.id DESC
        LIMIT 1`,
-      [userId]
+      [locale, userId]
     );
     const [inProgress] = await db(connection).query(
-      `SELECT sa.*, sd.title, sd.slug, sd.topic_code, sd.difficulty
+      `SELECT sa.*,
+              COALESCE(requested.title, english.title, sd.title) AS title,
+              sd.slug,
+              sd.topic_code,
+              sd.difficulty
        FROM scenario_attempts sa
        JOIN scenario_definitions sd ON sd.id = sa.scenario_id
+       LEFT JOIN scenario_definition_translations requested
+         ON requested.scenario_id = sd.id AND requested.locale = ?
+       LEFT JOIN scenario_definition_translations english
+         ON english.scenario_id = sd.id AND english.locale = 'en'
        WHERE sa.user_id = ? AND sa.status = 'in_progress'
        ORDER BY sa.started_at DESC, sa.id DESC
        LIMIT 1`,
-      [userId]
+      [locale, userId]
     );
     return {
       completedCount: rows[0].completed_count,

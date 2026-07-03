@@ -1,5 +1,8 @@
 import { useState, createContext, useContext, useRef, useEffect } from "react";
+import { useTranslation } from "react-i18next";
 import profileMappings from "./profileMappings";
+import i18n, { STORAGE_KEY as UI_LANGUAGE_STORAGE_KEY, getStoredUiLanguage} from "./i18n";
+import { normalizeLocale, profileLanguageToLocale } from "./i18n/languageMappings";
 
 // ─── Design tokens ────────────────────────────────────────────────
 /*const COLORS = {
@@ -480,9 +483,13 @@ async function dbSaveAccount(account) {
   }
 }
 
-async function dbGetInitialAssessment() {
+function localeQuery(locale) {
+  return `locale=${encodeURIComponent(normalizeLocale(locale))}`;
+}
+
+async function dbGetInitialAssessment(locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/assessments/initial`, {
+    const response = await fetch(`${API_BASE_URL}/api/assessments/initial?${localeQuery(locale)}`, {
       method: "GET",
       credentials: "include",
     });
@@ -494,9 +501,9 @@ async function dbGetInitialAssessment() {
   }
 }
 
-async function dbGetAssessmentStatus() {
+async function dbGetAssessmentStatus(locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/assessments/initial/status`, {
+    const response = await fetch(`${API_BASE_URL}/api/assessments/initial/status?${localeQuery(locale)}`, {
       method: "GET",
       credentials: "include",
     });
@@ -508,9 +515,9 @@ async function dbGetAssessmentStatus() {
   }
 }
 
-async function dbStartInitialAttempt() {
+async function dbStartInitialAttempt(locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/assessments/initial/attempts`, {
+    const response = await fetch(`${API_BASE_URL}/api/assessments/initial/attempts?${localeQuery(locale)}`, {
       method: "POST",
       credentials: "include",
     });
@@ -538,9 +545,9 @@ async function dbSaveAssessmentAnswer(attemptId, questionId, selectedOptionKey) 
   }
 }
 
-async function dbSubmitAssessment(attemptId) {
+async function dbSubmitAssessment(attemptId, locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/assessment-attempts/${attemptId}/submit`, {
+    const response = await fetch(`${API_BASE_URL}/api/assessment-attempts/${attemptId}/submit?${localeQuery(locale)}`, {
       method: "POST",
       credentials: "include",
     });
@@ -608,11 +615,12 @@ async function dbMarkRecommendationCompleted(id) {
   }
 }
 
-async function dbGetScenarios(filters = {}) {
+async function dbGetScenarios(filters = {}, locale) {
   try {
     const params = new URLSearchParams();
     if (filters.topicCode) params.set("topicCode", filters.topicCode);
     if (filters.difficulty) params.set("difficulty", filters.difficulty);
+    params.set("locale", normalizeLocale(locale));
     const response = await fetch(`${API_BASE_URL}/api/scenarios${params.toString() ? `?${params}` : ""}`, {
       method: "GET",
       credentials: "include",
@@ -625,9 +633,9 @@ async function dbGetScenarios(filters = {}) {
   }
 }
 
-async function dbGetScenario(slug) {
+async function dbGetScenario(slug, locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/scenarios/${slug}`, {
+    const response = await fetch(`${API_BASE_URL}/api/scenarios/${slug}?${localeQuery(locale)}`, {
       method: "GET",
       credentials: "include",
     });
@@ -639,9 +647,9 @@ async function dbGetScenario(slug) {
   }
 }
 
-async function dbStartScenario(slug) {
+async function dbStartScenario(slug, locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/scenarios/${slug}/attempts`, {
+    const response = await fetch(`${API_BASE_URL}/api/scenarios/${slug}/attempts?${localeQuery(locale)}`, {
       method: "POST",
       credentials: "include",
     });
@@ -653,9 +661,9 @@ async function dbStartScenario(slug) {
   }
 }
 
-async function dbGetScenarioAttempt(attemptId) {
+async function dbGetScenarioAttempt(attemptId, locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/scenario-attempts/${attemptId}`, {
+    const response = await fetch(`${API_BASE_URL}/api/scenario-attempts/${attemptId}?${localeQuery(locale)}`, {
       method: "GET",
       credentials: "include",
     });
@@ -667,9 +675,9 @@ async function dbGetScenarioAttempt(attemptId) {
   }
 }
 
-async function dbSaveScenarioDecision(attemptId, stepId, selectedOptionKey) {
+async function dbSaveScenarioDecision(attemptId, stepId, selectedOptionKey, locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/scenario-attempts/${attemptId}/decisions`, {
+    const response = await fetch(`${API_BASE_URL}/api/scenario-attempts/${attemptId}/decisions?${localeQuery(locale)}`, {
       method: "PUT",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -683,9 +691,9 @@ async function dbSaveScenarioDecision(attemptId, stepId, selectedOptionKey) {
   }
 }
 
-async function dbCompleteScenario(attemptId) {
+async function dbCompleteScenario(attemptId, locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/scenario-attempts/${attemptId}/complete`, {
+    const response = await fetch(`${API_BASE_URL}/api/scenario-attempts/${attemptId}/complete?${localeQuery(locale)}`, {
       method: "POST",
       credentials: "include",
     });
@@ -697,9 +705,9 @@ async function dbCompleteScenario(attemptId) {
   }
 }
 
-async function dbGetScenarioResult(attemptId) {
+async function dbGetScenarioResult(attemptId, locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/scenario-attempts/${attemptId}/result`, {
+    const response = await fetch(`${API_BASE_URL}/api/scenario-attempts/${attemptId}/result?${localeQuery(locale)}`, {
       method: "GET",
       credentials: "include",
     });
@@ -711,9 +719,9 @@ async function dbGetScenarioResult(attemptId) {
   }
 }
 
-async function dbGetRecommendedScenarios() {
+async function dbGetRecommendedScenarios(locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/scenarios/recommended`, {
+    const response = await fetch(`${API_BASE_URL}/api/scenarios/recommended?${localeQuery(locale)}`, {
       method: "GET",
       credentials: "include",
     });
@@ -725,9 +733,9 @@ async function dbGetRecommendedScenarios() {
   }
 }
 
-async function dbGetScenarioDashboard() {
+async function dbGetScenarioDashboard(locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/scenarios/dashboard`, {
+    const response = await fetch(`${API_BASE_URL}/api/scenarios/dashboard?${localeQuery(locale)}`, {
       method: "GET",
       credentials: "include",
     });
@@ -806,52 +814,117 @@ async function askClaude(messages, systemPrompt) {
 // STEP 1 — Account credentials
 // ─────────────────────────────────────────────────────────────────
 function StepCredentials({ data, onChange, errors }) {
+  const { t } = useTranslation();
+
   return (
     <>
-      <div className="auth-title">Create your account</div>
-      <div className="auth-sub">Account details stay with your user account. Learning preferences are saved after onboarding.</div>
+      <div className="auth-title">
+        {t("auth.createAccount")}
+      </div>
+
+      <div className="auth-sub">
+        {t("auth.accountDetailsHint")}
+      </div>
 
       <div className="field">
-        <label>Email</label>
+        <label>
+          {t("auth.email")}
+        </label>
+
         <input
           type="email"
-          placeholder="you@example.com"
+          placeholder={t("auth.emailPlaceholder")}
           value={data.email}
-          onChange={e => onChange("email", e.target.value)}
+          onChange={event =>
+            onChange(
+              "email",
+              event.target.value
+            )
+          }
         />
-        {errors.email && <div className="field-error">{errors.email}</div>}
+
+        {errors.email && (
+          <div className="field-error">
+            {errors.email}
+          </div>
+        )}
       </div>
 
       <div className="field">
-        <label>Display name</label>
+        <label>
+          {t("auth.displayName")}
+        </label>
+
         <input
-          placeholder="Your name"
+          placeholder={t(
+            "auth.displayNamePlaceholder"
+          )}
           value={data.displayName}
-          onChange={e => onChange("displayName", e.target.value)}
+          onChange={event =>
+            onChange(
+              "displayName",
+              event.target.value
+            )
+          }
         />
-        {errors.displayName && <div className="field-error">{errors.displayName}</div>}
+
+        {errors.displayName && (
+          <div className="field-error">
+            {errors.displayName}
+          </div>
+        )}
       </div>
 
       <div className="field">
-        <label>Age</label>
+        <label>
+          {t("auth.age")}
+        </label>
+
         <input
           type="number"
-          placeholder="e.g. 16"
+          placeholder={t(
+            "auth.agePlaceholder"
+          )}
           value={data.age}
-          onChange={e => onChange("age", e.target.value)}
+          onChange={event =>
+            onChange(
+              "age",
+              event.target.value
+            )
+          }
         />
-        {errors.age && <div className="field-error">{errors.age}</div>}
+
+        {errors.age && (
+          <div className="field-error">
+            {errors.age}
+          </div>
+        )}
       </div>
 
       <div className="field">
-        <label>Password</label>
+        <label>
+          {t("auth.password")}
+        </label>
+
         <input
           type="password"
-          placeholder="At least 8 characters"
+          placeholder={t(
+            "auth.passwordPlaceholder"
+          )}
           value={data.password}
-          onChange={e => onChange("password", e.target.value)}
+          onChange={event =>
+            onChange(
+              "password",
+              event.target.value
+            )
+          }
         />
-        {errors.password && <div className="field-error">{errors.password}</div>}
+
+        {errors.password && (
+          <div className="field-error">
+            {errors.password}
+          </div>
+        )}
       </div>
     </>
   );
@@ -860,20 +933,42 @@ function StepCredentials({ data, onChange, errors }) {
 // ─────────────────────────────────────────────────────────────────
 // STEP 2 — AI nickname
 // ─────────────────────────────────────────────────────────────────
-function StepNickname({ data, onChange, errors }) {
+function StepNickname({
+  data,
+  onChange,
+  errors,
+}) {
+  const { t } = useTranslation();
+
   return (
     <>
       <div className="q-label">
-        1. What should the AI call you?
-        <div className="q-hint">This can be a nickname or alias — it's just for CyberGuard.</div>
+        {t("onboarding.nicknameQuestion")}
+
+        <div className="q-hint">
+          {t("onboarding.nicknameHint")}
+        </div>
       </div>
+
       <div className="field">
         <input
-          placeholder="e.g. Alex, Koko, ZK…"
+          placeholder={t(
+            "onboarding.nicknamePlaceholder"
+          )}
           value={data.aiNickname}
-          onChange={e => onChange("aiNickname", e.target.value)}
+          onChange={event =>
+            onChange(
+              "aiNickname",
+              event.target.value
+            )
+          }
         />
-        {errors.aiNickname && <div className="field-error">{errors.aiNickname}</div>}
+
+        {errors.aiNickname && (
+          <div className="field-error">
+            {errors.aiNickname}
+          </div>
+        )}
       </div>
     </>
   );
@@ -882,18 +977,40 @@ function StepNickname({ data, onChange, errors }) {
 // ─────────────────────────────────────────────────────────────────
 // STEP 3 — Education level
 // ─────────────────────────────────────────────────────────────────
-function StepEducationLevel({ data, onChange }) {
+function StepEducationLevel({
+  data,
+  onChange,
+}) {
+  const { t } = useTranslation();
+
   return (
     <>
-      <div className="q-label">2. What education level best fits you?</div>
+      <div className="q-label">
+        {t("onboarding.educationQuestion")}
+      </div>
+
       <div className="opt-grid">
         {EDUCATION_LEVELS.map(level => (
           <button
             key={level.value}
-            className={`opt-btn full-width ${data.educationLevel === level.value ? "selected" : ""}`}
-            onClick={() => onChange("educationLevel", level.value)}
+            className={`opt-btn full-width ${
+              data.educationLevel === level.value
+                ? "selected"
+                : ""
+            }`}
+            onClick={() =>
+              onChange(
+                "educationLevel",
+                level.value
+              )
+            }
           >
-            {level.label}
+            {t(
+              `profileOptions.education.${level.value}`,
+              {
+                defaultValue: level.label,
+              }
+            )}
           </button>
         ))}
       </div>
@@ -904,18 +1021,42 @@ function StepEducationLevel({ data, onChange }) {
 // ─────────────────────────────────────────────────────────────────
 // STEP 4 — Language preference
 // ─────────────────────────────────────────────────────────────────
-function StepLanguage({ data, onChange }) {
+function StepLanguage({
+  data,
+  onChange,
+}) {
+  const { t } = useTranslation();
+
   return (
     <>
-      <div className="q-label">3. Which language do you prefer?</div>
+      <div className="q-label">
+        {t("onboarding.languageQuestion")}
+      </div>
+
       <div className="opt-grid">
-        {LANGUAGES.map(lang => (
+        {LANGUAGES.map(languageOption => (
           <button
-            key={lang.value}
-            className={`opt-btn full-width ${data.language === lang.value ? "selected" : ""}`}
-            onClick={() => onChange("language", lang.value)}
+            key={languageOption.value}
+            className={`opt-btn full-width ${
+              data.language ===
+              languageOption.value
+                ? "selected"
+                : ""
+            }`}
+            onClick={() =>
+              onChange(
+                "language",
+                languageOption.value
+              )
+            }
           >
-            {lang.label}
+            {t(
+              `profileOptions.language.${languageOption.value}`,
+              {
+                defaultValue:
+                  languageOption.label,
+              }
+            )}
           </button>
         ))}
       </div>
@@ -926,20 +1067,65 @@ function StepLanguage({ data, onChange }) {
 // ─────────────────────────────────────────────────────────────────
 // STEP 5 — Cybersecurity familiarity
 // ─────────────────────────────────────────────────────────────────
-function StepFamiliarity({ data, onChange }) {
+function StepFamiliarity({
+  data,
+  onChange,
+}) {
+  const { t } = useTranslation();
+
   return (
     <>
-      <div className="q-label">4. How familiar are you with cybersecurity?</div>
+      <div className="q-label">
+        {t(
+          "onboarding.familiarityQuestion"
+        )}
+      </div>
+
       <div className="opt-grid">
-        {FAMILIARITY.map(lvl => (
+        {FAMILIARITY.map(level => (
           <button
-            key={lvl.value}
-            className={`opt-btn full-width ${data.familiarity === lvl.value ? "selected" : ""}`}
-            onClick={() => onChange("familiarity", lvl.value)}
+            key={level.value}
+            className={`opt-btn full-width ${
+              data.familiarity === level.value
+                ? "selected"
+                : ""
+            }`}
+            onClick={() =>
+              onChange(
+                "familiarity",
+                level.value
+              )
+            }
           >
-            <strong>{lvl.label}</strong>
-            <div style={{ fontSize: "0.78rem", color: data.familiarity === lvl.value ? "inherit" : "#888", marginTop: "0.2rem", fontWeight: 400 }}>
-              {lvl.desc}
+            <strong>
+              {t(
+                `profileOptions.familiarity.${level.value}.label`,
+                {
+                  defaultValue:
+                    level.label,
+                }
+              )}
+            </strong>
+
+            <div
+              style={{
+                fontSize: "0.78rem",
+                color:
+                  data.familiarity ===
+                  level.value
+                    ? "inherit"
+                    : "#888",
+                marginTop: "0.2rem",
+                fontWeight: 400,
+              }}
+            >
+              {t(
+                `profileOptions.familiarity.${level.value}.description`,
+                {
+                  defaultValue:
+                    level.desc,
+                }
+              )}
             </div>
           </button>
         ))}
@@ -951,35 +1137,74 @@ function StepFamiliarity({ data, onChange }) {
 // ─────────────────────────────────────────────────────────────────
 // STEP 6 — Help topics (multi-select, up to 3)
 // ─────────────────────────────────────────────────────────────────
-function StepHelpTopics({ data, onChange }) {
+function StepHelpTopics({
+  data,
+  onChange,
+}) {
+  const { t } = useTranslation();
   const selected = data.helpTopics || [];
-  function toggle(topic) {
-    if (selected.includes(topic)) {
-      onChange("helpTopics", selected.filter(t => t !== topic));
+
+  function toggle(topicValue) {
+    if (selected.includes(topicValue)) {
+      onChange(
+        "helpTopics",
+        selected.filter(
+          value => value !== topicValue
+        )
+      );
     } else if (selected.length < 3) {
-      onChange("helpTopics", [...selected, topic]);
+      onChange(
+        "helpTopics",
+        [...selected, topicValue]
+      );
     }
   }
+
   return (
     <>
       <div className="q-label">
-        5. What would you like help with?
-        <div className="q-hint">Choose up to 3 topics.</div>
+        {t("onboarding.helpTopicsQuestion")}
+
+        <div className="q-hint">
+          {t("onboarding.helpTopicsHint")}
+        </div>
       </div>
+
       <div className="chip-grid">
         {HELP_OPTIONS.map(topic => (
           <button
             key={topic.value}
-            className={`chip-btn ${selected.includes(topic.value) ? "selected" : ""}`}
-            onClick={() => toggle(topic.value)}
-            disabled={selected.length >= 3 && !selected.includes(topic.value)}
+            className={`chip-btn ${
+              selected.includes(topic.value)
+                ? "selected"
+                : ""
+            }`}
+            onClick={() =>
+              toggle(topic.value)
+            }
+            disabled={
+              selected.length >= 3 &&
+              !selected.includes(topic.value)
+            }
           >
-            {topic.label}
+            {t(
+              `profileOptions.helpTopics.${topic.value}`,
+              {
+                defaultValue: topic.label,
+              }
+            )}
           </button>
         ))}
       </div>
+
       <div className="chip-limit-note">
-        {selected.length}/3 selected
+        {t(
+          "onboarding.selectedCount",
+          {
+            count: selected.length,
+            max: 3,
+          }
+        )}
       </div>
     </>
   );
@@ -988,48 +1213,78 @@ function StepHelpTopics({ data, onChange }) {
 // ─────────────────────────────────────────────────────────────────
 // STEP 7 — Learning style
 // ─────────────────────────────────────────────────────────────────
-function StepLearningStyle({ data, onChange }) {
+function StepLearningStyle({
+  data,
+  onChange,
+}) {
+  const { t } = useTranslation();
+
   return (
     <>
-      <div className="q-label">6. How do you prefer learning?</div>
+      <div className="q-label">
+        {t(
+          "onboarding.learningStyleQuestion"
+        )}
+      </div>
+
       <div className="opt-grid">
         {LEARNING_STYLES.map(style => (
           <button
             key={style.value}
-            className={`opt-btn full-width ${data.learningStyle === style.value ? "selected" : ""}`}
-            onClick={() => onChange("learningStyle", style.value)}
+            className={`opt-btn full-width ${
+              data.learningStyle === style.value
+                ? "selected"
+                : ""
+            }`}
+            onClick={() =>
+              onChange(
+                "learningStyle",
+                style.value
+              )
+            }
           >
-            {style.icon} {style.label}
+            {style.icon}{" "}
+            {t(
+              `profileOptions.learningStyle.${style.value}`,
+              {
+                defaultValue:
+                  style.label,
+              }
+            )}
           </button>
         ))}
       </div>
     </>
   );
 }
-
 // ─────────────────────────────────────────────────────────────────
 // MULTI-STEP REGISTER FORM
 // ─────────────────────────────────────────────────────────────────
 const TOTAL_STEPS = 7;
-const STEP_LABELS = [
-  "Account",
-  "Nickname",
-  "Education",
-  "Language",
-  "Experience",
-  "Goals",
-  "Learning Style",
+const STEP_LABEL_KEYS = [
+  "onboarding.account",
+  "onboarding.nickname",
+  "onboarding.education",
+  "onboarding.language",
+  "onboarding.experience",
+  "onboarding.goals",
+  "onboarding.learningStyle",
 ];
 
 function RegisterPage({ onSwitch }) {
+  const { t } = useTranslation();
   const { login } = useApp();
+
   const [step, setStep] = useState(1);
-  const [registeredUser, setRegisteredUser] = useState(null);
+  const [registeredUser, setRegisteredUser] =
+    useState(null);
+
   const [form, setForm] = useState({
     email: "",
     displayName: "",
     age: "",
     password: "",
+
     // Step 2–7 — onboarding
     aiNickname: "",
     educationLevel: "",
@@ -1038,75 +1293,199 @@ function RegisterPage({ onSwitch }) {
     helpTopics: [],
     learningStyle: "",
   });
+
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
   function set(key, val) {
-    setForm(f => ({ ...f, [key]: val }));
-    setErrors(e => ({ ...e, [key]: undefined }));
+    setForm(current => ({
+      ...current,
+      [key]: val,
+    }));
+
+    setErrors(current => ({
+      ...current,
+      [key]: undefined,
+      form: undefined,
+    }));
   }
 
   // Per-step validation
   function validate() {
-    const e = {};
+    const validationErrors = {};
+
     if (step === 1) {
-      if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim()))
-        e.email = "Please enter a valid email address.";
-      if (!form.displayName.trim() || form.displayName.trim().length > 100)
-        e.displayName = "Display name is required and must be 100 characters or fewer.";
-      if (!form.age || isNaN(form.age) || !Number.isInteger(+form.age) || +form.age < 1 || +form.age > 120)
-        e.age = "Please enter a whole-number age from 1 to 120.";
-      if (!form.password || form.password.length < 8 || !/[A-Za-z]/.test(form.password) || !/[0-9]/.test(form.password))
-        e.password = "Password must be at least 8 characters and include a letter and a number.";
+      if (
+        !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+          form.email.trim()
+        )
+      ) {
+        validationErrors.email =
+          t("auth.emailInvalid");
+      }
+
+      const displayName =
+        form.displayName.trim();
+
+      if (
+        !displayName ||
+        displayName.length < 2 ||
+        displayName.length > 50
+      ) {
+        validationErrors.displayName =
+          t("auth.displayNameRequired");
+      }
+
+      if (
+        !form.age ||
+        Number.isNaN(Number(form.age)) ||
+        !Number.isInteger(Number(form.age)) ||
+        Number(form.age) < 1 ||
+        Number(form.age) > 120
+      ) {
+        validationErrors.age =
+          t("auth.ageInvalid");
+      }
+
+      if (
+        !form.password ||
+        form.password.length < 8 ||
+        !/[A-Za-z]/.test(form.password) ||
+        !/[0-9]/.test(form.password)
+      ) {
+        validationErrors.password =
+          t("auth.passwordRequirements");
+      }
     }
-    if (step === 2) {
-      if (!form.aiNickname.trim()) e.aiNickname = "Please enter a nickname for the AI to use.";
+
+    if (
+      step === 2 &&
+      !form.aiNickname.trim()
+    ) {
+      validationErrors.aiNickname =
+        t("onboarding.nicknameRequired");
     }
-    if (step === 3 && !form.educationLevel) e.educationLevel = "Please pick an education level.";
-    if (step === 4 && !form.language)   e.language   = "Please pick a language.";
-    if (step === 5 && !form.familiarity) e.familiarity = "Please pick your level.";
-    if (step === 6 && form.helpTopics.length === 0) e.helpTopics = "Pick at least one topic.";
-    if (step === 7 && !form.learningStyle) e.learningStyle = "Please pick a learning style.";
-    return e;
+
+    if (
+      step === 3 &&
+      !form.educationLevel
+    ) {
+      validationErrors.educationLevel =
+        t("onboarding.educationRequired");
+    }
+
+    if (
+      step === 4 &&
+      !form.language
+    ) {
+      validationErrors.language =
+        t("onboarding.languageRequired");
+    }
+
+    if (
+      step === 5 &&
+      !form.familiarity
+    ) {
+      validationErrors.familiarity =
+        t("onboarding.familiarityRequired");
+    }
+
+    if (
+      step === 6 &&
+      form.helpTopics.length === 0
+    ) {
+      validationErrors.helpTopics =
+        t("onboarding.helpTopicsRequired");
+    }
+
+    if (
+      step === 7 &&
+      !form.learningStyle
+    ) {
+      validationErrors.learningStyle =
+        t("onboarding.learningStyleRequired");
+    }
+
+    return validationErrors;
   }
 
   function next() {
-    const e = validate();
-    if (Object.keys(e).length) { setErrors(e); return; }
-    if (step < TOTAL_STEPS) { setStep(s => s + 1); return; }
-    // Final step — submit
+    const validationErrors = validate();
+
+    if (
+      Object.keys(validationErrors).length > 0
+    ) {
+      setErrors(validationErrors);
+      return;
+    }
+
+    if (step < TOTAL_STEPS) {
+      setStep(current => current + 1);
+      return;
+    }
+
     handleSubmit();
   }
 
-  function back() { setStep(s => s - 1); }
+  function back() {
+    setErrors({});
+    setStep(current => current - 1);
+  }
 
   function buildLearnerProfilePayload() {
     return {
-      aiNickname: form.aiNickname.trim(),
-      educationLevel: form.educationLevel,
-      preferredLanguage: form.language,
-      familiarityLevel: form.familiarity,
-      helpTopics: form.helpTopics,
-      learningStyle: form.learningStyle,
+      aiNickname:
+        form.aiNickname.trim(),
+
+      educationLevel:
+        form.educationLevel,
+
+      preferredLanguage:
+        form.language,
+
+      familiarityLevel:
+        form.familiarity,
+
+      helpTopics:
+        form.helpTopics,
+
+      learningStyle:
+        form.learningStyle,
+
       onboardingCompleted: true,
     };
   }
 
   async function handleSubmit() {
+    if (loading) return;
+
     setLoading(true);
+    setErrors({});
+
     try {
       let accountUser = registeredUser;
 
       if (!accountUser) {
         const result = await dbRegister({
-          email:       form.email.trim(),
-          displayName: form.displayName.trim(),
-          age:         +form.age,
-          password:    form.password,
+          email:
+            form.email.trim(),
+
+          displayName:
+            form.displayName.trim(),
+
+          age:
+            Number(form.age),
+
+          password:
+            form.password,
         });
 
         if (!result.ok) {
-          setErrors({ form: result.error });
+          setErrors({
+            form:
+              result.error ||
+              t("auth.registerFailed"),
+          });
           return;
         }
 
@@ -1114,78 +1493,201 @@ function RegisterPage({ onSwitch }) {
         setRegisteredUser(result.user);
       }
 
-      const profileResult = await dbSaveProfile(buildLearnerProfilePayload());
+      const profileResult =
+        await dbSaveProfile(
+          buildLearnerProfilePayload()
+        );
+
       if (!profileResult.ok) {
         setErrors({
-          form: "Your account was created, but your learner profile was not saved. Please retry saving your profile before continuing.",
+          form:
+            t("onboarding.profileSaveFailed"),
+
           ...profileResult.errors,
         });
         return;
       }
 
-      login(accountUser, profileResult.profile, "assessment");
+      login(
+        accountUser,
+        profileResult.profile,
+        "assessment"
+      );
     } catch {
-      setErrors({ form: "Something went wrong. Please try again." });
+      setErrors({
+        form:
+          t("common.somethingWentWrong"),
+      });
     } finally {
       setLoading(false);
     }
   }
 
-  const progress = Math.round((step / TOTAL_STEPS) * 100);
+  const progress = Math.round(
+    (step / TOTAL_STEPS) * 100
+  );
+
+  const stepLabel = t(
+    STEP_LABEL_KEYS[step - 1]
+  );
 
   return (
     <div className="auth-wrap">
       <div className="auth-card">
         {/* Logo */}
         <div className="auth-logo">
-          <div className="auth-logo-icon">🛡</div>
-          <div className="auth-logo-name">Cyberly</div>
+          <div className="auth-logo-icon">
+            🛡
+          </div>
+
+          <div className="auth-logo-name">
+            Cyberly
+          </div>
         </div>
 
         {/* Progress */}
         <div className="auth-progress">
           <div className="auth-progress-track">
-            <div className="auth-progress-fill" style={{ width: `${progress}%` }} />
+            <div
+              className="auth-progress-fill"
+              style={{
+                width: `${progress}%`,
+              }}
+            />
           </div>
+
           <div className="auth-progress-label">
-            <span>Step {step} of {TOTAL_STEPS} — {STEP_LABELS[step - 1]}</span>
-            <span>{progress}%</span>
+            <span>
+              {t("onboarding.progress", {
+                step,
+                total: TOTAL_STEPS,
+                label: stepLabel,
+              })}
+            </span>
+
+            <span>
+              {progress}%
+            </span>
           </div>
         </div>
 
         {/* Step content */}
-        {step === 1 && <StepCredentials data={form} onChange={set} errors={errors} />}
-        {step === 2 && <StepNickname    data={form} onChange={set} errors={errors} />}
-        {step === 3 && <StepEducationLevel data={form} onChange={set} errors={errors} />}
-        {step === 4 && <StepLanguage    data={form} onChange={set} errors={errors} />}
-        {step === 5 && <StepFamiliarity data={form} onChange={set} errors={errors} />}
-        {step === 6 && <StepHelpTopics  data={form} onChange={set} errors={errors} />}
-        {step === 7 && <StepLearningStyle data={form} onChange={set} errors={errors} />}
+        {step === 1 && (
+          <StepCredentials
+            data={form}
+            onChange={set}
+            errors={errors}
+          />
+        )}
 
-        {errors.form && <div className="field-error" style={{ marginTop: "0.5rem" }}>{errors.form}</div>}
+        {step === 2 && (
+          <StepNickname
+            data={form}
+            onChange={set}
+            errors={errors}
+          />
+        )}
+
+        {step === 3 && (
+          <StepEducationLevel
+            data={form}
+            onChange={set}
+            errors={errors}
+          />
+        )}
+
+        {step === 4 && (
+          <StepLanguage
+            data={form}
+            onChange={set}
+            errors={errors}
+          />
+        )}
+
+        {step === 5 && (
+          <StepFamiliarity
+            data={form}
+            onChange={set}
+            errors={errors}
+          />
+        )}
+
+        {step === 6 && (
+          <StepHelpTopics
+            data={form}
+            onChange={set}
+            errors={errors}
+          />
+        )}
+
+        {step === 7 && (
+          <StepLearningStyle
+            data={form}
+            onChange={set}
+            errors={errors}
+          />
+        )}
+
+        {errors.form && (
+          <div
+            className="field-error"
+            style={{
+              marginTop: "0.5rem",
+            }}
+          >
+            {errors.form}
+          </div>
+        )}
 
         {/* Navigation */}
         <div className="auth-nav">
           {step > 1 && (
-            <button className="btn-ghost" onClick={back}>← Back</button>
+            <button
+              className="btn-ghost"
+              onClick={back}
+              disabled={loading}
+            >
+              ← {t("common.back")}
+            </button>
           )}
+
           <button
             className="btn-primary"
             onClick={next}
             disabled={loading}
           >
             {loading
-              ? (registeredUser ? "Saving profile…" : "Setting up…")
+              ? registeredUser
+                ? t(
+                    "onboarding.savingProfile"
+                  )
+                : t(
+                    "onboarding.settingUp"
+                  )
               : step === TOTAL_STEPS
-                ? (registeredUser ? "Retry saving profile" : "🚀 Let's go!")
-                : "Continue →"}
+                ? registeredUser
+                  ? t(
+                      "onboarding.retrySavingProfile"
+                    )
+                  : t(
+                      "onboarding.letsGo"
+                    )
+                : t(
+                    "onboarding.continue"
+                  )}
           </button>
         </div>
 
         {/* Switch to login */}
         <div className="auth-switch">
-          Already have an account?{" "}
-          <button onClick={onSwitch}>Sign in</button>
+          {t("auth.signInPrompt")}{" "}
+
+          <button
+            onClick={onSwitch}
+            disabled={loading}
+          >
+            {t("auth.goToLogin")}
+          </button>
         </div>
       </div>
     </div>
@@ -1196,31 +1698,74 @@ function RegisterPage({ onSwitch }) {
 // LOGIN PAGE
 // ─────────────────────────────────────────────────────────────────
 function LoginPage({ onSwitch }) {
+  const { t } = useTranslation();
   const { login } = useApp();
-  const [form, setForm] = useState({ email: "", password: "" });
+
+  const [form, setForm] = useState({
+    email: "",
+    password: "",
+  });
+
   const [errors, setErrors] = useState({});
   const [loading, setLoading] = useState(false);
 
   function validate() {
     const e = {};
-    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email.trim())) e.email = "Valid email is required.";
-    if (!form.password) e.password = "Password is required.";
+
+    if (
+      !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+        form.email.trim()
+      )
+    ) {
+      e.email = t("auth.emailInvalid");
+    }
+
+    if (!form.password) {
+      e.password =
+        t("auth.passwordRequired");
+    }
+
     return e;
   }
 
   async function handleSubmit() {
-    const errs = validate();
-    if (Object.keys(errs).length) { setErrors(errs); return; }
+    if (loading) return;
+
+    const validationErrors = validate();
+
+    if (
+      Object.keys(validationErrors).length
+    ) {
+      setErrors(validationErrors);
+      return;
+    }
+
     setLoading(true);
+    setErrors({});
+
     try {
-      const result = await dbLogin(form.email.trim(), form.password);
+      const result = await dbLogin(
+        form.email.trim(),
+        form.password
+      );
+
       if (!result.ok) {
-        setErrors({ form: result.error });
+        setErrors({
+          form:
+            result.error ||
+            t("auth.invalidCredentials"),
+        });
       } else {
-        login(result.user, result.profile);
+        login(
+          result.user,
+          result.profile
+        );
       }
     } catch {
-      setErrors({ form: "Something went wrong. Please try again." });
+      setErrors({
+        form:
+          t("common.somethingWentWrong"),
+      });
     } finally {
       setLoading(false);
     }
@@ -1230,46 +1775,126 @@ function LoginPage({ onSwitch }) {
     <div className="auth-wrap">
       <div className="auth-card">
         <div className="auth-logo">
-          <div className="auth-logo-icon">🛡</div>
-          <div className="auth-logo-name">Cyberly</div>
+          <div className="auth-logo-icon">
+            🛡
+          </div>
+
+          <div className="auth-logo-name">
+            Cyberly
+          </div>
         </div>
-        <div className="auth-title">Welcome back</div>
-        <div className="auth-sub">Sign in with your email and password to continue.</div>
+
+        <div className="auth-title">
+          <h1>
+            {t("auth.welcomeBack")}
+          </h1>
+        </div>
+
+        <div className="auth-sub">
+          <p>
+            {t("auth.loginDescription")}
+          </p>
+        </div>
 
         <div className="field">
-          <label>Email</label>
+          <label>
+            {t("auth.email")}
+          </label>
+
           <input
             type="email"
-            placeholder="you@example.com"
+            placeholder={t("auth.email")}
             value={form.email}
-            onChange={e => { setForm(f => ({ ...f, email: e.target.value })); setErrors({}); }}
-            onKeyDown={e => e.key === "Enter" && handleSubmit()}
+            onChange={event => {
+              setForm(current => ({
+                ...current,
+                email: event.target.value,
+              }));
+
+              setErrors({});
+            }}
+            onKeyDown={event =>
+              event.key === "Enter" &&
+              handleSubmit()
+            }
           />
-          {errors.email && <div className="field-error">{errors.email}</div>}
+
+          {errors.email && (
+            <div className="field-error">
+              {errors.email}
+            </div>
+          )}
         </div>
+
         <div className="field">
-          <label>Password</label>
+          <label>
+            {t("auth.password")}
+          </label>
+
           <input
             type="password"
-            placeholder="Your password"
+            placeholder={t("auth.password")}
             value={form.password}
-            onChange={e => { setForm(f => ({ ...f, password: e.target.value })); setErrors({}); }}
-            onKeyDown={e => e.key === "Enter" && handleSubmit()}
+            onChange={event => {
+              setForm(current => ({
+                ...current,
+                password: event.target.value,
+              }));
+
+              setErrors({});
+            }}
+            onKeyDown={event =>
+              event.key === "Enter" &&
+              handleSubmit()
+            }
           />
-          {errors.password && <div className="field-error">{errors.password}</div>}
+
+          {errors.password && (
+            <div className="field-error">
+              {errors.password}
+            </div>
+          )}
         </div>
 
-        {errors.form && <div className="field-error" style={{ marginTop: "0.5rem" }}>{errors.form}</div>}
+        {errors.form && (
+          <div
+            className="field-error"
+            style={{
+              marginTop: "0.5rem",
+            }}
+          >
+            {errors.form}
+          </div>
+        )}
 
-        <div className="auth-nav" style={{ marginTop: "1.5rem" }}>
-          <button className="btn-primary" onClick={handleSubmit} disabled={loading}>
-            {loading ? "Signing in…" : "Sign in"}
+        <div
+          className="auth-nav"
+          style={{
+            marginTop: "1.5rem",
+          }}
+        >
+          <button
+            className="btn-primary"
+            onClick={handleSubmit}
+            disabled={loading}
+          >
+            {loading
+              ? t("auth.loading")
+              : t("auth.signInButton")}
           </button>
         </div>
 
         <div className="auth-switch">
-          New here?{" "}
-          <button onClick={onSwitch}>Create an account</button>
+          <span>
+            {t("auth.registerPrompt")}
+          </span>{" "}
+
+          <button
+            onClick={onSwitch}
+            disabled={loading}
+          >
+            {t("auth.goToRegister")}
+          </button>
         </div>
       </div>
     </div>
@@ -1278,6 +1903,7 @@ function LoginPage({ onSwitch }) {
 
 // ─── Auth Gate (toggles between Login & Register) ─────────────────
 function AuthGate() {
+  const { t } = useTranslation();
   const { go } = useApp();
   const [mode, setMode] = useState("login");
   return (
@@ -1297,7 +1923,7 @@ function AuthGate() {
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M19 12H5M12 5l-7 7 7 7"/>
         </svg>
-        Back to Home
+        {t("common.backToHome")}
       </button>
       {mode === "login"
         ? <LoginPage    onSwitch={() => setMode("register")} />
@@ -1338,46 +1964,46 @@ Keep responses concise and encouraging. Use their nickname when appropriate.`;
 
 // ─── Page: Home ───────────────────────────────────────────────────
 function HomePage() {
+  const { t } = useTranslation();
   const { go } = useApp();
 
   const threatStats = [
-    { emoji: "😨", value: "11%", desc: "of Malaysian teens have fallen victim to an online scam" },
-    { emoji: "📧", value: "50%", desc: "of students have received scam-related emails or SMS" },
-    { emoji: "🎓", value: "84.6%", desc: "of students never attended a scam awareness workshop" },
-    { emoji: "📱", value: "96%", desc: "of Malaysian teens aged 12–17 go online every single day" },
+    { emoji: "😨", value: "11%", descKey: "home.stats.scamVictim" },
+    { emoji: "📧", value: "50%", descKey: "home.stats.scamMessages" },
+    { emoji: "🎓", value: "84.6%", descKey: "home.stats.noWorkshop" },
+    { emoji: "📱", value: "96%", descKey: "home.stats.dailyOnline" },
   ];
 
   const topics = [
-    { emoji: "🎣", label: "Phishing" },
-    { emoji: "💸", label: "Online Scams" },
-    { emoji: "📰", label: "Fake News" },
-    { emoji: "🤖", label: "AI & Deepfakes" },
-    { emoji: "🔐", label: "Passwords" },
-    { emoji: "🕵️", label: "Privacy" },
+    { emoji: "🎣", labelKey: "home.topics.phishing" },
+    { emoji: "💸", labelKey: "home.topics.onlineScams" },
+    { emoji: "📰", labelKey: "home.topics.fakeNews" },
+    { emoji: "🤖", labelKey: "home.topics.aiDeepfakes" },
+    { emoji: "🔐", labelKey: "home.topics.passwords" },
+    { emoji: "🕵️", labelKey: "home.topics.privacy" },
   ];
 
   const steps = [
-    { num: "01", icon: "✍️", title: "Sign up free", desc: "Create your profile in under a minute — tell us your age, language, and what you want to learn." },
-    { num: "02", icon: "🤖", title: "Meet your AI tutor", desc: "CyberGuard AI adapts to your level and chats with you in English, BM, or Chinese." },
-    { num: "03", icon: "🚀", title: "Learn & level up", desc: "Explore guides, beat simulations, and track your progress as your cyber skills grow." },
+    { num: "01", icon: "✍️", titleKey: "home.steps.signUp.title", descKey: "home.steps.signUp.description" },
+    { num: "02", icon: "🤖", titleKey: "home.steps.aiTutor.title", descKey: "home.steps.aiTutor.description" },
+    { num: "03", icon: "🚀", titleKey: "home.steps.levelUp.title", descKey: "home.steps.levelUp.description" },
   ];
 
   return (
     <>
       {/* ── Hero ── */}
       <div className="hero">
-        <h1>Stay Safe in the Digital World 🛡</h1>
+        <h1>{t("home.hero.title")}</h1>
         <p>
-          Cyberly is your personal cybersecurity guide — powered by AI that adapts to your level,
-          language, and learning style.
+          {t("home.hero.description")}
         </p>
         <button className="hero-cta" onClick={() => go("login")}>
-          Get started free →
+          {t("home.hero.cta")}
         </button>
         <div className="stat-row">
-          <div className="stat-chip">🎓 Built for Malaysian students</div>
-          <div className="stat-chip">🌐 Supports 3 languages</div>
-          <div className="stat-chip">🤖 AI-personalised</div>
+          <div className="stat-chip">🎓 {t("home.hero.chips.students")}</div>
+          <div className="stat-chip">🌐 {t("home.hero.chips.languages")}</div>
+          <div className="stat-chip">🤖 {t("home.hero.chips.aiPersonalised")}</div>
         </div>
       </div>
 
@@ -1385,7 +2011,7 @@ function HomePage() {
       <div style={{ background: "#1a2e1a", padding: "2.5rem 1.5rem" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <p style={{ textAlign: "center", color: "rgba(255,255,255,0.5)", fontSize: "0.75rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "1.5rem" }}>
-            Did you know? — Cyber threats facing Malaysian teens right now
+            {t("home.threats.eyebrow")}
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem" }}>
             {threatStats.map(s => (
@@ -1396,7 +2022,7 @@ function HomePage() {
               }}>
                 <div style={{ fontSize: "1.6rem", marginBottom: "0.4rem" }}>{s.emoji}</div>
                 <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "2rem", fontWeight: 700, color: "var(--teal)", marginBottom: "0.35rem" }}>{s.value}</div>
-                <div style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.6)", lineHeight: 1.5 }}>{s.desc}</div>
+                <div style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.6)", lineHeight: 1.5 }}>{t(s.descKey)}</div>
               </div>
             ))}
           </div>
@@ -1405,18 +2031,18 @@ function HomePage() {
 
       {/* ── Why Cyberly ── */}
       <div className="section">
-        <p className="section-title">Why Cyberly?</p>
-        <p className="section-sub">Cybersecurity education that meets you where you are.</p>
+        <p className="section-title">{t("home.why.title")}</p>
+        <p className="section-sub">{t("home.why.description")}</p>
         <div className="card-grid">
           {[
-            { icon: "🧠", title: "Adaptive AI", desc: "Our AI adjusts explanations based on your experience level and preferred language." },
-            { icon: "🔒", title: "Real Skills", desc: "Learn practical skills — spotting scams, protecting accounts, and browsing safely." },
-            { icon: "🎯", title: "Focused Topics", desc: "Choose what matters to you — from online safety to cybersecurity careers." },
+            { icon: "🧠", titleKey: "home.why.cards.adaptive.title", descKey: "home.why.cards.adaptive.description" },
+            { icon: "🔒", titleKey: "home.why.cards.skills.title", descKey: "home.why.cards.skills.description" },
+            { icon: "🎯", titleKey: "home.why.cards.topics.title", descKey: "home.why.cards.topics.description" },
           ].map(c => (
-            <div className="card" key={c.title}>
+            <div className="card" key={c.titleKey}>
               <div style={{ fontSize: "1.8rem", marginBottom: "0.6rem" }}>{c.icon}</div>
-              <div style={{ fontWeight: 600, marginBottom: "0.35rem" }}>{c.title}</div>
-              <div style={{ color: "#666", fontSize: "0.875rem", lineHeight: 1.55 }}>{c.desc}</div>
+              <div style={{ fontWeight: 600, marginBottom: "0.35rem" }}>{t(c.titleKey)}</div>
+              <div style={{ color: "#666", fontSize: "0.875rem", lineHeight: 1.55 }}>{t(c.descKey)}</div>
             </div>
           ))}
         </div>
@@ -1434,14 +2060,14 @@ function HomePage() {
           <div style={{ flex: 1, minWidth: 220 }}>
             <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.5rem" }}>
               <span style={{ background: "#ff9800", color: "#fff", fontSize: "0.7rem", fontWeight: 700, borderRadius: 99, padding: "0.2rem 0.65rem", letterSpacing: "0.05em" }}>
-                THREAT OF THE WEEK
+                {t("home.threatOfWeek.badge")}
               </span>
             </div>
             <div style={{ fontWeight: 700, fontSize: "1.1rem", marginBottom: "0.4rem", color: "#1a1a18" }}>
-              AI Voice & Video Scams (Deepfakes)
+              {t("home.threatOfWeek.title")}
             </div>
             <div style={{ fontSize: "0.875rem", color: "#555", lineHeight: 1.65 }}>
-              Scammers in Malaysia are now using AI to clone the voices and faces of celebrities and family members to trick people into sending money. If you get an unexpected video call or voice message asking for money — even if it looks real — always verify through another channel before acting.
+              {t("home.threatOfWeek.description")}
             </div>
           </div>
           <button
@@ -1456,19 +2082,19 @@ function HomePage() {
             onMouseEnter={e => e.currentTarget.style.background = "#e65100"}
             onMouseLeave={e => e.currentTarget.style.background = "#ff9800"}
           >
-            Learn more →
+            {t("common.learnMore")}
           </button>
         </div>
       </div>
 
       {/* ── Quick Topic Cards ── */}
       <div className="section" style={{ paddingTop: 0 }}>
-        <p className="section-title">What do you want to learn today?</p>
-        <p className="section-sub">Pick a topic and jump straight in.</p>
+        <p className="section-title">{t("home.quickTopics.title")}</p>
+        <p className="section-sub">{t("home.quickTopics.description")}</p>
         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
-          {topics.map(t => (
+          {topics.map(topic => (
             <button
-              key={t.label}
+              key={topic.labelKey}
               onClick={() => go("resources")}
               style={{
                 display: "inline-flex", alignItems: "center", gap: "0.5rem",
@@ -1489,7 +2115,7 @@ function HomePage() {
                 e.currentTarget.style.color = "#333";
               }}
             >
-              <span>{t.emoji}</span> {t.label}
+              <span>{topic.emoji}</span> {t(topic.labelKey)}
             </button>
           ))}
         </div>
@@ -1498,8 +2124,8 @@ function HomePage() {
       {/* ── How it works ── */}
       <div style={{ background: "var(--teal-lt)", borderTop: "1px solid rgba(29,158,117,0.12)", borderBottom: "1px solid rgba(29,158,117,0.12)", padding: "3rem 1.5rem" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <p className="section-title" style={{ textAlign: "center" }}>How Cyberly works</p>
-          <p className="section-sub" style={{ textAlign: "center", marginBottom: "2rem" }}>Up and running in three simple steps.</p>
+          <p className="section-title" style={{ textAlign: "center" }}>{t("home.how.title")}</p>
+          <p className="section-sub" style={{ textAlign: "center", marginBottom: "2rem" }}>{t("home.how.description")}</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "1.25rem" }}>
             {steps.map((s, i) => (
               <div key={s.num} style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}>
@@ -1514,9 +2140,9 @@ function HomePage() {
                 </div>
                 <div>
                   <div style={{ fontWeight: 700, fontSize: "1rem", marginBottom: "0.3rem" }}>
-                    {s.icon} {s.title}
+                    {s.icon} {t(s.titleKey)}
                   </div>
-                  <div style={{ fontSize: "0.85rem", color: "#555", lineHeight: 1.65 }}>{s.desc}</div>
+                  <div style={{ fontSize: "0.85rem", color: "#555", lineHeight: 1.65 }}>{t(s.descKey)}</div>
                 </div>
                 {i < steps.length - 1 && (
                   <div style={{ display: "none" }} />
@@ -1532,20 +2158,20 @@ function HomePage() {
         <div style={{ maxWidth: 560, margin: "0 auto" }}>
           <div style={{ fontSize: "2.2rem", marginBottom: "0.75rem" }}>🚀</div>
           <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 600, color: "#fff", marginBottom: "0.75rem" }}>
-            Ready to level up your cyber skills?
+            {t("home.bottomCta.title")}
           </h2>
           <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.95rem", lineHeight: 1.7, marginBottom: "2rem" }}>
-            Join thousands of Malaysian teens learning how to stay safe online — for free, in your language, at your pace.
+            {t("home.bottomCta.description")}
           </p>
           <button
             className="hero-cta"
             onClick={() => go("login")}
             style={{ fontSize: "1rem", padding: "0.85rem 2.5rem" }}
           >
-            Get started free →
+            {t("home.hero.cta")}
           </button>
           <div style={{ marginTop: "1.25rem", fontSize: "0.8rem", color: "rgba(255,255,255,0.35)" }}>
-            No credit card needed · Available in English, BM & 中文
+            {t("home.bottomCta.note")}
           </div>
         </div>
       </div>
@@ -1555,7 +2181,9 @@ function HomePage() {
 
 // ─── Page: Dashboard ──────────────────────────────────────────────
 function DashboardPage() {
+  const { t, i18n: activeI18n } = useTranslation();
   const { user, go, openRecommendedResource } = useApp();
+  const assessmentLocale = normalizeLocale(activeI18n.language);
   const [tipIndex] = useState(() => Math.floor(Math.random() * 4));
   const [assessmentStatus, setAssessmentStatus] = useState({ loading: true, status: "pending" });
   const [progressState, setProgressState] = useState({ loading: true, progress: null });
@@ -1565,7 +2193,7 @@ function DashboardPage() {
   useEffect(() => {
     let active = true;
     if (!user) return () => { active = false; };
-    dbGetAssessmentStatus().then(result => {
+    dbGetAssessmentStatus(assessmentLocale).then(result => {
       if (!active) return;
       if (result.ok) {
         setAssessmentStatus({ loading: false, status: result.status, result: result.result, attempt: result.attempt });
@@ -1574,12 +2202,12 @@ function DashboardPage() {
       }
     });
     return () => { active = false; };
-  }, [user]);
+  }, [user, assessmentLocale]);
 
   useEffect(() => {
     let active = true;
     if (!user) return () => { active = false; };
-    Promise.all([dbGetRecommendedScenarios(), dbGetScenarioDashboard()]).then(([recommendedResult, dashboardResult]) => {
+    Promise.all([dbGetRecommendedScenarios(assessmentLocale), dbGetScenarioDashboard(assessmentLocale)]).then(([recommendedResult, dashboardResult]) => {
       if (!active) return;
       setScenarioState({
         loading: false,
@@ -1589,7 +2217,7 @@ function DashboardPage() {
       });
     });
     return () => { active = false; };
-  }, [user]);
+  }, [user, assessmentLocale]);
 
   useEffect(() => {
     let active = true;
@@ -1615,6 +2243,16 @@ function DashboardPage() {
   const recommendation = recommendationState.recommendation;
   const recommendedScenario = scenarioState.recommended?.[0];
   const scenarioDashboard = scenarioState.dashboard;
+  const translatedAgeGroup = t(`settings.ageGroups.${group.key}`,{defaultValue: group.label});
+  const preferredLanguageValue = user.profile?.preferredLanguage || "";
+  const familiarityValue = user.profile?.familiarityLevel || "";
+  const educationValue = user.profile?.educationLevel || "";
+  const learningStyleValue = user.profile?.learningStyle || "";
+  const translatedLanguage = t(`profileOptions.language.${preferredLanguageValue}`,{defaultValue: user.language || "English" });
+  const translatedFamiliarity = t(`profileOptions.familiarity.${familiarityValue}.label`,{defaultValue: user.familiarity || t("dashboard.beginner") });
+  const translatedEducation = educationValue? t(`profileOptions.education.${educationValue}`,{ defaultValue: user.educationLevel }): "";
+  const translatedLearningStyle = learningStyleValue? t( `profileOptions.learningStyle.${learningStyleValue}`, { defaultValue: user.learningStyle,}): "";
+  const translatedHelpTopics = (user.profile?.helpTopics || []).map( topicCode => t(`profileOptions.helpTopics.${topicCode}`, { defaultValue: topicCode }));
 
   async function followRecommendation() {
     if (recommendation?.id) {
@@ -1630,20 +2268,81 @@ function DashboardPage() {
   }
 
   const quickActions = [
-    { icon: "📚", label: "Browse Resources",  desc: "Guides on scams, privacy & more", page: "resources", color: "#E3F2FD", accent: "#1E88E5" },
-    { icon: "🧭", label: "Initial Assessment", desc: "Set your measured baseline", page: "assessment", color: "#FFF3E0", accent: "#FB8C00" },
-    { icon: "🎮", label: "Practice Scenarios", desc: "Make safe choices in realistic moments", page: "scenarios", color: "#E8F5E9", accent: "#2E7D32" },
-    { icon: "👤", label: "Edit Profile",       desc: "Update your learner preferences", page: "profile",   color: "#E1F5EE", accent: "#1D9E75" },
-    { icon: "ℹ️",  label: "About the Project", desc: "Meet the team behind Cyberly",  page: "about",     color: "#F3E5F5", accent: "#8E24AA" },
-    { icon: "📊", label: "My Progress",        desc: "See your learning stats & topics", page: "progress",  color: "#FFF8E1", accent: "#F59E0B" },
-    { icon: "🏠",  label: "Back to Home",      desc: "Return to the landing page",      page: "home",      color: "#E8F5E9", accent: "#43A047" },
+    {
+      icon: "📚",
+      labelKey: "dashboard.actions.resources",
+      descKey: "dashboard.actions.resourcesDescription",
+      page: "resources",
+      color: "#E3F2FD",
+      accent: "#1E88E5",
+    },
+    {
+      icon: "🧭",
+      labelKey: "dashboard.actions.assessment",
+      descKey: "dashboard.actions.assessmentDescription",
+      page: "assessment",
+      color: "#FFF3E0",
+      accent: "#FB8C00",
+    },
+    {
+      icon: "🎮",
+      labelKey: "dashboard.actions.scenarios",
+      descKey: "dashboard.actions.scenariosDescription",
+      page: "scenarios",
+      color: "#E8F5E9",
+      accent: "#2E7D32",
+    },
+    {
+      icon: "👤",
+      labelKey: "dashboard.actions.profile",
+      descKey: "dashboard.actions.profileDescription",
+      page: "profile",
+      color: "#E1F5EE",
+      accent: "#1D9E75",
+    },
+    {
+      icon: "ℹ️",
+      labelKey: "dashboard.actions.about",
+      descKey: "dashboard.actions.aboutDescription",
+      page: "about",
+      color: "#F3E5F5",
+      accent: "#8E24AA",
+    },
+    {
+      icon: "📊",
+      labelKey: "dashboard.actions.progress",
+      descKey: "dashboard.actions.progressDescription",
+      page: "progress",
+      color: "#FFF8E1",
+      accent: "#F59E0B",
+    },
+    {
+      icon: "🏠",
+      labelKey: "dashboard.actions.home",
+      descKey: "dashboard.actions.homeDescription",
+      page: "home",
+      color: "#E8F5E9",
+      accent: "#43A047",
+    },
   ];
 
   const tips = [
-    { emoji: "🎣", tip: "Never click links in unexpected emails or SMS — go directly to the official website instead." },
-    { emoji: "🔐", tip: "Use a different password for every account. A password manager makes this easy." },
-    { emoji: "🤔", tip: "Before sharing news online, verify it on Sebenarnya.my — Malaysia's official fact-check site." },
-    { emoji: "📵", tip: "If someone calls claiming to be from a bank or government, hang up and call the official number." },
+    {
+      emoji: "🎣",
+      tipKey: "dashboard.tips.phishing",
+    },
+    {
+      emoji: "🔐",
+      tipKey: "dashboard.tips.password",
+    },
+    {
+      emoji: "🤔",
+      tipKey: "dashboard.tips.fakeNews",
+    },
+    {
+      emoji: "📵",
+      tipKey: "dashboard.tips.phoneScam",
+    },
   ];
 
   const todayTip = tips[tipIndex];
@@ -1658,24 +2357,24 @@ function DashboardPage() {
         <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
           <div>
             <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.6)", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.4rem" }}>
-              Your Dashboard
+              {t("dashboard.yourDashboard")}
             </div>
             <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 600, marginBottom: "0.35rem" }}>
-              Welcome back, {nick} 👋
+              {t("dashboard.welcomeBack", {name: nick,})} 👋
             </h1>
             <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.9rem" }}>
-              {group.label} · {user.familiarity || "Beginner"} level{user.educationLevel ? ` · ${user.educationLevel}` : ""}
+              {translatedAgeGroup} {" · "}{t("dashboard.levelDisplay", { level: translatedFamiliarity })}{translatedEducation ? ` · ${translatedEducation}` : ""}
             </p>
           </div>
           <div style={{ display: "flex", gap: "0.75rem" }}>
             {[
-              { val: "9", label: "Topics" },
-              { val: "3", label: "Languages" },
-              { val: "AI", label: "Powered" },
-            ].map(s => (
-              <div key={s.label} style={{ background: "rgba(255,255,255,0.12)", borderRadius: 12, padding: "0.75rem 1rem", textAlign: "center", minWidth: 64 }}>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.2rem" }}>{s.val}</div>
-                <div style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.6)" }}>{s.label}</div>
+              { val: "9", label: "dashboard.stats.topics" },
+              { val: "3", label: "dashboard.stats.languages" },
+              { val: "AI", label: "dashboard.stats.powered" },
+            ].map(stat => (
+              <div key={stat.labelKey} style={{ background: "rgba(255,255,255,0.12)", borderRadius: 12, padding: "0.75rem 1rem", textAlign: "center", minWidth: 64 }}>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.2rem" }}>{stat.val}</div>
+                <div style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.6)" }}>{t(stat.label)}</div>
               </div>
             ))}
           </div>
@@ -1688,20 +2387,20 @@ function DashboardPage() {
         {user.helpTopics?.length > 0 && (
           <div className="card" style={{ marginBottom: "2rem", background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)", display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
             <div style={{ flex: 1, minWidth: 200 }}>
-              <div style={{ fontWeight: 600, marginBottom: "0.4rem", color: "var(--teal)" }}>🎯 Your learning profile</div>
+              <div style={{ fontWeight: 600, marginBottom: "0.4rem", color: "var(--teal)" }}>🎯 {t("dashboard.learningProfile")}</div>
               <div style={{ fontSize: "0.85rem", color: "#333", lineHeight: 1.7 }}>
-                <span>🌐 {user.language || "English"}</span>
+                <span>🌐 {translatedLanguage}</span>
                 <span style={{ margin: "0 0.5rem" }}>·</span>
-                <span>📖 {user.learningStyle}</span>
+                <span>📖 {translatedLearningStyle}</span>
                 <span style={{ margin: "0 0.5rem" }}>·</span>
-                <span>🎯 {user.helpTopicLabels.join(", ")}</span>
+                <span>🎯 {translatedHelpTopics.join(", ")}</span>
               </div>
               <div style={{ fontSize: "0.76rem", color: "#5f6f69", marginTop: "0.45rem" }}>
-                Learner preferences are saved to your profile and restored after refresh or login.
+                {t("dashboard.learningProfileDescription")}
               </div>
             </div>
             <button onClick={() => go("profile")} style={{ background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1.1rem", fontSize: "0.82rem", fontWeight: 600, cursor: "pointer", flexShrink: 0 }}>
-              Edit profile →
+              {t("dashboard.editProfile")}
             </button>
           </div>
         )}
@@ -1710,117 +2409,117 @@ function DashboardPage() {
           <div style={{ flex: 1, minWidth: 220 }}>
             <div style={{ fontWeight: 700, color: "#e65100", marginBottom: "0.25rem" }}>
               {assessmentStatus.status === "completed"
-                ? "Initial assessment completed"
+                ? t("dashboard.assessment.completed")
                 : assessmentStatus.status === "in_progress"
-                  ? "Initial assessment in progress"
-                  : "Initial assessment pending"}
+                  ? t("dashboard.assessment.inProgress")
+                  : t("dashboard.assessment.pending")}
             </div>
             <div style={{ fontSize: "0.86rem", color: "#5f4a1d", lineHeight: 1.6 }}>
-              {assessmentStatus.loading && "Checking assessment status..."}
+              {assessmentStatus.loading && t("dashboard.assessment.checking")}
               {!assessmentStatus.loading && assessmentStatus.status === "completed" && (
-                <>Measured level: <strong>{assessmentStatus.result?.attempt?.measuredLevel}</strong> · Score: <strong>{assessmentStatus.result?.attempt?.totalScore}/{assessmentStatus.result?.attempt?.maximumScore}</strong></>
+                <> {t("dashboard.assessment.measuredLevel")} {": "} <strong> {t( `levels.${assessmentStatus.result?.attempt?.measuredLevel}`, { defaultValue: assessmentStatus.result?.attempt?.measuredLevel } )} </strong> {" · "} {t("dashboard.assessment.score")} {": "} <strong> { assessmentStatus.result?.attempt ?.totalScore } / { assessmentStatus.result?.attempt ?.maximumScore} </strong></>
               )}
-              {!assessmentStatus.loading && assessmentStatus.status === "in_progress" && "Resume your saved answers and continue when ready."}
-              {!assessmentStatus.loading && assessmentStatus.status !== "completed" && assessmentStatus.status !== "in_progress" && "Do it now or later. Adaptive recommendations are not active until this baseline exists."}
+              {!assessmentStatus.loading && assessmentStatus.status === "in_progress" && t("dashboard.assessment.resumeDescription")}
+              {!assessmentStatus.loading && assessmentStatus.status !== "completed" && assessmentStatus.status !== "in_progress" && t("dashboard.assessment.pendingDescription")}
             </div>
           </div>
           <button onClick={() => go("assessment")} style={{ background: "#FB8C00", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>
-            {assessmentStatus.status === "completed" ? "View results" : assessmentStatus.status === "in_progress" ? "Resume" : "Start / do later"}
+            {assessmentStatus.status === "completed" ? t("dashboard.assessment.viewResults") : assessmentStatus.status === "in_progress" ? t("dashboard.assessment.resume") : t("dashboard.assessment.start")}
           </button>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
           <div className="card" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.07)" }}>
-            <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.35rem" }}>Measured progress</div>
+            <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.35rem" }}>{t("dashboard.progress.title")}</div>
             {progressState.loading ? (
-              <div style={{ fontSize: "0.86rem", color: "#666" }}>Loading your measured baseline...</div>
+              <div style={{ fontSize: "0.86rem", color: "#666" }}>{t("dashboard.progress.loading")}</div>
             ) : summary?.exists ? (
               <>
                 <div style={{ display: "flex", alignItems: "flex-end", gap: "0.45rem", marginBottom: "0.65rem" }}>
                   <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "2rem", fontWeight: 700, color: "#1a1a18" }}>{summary.overallMasteryPercentage}%</span>
-                  <span style={{ fontSize: "0.82rem", color: "#666", paddingBottom: "0.35rem" }}>{levelLabel(summary.measuredLevel)}</span>
+                  <span style={{ fontSize: "0.82rem", color: "#666", paddingBottom: "0.35rem" }}>{t( `levels.${summary.measuredLevel}`,{ defaultValue: levelLabel(summary.measuredLevel)})}</span>
                 </div>
                 <div style={{ background: "#edf3ef", borderRadius: 99, height: 10, overflow: "hidden", marginBottom: "0.7rem" }}>
                   <div style={{ width: `${summary.overallMasteryPercentage}%`, height: "100%", background: "var(--teal)", borderRadius: 99 }} />
                 </div>
                 <div style={{ fontSize: "0.8rem", color: "#666" }}>
-                  {summary.completedTopicCount} measured topics · Based on assessment results, not profile preferences.
+                  {t("dashboard.progress.summary", { count: summary.completedTopicCount })}
                 </div>
               </>
             ) : (
               <div style={{ fontSize: "0.86rem", color: "#666", lineHeight: 1.6 }}>
-                Complete the initial assessment to create measured progress.
+                {t("dashboard.progress.empty")}
               </div>
             )}
           </div>
 
           <div className="card" style={{ background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.18)" }}>
-            <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.35rem" }}>Recommended next step</div>
+            <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.35rem" }}>{t("dashboard.recommendation.title")}</div>
             {recommendationState.loading ? (
-              <div style={{ fontSize: "0.86rem", color: "#666" }}>Checking recommendation...</div>
+              <div style={{ fontSize: "0.86rem", color: "#666" }}>{t("dashboard.recommendation.loading")}</div>
             ) : recommendation ? (
               <>
                 <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.05rem", marginBottom: "0.35rem", color: "#1a1a18" }}>
-                  {recommendation.topicCode ? topicLabel(recommendation.topicCode, recommendation.topicLabel) : "Initial assessment"}
+                  {recommendation.topicCode ? t( `topics.${recommendation.topicCode}`, { defaultValue: topicLabel(  recommendation.topicCode,  recommendation.topicLabel )}) : t("dashboard.recommendation.initialAssessment")}
                 </div>
                 <div style={{ fontSize: "0.84rem", color: "#3e5149", lineHeight: 1.55, marginBottom: "0.85rem" }}>
                   {recommendation.reasonText}
                 </div>
                 <button onClick={followRecommendation} style={{ background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1rem", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
-                  {recommendedScenario ? "Practice with scenario" : recommendation.topicCode ? "Read resource" : "Start assessment"}
+                  {recommendedScenario ?  t("dashboard.recommendation.practiceScenario") : recommendation.topicCode ? t("dashboard.recommendation.readResource") : t("dashboard.recommendation.startAssessment")}
                 </button>
               </>
             ) : (
-              <div style={{ fontSize: "0.86rem", color: "#666" }}>No active recommendation yet.</div>
+              <div style={{ fontSize: "0.86rem", color: "#666" }}>{t("dashboard.recommendation.empty")}</div>
             )}
           </div>
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
           <div className="card" style={{ border: "1px solid rgba(0,0,0,0.07)" }}>
-            <div style={{ fontWeight: 700, color: "#2E7D32", marginBottom: "0.35rem" }}>Scenario practice</div>
+            <div style={{ fontWeight: 700, color: "#2E7D32", marginBottom: "0.35rem" }}>{t("dashboard.scenarios.practiceTitle")}</div>
             {scenarioState.loading ? (
-              <div style={{ fontSize: "0.86rem", color: "#666" }}>Loading scenario activity...</div>
+              <div style={{ fontSize: "0.86rem", color: "#666" }}>{t("dashboard.scenarios.loadingActivity")}</div>
             ) : (
               <>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0.75rem", marginBottom: "0.85rem" }}>
                   <div>
                     <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.45rem", fontWeight: 700, color: "#1a1a18" }}>{scenarioDashboard?.completedCount || 0}</div>
-                    <div style={{ fontSize: "0.74rem", color: "#777" }}>Completed</div>
+                    <div style={{ fontSize: "0.74rem", color: "#777" }}>{t("dashboard.scenarios.completed")}</div>
                   </div>
                   <div>
                     <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.45rem", fontWeight: 700, color: "#1a1a18" }}>{scenarioDashboard?.inProgress ? "1" : "0"}</div>
-                    <div style={{ fontSize: "0.74rem", color: "#777" }}>In progress</div>
+                    <div style={{ fontSize: "0.74rem", color: "#777" }}>{t("dashboard.scenarios.inProgress")}</div>
                   </div>
                 </div>
                 {scenarioDashboard?.latestCompleted && (
                   <div style={{ fontSize: "0.82rem", color: "#555", lineHeight: 1.55, marginBottom: "0.8rem" }}>
-                    Latest: <strong>{scenarioDashboard.latestCompleted.title}</strong> · {scenarioResultLabel(scenarioDashboard.latestCompleted.resultLevel)}
+                    {t("dashboard.scenarios.latest")}: <strong>{scenarioDashboard.latestCompleted.title}</strong> · {t( `scenarioResults.${scenarioDashboard.latestCompleted.resultLevel}`, { defaultValue: scenarioResultLabel( scenarioDashboard.latestCompleted.resultLevel)})}
                   </div>
                 )}
                 <button onClick={() => go("scenarios")} style={{ background: "#2E7D32", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1rem", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
-                  {scenarioDashboard?.inProgress ? "Continue scenario" : "Open scenario library"}
+                  {scenarioDashboard?.inProgress ? t("dashboard.scenarios.continueScenario") : t("dashboard.scenarios.openLibrary")}
                 </button>
               </>
             )}
           </div>
 
           <div className="card" style={{ background: "#E8F5E9", border: "1px solid rgba(46,125,50,0.18)" }}>
-            <div style={{ fontWeight: 700, color: "#2E7D32", marginBottom: "0.35rem" }}>Recommended scenario</div>
+            <div style={{ fontWeight: 700, color: "#2E7D32", marginBottom: "0.35rem" }}>{t("dashboard.scenarios.recommendedTitle")}</div>
             {scenarioState.loading ? (
-              <div style={{ fontSize: "0.86rem", color: "#666" }}>Finding a matching scenario...</div>
+              <div style={{ fontSize: "0.86rem", color: "#666" }}>{t("dashboard.scenarios.finding")}</div>
             ) : recommendedScenario ? (
               <>
                 <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.02rem", marginBottom: "0.35rem" }}>{recommendedScenario.title}</div>
                 <div style={{ fontSize: "0.82rem", color: "#445", lineHeight: 1.55, marginBottom: "0.8rem" }}>
-                  {topicLabel(recommendedScenario.topicCode)} · {levelLabel(recommendedScenario.difficulty)} · {recommendedScenario.estimatedMinutes} min
+                  {t( `topics.${recommendedScenario.topicCode}`,{ defaultValue: topicLabel( recommendedScenario.topicCode)})} · {t( `levels.${recommendedScenario.difficulty}`, { defaultValue: levelLabel( recommendedScenario.difficulty)})} · {t("dashboard.scenarios.minutes", {count: recommendedScenario.estimatedMinutes})}
                 </div>
                 <button onClick={() => go("scenarios")} style={{ background: "#2E7D32", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1rem", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
-                  Practice with scenario
+                  {t("dashboard.recommendation.practiceScenario")}
                 </button>
               </>
             ) : (
-              <div style={{ fontSize: "0.86rem", color: "#666", lineHeight: 1.6 }}>Complete the assessment to unlock scenario recommendations.</div>
+              <div style={{ fontSize: "0.86rem", color: "#666", lineHeight: 1.6 }}>{t("dashboard.scenarios.unlockDescription")}</div>
             )}
           </div>
         </div>
@@ -1828,20 +2527,20 @@ function DashboardPage() {
         {topicsMeasured.length > 0 && (
           <div style={{ marginBottom: "2rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap" }}>
-              <p className="section-title" style={{ fontSize: "1.1rem", margin: 0 }}>Topic mastery</p>
-              <button onClick={() => go("progress")} style={{ background: "transparent", color: "var(--teal)", border: "none", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>View progress →</button>
+              <p className="section-title" style={{ fontSize: "1.1rem", margin: 0 }}>{t("dashboard.topicMastery.title")}</p>
+              <button onClick={() => go("progress")} style={{ background: "transparent", color: "var(--teal)", border: "none", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>{t("dashboard.topicMastery.viewProgress")}</button>
             </div>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "0.75rem" }}>
               {topicsMeasured.map(topic => (
                 <div key={topic.topicCode} className="card" style={{ padding: "1rem" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.55rem" }}>
-                    <span style={{ fontWeight: 700, fontSize: "0.86rem" }}>{PROGRESS_TOPIC_META[topic.topicCode]?.icon} {topicLabel(topic.topicCode, topic.topicLabel)}</span>
+                    <span style={{ fontWeight: 700, fontSize: "0.86rem" }}>{PROGRESS_TOPIC_META[topic.topicCode]?.icon} {t(`topics.${topic.topicCode}`,{defaultValue: topicLabel(topic.topicCode, topic.topicLabel)})}</span>
                     <span style={{ color: "var(--teal)", fontWeight: 700, fontSize: "0.82rem" }}>{topic.masteryPercentage}%</span>
                   </div>
                   <div style={{ background: "#edf3ef", borderRadius: 99, height: 8, overflow: "hidden" }}>
                     <div style={{ width: `${topic.masteryPercentage}%`, height: "100%", background: "var(--teal)", borderRadius: 99 }} />
                   </div>
-                  <div style={{ fontSize: "0.74rem", color: "#777", marginTop: "0.45rem" }}>{levelLabel(topic.currentLevel)}</div>
+                  <div style={{ fontSize: "0.74rem", color: "#777", marginTop: "0.45rem" }}>{t( `levels.${topic.currentLevel}`,{ defaultValue: levelLabel(topic.currentLevel)})}</div>
                 </div>
               ))}
             </div>
@@ -1856,18 +2555,18 @@ function DashboardPage() {
         }}>
           <span style={{ fontSize: "1.4rem", flexShrink: 0 }}>{todayTip.emoji}</span>
           <div>
-            <div style={{ fontWeight: 700, fontSize: "0.82rem", color: "#e65100", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.25rem" }}>Daily Cyber Tip</div>
-            <div style={{ fontSize: "0.88rem", color: "#444", lineHeight: 1.6 }}>{todayTip.tip}</div>
+            <div style={{ fontWeight: 700, fontSize: "0.82rem", color: "#e65100", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.25rem" }}>{t("dashboard.dailyTip")}</div>
+            <div style={{ fontSize: "0.88rem", color: "#444", lineHeight: 1.6 }}>{t(todayTip.tipKey)}</div>
           </div>
         </div>
 
         {/* Quick actions */}
-        <p className="section-title" style={{ fontSize: "1.1rem", marginBottom: "0.4rem" }}>Quick actions</p>
-        <p className="section-sub" style={{ marginBottom: "1.25rem" }}>Jump to what you need.</p>
+        <p className="section-title" style={{ fontSize: "1.1rem", marginBottom: "0.4rem" }}>{t("dashboard.quickActions.title")}</p>
+        <p className="section-sub" style={{ marginBottom: "1.25rem" }}>{t("dashboard.quickActions.description")}</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem", marginBottom: "2.5rem" }}>
           {quickActions.map(a => (
             <button
-              key={a.label}
+              key={a.labelKey}
               onClick={() => go(a.page)}
               style={{
                 background: a.color, border: `1px solid ${a.accent}22`,
@@ -1879,8 +2578,8 @@ function DashboardPage() {
               onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.05)"; }}
             >
               <div style={{ fontSize: "1.6rem", marginBottom: "0.5rem" }}>{a.icon}</div>
-              <div style={{ fontWeight: 700, fontSize: "0.95rem", color: a.accent, marginBottom: "0.2rem" }}>{a.label}</div>
-              <div style={{ fontSize: "0.8rem", color: "#666" }}>{a.desc}</div>
+              <div style={{ fontWeight: 700, fontSize: "0.95rem", color: a.accent, marginBottom: "0.2rem" }}> {t(a.labelKey)}</div>
+              <div style={{ fontSize: "0.8rem", color: "#666"}}>{t(a.descKey)}</div>
             </button>
           ))}
         </div>
@@ -1888,11 +2587,11 @@ function DashboardPage() {
         {/* CyberGuard AI */}
         <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem", marginBottom: "0.75rem" }}>
           <div>
-            <p className="section-title" style={{ fontSize: "1.1rem", margin: 0 }}>🛡 CyberGuard AI</p>
-            <p className="section-sub" style={{ margin: "0.25rem 0 0" }}>Preview the chat interface. Live AI replies will use the backend AI Gateway in a later phase.</p>
+            <p className="section-title" style={{ fontSize: "1.1rem", margin: 0 }}>🛡 {t("dashboard.cyberGuard.title")}</p>
+            <p className="section-sub" style={{ margin: "0.25rem 0 0" }}>{t("dashboard.cyberGuard.description")}</p>
           </div>
           <span style={{ background: "var(--teal-lt)", color: "var(--teal)", fontSize: "0.72rem", fontWeight: 600, borderRadius: 99, padding: "0.25rem 0.75rem" }}>
-            Saved profile preview
+            {t("dashboard.cyberGuard.badge")}
           </span>
         </div>
         <AgentPanel />
@@ -1903,6 +2602,7 @@ function DashboardPage() {
 
 // ─── Agent Panel ──────────────────────────────────────────────────
 function AgentPanel() {
+  const { t } = useTranslation();
   const { user } = useApp();
   const [messages, setMessages] = useState([]);
   const [history,  setHistory]  = useState([]);
@@ -1917,9 +2617,9 @@ function AgentPanel() {
   useEffect(() => {
     setMessages([{
       role: "ai",
-      text: `Hi ${nick}! CyberGuard's chat interface is ready, but live AI replies will be enabled after the backend AI Gateway phase.`,
+      text: t("agent.welcome", { name: nick }),
     }]);
-  }, [nick]);
+  }, [nick, t]);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
@@ -1950,21 +2650,21 @@ function AgentPanel() {
 
   return (
     <div className="agent-panel">
-      <div className="agent-header">🛡 CyberGuard AI</div>
+      <div className="agent-header">🛡 {t("agent.title")}</div>
       <div className="agent-messages">
         {messages.map((m, i) => (
           <div key={i} className={`agent-bubble ${m.role}`} style={{ whiteSpace: "pre-wrap" }}>
             {m.text}
           </div>
         ))}
-        {loading && <div className="agent-bubble ai loading">CyberGuard is thinking…</div>}
+        {loading && <div className="agent-bubble ai loading">{t("agent.thinking")}</div>}
         {error && <p style={{ color: "var(--coral)", fontSize: "0.82rem" }}>⚠️ {error}</p>}
         <div ref={endRef} />
       </div>
       <div className="agent-input-row">
         <input
           className="agent-input"
-          placeholder="Ask about cybersecurity…"
+          placeholder={t("agent.placeholder")}
           value={input}
           onChange={e => setInput(e.target.value)}
           onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
@@ -1975,7 +2675,7 @@ function AgentPanel() {
           onClick={() => sendMessage(input)}
           disabled={loading || !input.trim()}
         >
-          {loading ? "…" : "Send"}
+          {loading ? "…" : t("agent.send")}
         </button>
       </div>
     </div>
@@ -2098,6 +2798,7 @@ const TOPIC_COLORS = {
 const RESOURCE_CATEGORIES = ["All", ...Array.from(new Set(TOPICS.map(t => t.category)))];
 
 function ResourcesPage() {
+  const { t } = useTranslation();
   const { go, resourceFocusTopic, clearResourceFocus } = useApp();
   const [selected, setSelected]   = useState(null);
   const [filter,   setFilter]     = useState("All");
@@ -2106,6 +2807,7 @@ function ResourcesPage() {
   const categories = RESOURCE_CATEGORIES;
   const filtered   = filter === "All" ? TOPICS : TOPICS.filter(t => t.category === filter);
   const focusedCategory = resourceFocusTopic ? PROGRESS_TOPIC_META[resourceFocusTopic]?.category : null;
+  const categoryLabel = category => t(`resources.categories.${category}`, { defaultValue: category });
 
   useEffect(() => {
     if (focusedCategory && categories.includes(focusedCategory)) {
@@ -2128,7 +2830,7 @@ function ResourcesPage() {
       <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
         <path d="M19 12H5M12 5l-7 7 7 7"/>
       </svg>
-      Back to Home
+      {t("common.backToHome")}
     </button>
   );
 
@@ -2142,20 +2844,20 @@ function ResourcesPage() {
         <div style={{ maxWidth: 680, margin: "0 auto" }}>
           <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>📚</div>
           <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.5rem, 3vw, 2.2rem)", fontWeight: 600, marginBottom: "0.75rem" }}>
-            Cyber Wellness Resources
+            {t("resources.title")}
           </h1>
           <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "0.95rem", lineHeight: 1.7, marginBottom: "1.5rem" }}>
-            Curated guides on the cyber threats that matter most to Malaysian teens. Click any card to read the full guide.
+            {t("resources.description")}
           </p>
           <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
             {[
-              { val: "9", label: "Topics covered" },
-              { val: "100%", label: "Free to read" },
-              { val: "MY", label: "Malaysia focused" },
+              { val: "9", labelKey: "resources.stats.topicsCovered" },
+              { val: "100%", labelKey: "resources.stats.freeToRead" },
+              { val: "MY", labelKey: "resources.stats.malaysiaFocused" },
             ].map(s => (
-              <div key={s.label} style={{ background: "rgba(255,255,255,0.08)", borderRadius: 10, padding: "0.6rem 1.2rem", textAlign: "center" }}>
+              <div key={s.labelKey} style={{ background: "rgba(255,255,255,0.08)", borderRadius: 10, padding: "0.6rem 1.2rem", textAlign: "center" }}>
                 <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.2rem", color: "var(--teal)" }}>{s.val}</div>
-                <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.5)" }}>{s.label}</div>
+                <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.5)" }}>{t(s.labelKey)}</div>
               </div>
             ))}
           </div>
@@ -2168,13 +2870,13 @@ function ResourcesPage() {
         {focusedCategory && (
           <div className="card" style={{ marginBottom: "1rem", background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)", display: "flex", gap: "0.85rem", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}>
             <div>
-              <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.2rem" }}>Recommended focus</div>
+              <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.2rem" }}>{t("resources.focus.title")}</div>
               <div style={{ fontSize: "0.84rem", color: "#455", lineHeight: 1.55 }}>
-                Showing guides for {topicLabel(resourceFocusTopic)} based on your measured assessment result.
+                {t("resources.focus.description", { topic: t(`topics.${resourceFocusTopic}`, { defaultValue: topicLabel(resourceFocusTopic) }) })}
               </div>
             </div>
             <button onClick={() => { clearResourceFocus(); setFilter("All"); }} style={{ background: "#fff", color: "var(--teal)", border: "1px solid rgba(29,158,117,0.3)", borderRadius: 10, padding: "0.5rem 0.9rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" }}>
-              Show all guides
+              {t("resources.focus.showAll")}
             </button>
           </div>
         )}
@@ -2194,22 +2896,22 @@ function ResourcesPage() {
                 transition: "all 0.15s",
               }}
             >
-              {cat}
+              {categoryLabel(cat)}
             </button>
           ))}
           <span style={{ marginLeft: "auto", fontSize: "0.8rem", color: "#999", alignSelf: "center" }}>
-            {filtered.length} guide{filtered.length !== 1 ? "s" : ""}
+            {t("resources.guideCount", { count: filtered.length })}
           </span>
         </div>
 
         {/* Cards grid */}
         <div className="res-grid">
-          {filtered.map(t => {
-            const cat = TOPIC_COLORS[t.category] || { bg: "#E8EDE8", text: "#1D9E75", dot: "#1D9E75" };
+          {filtered.map(resource => {
+            const cat = TOPIC_COLORS[resource.category] || { bg: "#E8EDE8", text: "#1D9E75", dot: "#1D9E75" };
             return (
               <button
-                key={t.id}
-                onClick={() => setSelected(t.id)}
+                key={resource.id}
+                onClick={() => setSelected(resource.id)}
                 style={{
                   background: "#fff", border: "1px solid rgba(0,0,0,0.07)",
                   borderRadius: 14, padding: "1.25rem", textAlign: "left",
@@ -2235,12 +2937,12 @@ function ResourcesPage() {
                   fontSize: "0.72rem", fontWeight: 600, alignSelf: "flex-start",
                 }}>
                   <span style={{ width: 6, height: 6, borderRadius: "50%", background: cat.dot, display: "inline-block" }} />
-                  {t.category}
+                  {categoryLabel(resource.category)}
                 </span>
-                <div className="res-title">{t.title}</div>
-                <div className="res-desc">{t.summary}</div>
+                <div className="res-title">{resource.title}</div>
+                <div className="res-desc">{resource.summary}</div>
                 <span style={{ fontSize: "0.78rem", color: "var(--teal)", fontWeight: 600, display: "flex", alignItems: "center", gap: 4, marginTop: "auto" }}>
-                  Read guide →
+                  {t("resources.readGuide")}
                 </span>
               </button>
             );
@@ -2255,9 +2957,9 @@ function ResourcesPage() {
         }}>
           <span style={{ fontSize: "1.5rem", flexShrink: 0 }}>💡</span>
           <div>
-            <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--teal)", marginBottom: "0.2rem" }}>Pro tip</div>
+            <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--teal)", marginBottom: "0.2rem" }}>{t("resources.tip.title")}</div>
             <div style={{ fontSize: "0.85rem", color: "#444", lineHeight: 1.6 }}>
-              Not sure where to start? Try <strong>Phishing</strong> or <strong>Password Security</strong> — they are the most common threats facing Malaysian teens right now.
+              {t("resources.tip.prefix")} <strong>{t("resources.tip.phishing")}</strong> {t("resources.tip.or")} <strong>{t("resources.tip.passwordSecurity")}</strong> {t("resources.tip.suffix")}
             </div>
           </div>
         </div>
@@ -2301,7 +3003,7 @@ function ResourcesPage() {
                   fontSize: "0.72rem", fontWeight: 600, marginBottom: "0.9rem",
                 }}>
                   <span style={{ width: 6, height: 6, borderRadius: "50%", background: cat.dot, display: "inline-block" }} />
-                  {topic.category}
+                  {categoryLabel(topic.category)}
                 </span>
               );
             })()}
@@ -2319,7 +3021,7 @@ function ResourcesPage() {
             <div style={{ borderTop: "1px solid rgba(0,0,0,0.08)", margin: "1.75rem 0 1.25rem" }} />
 
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
-              <span style={{ fontSize: "0.78rem", color: "#aaa" }}>Source: <em>{topic.sourceLabel}</em></span>
+              <span style={{ fontSize: "0.78rem", color: "#aaa" }}>{t("resources.source")}: <em>{topic.sourceLabel}</em></span>
               <a
                 href={topic.source} target="_blank" rel="noopener noreferrer"
                 style={{
@@ -2328,7 +3030,7 @@ function ResourcesPage() {
                   borderRadius: 10, padding: "0.6rem 1.25rem",
                   fontSize: "0.875rem", fontWeight: 600, textDecoration: "none",
                 }}
-              >Learn more ↗</a>
+              >{t("common.learnMore")}</a>
             </div>
           </div>
         </div>
@@ -2339,38 +3041,39 @@ function ResourcesPage() {
 
 // ─── Page: About ──────────────────────────────────────────────────
 function AboutPage() {
+  const { t } = useTranslation();
   const { go } = useApp();
 
   const members = [
-    { initials: "JJ",  name: "Jayron Poi",     role: "Web Developer",                   desc: "Ensures logic and webpage usability are functional, and leads implementation of Agentic AI features and adaptive learning tools." },
-    { initials: "JH",  name: "Chung Jin Hong", role: "UI/UX Designer",                  desc: "Develops the core wireframe and low-fidelity prototype design, ensuring the interface is tailored to our teenage target demographic." },
-    { initials: "EC",  name: "Edward Chang",   role: "System Architect & Chatbot Lead", desc: "Handles backend architecture and AI workflow planning, ensuring components are streamlined for adaptive learning features." },
-    { initials: "AB",  name: "Arman",          role: "Agentic AI Personalisation",      desc: "Builds Agentic AI analytics for personalised features and adaptive learning, focusing on user behaviour analysis." },
-    { initials: "PW",  name: "Puah Wen Zhen",  role: "Agentic AI Module Lead",          desc: "Leads the implementation of system architecture and the Agentic AI module, with support in chatbot functionalities." },
+    { initials: "JJ",  name: "Jayron Poi",     roleKey: "about.team.members.jayron.role", descKey: "about.team.members.jayron.description" },
+    { initials: "JH",  name: "Chung Jin Hong", roleKey: "about.team.members.jinHong.role", descKey: "about.team.members.jinHong.description" },
+    { initials: "EC",  name: "Edward Chang",   roleKey: "about.team.members.edward.role", descKey: "about.team.members.edward.description" },
+    { initials: "AB",  name: "Arman",          roleKey: "about.team.members.arman.role", descKey: "about.team.members.arman.description" },
+    { initials: "PW",  name: "Puah Wen Zhen",  roleKey: "about.team.members.puah.role", descKey: "about.team.members.puah.description" },
   ];
 
   const features = [
-    { icon: "🤖", title: "Agentic AI Guidance",      desc: "Autonomous, goal-oriented learning support with scenario-based decision assistance and real-time personalised recommendations." },
-    { icon: "💬", title: "Cyber Wellness Chatbot",    desc: "Real-time conversational support that answers cybersecurity questions through natural language interaction." },
-    { icon: "🎯", title: "Adaptive Difficulty",       desc: "Auto-selects difficulty based on the user's knowledge and progress for a more effective lesson experience." },
-    { icon: "🛡",  title: "Cyber Threat Simulations", desc: "Simulate phishing, scams, and misinformation scenarios to sharpen critical thinking and cybersecurity decisions." },
-    { icon: "📊", title: "Progress Tracking",         desc: "Monitors learning progress and engagement patterns to assess effectiveness and drive adaptive recommendations." },
-    { icon: "🎮", title: "Gamified Challenges",       desc: "Optional quizzes, achievements, and interactive activities to boost motivation, engagement, and knowledge retention." },
+    { icon: "🤖", titleKey: "about.features.agentic.title", descKey: "about.features.agentic.description" },
+    { icon: "💬", titleKey: "about.features.chatbot.title", descKey: "about.features.chatbot.description" },
+    { icon: "🎯", titleKey: "about.features.adaptive.title", descKey: "about.features.adaptive.description" },
+    { icon: "🛡",  titleKey: "about.features.simulations.title", descKey: "about.features.simulations.description" },
+    { icon: "📊", titleKey: "about.features.progress.title", descKey: "about.features.progress.description" },
+    { icon: "🎮", titleKey: "about.features.gamified.title", descKey: "about.features.gamified.description" },
   ];
 
   const stats = [
-    { value: "56%",   label: "of Malaysian teens say they can identify scams" },
-    { value: "11%",   label: "have already fallen victim to an online scam" },
-    { value: "84.6%", label: "of students never attended a scam awareness workshop" },
-    { value: "96%",   label: "of teens aged 12–17 go online daily" },
+    { value: "56%",   labelKey: "about.stats.identifyScams" },
+    { value: "11%",   labelKey: "about.stats.scamVictim" },
+    { value: "84.6%", labelKey: "about.stats.noWorkshop" },
+    { value: "96%",   labelKey: "about.stats.dailyOnline" },
   ];
 
   const objectives = [
-    "Design and develop an AI-driven Cyber Wellness Toolkit that enhances cybersecurity awareness among Malaysian teenagers aged 13–17.",
-    "Create an intelligent cybersecurity chatbot for real-time conversational learning in multiple languages.",
-    "Build an Agentic AI module for personalised learning recommendations and adaptive difficulty adjustment.",
-    "Incorporate optional gamified learning areas — quizzes, simulations, and real-life cyber threat scenarios.",
-    "Evaluate the system through user interaction analysis, pre/post assessments, and feedback collection.",
+    "about.objectives.items.toolkit",
+    "about.objectives.items.chatbot",
+    "about.objectives.items.agentic",
+    "about.objectives.items.gamified",
+    "about.objectives.items.evaluate",
   ];
 
   return (
@@ -2382,16 +3085,16 @@ function AboutPage() {
       }}>
         <div style={{ maxWidth: 680, margin: "0 auto" }}>
           <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "rgba(255,255,255,0.45)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.75rem" }}>
-            Capstone Project · Group 20 · Taylor's University
+            {t("about.hero.eyebrow")}
           </div>
           <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.6rem, 4vw, 2.4rem)", fontWeight: 600, marginBottom: "0.85rem", lineHeight: 1.3 }}>
-            Interactive Cyber Wellness Toolkit for Teens
+            {t("about.hero.title")}
           </h1>
           <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "0.95rem", lineHeight: 1.7, marginBottom: "1.5rem" }}>
-            An AI-driven platform built to enhance cybersecurity awareness and promote safer digital behaviour among Malaysian teenagers aged 13–17.
+            {t("about.hero.description")}
           </p>
           <div style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 99, padding: "0.45rem 1rem", fontSize: "0.8rem", color: "rgba(255,255,255,0.65)" }}>
-            🏫 In collaboration with Cybersecurity Hub DISS – Impact Lab
+            🏫 {t("about.hero.collaboration")}
           </div>
         </div>
       </div>
@@ -2413,18 +3116,18 @@ function AboutPage() {
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M19 12H5M12 5l-7 7 7 7"/>
           </svg>
-          Back to Home
+          {t("common.backToHome")}
         </button>
 
         {/* Stats */}
         <div style={{ marginBottom: "3rem" }}>
-          <p className="section-title" style={{ fontSize: "1.3rem" }}>Why this matters</p>
-          <p className="section-sub">The cyber threat landscape facing Malaysian teenagers is serious and growing.</p>
+          <p className="section-title" style={{ fontSize: "1.3rem" }}>{t("about.why.title")}</p>
+          <p className="section-sub">{t("about.why.description")}</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem" }}>
             {stats.map(s => (
               <div key={s.value} className="card" style={{ textAlign: "center", padding: "1.5rem 1rem" }}>
                 <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "2rem", fontWeight: 700, color: "var(--teal)", marginBottom: "0.4rem" }}>{s.value}</div>
-                <div style={{ fontSize: "0.82rem", color: "#666", lineHeight: 1.5 }}>{s.label}</div>
+                <div style={{ fontSize: "0.82rem", color: "#666", lineHeight: 1.5 }}>{t(s.labelKey)}</div>
               </div>
             ))}
           </div>
@@ -2432,14 +3135,14 @@ function AboutPage() {
 
         {/* Features */}
         <div style={{ marginBottom: "3rem" }}>
-          <p className="section-title" style={{ fontSize: "1.3rem" }}>What we built</p>
-          <p className="section-sub">A modular, AI-powered toolkit with six core capabilities.</p>
+          <p className="section-title" style={{ fontSize: "1.3rem" }}>{t("about.built.title")}</p>
+          <p className="section-sub">{t("about.built.description")}</p>
           <div className="card-grid">
             {features.map(f => (
-              <div key={f.title} className="card" style={{ padding: "1.25rem" }}>
+              <div key={f.titleKey} className="card" style={{ padding: "1.25rem" }}>
                 <div style={{ fontSize: "1.6rem", marginBottom: "0.6rem" }}>{f.icon}</div>
-                <div style={{ fontWeight: 600, fontSize: "0.95rem", marginBottom: "0.35rem" }}>{f.title}</div>
-                <div style={{ color: "#666", fontSize: "0.82rem", lineHeight: 1.6 }}>{f.desc}</div>
+                <div style={{ fontWeight: 600, fontSize: "0.95rem", marginBottom: "0.35rem" }}>{t(f.titleKey)}</div>
+                <div style={{ color: "#666", fontSize: "0.82rem", lineHeight: 1.6 }}>{t(f.descKey)}</div>
               </div>
             ))}
           </div>
@@ -2447,21 +3150,21 @@ function AboutPage() {
 
         {/* How it works */}
         <div style={{ marginBottom: "3rem" }}>
-          <p className="section-title" style={{ fontSize: "1.3rem" }}>How it works</p>
-          <p className="section-sub">Every experience is shaped around the individual learner.</p>
+          <p className="section-title" style={{ fontSize: "1.3rem" }}>{t("about.how.title")}</p>
+          <p className="section-sub">{t("about.how.description")}</p>
           <div className="card" style={{ background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)", padding: "1.75rem" }}>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1.25rem" }}>
               {[
-                { step: "01", title: "You sign up",         desc: "Complete a short onboarding profile — your age, language, familiarity, and learning goals." },
-                { step: "02", title: "AI builds your path", desc: "The Agentic AI module constructs a personalised learning path based on your responses." },
-                { step: "03", title: "Learn your way",      desc: "Chat with CyberGuard AI, explore resources, and tackle simulations — all adapted to your level." },
-                { step: "04", title: "Track your growth",   desc: "Your progress is tracked to continuously refine recommendations over time." },
+                { step: "01", titleKey: "about.how.steps.signUp.title", descKey: "about.how.steps.signUp.description" },
+                { step: "02", titleKey: "about.how.steps.path.title", descKey: "about.how.steps.path.description" },
+                { step: "03", titleKey: "about.how.steps.learn.title", descKey: "about.how.steps.learn.description" },
+                { step: "04", titleKey: "about.how.steps.track.title", descKey: "about.how.steps.track.description" },
               ].map(s => (
                 <div key={s.step} style={{ display: "flex", gap: "0.85rem" }}>
                   <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.1rem", fontWeight: 700, color: "var(--teal)", opacity: 0.5, flexShrink: 0 }}>{s.step}</div>
                   <div>
-                    <div style={{ fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.25rem" }}>{s.title}</div>
-                    <div style={{ fontSize: "0.82rem", color: "#555", lineHeight: 1.6 }}>{s.desc}</div>
+                    <div style={{ fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.25rem" }}>{t(s.titleKey)}</div>
+                    <div style={{ fontSize: "0.82rem", color: "#555", lineHeight: 1.6 }}>{t(s.descKey)}</div>
                   </div>
                 </div>
               ))}
@@ -2471,8 +3174,8 @@ function AboutPage() {
 
         {/* Objectives */}
         <div style={{ marginBottom: "3rem" }}>
-          <p className="section-title" style={{ fontSize: "1.3rem" }}>Project objectives</p>
-          <p className="section-sub">Five goals that guide everything we build.</p>
+          <p className="section-title" style={{ fontSize: "1.3rem" }}>{t("about.objectives.title")}</p>
+          <p className="section-sub">{t("about.objectives.description")}</p>
           <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
             {objectives.map((obj, i) => (
               <div key={i} className="card" style={{ display: "flex", gap: "1rem", alignItems: "flex-start", padding: "1rem 1.25rem" }}>
@@ -2482,7 +3185,7 @@ function AboutPage() {
                   fontWeight: 700, fontSize: "0.78rem", display: "flex", alignItems: "center",
                   justifyContent: "center", flexShrink: 0,
                 }}>{i + 1}</div>
-                <p style={{ margin: 0, fontSize: "0.88rem", color: "#444", lineHeight: 1.65 }}>{obj}</p>
+                <p style={{ margin: 0, fontSize: "0.88rem", color: "#444", lineHeight: 1.65 }}>{t(obj)}</p>
               </div>
             ))}
           </div>
@@ -2490,16 +3193,16 @@ function AboutPage() {
 
         {/* Team */}
         <div>
-          <p className="section-title" style={{ fontSize: "1.3rem" }}>Meet the team</p>
-          <p className="section-sub">Group 20 — Taylor's University Capstone Project</p>
+          <p className="section-title" style={{ fontSize: "1.3rem" }}>{t("about.team.title")}</p>
+          <p className="section-sub">{t("about.team.description")}</p>
 
           {/* Supervisor */}
           <div className="card" style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1.25rem", background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)", padding: "1.25rem 1.5rem" }}>
             <div style={{ width: 48, height: 48, borderRadius: "50%", background: "var(--teal)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "1rem", flexShrink: 0 }}>SZ</div>
             <div>
               <div style={{ fontWeight: 600, fontSize: "0.95rem" }}>Dr Siti Zainab Ibrahim</div>
-              <div style={{ fontSize: "0.8rem", color: "var(--teal)", fontWeight: 600, marginBottom: "0.2rem" }}>Project Supervisor · Cybersecurity Hub DISS – Impact Lab</div>
-              <div style={{ fontSize: "0.8rem", color: "#555" }}>Provides guidance, professional oversight, and industry client direction throughout the project.</div>
+              <div style={{ fontSize: "0.8rem", color: "var(--teal)", fontWeight: 600, marginBottom: "0.2rem" }}>{t("about.team.supervisor.role")}</div>
+              <div style={{ fontSize: "0.8rem", color: "#555" }}>{t("about.team.supervisor.description")}</div>
             </div>
           </div>
 
@@ -2508,8 +3211,8 @@ function AboutPage() {
               <div className="team-card" key={m.name} style={{ padding: "1.5rem 1.25rem" }}>
                 <div className="avatar">{m.initials}</div>
                 <div style={{ fontWeight: 600, fontSize: "0.95rem" }}>{m.name}</div>
-                <div style={{ color: "var(--teal)", fontSize: "0.75rem", fontWeight: 600, margin: "0.2rem 0 0.5rem" }}>{m.role}</div>
-                <div style={{ color: "#777", fontSize: "0.78rem", lineHeight: 1.55 }}>{m.desc}</div>
+                <div style={{ color: "var(--teal)", fontSize: "0.75rem", fontWeight: 600, margin: "0.2rem 0 0.5rem" }}>{t(m.roleKey)}</div>
+                <div style={{ color: "#777", fontSize: "0.78rem", lineHeight: 1.55 }}>{t(m.descKey)}</div>
               </div>
             ))}
           </div>
@@ -2522,7 +3225,9 @@ function AboutPage() {
 
 // ─── Page: Initial Assessment ────────────────────────────────────
 function AssessmentPage() {
+  const { t, i18n: activeI18n } = useTranslation();
   const { user, go } = useApp();
+  const assessmentLocale = normalizeLocale(activeI18n.language);
   const [assessment, setAssessment] = useState(null);
   const [questions, setQuestions] = useState([]);
   const [attempt, setAttempt] = useState(null);
@@ -2541,8 +3246,8 @@ function AssessmentPage() {
       setLoading(true);
       setError("");
       const [assessmentResult, statusResult] = await Promise.all([
-        dbGetInitialAssessment(),
-        dbGetAssessmentStatus(),
+        dbGetInitialAssessment(assessmentLocale),
+        dbGetAssessmentStatus(assessmentLocale),
       ]);
       if (!active) return;
       if (!assessmentResult.ok) {
@@ -2563,14 +3268,14 @@ function AssessmentPage() {
     }
     load();
     return () => { active = false; };
-  }, [user]);
+  }, [user, assessmentLocale]);
 
   if (!user) { go("login"); return null; }
 
   async function start() {
     setLoading(true);
     setError("");
-    const response = await dbStartInitialAttempt();
+    const response = await dbStartInitialAttempt(assessmentLocale);
     setLoading(false);
     if (!response.ok) {
       setError(response.error);
@@ -2607,14 +3312,14 @@ function AssessmentPage() {
   async function submit() {
     if (!attempt || submitting) return;
     if (Object.keys(answers).length !== questions.length) {
-      setError("Please answer all questions before submitting.");
+      setError(t("assessment.answerAll"));
       return;
     }
-    const confirmed = window.confirm("Submit your initial assessment? This baseline result will be preserved.");
+    const confirmed = window.confirm(t("assessment.confirmSubmit"));
     if (!confirmed) return;
     setSubmitting(true);
     setError("");
-    const response = await dbSubmitAssessment(attempt.id);
+    const response = await dbSubmitAssessment(attempt.id, assessmentLocale);
     setSubmitting(false);
     if (!response.ok) {
       setError(response.error);
@@ -2629,31 +3334,43 @@ function AssessmentPage() {
       <div className="section" style={{ maxWidth: 850 }}>
         <div className="card" style={{ background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)" }}>
           <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🧭</div>
-          <h1 className="section-title">{assessment?.title || "Initial Cyber Wellness Assessment"}</h1>
+          <h1 className="section-title">{assessment?.title || t("assessment.title")}</h1>
           <p className="section-sub" style={{ marginBottom: "1rem" }}>
-            A 12-question baseline check that helps future Cyberly lessons understand your measured cyber wellness level.
+            {t("assessment.introduction")}
           </p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.75rem", marginBottom: "1.5rem" }}>
             {[
-              ["12", "single-choice questions"],
-              ["5-10", "minutes"],
-              ["0", "negative marks"],
-              ["4", "topic areas"],
-            ].map(([value, label]) => (
-              <div key={label} style={{ background: "#fff", borderRadius: 10, padding: "0.9rem", textAlign: "center" }}>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", color: "var(--teal)", fontWeight: 700, fontSize: "1.2rem" }}>{value}</div>
-                <div style={{ fontSize: "0.78rem", color: "#666" }}>{label}</div>
+              {
+                value: "12",
+                labelKey: "assessment.stats.questions",
+              },
+              {
+                value: "5-10",
+                labelKey: "assessment.stats.minutes",
+              },
+              {
+                value: "0",
+                labelKey: "assessment.stats.negativeMarks",
+              },
+              {
+                value: "4",
+                labelKey: "assessment.stats.topicAreas",
+              },
+            ].map(stat => (
+              <div key={stat.labelKey} style={{ background: "#fff", borderRadius: 10, padding: "0.9rem", textAlign: "center" }}>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", color: "var(--teal)", fontWeight: 700, fontSize: "1.2rem" }}>{stat.value}</div>
+                <div style={{ fontSize: "0.78rem", color: "#666" }}>{t(stat.labelKey)}</div>
               </div>
             ))}
           </div>
           <p style={{ fontSize: "0.86rem", color: "#42524d", lineHeight: 1.7, marginBottom: "1rem" }}>
-            Your self-reported familiarity stays separate from this measured result. No AI is used for questions, scoring, or feedback.
+            {t("assessment.measurementNote")}
           </p>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
             <button className="btn-primary" style={{ flex: "0 0 auto", minWidth: 190 }} onClick={start} disabled={loading}>
-              {attempt ? "Resume assessment" : "Start assessment"}
+              {attempt ? t("assessment.resume") : t("assessment.start")}
             </button>
-            <button className="btn-ghost" onClick={() => go("dashboard")}>Do later</button>
+            <button className="btn-ghost" onClick={() => go("dashboard")}>{t("assessment.doLater")}</button>
           </div>
         </div>
       </div>
@@ -2668,15 +3385,15 @@ function AssessmentPage() {
 
     return (
       <div className="section" style={{ maxWidth: 860 }}>
-        <button className="btn-ghost" style={{ marginBottom: "1rem" }} onClick={() => go("dashboard")}>Dashboard</button>
+        <button className="btn-ghost" style={{ marginBottom: "1rem" }} onClick={() => go("dashboard")}>{t("nav.dashboard")}</button>
         <div className="card">
           <div className="auth-progress" style={{ marginBottom: "1.25rem" }}>
             <div className="auth-progress-track">
               <div className="auth-progress-fill" style={{ width: `${progress}%` }} />
             </div>
             <div className="auth-progress-label">
-              <span>Question {current + 1} of {questions.length}</span>
-              <span>{answeredCount}/{questions.length} answered {saving ? "· saving..." : ""}</span>
+              <span>{t("assessment.questionProgress", { current: current + 1, total: questions.length })}</span>
+              <span>{answeredCount}/{questions.length} {t("assessment.answeredProgress", { answered: answeredCount, total: questions.length })} {saving ? "· " + t("common.saving") : ""}</span>
             </div>
           </div>
           <div className="res-tag">{question?.topicLabel}</div>
@@ -2694,17 +3411,17 @@ function AssessmentPage() {
             ))}
           </div>
           <div className="auth-nav">
-            <button className="btn-ghost" onClick={() => setCurrent(index => Math.max(0, index - 1))} disabled={current === 0}>Previous</button>
+            <button className="btn-ghost" onClick={() => setCurrent(index => Math.max(0, index - 1))} disabled={current === 0}>{t("assessment.previous")}</button>
             {current < questions.length - 1 ? (
-              <button className="btn-primary" onClick={() => setCurrent(index => Math.min(questions.length - 1, index + 1))}>Next</button>
+              <button className="btn-primary" onClick={() => setCurrent(index => Math.min(questions.length - 1, index + 1))}>{t("assessment.next")}</button>
             ) : (
               <button className="btn-primary" onClick={submit} disabled={submitting || answeredCount !== questions.length}>
-                {submitting ? "Submitting..." : "Submit assessment"}
+                {submitting ? t("assessment.submitting") : t("assessment.submit")}
               </button>
             )}
           </div>
           {answeredCount !== questions.length && current === questions.length - 1 && (
-            <div style={{ fontSize: "0.8rem", color: "#777", marginTop: "0.75rem" }}>Answer all questions before final submission.</div>
+            <div style={{ fontSize: "0.8rem", color: "#777", marginTop: "0.75rem" }}>{t("assessment.finalSubmissionReminder")}</div>
           )}
         </div>
       </div>
@@ -2718,43 +3435,68 @@ function AssessmentPage() {
     return (
       <div className="section" style={{ maxWidth: 980 }}>
         <div className="card" style={{ marginBottom: "1.5rem", background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)" }}>
-          <div style={{ fontSize: "0.78rem", color: "var(--teal)", fontWeight: 700, textTransform: "uppercase" }}>Initial result</div>
-          <h1 className="section-title" style={{ marginTop: "0.25rem" }}>{attemptResult?.measuredLevel} · {attemptResult?.percentage}%</h1>
+          <div style={{ fontSize: "0.78rem", color: "var(--teal)", fontWeight: 700, textTransform: "uppercase" }}>{t("assessment.result")}</div>
+          <h1 className="section-title" style={{ marginTop: "0.25rem" }}>{t("assessment.completed")}</h1>
           <p className="section-sub" style={{ marginBottom: "1rem" }}>
-            Score {attemptResult?.totalScore}/{attemptResult?.maximumScore}. This measured level is based only on your answers.
+            {t("assessment.resultSummary", {
+              score: attemptResult?.totalScore,
+              maxScore: attemptResult?.maximumScore,
+            })}
           </p>
-          <button className="btn-primary" style={{ flex: "0 0 auto" }} onClick={() => go("dashboard")}>Back to dashboard</button>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "0.75rem", marginBottom: "1rem" }}>
+            <div style={{ background: "#fff", borderRadius: 10, padding: "0.9rem" }}>
+              <div style={{ fontSize: "0.76rem", color: "#777", fontWeight: 700, marginBottom: "0.25rem" }}>{t("assessment.measuredLevel")}</div>
+              <div style={{ fontFamily: "'Space Grotesk', sans-serif", color: "var(--teal)", fontWeight: 700, fontSize: "1.2rem" }}>{attemptResult?.measuredLevel}</div>
+            </div>
+            <div style={{ background: "#fff", borderRadius: 10, padding: "0.9rem" }}>
+              <div style={{ fontSize: "0.76rem", color: "#777", fontWeight: 700, marginBottom: "0.25rem" }}>{t("assessment.score")}</div>
+              <div style={{ fontFamily: "'Space Grotesk', sans-serif", color: "var(--teal)", fontWeight: 700, fontSize: "1.2rem" }}>{attemptResult?.percentage}%</div>
+            </div>
+          </div>
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
+            <button className="btn-primary" style={{ flex: "0 0 auto" }} onClick={() => go("dashboard")}>{t("assessment.backToDashboard")}</button>
+            <button className="btn-ghost" onClick={() => go("progress")}>{t("assessment.viewProgress")}</button>
+          </div>
         </div>
 
+        <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("assessment.topicBreakdown")}</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
           {(result?.topicScores || []).map(topic => (
             <div key={topic.topicCode} className="card" style={{ padding: "1.1rem" }}>
               <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.35rem" }}>{topic.topicLabel}</div>
               <div style={{ fontSize: "1.2rem", fontWeight: 700 }}>{topic.correctCount}/{topic.totalCount} · {topic.percentage}%</div>
-              <div style={{ fontSize: "0.78rem", color: "#777", marginTop: "0.3rem" }}>{topic.classification === "strength" ? "Relative strength" : "Area to improve"}</div>
+              <div style={{ fontSize: "0.78rem", color: "#777", marginTop: "0.3rem" }}>
+                {topic.classification === "strength" ? t("assessment.relativeStrength") : t("assessment.areaToImprove")}
+              </div>
             </div>
           ))}
         </div>
 
         <div className="card" style={{ marginBottom: "1.5rem" }}>
-          <div style={{ fontWeight: 700, marginBottom: "0.5rem" }}>Strengths</div>
+          <div style={{ fontWeight: 700, marginBottom: "0.5rem" }}>{t("assessment.strengths")}</div>
           <div style={{ fontSize: "0.86rem", color: "#555", lineHeight: 1.7 }}>
-            {strengths.length ? strengths.map(topic => topic.topicLabel).join(", ") : "No topic crossed the strength threshold yet. That is okay; this is a starting baseline."}
+            {strengths.length ? strengths.map(topic => topic.topicLabel).join(", ") : t("assessment.noStrengthsYet")}
           </div>
-          <div style={{ fontWeight: 700, margin: "1rem 0 0.5rem" }}>Areas to improve</div>
+          <div style={{ fontWeight: 700, margin: "1rem 0 0.5rem" }}>{t("assessment.areasToImprove")}</div>
           <div style={{ fontSize: "0.86rem", color: "#555", lineHeight: 1.7 }}>
-            {improvements.length ? improvements.map(topic => topic.topicLabel).join(", ") : "All topics met the current strength threshold."}
+            {improvements.length ? improvements.map(topic => topic.topicLabel).join(", ") : t("assessment.allTopicsMetThreshold")}
           </div>
         </div>
 
-        <p className="section-title" style={{ fontSize: "1.1rem" }}>Question review</p>
+        <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("assessment.reviewAnswers")}</p>
         <div style={{ display: "grid", gap: "0.9rem" }}>
           {(result?.review || []).map(item => (
             <div key={item.questionId} className="card" style={{ padding: "1rem" }}>
               <div className="res-tag">{item.topicLabel}</div>
               <div style={{ fontWeight: 700, marginBottom: "0.55rem" }}>{item.prompt}</div>
               <div style={{ fontSize: "0.84rem", color: item.isCorrect ? "var(--teal)" : "var(--coral)", fontWeight: 700, marginBottom: "0.35rem" }}>
-                Your answer: {item.selectedOptionKey} · Correct answer: {item.correctOptionKey}
+                {item.isCorrect ? t("assessment.correct") : t("assessment.incorrect")}
+              </div>
+              <div style={{ fontSize: "0.84rem", color: "#555", lineHeight: 1.6, marginBottom: "0.35rem" }}>
+                {t("assessment.yourAnswer")}: {item.selectedOptionKey} · {t("assessment.correctAnswer")}: {item.correctOptionKey}
+              </div>
+              <div style={{ fontSize: "0.78rem", color: "#777", fontWeight: 700, marginBottom: "0.2rem" }}>
+                {t("assessment.explanation")}
               </div>
               <div style={{ fontSize: "0.84rem", color: "#555", lineHeight: 1.6 }}>{item.explanation}</div>
             </div>
@@ -2768,13 +3510,13 @@ function AssessmentPage() {
     <div>
       <div style={{ background: "linear-gradient(135deg, #1a2e1a 0%, #2d4a2d 100%)", padding: "2.5rem 1.5rem", color: "#fff" }}>
         <div style={{ maxWidth: 980, margin: "0 auto" }}>
-          <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.55)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}>Baseline Assessment</div>
-          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.5rem, 3vw, 2.2rem)", marginTop: "0.35rem" }}>Initial Cyber Wellness Assessment</h1>
+          <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.55)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}> {t("assessment.baselineLabel")}</div>
+          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.5rem, 3vw, 2.2rem)", marginTop: "0.35rem" }}> {t("assessment.title")}</h1>
         </div>
       </div>
-      {error && <div className="section" style={{ paddingBottom: 0 }}><div className="field-error">{error}</div></div>}
+      {error && <div className="section" style={{ paddingBottom: 0 }}><div className="field-error">{error || t("assessment.error")}</div></div>}
       {loading ? (
-        <div className="section"><p className="section-title">Loading assessment...</p></div>
+        <div className="section"><p className="section-title">{t("assessment.loading")}</p></div>
       ) : result ? renderResult() : attempt ? renderAttempt() : renderIntro()}
     </div>
   );
@@ -2782,7 +3524,9 @@ function AssessmentPage() {
 
 // ─── Page: Scenarios ──────────────────────────────────────────────
 function ScenariosPage() {
+  const { t, i18n: activeI18n } = useTranslation();
   const { user, go } = useApp();
+  const scenarioLocale = normalizeLocale(activeI18n.language);
   const [filters, setFilters] = useState({ topicCode: "", difficulty: "" });
   const [library, setLibrary] = useState({ loading: true, scenarios: [], recommended: [] });
   const [view, setView] = useState({ mode: "library" });
@@ -2795,8 +3539,8 @@ function ScenariosPage() {
     let active = true;
     if (!user) return () => { active = false; };
     Promise.all([
-      dbGetScenarios({ topicCode: filters.topicCode, difficulty: filters.difficulty }),
-      dbGetRecommendedScenarios(),
+      dbGetScenarios({ topicCode: filters.topicCode, difficulty: filters.difficulty }, scenarioLocale),
+      dbGetRecommendedScenarios(scenarioLocale),
     ]).then(([scenarioResult, recommendedResult]) => {
       if (!active) return;
       setLibrary({
@@ -2807,7 +3551,28 @@ function ScenariosPage() {
       });
     });
     return () => { active = false; };
-  }, [user, filters.topicCode, filters.difficulty]);
+  }, [user, filters.topicCode, filters.difficulty, scenarioLocale]);
+
+  useEffect(() => {
+    let active = true;
+    if (!user || view.mode === "library") return () => { active = false; };
+
+    async function reloadScenarioContent() {
+      if (view.mode === "intro" && view.scenario?.slug) {
+        const result = await dbGetScenario(view.scenario.slug, scenarioLocale);
+        if (active && result.ok) setView(current => ({ ...current, scenario: result.scenario, firstStep: result.firstStep }));
+      } else if (view.mode === "attempt" && view.attempt?.id && !decisionFeedback) {
+        const result = await dbGetScenarioAttempt(view.attempt.id, scenarioLocale);
+        if (active && result.ok) setView(current => ({ ...current, ...result }));
+      } else if (view.mode === "result" && view.attempt?.id) {
+        const result = await dbGetScenarioResult(view.attempt.id, scenarioLocale);
+        if (active && result.ok) setView(current => ({ ...current, ...result.result }));
+      }
+    }
+
+    reloadScenarioContent();
+    return () => { active = false; };
+  }, [user, scenarioLocale, view.mode, view.scenario?.slug, view.attempt?.id, decisionFeedback]);
 
   if (!user) { go("login"); return null; }
 
@@ -2816,7 +3581,7 @@ function ScenariosPage() {
   async function openIntro(slug) {
     setBusy(true);
     setError(null);
-    const result = await dbGetScenario(slug);
+    const result = await dbGetScenario(slug, scenarioLocale);
     setBusy(false);
     if (!result.ok) return setError(result.error);
     setView({ mode: "intro", scenario: result.scenario, firstStep: result.firstStep });
@@ -2825,7 +3590,7 @@ function ScenariosPage() {
   async function startScenario(slug) {
     setBusy(true);
     setError(null);
-    const result = await dbStartScenario(slug);
+    const result = await dbStartScenario(slug, scenarioLocale);
     setBusy(false);
     if (!result.ok) return setError(result.error);
     setSelectedChoice("");
@@ -2836,7 +3601,7 @@ function ScenariosPage() {
   async function openAttempt(attemptId) {
     setBusy(true);
     setError(null);
-    const result = await dbGetScenarioAttempt(attemptId);
+    const result = await dbGetScenarioAttempt(attemptId, scenarioLocale);
     setBusy(false);
     if (!result.ok) return setError(result.error);
     setSelectedChoice("");
@@ -2848,7 +3613,7 @@ function ScenariosPage() {
     if (!view.currentStep || !selectedChoice || busy) return;
     setBusy(true);
     setError(null);
-    const result = await dbSaveScenarioDecision(view.attempt.id, view.currentStep.id, selectedChoice);
+    const result = await dbSaveScenarioDecision(view.attempt.id, view.currentStep.id, selectedChoice, scenarioLocale);
     setBusy(false);
     if (!result.ok) return setError(result.error);
     setDecisionFeedback(result.decision);
@@ -2873,7 +3638,7 @@ function ScenariosPage() {
   async function completeScenario() {
     setBusy(true);
     setError(null);
-    const result = await dbCompleteScenario(view.attempt.id);
+    const result = await dbCompleteScenario(view.attempt.id, scenarioLocale);
     setBusy(false);
     if (!result.ok) return setError(result.error);
     setView({ mode: "result", ...result.result });
@@ -2882,7 +3647,7 @@ function ScenariosPage() {
   async function openResult(attemptId) {
     setBusy(true);
     setError(null);
-    const result = await dbGetScenarioResult(attemptId);
+    const result = await dbGetScenarioResult(attemptId, scenarioLocale);
     setBusy(false);
     if (!result.ok) return setError(result.error);
     setView({ mode: "result", ...result.result });
@@ -2890,13 +3655,21 @@ function ScenariosPage() {
 
   const filterBar = (
     <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
-      <select value={filters.topicCode} onChange={event => setFilters(current => ({ ...current, topicCode: event.target.value }))} style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 10, padding: "0.55rem 0.75rem" }}>
-        <option value="">All topics</option>
-        {Object.entries(PROGRESS_TOPIC_META).map(([value, meta]) => <option key={value} value={value}>{meta.label}</option>)}
+      <select aria-label={t("scenarios.filters.topic")} value={filters.topicCode} onChange={event => setFilters(current => ({ ...current, topicCode: event.target.value }))} style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 10, padding: "0.55rem 0.75rem" }}>
+        <option value="">{t("scenarios.filters.allTopics")}</option>
+        {Object.entries(PROGRESS_TOPIC_META).map(([value, meta]) => (
+          <option key={value} value={value}>
+            {t(`topics.${value}`, { defaultValue: meta.label })}
+          </option>
+        ))}
       </select>
-      <select value={filters.difficulty} onChange={event => setFilters(current => ({ ...current, difficulty: event.target.value }))} style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 10, padding: "0.55rem 0.75rem" }}>
-        <option value="">All difficulty</option>
-        {["beginner", "developing", "intermediate", "advanced"].map(value => <option key={value} value={value}>{levelLabel(value)}</option>)}
+      <select aria-label={t("scenarios.filters.difficulty")} value={filters.difficulty} onChange={event => setFilters(current => ({ ...current, difficulty: event.target.value }))} style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 10, padding: "0.55rem 0.75rem" }}>
+        <option value="">{t("scenarios.filters.allDifficulties")}</option>
+        {["beginner", "developing", "intermediate", "advanced"].map(value => (
+          <option key={value} value={value}>
+            {t(`levels.${value}`, { defaultValue: levelLabel(value) })}
+          </option>
+        ))}
       </select>
     </div>
   );
@@ -2906,7 +3679,9 @@ function ScenariosPage() {
       <>
         {filterBar}
         {library.loading ? (
-          <div className="card">Loading scenarios...</div>
+          <div className="card">{t("scenarios.library.loading")}</div>
+        ) : library.scenarios.length === 0 ? (
+          <div className="card">{t("scenarios.library.empty")}</div>
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "1rem" }}>
             {library.scenarios.map(scenario => {
@@ -2915,20 +3690,22 @@ function ScenariosPage() {
               return (
                 <div key={scenario.id} className="card" style={{ border: isRecommended ? "1px solid rgba(46,125,50,0.35)" : "1px solid rgba(0,0,0,0.07)" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.65rem" }}>
-                    <span style={{ color: "#2E7D32", fontWeight: 700, fontSize: "0.78rem" }}>{topicLabel(scenario.topicCode)}</span>
-                    {isRecommended && <span style={{ background: "#E8F5E9", color: "#2E7D32", borderRadius: 99, padding: "0.18rem 0.55rem", fontSize: "0.7rem", fontWeight: 700 }}>Recommended</span>}
+                    <span style={{ color: "#2E7D32", fontWeight: 700, fontSize: "0.78rem" }}>{t(`topics.${scenario.topicCode}`, { defaultValue: topicLabel(scenario.topicCode) })}</span>
+                    {isRecommended && <span style={{ background: "#E8F5E9", color: "#2E7D32", borderRadius: 99, padding: "0.18rem 0.55rem", fontSize: "0.7rem", fontWeight: 700 }}>{t("scenarios.library.recommended")}</span>}
                   </div>
                   <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.05rem", marginBottom: "0.4rem" }}>{scenario.title}</div>
                   <div style={{ color: "#666", fontSize: "0.84rem", lineHeight: 1.55, marginBottom: "0.8rem" }}>{scenario.summary}</div>
-                  <div style={{ fontSize: "0.78rem", color: "#777", marginBottom: "0.9rem" }}>{levelLabel(scenario.difficulty)} · {scenario.estimatedMinutes} min · {scenario.totalSteps} decisions</div>
+                  <div style={{ fontSize: "0.78rem", color: "#777", marginBottom: "0.9rem" }}>
+                    {t(`levels.${scenario.difficulty}`, { defaultValue: levelLabel(scenario.difficulty) })} · {t("scenarios.card.minutes", { count: scenario.estimatedMinutes })} · {t("scenarios.card.decisions", { count: scenario.totalSteps })}
+                  </div>
                   <div style={{ display: "flex", gap: "0.55rem", flexWrap: "wrap" }}>
                     {latest?.status === "in_progress" ? (
-                      <button onClick={() => openAttempt(latest.id)} className="btn-primary" style={{ minWidth: 0, padding: "0.55rem 0.9rem" }}>Resume</button>
+                      <button onClick={() => openAttempt(latest.id)} className="btn-primary" style={{ minWidth: 0, padding: "0.55rem 0.9rem" }}>{t("scenarios.card.resume")}</button>
                     ) : (
-                      <button onClick={() => openIntro(scenario.slug)} className="btn-primary" style={{ minWidth: 0, padding: "0.55rem 0.9rem" }}>Start</button>
+                      <button onClick={() => openIntro(scenario.slug)} className="btn-primary" style={{ minWidth: 0, padding: "0.55rem 0.9rem" }}>{t("scenarios.card.start")}</button>
                     )}
                     {latest?.status === "completed" && (
-                      <button onClick={() => openResult(latest.id)} className="btn-ghost">Result</button>
+                      <button onClick={() => openResult(latest.id)} className="btn-ghost">{t("scenarios.card.viewResult")}</button>
                     )}
                   </div>
                 </div>
@@ -2944,19 +3721,19 @@ function ScenariosPage() {
     const scenario = view.scenario;
     return (
       <div className="card" style={{ maxWidth: 760, margin: "0 auto" }}>
-        <button className="btn-ghost" onClick={() => setView({ mode: "library" })} style={{ marginBottom: "1rem" }}>Back</button>
-        <div style={{ color: "#2E7D32", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.35rem" }}>{topicLabel(scenario.topicCode)}</div>
+        <button className="btn-ghost" onClick={() => setView({ mode: "library" })} style={{ marginBottom: "1rem" }}>{t("common.back")}</button>
+        <div style={{ color: "#2E7D32", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.35rem" }}>{t(`topics.${scenario.topicCode}`, { defaultValue: topicLabel(scenario.topicCode) })}</div>
         <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", marginBottom: "0.5rem" }}>{scenario.title}</h2>
         <p style={{ color: "#555", lineHeight: 1.65 }}>{scenario.summary}</p>
         <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", fontSize: "0.82rem", color: "#666", margin: "1rem 0" }}>
-          <span>{levelLabel(scenario.difficulty)}</span>
-          <span>{scenario.estimatedMinutes} minutes</span>
-          <span>{scenario.totalSteps} decisions</span>
+          <span>{t(`levels.${scenario.difficulty}`, { defaultValue: levelLabel(scenario.difficulty) })}</span>
+          <span>{t("scenarios.card.minutes", { count: scenario.estimatedMinutes })}</span>
+          <span>{t("scenarios.card.decisions", { count: scenario.totalSteps })}</span>
         </div>
         <div style={{ background: "#fff8e1", border: "1px solid #ffe082", borderRadius: 12, padding: "0.9rem", fontSize: "0.84rem", color: "#5f4a1d", lineHeight: 1.6, marginBottom: "1rem" }}>
-          Choices are final once submitted. Feedback appears after each decision, and scoring is calculated by the backend.
+          {t("scenarios.intro.choiceNotice")}
         </div>
-        <button className="btn-primary" onClick={() => startScenario(scenario.slug)} disabled={busy}>Start scenario</button>
+        <button className="btn-primary" onClick={() => startScenario(scenario.slug)} disabled={busy}>{t("scenarios.intro.startPractice")}</button>
       </div>
     );
   }
@@ -2966,16 +3743,16 @@ function ScenariosPage() {
     if (!step) {
       return (
         <div className="card" style={{ maxWidth: 760, margin: "0 auto" }}>
-          <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", marginBottom: "0.5rem" }}>Ready to complete</h2>
-          <p style={{ color: "#555", lineHeight: 1.6 }}>All decisions are submitted. Complete the scenario to calculate your result and apply progress.</p>
-          <button className="btn-primary" onClick={completeScenario} disabled={busy}>Complete scenario</button>
+          <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", marginBottom: "0.5rem" }}>{t("scenarios.attempt.readyToComplete")}</h2>
+          <p style={{ color: "#555", lineHeight: 1.6 }}>{t("scenarios.attempt.readyToCompleteDescription")}</p>
+          <button className="btn-primary" onClick={completeScenario} disabled={busy}>{busy ? t("scenarios.attempt.completing") : t("scenarios.attempt.complete")}</button>
         </div>
       );
     }
     return (
-      <div className="card" style={{ maxWidth: 820, margin: "0 auto" }}>
-        <div style={{ color: "#2E7D32", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.35rem" }}>
-          Step {step.stepOrder} of {view.scenario.totalSteps}
+        <div className="card" style={{ maxWidth: 820, margin: "0 auto" }}>
+          <div style={{ color: "#2E7D32", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.35rem" }}>
+          {t("scenarios.attempt.stepProgress", { current: step.stepOrder, total: view.scenario.totalSteps })}
         </div>
         <div style={{ background: "#edf3ef", borderRadius: 99, height: 8, overflow: "hidden", marginBottom: "1rem" }}>
           <div style={{ width: `${((step.stepOrder - 1) / view.scenario.totalSteps) * 100}%`, background: "#2E7D32", height: "100%" }} />
@@ -2997,13 +3774,15 @@ function ScenariosPage() {
           ))}
         </div>
         {!decisionFeedback ? (
-          <button className="btn-primary" disabled={!selectedChoice || busy} onClick={submitDecision}>Submit choice</button>
+          <button className="btn-primary" disabled={!selectedChoice || busy} onClick={submitDecision}>{busy ? t("scenarios.attempt.savingDecision") : t("scenarios.attempt.confirmChoice")}</button>
         ) : (
           <div style={{ background: "#E8F5E9", border: "1px solid rgba(46,125,50,0.22)", borderRadius: 12, padding: "1rem" }}>
-            <div style={{ fontWeight: 700, color: "#2E7D32", marginBottom: "0.35rem" }}>Feedback</div>
+            <div style={{ fontWeight: 700, color: "#2E7D32", marginBottom: "0.35rem" }}>{t("scenarios.attempt.decisionSaved")}</div>
+            <div style={{ fontSize: "0.78rem", color: "#477", fontWeight: 700, marginBottom: "0.2rem" }}>{t("scenarios.result.feedback")}</div>
             <div style={{ fontSize: "0.88rem", color: "#333", lineHeight: 1.65, marginBottom: "0.55rem" }}>{decisionFeedback.feedback}</div>
+            <div style={{ fontSize: "0.78rem", color: "#477", fontWeight: 700, marginBottom: "0.2rem" }}>{t("scenarios.result.keyLesson")}</div>
             <div style={{ fontSize: "0.82rem", color: "#566", lineHeight: 1.6, marginBottom: "0.85rem" }}>{decisionFeedback.safetyExplanation}</div>
-            <button className="btn-primary" onClick={continueAfterFeedback} disabled={busy}>{view.nextStep ? "Continue" : "Complete scenario"}</button>
+            <button className="btn-primary" onClick={continueAfterFeedback} disabled={busy}>{view.nextStep ? t("common.next") : busy ? t("scenarios.attempt.completing") : t("scenarios.attempt.complete")}</button>
           </div>
         )}
       </div>
@@ -3014,33 +3793,44 @@ function ScenariosPage() {
     const result = view;
     return (
       <div className="card" style={{ maxWidth: 900, margin: "0 auto" }}>
-        <div style={{ color: "#2E7D32", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.35rem" }}>Scenario result</div>
+        <div style={{ color: "#2E7D32", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.35rem" }}>{t("scenarios.result.completed")}</div>
         <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", marginBottom: "0.5rem" }}>{result.scenario.title}</h2>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "0.75rem", margin: "1rem 0" }}>
-          <div><strong>{result.attempt.totalScore}/{result.attempt.maximumScore}</strong><div style={{ color: "#777", fontSize: "0.76rem" }}>Score</div></div>
-          <div><strong>{result.attempt.percentage}%</strong><div style={{ color: "#777", fontSize: "0.76rem" }}>Percentage</div></div>
-          <div><strong>{scenarioResultLabel(result.attempt.resultLevel)}</strong><div style={{ color: "#777", fontSize: "0.76rem" }}>Result</div></div>
-          <div><strong>+{result.progressImpact?.masteryDelta || 0}</strong><div style={{ color: "#777", fontSize: "0.76rem" }}>Mastery delta</div></div>
+          <div><strong>{result.attempt.totalScore}/{result.attempt.maximumScore}</strong><div style={{ color: "#777", fontSize: "0.76rem" }}>{t("scenarios.result.score")}</div></div>
+          <div><strong>{result.attempt.percentage}%</strong><div style={{ color: "#777", fontSize: "0.76rem" }}>{t("scenarios.result.percentage")}</div></div>
+          <div><strong>{t(`scenarioResults.${result.attempt.resultLevel}`, { defaultValue: scenarioResultLabel(result.attempt.resultLevel) })}</strong><div style={{ color: "#777", fontSize: "0.76rem" }}>{t("scenarios.result.performanceLevel")}</div></div>
+          <div><strong>+{result.progressImpact?.masteryDelta || 0}</strong><div style={{ color: "#777", fontSize: "0.76rem" }}>{t("scenarios.result.masteryDelta")}</div></div>
         </div>
+        <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, marginBottom: "0.65rem" }}>{t("scenarios.result.decisionsReviewed")}</div>
         <div style={{ display: "grid", gap: "0.85rem", margin: "1.25rem 0" }}>
           {result.review.map(item => (
             <div key={item.id} style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "1rem" }}>
-              <div style={{ fontWeight: 700, marginBottom: "0.35rem" }}>Step {item.stepOrder}: choice {item.selectedOptionKey}</div>
+              <div style={{ fontWeight: 700, marginBottom: "0.35rem" }}>{t("scenarios.result.step", { step: item.stepOrder })}</div>
+              <div style={{ fontSize: "0.8rem", color: "#777", marginBottom: "0.35rem" }}>
+                {t("scenarios.result.yourChoice")}: {item.selectedOptionKey}
+              </div>
+              {item.recommendedOptionKey && (
+                <div style={{ fontSize: "0.8rem", color: "#777", marginBottom: "0.35rem" }}>
+                  {t("scenarios.result.recommendedChoice")}: {item.recommendedOptionKey}
+                </div>
+              )}
+              <div style={{ fontSize: "0.78rem", color: "#777", fontWeight: 700, marginBottom: "0.2rem" }}>{t("scenarios.result.feedback")}</div>
               <div style={{ fontSize: "0.86rem", color: "#333", lineHeight: 1.6 }}>{item.feedback}</div>
+              <div style={{ fontSize: "0.78rem", color: "#777", fontWeight: 700, marginTop: "0.35rem", marginBottom: "0.2rem" }}>{t("scenarios.result.keyLesson")}</div>
               <div style={{ fontSize: "0.8rem", color: "#666", lineHeight: 1.55, marginTop: "0.35rem" }}>{item.safetyExplanation}</div>
             </div>
           ))}
         </div>
         {result.recommendation && (
           <div style={{ background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)", borderRadius: 12, padding: "1rem", marginBottom: "1rem" }}>
-            <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.25rem" }}>Updated recommendation</div>
+            <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.25rem" }}>{t("scenarios.result.updatedRecommendation")}</div>
             <div style={{ fontSize: "0.86rem", color: "#455", lineHeight: 1.6 }}>{result.recommendation.reasonText}</div>
           </div>
         )}
         <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-          <button className="btn-primary" onClick={() => setView({ mode: "library" })}>Scenario library</button>
-          <button className="btn-ghost" onClick={() => go("dashboard")}>Dashboard</button>
-          <button className="btn-ghost" onClick={() => go("resources")}>Resources</button>
+          <button className="btn-primary" onClick={() => setView({ mode: "library" })}>{t("scenarios.result.returnToLibrary")}</button>
+          <button className="btn-ghost" onClick={() => go("dashboard")}>{t("nav.dashboard")}</button>
+          <button className="btn-ghost" onClick={() => go("progress")}>{t("scenarios.result.viewProgress")}</button>
         </div>
       </div>
     );
@@ -3050,14 +3840,14 @@ function ScenariosPage() {
     <div>
       <div style={{ background: "linear-gradient(135deg, #1a2e1a 0%, #2d4a2d 100%)", padding: "2.5rem 1.5rem", color: "#fff" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.55)", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.4rem" }}>Scenario Practice</div>
-          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 600, marginBottom: "0.35rem" }}>Practice cyber choices</h1>
-          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "0.9rem", lineHeight: 1.6 }}>Short realistic situations with immediate feedback after each final choice.</p>
+          <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.55)", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.4rem" }}>{t("nav.scenarios")}</div>
+          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 600, marginBottom: "0.35rem" }}>{t("scenarios.library.title")}</h1>
+          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "0.9rem", lineHeight: 1.6 }}>{t("scenarios.library.description")}</p>
         </div>
       </div>
       <div className="section">
         <button className="btn-ghost" onClick={() => view.mode === "library" ? go("dashboard") : setView({ mode: "library" })} style={{ marginBottom: "1.5rem" }}>
-          ← Back
+          {view.mode === "library" ? t("scenarios.library.backToDashboard") : view.mode === "attempt" ? t("scenarios.attempt.exit") : t("common.back")}
         </button>
         {error && <div className="field-error" style={{ marginBottom: "1rem" }}>{error}</div>}
         {view.mode === "intro" ? renderIntro() : view.mode === "attempt" ? renderAttempt() : view.mode === "result" ? renderResult() : renderLibrary()}
@@ -3068,43 +3858,108 @@ function ScenariosPage() {
 
 // ─── Page: Profile ───────────────────────────────────────────────
 function ProfilePage() {
-  const { user, go, updateProfile, updateAccount } = useApp();
-  const [form, setForm] = useState(() => ({
-    aiNickname: user?.profile?.aiNickname || user?.displayName || "",
-    educationLevel: user?.profile?.educationLevel || "",
-    preferredLanguage: user?.profile?.preferredLanguage || "",
-    familiarityLevel: user?.profile?.familiarityLevel || "",
-    helpTopics: user?.profile?.helpTopics || [],
-    learningStyle: user?.profile?.learningStyle || "",
-  }));
-  const [accountForm, setAccountForm] = useState(() => ({
-    displayName:
-      user?.displayName ||
-      user?.name ||
-      "",
-    age: user?.age || "",
-  }));
-  const [accountErrors, setAccountErrors] = useState({});
-  const [accountSaving, setAccountSaving] = useState(false);
-  const [accountSaved, setAccountSaved] = useState(false);
-  const [errors, setErrors] = useState({});
-  const [saving, setSaving] = useState(false);
-  const [saved, setSaved] = useState(false);
+  const { t } = useTranslation();
 
-  if (!user) { go("login"); return null; }
+  const {
+    user,
+    go,
+    updateProfile,
+    updateAccount,
+  } = useApp();
+
+  const [form, setForm] = useState(() => ({
+    aiNickname:
+      user?.profile?.aiNickname ||
+      user?.displayName ||
+      "",
+
+    educationLevel:
+      user?.profile?.educationLevel ||
+      "",
+
+    preferredLanguage:
+      user?.profile?.preferredLanguage ||
+      "",
+
+    familiarityLevel:
+      user?.profile?.familiarityLevel ||
+      "",
+
+    helpTopics:
+      user?.profile?.helpTopics ||
+      [],
+
+    learningStyle:
+      user?.profile?.learningStyle ||
+      "",
+  }));
+
+  const [accountForm, setAccountForm] =
+    useState(() => ({
+      displayName:
+        user?.displayName ||
+        user?.name ||
+        "",
+
+      age:
+        user?.age ||
+        "",
+    }));
+
+  const [accountErrors, setAccountErrors] =
+    useState({});
+
+  const [accountSaving, setAccountSaving] =
+    useState(false);
+
+  const [accountSaved, setAccountSaved] =
+    useState(false);
+
+  const [errors, setErrors] =
+    useState({});
+
+  const [saving, setSaving] =
+    useState(false);
+
+  const [saved, setSaved] =
+    useState(false);
+
+  if (!user) {
+    go("login");
+    return null;
+  }
 
   function set(key, value) {
-    setForm(current => ({ ...current, [key]: value }));
-    setErrors(current => ({ ...current, [key]: undefined, form: undefined }));
+    setForm(current => ({
+      ...current,
+      [key]: value,
+    }));
+
+    setErrors(current => ({
+      ...current,
+      [key]: undefined,
+      form: undefined,
+    }));
+
     setSaved(false);
   }
 
-  function toggleTopic(topic) {
-    const selected = form.helpTopics || [];
-    if (selected.includes(topic)) {
-      set("helpTopics", selected.filter(item => item !== topic));
+  function toggleTopic(topicValue) {
+    const selected =
+      form.helpTopics || [];
+
+    if (selected.includes(topicValue)) {
+      set(
+        "helpTopics",
+        selected.filter(
+          item => item !== topicValue
+        )
+      );
     } else if (selected.length < 3) {
-      set("helpTopics", [...selected, topic]);
+      set(
+        "helpTopics",
+        [...selected, topicValue]
+      );
     }
   }
 
@@ -3131,18 +3986,26 @@ function ProfilePage() {
     setAccountSaved(false);
     setAccountErrors({});
 
-    const result = await dbSaveAccount({
-      displayName: accountForm.displayName,
-      age: Number(accountForm.age),
-    });
+    const result =
+      await dbSaveAccount({
+        displayName:
+          accountForm.displayName,
+
+        age:
+          Number(accountForm.age),
+      });
 
     setAccountSaving(false);
 
     if (!result.ok) {
       setAccountErrors({
-        form: result.error,
+        form:
+          result.error ||
+          t("settings.accountSaveFailed"),
+
         ...result.errors,
       });
+
       return;
     }
 
@@ -3150,26 +4013,41 @@ function ProfilePage() {
 
     setAccountForm({
       displayName:
-        result.account.displayName || "",
+        result.account.displayName ||
+        "",
+
       age:
-        result.account.age || "",
+        result.account.age ||
+        "",
     });
 
     setAccountSaved(true);
   }
 
   async function save() {
-    if(saving) return;
+    if (saving) return;
+
     setSaving(true);
     setSaved(false);
-    const result = await dbSaveProfile({
-      ...form,
-      onboardingCompleted: true,
-    });
+    setErrors({});
+
+    const result =
+      await dbSaveProfile({
+        ...form,
+        onboardingCompleted: true,
+      });
+
     setSaving(false);
 
     if (!result.ok) {
-      setErrors({ form: result.error, ...result.errors });
+      setErrors({
+        form:
+          result.error ||
+          t("settings.profileSaveFailed"),
+
+        ...result.errors,
+      });
+
       return;
     }
 
@@ -3178,57 +4056,324 @@ function ProfilePage() {
   }
 
   const fieldSet = [
-    { key: "educationLevel", label: "Education level", options: EDUCATION_LEVELS },
-    { key: "preferredLanguage", label: "Preferred language", options: LANGUAGES },
-    { key: "familiarityLevel", label: "Cybersecurity familiarity", options: FAMILIARITY },
-    { key: "learningStyle", label: "Learning style", options: LEARNING_STYLES },
+    {
+      key: "educationLevel",
+      labelKey:
+        "settings.educationLevel",
+      options: EDUCATION_LEVELS,
+      translationGroup:
+        "education",
+    },
+    {
+      key: "preferredLanguage",
+      labelKey:
+        "settings.preferredLanguage",
+      options: LANGUAGES,
+      translationGroup:
+        "language",
+    },
+    {
+      key: "familiarityLevel",
+      labelKey:
+        "settings.familiarity",
+      options: FAMILIARITY,
+      translationGroup:
+        "familiarity",
+    },
+    {
+      key: "learningStyle",
+      labelKey:
+        "settings.learningStyle",
+      options: LEARNING_STYLES,
+      translationGroup:
+        "learningStyle",
+    },
   ];
+
+  function translatedOptionLabel(
+    field,
+    option
+  ) {
+    if (
+      field.translationGroup ===
+      "familiarity"
+    ) {
+      return t(
+        `profileOptions.familiarity.${option.value}.label`,
+        {
+          defaultValue:
+            option.label,
+        }
+      );
+    }
+
+    return t(
+      `profileOptions.${field.translationGroup}.${option.value}`,
+      {
+        defaultValue:
+          option.label,
+      }
+    );
+  }
+
+  const ageGroupKey =
+    user?.ageGroup ||
+    getAgeGroup(user?.age).key;
+
+  const translatedAgeGroup = t(
+    `settings.ageGroups.${ageGroupKey}`,
+    {
+      defaultValue:
+        user?.ageGroup ||
+        getAgeGroup(user?.age).label,
+    }
+  );
 
   return (
     <div>
-      <div style={{ background: "linear-gradient(135deg, var(--teal) 0%, #1a5c4a 100%)", padding: "2.5rem 1.5rem", color: "#fff" }}>
-        <div style={{ maxWidth: 900, margin: "0 auto" }}>
-          <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.6)", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.4rem" }}>
-            Learner Profile
+      {/* Header */}
+      <div
+        style={{
+          background:
+            "linear-gradient(135deg, var(--teal) 0%, #1a5c4a 100%)",
+
+          padding:
+            "2.5rem 1.5rem",
+
+          color:
+            "#fff",
+        }}
+      >
+        <div
+          style={{
+            maxWidth: 900,
+            margin: "0 auto",
+          }}
+        >
+          <div
+            style={{
+              fontSize:
+                "0.78rem",
+
+              color:
+                "rgba(255,255,255,0.6)",
+
+              fontWeight:
+                600,
+
+              letterSpacing:
+                "0.08em",
+
+              textTransform:
+                "uppercase",
+
+              marginBottom:
+                "0.4rem",
+            }}
+          >
+            {t("settings.learnerProfile")}
           </div>
-          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 600, marginBottom: "0.35rem" }}>
-            Shape your Cyberly experience
+
+          <h1
+            style={{
+              fontFamily:
+                "'Space Grotesk', sans-serif",
+
+              fontSize:
+                "clamp(1.4rem, 3vw, 2rem)",
+
+              fontWeight:
+                600,
+
+              marginBottom:
+                "0.35rem",
+            }}
+          >
+            {t("settings.title")}
           </h1>
-          <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.9rem", lineHeight: 1.6 }}>
-            These preferences are saved separately from your account identity. Age and education level stay separate.
+
+          <p
+            style={{
+              color:
+                "rgba(255,255,255,0.7)",
+
+              fontSize:
+                "0.9rem",
+
+              lineHeight:
+                1.6,
+            }}
+          >
+            {t("settings.description")}
           </p>
         </div>
       </div>
 
-      <div className="section" style={{ maxWidth: 900 }}>
+      <div
+        className="section"
+        style={{
+          maxWidth: 900,
+        }}
+      >
+        {/* Back */}
         <button
-          onClick={() => go(user.onboardingCompleted ? "dashboard" : "login")}
-          style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "none", border: "none", cursor: "pointer", color: "#555", fontSize: "0.875rem", fontWeight: 500, padding: 0, marginBottom: "1.5rem" }}
+          onClick={() =>
+            go(
+              user.onboardingCompleted
+                ? "dashboard"
+                : "login"
+            )
+          }
+          style={{
+            display:
+              "inline-flex",
+
+            alignItems:
+              "center",
+
+            gap:
+              "0.4rem",
+
+            background:
+              "none",
+
+            border:
+              "none",
+
+            cursor:
+              "pointer",
+
+            color:
+              "#555",
+
+            fontSize:
+              "0.875rem",
+
+            fontWeight:
+              500,
+
+            padding:
+              0,
+
+            marginBottom:
+              "1.5rem",
+          }}
         >
-          ← Back
+          ← {t("common.back")}
         </button>
 
+        {/* Incomplete onboarding */}
         {!user.onboardingCompleted && (
-          <div className="card" style={{ marginBottom: "1rem", background: "var(--coral-lt)", border: "1px solid rgba(216,90,48,0.25)" }}>
-            <div style={{ fontWeight: 700, color: "var(--coral)", marginBottom: "0.25rem" }}>Finish onboarding</div>
-            <div style={{ fontSize: "0.86rem", color: "#5f4036", lineHeight: 1.6 }}>
-              Your account is signed in, but your learner profile is incomplete. Save this profile to continue to the dashboard.
+          <div
+            className="card"
+            style={{
+              marginBottom:
+                "1rem",
+
+              background:
+                "var(--coral-lt)",
+
+              border:
+                "1px solid rgba(216,90,48,0.25)",
+            }}
+          >
+            <div
+              style={{
+                fontWeight:
+                  700,
+
+                color:
+                  "var(--coral)",
+
+                marginBottom:
+                  "0.25rem",
+              }}
+            >
+              {t(
+                "settings.finishOnboarding"
+              )}
+            </div>
+
+            <div
+              style={{
+                fontSize:
+                  "0.86rem",
+
+                color:
+                  "#5f4036",
+
+                lineHeight:
+                  1.6,
+              }}
+            >
+              {t(
+                "settings.finishOnboardingDescription"
+              )}
             </div>
           </div>
         )}
 
-        <div className="card" style={{ marginBottom: "1rem" }}>
-          <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, marginBottom: "1rem" }} >Account Information</div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem" }}>
+        {/* Account information */}
+        <div
+          className="card"
+          style={{
+            marginBottom:
+              "1rem",
+          }}
+        >
+          <div
+            style={{
+              fontFamily:
+                "'Space Grotesk', sans-serif",
+
+              fontWeight:
+                700,
+
+              marginBottom:
+                "1rem",
+            }}
+          >
+            {t(
+              "settings.accountInformation"
+            )}
+          </div>
+
+          <div
+            style={{
+              display:
+                "grid",
+
+              gridTemplateColumns:
+                "repeat(auto-fit, minmax(220px, 1fr))",
+
+              gap:
+                "1rem",
+            }}
+          >
             <div className="field">
-              <label>Email</label>
-              <input value={user?.email || ""} readOnly />
+              <label>
+                {t("settings.email")}
+              </label>
+
+              <input
+                value={
+                  user?.email || ""
+                }
+                readOnly
+              />
             </div>
 
             <div className="field">
-              <label>Display name</label>
+              <label>
+                {t(
+                  "settings.displayName"
+                )}
+              </label>
+
               <input
-                value={accountForm.displayName}
+                value={
+                  accountForm.displayName
+                }
                 maxLength={50}
                 onChange={event =>
                   setAccount(
@@ -3236,23 +4381,32 @@ function ProfilePage() {
                     event.target.value
                   )
                 }
-                placeholder="Your display name"
+                placeholder={t(
+                  "settings.displayNamePlaceholder"
+                )}
               />
 
               {accountErrors.displayName && (
                 <div className="field-error">
-                  {accountErrors.displayName}
+                  {
+                    accountErrors.displayName
+                  }
                 </div>
               )}
             </div>
 
             <div className="field">
-              <label>Age</label>
+              <label>
+                {t("settings.age")}
+              </label>
+
               <input
                 type="number"
                 min="1"
                 max="120"
-                value={accountForm.age}
+                value={
+                  accountForm.age
+                }
                 onChange={event =>
                   setAccount(
                     "age",
@@ -3269,9 +4423,16 @@ function ProfilePage() {
             </div>
 
             <div className="field">
-              <label>Age group</label>
+              <label>
+                {t(
+                  "settings.ageGroup"
+                )}
+              </label>
+
               <input
-                value={user?.ageGroup || ""}
+                value={
+                  translatedAgeGroup
+                }
                 readOnly
               />
             </div>
@@ -3281,7 +4442,10 @@ function ProfilePage() {
             accountErrors.forbidden) && (
             <div
               className="field-error"
-              style={{ marginBottom: "0.75rem" }}
+              style={{
+                marginBottom:
+                  "0.75rem",
+              }}
             >
               {accountErrors.form ||
                 accountErrors.forbidden}
@@ -3291,95 +4455,356 @@ function ProfilePage() {
           {accountSaved && (
             <div
               style={{
-                color: "var(--teal)",
-                fontSize: "0.85rem",
-                fontWeight: 600,
-                marginBottom: "0.75rem",
+                color:
+                  "var(--teal)",
+
+                fontSize:
+                  "0.85rem",
+
+                fontWeight:
+                  600,
+
+                marginBottom:
+                  "0.75rem",
               }}
             >
-              Account saved.
+              {t(
+                "settings.accountSaved"
+              )}
             </div>
           )}
 
           <button
             className="btn-primary"
             style={{
-              flex: "0 0 auto",
-              minWidth: 180,
+              flex:
+                "0 0 auto",
+
+              minWidth:
+                180,
             }}
-            onClick={saveAccount}
-            disabled={accountSaving}
+            onClick={
+              saveAccount
+            }
+            disabled={
+              accountSaving
+            }
           >
             {accountSaving
-              ? "Saving..."
-              : "Save account"}
+              ? t("settings.saving")
+              : t(
+                  "settings.saveAccount"
+                )}
           </button>
         </div>
 
+        {/* Learning preferences */}
         <div className="card">
-          <div className="field">
-            <label>AI nickname</label>
-            <input
-              value={form.aiNickname}
-              maxLength={50}
-              onChange={event => set("aiNickname", event.target.value)}
-              placeholder="What should CyberGuard call you?"
-            />
-            {errors.aiNickname && <div className="field-error">{errors.aiNickname}</div>}
+          <div
+            style={{
+              fontFamily:
+                "'Space Grotesk', sans-serif",
+
+              fontWeight:
+                700,
+
+              marginBottom:
+                "1rem",
+            }}
+          >
+            {t(
+              "settings.learningPreferences"
+            )}
           </div>
 
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "1rem" }}>
+          <div className="field">
+            <label>
+              {t(
+                "settings.aiNickname"
+              )}
+            </label>
+
+            <input
+              value={
+                form.aiNickname
+              }
+              maxLength={50}
+              onChange={event =>
+                set(
+                  "aiNickname",
+                  event.target.value
+                )
+              }
+              placeholder={t(
+                "settings.aiNicknamePlaceholder"
+              )}
+            />
+
+            {errors.aiNickname && (
+              <div className="field-error">
+                {errors.aiNickname}
+              </div>
+            )}
+          </div>
+
+          <div
+            style={{
+              display:
+                "grid",
+
+              gridTemplateColumns:
+                "repeat(auto-fit, minmax(220px, 1fr))",
+
+              gap:
+                "1rem",
+            }}
+          >
             {fieldSet.map(field => (
-              <div className="field" key={field.key}>
-                <label>{field.label}</label>
+              <div
+                className="field"
+                key={field.key}
+              >
+                <label>
+                  {t(field.labelKey)}
+                </label>
+
                 <select
-                  value={form[field.key]}
-                  onChange={event => set(field.key, event.target.value)}
-                  style={{ width: "100%", border: "1.5px solid rgba(0,0,0,0.13)", borderRadius: 10, padding: "0.65rem 0.9rem", fontFamily: "'DM Sans', sans-serif", fontSize: "0.9rem", background: "#fff" }}
+                  value={
+                    form[field.key]
+                  }
+                  onChange={event =>
+                    set(
+                      field.key,
+                      event.target.value
+                    )
+                  }
+                  style={{
+                    width:
+                      "100%",
+
+                    border:
+                      "1.5px solid rgba(0,0,0,0.13)",
+
+                    borderRadius:
+                      10,
+
+                    padding:
+                      "0.65rem 0.9rem",
+
+                    fontFamily:
+                      "'DM Sans', sans-serif",
+
+                    fontSize:
+                      "0.9rem",
+
+                    background:
+                      "#fff",
+                  }}
                 >
-                  <option value="">Choose one</option>
-                  {field.options.map(option => (
-                    <option key={option.value} value={option.value}>{option.label}</option>
-                  ))}
+                  <option value="">
+                    {t(
+                      "settings.chooseOne"
+                    )}
+                  </option>
+
+                  {field.options.map(
+                    option => (
+                      <option
+                        key={
+                          option.value
+                        }
+                        value={
+                          option.value
+                        }
+                      >
+                        {translatedOptionLabel(
+                          field,
+                          option
+                        )}
+                      </option>
+                    )
+                  )}
                 </select>
-                {errors[field.key] && <div className="field-error">{errors[field.key]}</div>}
+
+                {errors[field.key] && (
+                  <div className="field-error">
+                    {
+                      errors[field.key]
+                    }
+                  </div>
+                )}
               </div>
             ))}
           </div>
 
           <div className="field">
-            <label>Help topics</label>
+            <label>
+              {t(
+                "settings.helpTopics"
+              )}
+            </label>
+
             <div className="chip-grid">
               {HELP_OPTIONS.map(topic => (
                 <button
-                  key={topic.value}
-                  className={`chip-btn ${form.helpTopics.includes(topic.value) ? "selected" : ""}`}
-                  onClick={() => toggleTopic(topic.value)}
-                  disabled={form.helpTopics.length >= 3 && !form.helpTopics.includes(topic.value)}
+                  key={
+                    topic.value
+                  }
+                  className={`chip-btn ${
+                    form.helpTopics.includes(
+                      topic.value
+                    )
+                      ? "selected"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    toggleTopic(
+                      topic.value
+                    )
+                  }
+                  disabled={
+                    form.helpTopics
+                      .length >= 3 &&
+                    !form.helpTopics.includes(
+                      topic.value
+                    )
+                  }
                   type="button"
                 >
-                  {topic.label}
+                  {t(
+                    `profileOptions.helpTopics.${topic.value}`,
+                    {
+                      defaultValue:
+                        topic.label,
+                    }
+                  )}
                 </button>
               ))}
             </div>
-            <div className="chip-limit-note">{form.helpTopics.length}/3 selected</div>
-            {errors.helpTopics && <div className="field-error">{errors.helpTopics}</div>}
-          </div>
 
-          {errors.form && <div className="field-error" style={{ marginBottom: "0.75rem" }}>{errors.form}</div>}
-          {saved && <div style={{ color: "var(--teal)", fontSize: "0.85rem", fontWeight: 600, marginBottom: "0.75rem" }}>Profile saved.</div>}
+            <div className="chip-limit-note">
+              {t(
+                "onboarding.selectedCount",
+                {
+                  count:
+                    form.helpTopics
+                      .length,
 
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", alignItems: "center" }}>
-            <button className="btn-primary" style={{ flex: "0 0 auto", minWidth: 180 }} onClick={save} disabled={saving}>
-              {saving ? "Saving…" : "Save profile"}
-            </button>
-            {user.onboardingCompleted && (
-              <button className="btn-ghost" onClick={() => go("dashboard")}>Dashboard</button>
+                  max:
+                    3,
+                }
+              )}
+            </div>
+
+            {errors.helpTopics && (
+              <div className="field-error">
+                {errors.helpTopics}
+              </div>
             )}
           </div>
 
-          <div style={{ fontSize: "0.76rem", color: "#777", marginTop: "1rem", lineHeight: 1.6 }}>
-            Display name and age editing are deferred to a future account settings endpoint. Age is not inferred from education level, and neither is treated as learning ability.
+          {errors.form && (
+            <div
+              className="field-error"
+              style={{
+                marginBottom:
+                  "0.75rem",
+              }}
+            >
+              {errors.form}
+            </div>
+          )}
+
+          {saved && (
+            <div
+              style={{
+                color:
+                  "var(--teal)",
+
+                fontSize:
+                  "0.85rem",
+
+                fontWeight:
+                  600,
+
+                marginBottom:
+                  "0.75rem",
+              }}
+            >
+              {t(
+                "settings.profileSaved"
+              )}
+            </div>
+          )}
+
+          <div
+            style={{
+              display:
+                "flex",
+
+              flexWrap:
+                "wrap",
+
+              gap:
+                "0.75rem",
+
+              alignItems:
+                "center",
+            }}
+          >
+            <button
+              className="btn-primary"
+              style={{
+                flex:
+                  "0 0 auto",
+
+                minWidth:
+                  180,
+              }}
+              onClick={save}
+              disabled={saving}
+            >
+              {saving
+                ? t(
+                    "settings.saving"
+                  )
+                : t(
+                    "settings.saveProfile"
+                  )}
+            </button>
+
+            {user.onboardingCompleted && (
+              <button
+                className="btn-ghost"
+                onClick={() =>
+                  go("dashboard")
+                }
+              >
+                {t(
+                  "nav.dashboard"
+                )}
+              </button>
+            )}
+          </div>
+
+          <div
+            style={{
+              fontSize:
+                "0.76rem",
+
+              color:
+                "#777",
+
+              marginTop:
+                "1rem",
+
+              lineHeight:
+                1.6,
+            }}
+          >
+            {t(
+              "settings.identityNote"
+            )}
           </div>
         </div>
       </div>
@@ -3390,6 +4815,7 @@ function ProfilePage() {
 
 // ─── Page: Progress ──────────────────────────────────────────────
 function ProgressPage() {
+  const { t } = useTranslation();
   const { user, go, openRecommendedResource } = useApp();
   const [progressState, setProgressState] = useState({ loading: true, progress: null });
   const [recommendationState, setRecommendationState] = useState({ loading: true, recommendation: null });
@@ -3413,25 +4839,34 @@ function ProgressPage() {
 
   const nick  = user.aiNickname || user.name;
   const topics = user.helpTopics || [];
-  const profileLevel  = user.familiarity || "Beginner";
-  const lang   = user.language    || "English";
-  const style  = user.learningStyle || "Not set";
+  const profileLevelValue = user.profile?.familiarityLevel || "";
+  const languageValue = user.profile?.preferredLanguage || "";
+  const learningStyleValue = user.profile?.learningStyle || "";
+  const profileLevel = profileLevelValue
+    ? t(`profileOptions.familiarity.${profileLevelValue}.label`, { defaultValue: user.familiarity || t("dashboard.beginner") })
+    : user.familiarity || t("dashboard.beginner");
+  const lang = languageValue
+    ? t(`profileOptions.language.${languageValue}`, { defaultValue: user.language || "English" })
+    : user.language || "English";
+  const style = learningStyleValue
+    ? t(`profileOptions.learningStyle.${learningStyleValue}`, { defaultValue: user.learningStyle || t("common.notSet") })
+    : user.learningStyle || t("common.notSet");
 
   const allTopics = HELP_OPTIONS;
 
   const summary = progressState.progress?.summary;
   const measuredTopics = progressState.progress?.topics || [];
   const recommendation = recommendationState.recommendation;
-  const measuredLevel = levelLabel(summary?.measuredLevel);
+  const measuredLevel = t(`levels.${summary?.measuredLevel}`, { defaultValue: levelLabel(summary?.measuredLevel) });
   const measuredValue = summary?.overallMasteryPercentage || 0;
 
   const badges = [
-    { icon: "🛡", label: "Joined Cyberly",     earned: true  },
-    { icon: "💬", label: "Chat Preview Open",     earned: true  },
-    { icon: "📚", label: "Explored Resources",    earned: topics.length > 0 },
-    { icon: "🎯", label: "Set Learning Goals",    earned: topics.length > 0 },
-    { icon: "🌐", label: "Multilingual Learner",  earned: lang !== "English" },
-    { icon: "🏆", label: "Measured Baseline",     earned: Boolean(summary?.exists) },
+    { icon: "🛡", labelKey: "progress.badges.joined", earned: true  },
+    { icon: "💬", labelKey: "progress.badges.chatPreview", earned: true  },
+    { icon: "📚", labelKey: "progress.badges.exploredResources", earned: topics.length > 0 },
+    { icon: "🎯", labelKey: "progress.badges.setGoals", earned: topics.length > 0 },
+    { icon: "🌐", labelKey: "progress.badges.multilingual", earned: languageValue && languageValue !== "english" },
+    { icon: "🏆", labelKey: "progress.badges.measuredBaseline", earned: Boolean(summary?.exists) },
   ];
 
   async function completeRecommendation() {
@@ -3447,12 +4882,12 @@ function ProgressPage() {
       {/* Hero */}
       <div style={{ background: "linear-gradient(135deg, #1a2e1a 0%, #2d4a2d 100%)", padding: "2.5rem 1.5rem", color: "#fff" }}>
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.5)", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.4rem" }}>My Progress</div>
+          <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.5)", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.4rem" }}>{t("progress.title")}</div>
           <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 600, marginBottom: "0.3rem" }}>
-            {nick}'s Learning Journey 📊
+            {t("progress.heroTitle", { name: nick })}
           </h1>
           <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.9rem" }}>
-            {summary?.exists ? `${measuredLevel} measured level` : `${profileLevel} profile familiarity`} · {lang} · {style}
+            {summary?.exists ? t("progress.measuredLevelSummary", { level: measuredLevel }) : t("progress.profileFamiliaritySummary", { level: profileLevel })} · {lang} · {style}
           </p>
         </div>
       </div>
@@ -3466,32 +4901,32 @@ function ProgressPage() {
           onMouseLeave={e => e.currentTarget.style.color = "#555"}
         >
           <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-          Back to Dashboard
+          {t("progress.backToDashboard")}
         </button>
 
         {/* Profile snapshot */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "1rem", marginBottom: "2.5rem" }}>
           {[
-            { icon: "🎓", label: "Measured level", value: progressState.loading ? "Loading" : measuredLevel },
-            { icon: "🌐", label: "Language", value: lang },
-            { icon: "📖", label: "Style",    value: style },
-            { icon: "🎯", label: "Topics",   value: `${topics.length} selected` },
+            { icon: "🎓", labelKey: "progress.snapshot.measuredLevel", value: progressState.loading ? t("common.loading") : measuredLevel },
+            { icon: "🌐", labelKey: "progress.snapshot.language", value: lang },
+            { icon: "📖", labelKey: "progress.snapshot.style",    value: style },
+            { icon: "🎯", labelKey: "progress.snapshot.topics",   value: t("progress.selectedTopics", { count: topics.length }) },
           ].map(s => (
-            <div key={s.label} className="card" style={{ textAlign: "center", padding: "1.25rem 1rem" }}>
+            <div key={s.labelKey} className="card" style={{ textAlign: "center", padding: "1.25rem 1rem" }}>
               <div style={{ fontSize: "1.5rem", marginBottom: "0.35rem" }}>{s.icon}</div>
               <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1rem", color: "var(--teal)", marginBottom: "0.2rem" }}>{s.value}</div>
-              <div style={{ fontSize: "0.75rem", color: "#888" }}>{s.label}</div>
+              <div style={{ fontSize: "0.75rem", color: "#888" }}>{t(s.labelKey)}</div>
             </div>
           ))}
         </div>
 
         {/* Skill level bar */}
         <div style={{ marginBottom: "2.5rem" }}>
-          <p className="section-title" style={{ fontSize: "1.1rem" }}>Measured Mastery</p>
-          <p className="section-sub" style={{ marginBottom: "1rem" }}>Calculated from completed assessment topic scores, not from age, education level, or self-reported familiarity.</p>
+          <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("progress.mastery.title")}</p>
+          <p className="section-sub" style={{ marginBottom: "1rem" }}>{t("progress.mastery.description")}</p>
           <div className="card" style={{ padding: "1.5rem" }}>
             {progressState.loading ? (
-              <div style={{ fontSize: "0.86rem", color: "#666" }}>Loading progress...</div>
+              <div style={{ fontSize: "0.86rem", color: "#666" }}>{t("progress.mastery.loading")}</div>
             ) : summary?.exists ? (
               <>
                 <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
@@ -3502,15 +4937,15 @@ function ProgressPage() {
                   <div style={{ background: "var(--teal)", width: `${measuredValue}%`, height: "100%", borderRadius: 99, transition: "width 0.6s ease" }} />
                 </div>
                 <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.5rem" }}>
-                  {["Beginner", "Developing", "Intermediate", "Advanced"].map(l => (
-                    <span key={l} style={{ fontSize: "0.72rem", color: l === measuredLevel ? "var(--teal)" : "#bbb", fontWeight: l === measuredLevel ? 700 : 400 }}>{l}</span>
+                  {["beginner", "developing", "intermediate", "advanced"].map(l => (
+                    <span key={l} style={{ fontSize: "0.72rem", color: t(`levels.${l}`) === measuredLevel ? "var(--teal)" : "#bbb", fontWeight: t(`levels.${l}`) === measuredLevel ? 700 : 400 }}>{t(`levels.${l}`)}</span>
                   ))}
                 </div>
               </>
             ) : (
               <div style={{ fontSize: "0.86rem", color: "#666", lineHeight: 1.6 }}>
-                No measured baseline yet. Complete the initial assessment to unlock progress tracking.
-                <button onClick={() => go("assessment")} style={{ display: "block", marginTop: "0.85rem", background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>Start assessment</button>
+                {t("progress.mastery.empty")}
+                <button onClick={() => go("assessment")} style={{ display: "block", marginTop: "0.85rem", background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>{t("dashboard.startAssessment")}</button>
               </div>
             )}
           </div>
@@ -3518,15 +4953,15 @@ function ProgressPage() {
 
         {measuredTopics.length > 0 && (
           <div style={{ marginBottom: "2.5rem" }}>
-            <p className="section-title" style={{ fontSize: "1.1rem" }}>Assessment Topics</p>
-            <p className="section-sub" style={{ marginBottom: "1rem" }}>Topic-level mastery from your initial cyber wellness assessment.</p>
+            <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("progress.assessmentTopics.title")}</p>
+            <p className="section-sub" style={{ marginBottom: "1rem" }}>{t("progress.assessmentTopics.description")}</p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "1rem" }}>
               {measuredTopics.map(topic => (
                 <div key={topic.topicCode} className="card">
                   <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem", alignItems: "flex-start", marginBottom: "0.65rem" }}>
                     <div>
                       <div style={{ fontSize: "1.25rem", marginBottom: "0.25rem" }}>{PROGRESS_TOPIC_META[topic.topicCode]?.icon || "📘"}</div>
-                      <div style={{ fontWeight: 700, fontSize: "0.92rem" }}>{topicLabel(topic.topicCode, topic.topicLabel)}</div>
+                      <div style={{ fontWeight: 700, fontSize: "0.92rem" }}>{t(`topics.${topic.topicCode}`, { defaultValue: topicLabel(topic.topicCode, topic.topicLabel) })}</div>
                     </div>
                     <div style={{ color: "var(--teal)", fontWeight: 800 }}>{topic.masteryPercentage}%</div>
                   </div>
@@ -3534,7 +4969,7 @@ function ProgressPage() {
                     <div style={{ width: `${topic.masteryPercentage}%`, background: "var(--teal)", height: "100%", borderRadius: 99 }} />
                   </div>
                   <div style={{ fontSize: "0.78rem", color: "#666" }}>
-                    {levelLabel(topic.currentLevel)} · Source: initial assessment
+                    {t(`levels.${topic.currentLevel}`, { defaultValue: levelLabel(topic.currentLevel) })} · {t("progress.assessmentTopics.source")}
                   </div>
                 </div>
               ))}
@@ -3544,25 +4979,25 @@ function ProgressPage() {
 
         {recommendation && (
           <div className="card" style={{ marginBottom: "2.5rem", background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)" }}>
-            <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.3rem" }}>Current recommendation</div>
+            <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.3rem" }}>{t("progress.recommendation.title")}</div>
             <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.05rem", marginBottom: "0.4rem" }}>
-              {recommendation.topicCode ? topicLabel(recommendation.topicCode, recommendation.topicLabel) : "Initial assessment"}
+              {recommendation.topicCode ? t(`topics.${recommendation.topicCode}`, { defaultValue: topicLabel(recommendation.topicCode, recommendation.topicLabel) }) : t("dashboard.recommendation.initialAssessment")}
             </div>
             <div style={{ fontSize: "0.86rem", color: "#3e5149", lineHeight: 1.6, marginBottom: "1rem" }}>
               {recommendation.reasonText}
             </div>
             <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
               <button onClick={() => recommendation.topicCode ? openRecommendedResource(recommendation.topicCode) : go("assessment")} style={{ background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>
-                {recommendation.topicCode ? "Read resource" : "Start assessment"}
+                {recommendation.topicCode ? t("dashboard.recommendation.readResource") : t("dashboard.recommendation.startAssessment")}
               </button>
               {recommendation.topicCode && (
                 <button onClick={() => go("scenarios")} style={{ background: "#2E7D32", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>
-                  Practice scenario
+                  {t("dashboard.recommendation.practiceScenario")}
                 </button>
               )}
               {recommendation.topicCode && recommendation.status !== "completed" && (
                 <button onClick={completeRecommendation} style={{ background: "#fff", color: "var(--teal)", border: "1px solid rgba(29,158,117,0.3)", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>
-                  Mark complete
+                  {t("progress.recommendation.markComplete")}
                 </button>
               )}
             </div>
@@ -3571,43 +5006,43 @@ function ProgressPage() {
 
         {/* Topics of interest */}
         <div style={{ marginBottom: "2.5rem" }}>
-          <p className="section-title" style={{ fontSize: "1.1rem" }}>Topics You're Learning</p>
-          <p className="section-sub" style={{ marginBottom: "1rem" }}>Based on your profile — explore guides for each one.</p>
+          <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("progress.learningTopics.title")}</p>
+          <p className="section-sub" style={{ marginBottom: "1rem" }}>{t("progress.learningTopics.description")}</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "0.75rem" }}>
-            {allTopics.map(t => {
-              const active = topics.includes(t.value);
+            {allTopics.map(topicOption => {
+              const active = topics.includes(topicOption.value);
               return (
-                <div key={t.value} style={{
+                <div key={topicOption.value} style={{
                   background: active ? "var(--teal-lt)" : "#f9f9f9",
                   border: active ? "1px solid rgba(29,158,117,0.3)" : "1px solid rgba(0,0,0,0.07)",
                   borderRadius: 10, padding: "0.75rem 1rem",
                   display: "flex", alignItems: "center", gap: "0.6rem",
                 }}>
                   <span style={{ fontSize: "1rem" }}>{active ? "✅" : "⬜"}</span>
-                  <span style={{ fontSize: "0.85rem", fontWeight: active ? 600 : 400, color: active ? "var(--teal)" : "#888" }}>{t.label}</span>
+                  <span style={{ fontSize: "0.85rem", fontWeight: active ? 600 : 400, color: active ? "var(--teal)" : "#888" }}>{t(`profileOptions.helpTopics.${topicOption.value}`, { defaultValue: topicOption.label })}</span>
                 </div>
               );
             })}
           </div>
           <button onClick={() => go("resources")} style={{ marginTop: "1rem", background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.25rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>
-            Explore all guides →
+            {t("progress.learningTopics.exploreAll")}
           </button>
         </div>
 
         {/* Badges */}
         <div>
-          <p className="section-title" style={{ fontSize: "1.1rem" }}>Badges</p>
-          <p className="section-sub" style={{ marginBottom: "1rem" }}>Achievements unlocked from your activity.</p>
+          <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("progress.badges.title")}</p>
+          <p className="section-sub" style={{ marginBottom: "1rem" }}>{t("progress.badges.description")}</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "1rem" }}>
             {badges.map(b => (
-              <div key={b.label} className="card" style={{
+              <div key={b.labelKey} className="card" style={{
                 textAlign: "center", padding: "1.25rem 0.75rem",
                 opacity: b.earned ? 1 : 0.4,
                 filter: b.earned ? "none" : "grayscale(1)",
               }}>
                 <div style={{ fontSize: "2rem", marginBottom: "0.4rem" }}>{b.icon}</div>
-                <div style={{ fontSize: "0.78rem", fontWeight: 600, color: b.earned ? "#1a1a18" : "#aaa" }}>{b.label}</div>
-                {b.earned && <div style={{ fontSize: "0.68rem", color: "var(--teal)", marginTop: "0.25rem", fontWeight: 600 }}>Earned ✓</div>}
+                <div style={{ fontSize: "0.78rem", fontWeight: 600, color: b.earned ? "#1a1a18" : "#aaa" }}>{t(b.labelKey)}</div>
+                {b.earned && <div style={{ fontSize: "0.68rem", color: "var(--teal)", marginTop: "0.25rem", fontWeight: 600 }}>{t("progress.badges.earned")}</div>}
               </div>
             ))}
           </div>
@@ -3620,6 +5055,7 @@ function ProgressPage() {
 
 // ─── Chat Widget (floating) ────────────────────────────────────────
 function ChatWidget() {
+  const { t } = useTranslation();
   const { user, go } = useApp();
   const [open,     setOpen]     = useState(false);
   const [messages, setMessages] = useState([]);
@@ -3634,9 +5070,9 @@ function ChatWidget() {
     if (!user || messages.length > 0) return;
     setMessages([{
       role: "ai",
-      text: `Hi ${displayName}! This chat UI is ready, but live CyberGuard replies will be enabled after the backend AI Gateway phase.`,
+      text: t("chat.welcome", { name: displayName }),
     }]);
-  }, [user, open, messages.length, displayName]);
+  }, [user, open, messages.length, displayName, t]);
 
   useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
 
@@ -3658,7 +5094,7 @@ function ChatWidget() {
         { role: "assistant", content: aiText },
       ]);
     } catch {
-      setMessages(prev => [...prev, { role: "ai", text: "Sorry, something went wrong. Please try again." }]);
+      setMessages(prev => [...prev, { role: "ai", text: t("common.somethingWentWrong") }]);
     } finally {
       setLoading(false);
     }
@@ -3672,17 +5108,17 @@ function ChatWidget() {
         <div className="chat-panel">
           <div className="chat-header">
             <div>
-              💬 Cyber Wellness Assistant
+              💬 {t("chat.title")}
               <div className="chat-header-sub">
-                {user ? `${displayName} · ${group.label}` : "Guest"}
+                {user ? `${displayName} · ${t(`settings.ageGroups.${group.key}`, { defaultValue: group.label })}` : t("chat.guest")}
               </div>
             </div>
           </div>
           <div className="chat-messages">
             {!user ? (
               <div className="chat-login-prompt">
-                <p>Sign in to preview the CyberGuard chat interface with your session profile.</p>
-                <button onClick={() => { setOpen(false); go("login"); }}>Sign in / Sign up</button>
+                <p>{t("chat.signInPrompt")}</p>
+                <button onClick={() => { setOpen(false); go("login"); }}>{t("chat.signInCta")}</button>
               </div>
             ) : (
               <>
@@ -3691,7 +5127,7 @@ function ChatWidget() {
                     {m.text}
                   </div>
                 ))}
-                {loading && <div className="chat-bubble ai loading">Thinking…</div>}
+                {loading && <div className="chat-bubble ai loading">{t("chat.thinking")}</div>}
                 <div ref={endRef} />
               </>
             )}
@@ -3701,7 +5137,7 @@ function ChatWidget() {
               <textarea
                 className="chat-input"
                 rows={1}
-                placeholder="Type a question…"
+                placeholder={t("chat.placeholder")}
                 value={input}
                 onChange={e => setInput(e.target.value)}
                 onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
@@ -3721,34 +5157,73 @@ function ChatWidget() {
 }
 
 // ─── Navbar ───────────────────────────────────────────────────────
+const LANGUAGE_OPTIONS = [
+  { locale: "en", label: "English" },
+  { locale: "ms", label: "Bahasa Melayu" },
+  { locale: "zh-CN", label: "简体中文" },
+];
+
+function LanguageSelector() {
+  const { t } = useTranslation();
+  const [locale, setLocale] = useState(normalizeLocale(i18n.language));
+
+  useEffect(() => {
+    function sync(nextLocale) {
+      setLocale(normalizeLocale(nextLocale));
+    }
+    i18n.on("languageChanged", sync);
+    return () => i18n.off("languageChanged", sync);
+  }, []);
+
+  async function changeLocale(event) {
+    const nextLocale = normalizeLocale(event.target.value);
+    localStorage.setItem(UI_LANGUAGE_STORAGE_KEY, nextLocale);
+    document.documentElement.lang = nextLocale;
+    await i18n.changeLanguage(nextLocale);
+  }
+
+  return (
+    <label className="nav-user" style={{ gap: "0.35rem" }}>
+      <span>{t("nav.language")}</span>
+      <select value={locale} onChange={changeLocale} aria-label={t("nav.language")}>
+        {LANGUAGE_OPTIONS.map(option => (
+          <option key={option.locale} value={option.locale}>{option.label}</option>
+        ))}
+      </select>
+    </label>
+  );
+}
+
 const NAV_ITEMS = [
-  { id: "home",      label: "Home"      },
-  { id: "dashboard", label: "Dashboard" },
-  { id: "assessment", label: "Assessment" },
-  { id: "scenarios", label: "Scenarios" },
-  { id: "resources", label: "Resources" },
-  { id: "about",     label: "About"     },
+  { id: "home", labelKey: "nav.home" },
+  { id: "dashboard", labelKey: "nav.dashboard" },
+  { id: "assessment", labelKey: "nav.assessment" },
+  { id: "scenarios", labelKey: "nav.scenarios" },
+  { id: "resources", labelKey: "nav.resources" },
+  { id: "about", labelKey: "nav.about" },
 ];
 
 function Navbar({ page }) {
   const { go, user, logout } = useApp();
+  const { t } = useTranslation();
   const displayName = user?.displayName || user?.name;
   return (
     <nav className="navbar">
       <div className="nav-logo" onClick={() => go("home")} style={{ cursor: "pointer" }}>🛡 <span>Cyberly</span></div>
       {NAV_ITEMS.map(n => (
         <button key={n.id} className={`nav-link${page === n.id ? " active" : ""}`} onClick={() => go(n.id)}>
-          {n.label}
+          {t(n.labelKey)}
         </button>
       ))}
+      <LanguageSelector />
       {user ? (
         <div className="nav-user">
           <div className="nav-avatar">{(displayName || "U")[0].toUpperCase()}</div>
           <span>{displayName}</span>
-          <button className="nav-logout" onClick={logout}>Sign out</button>
+          <button className="nav-logout" onClick={logout}>{t("nav.signOut")}</button>
         </div>
       ) : (
-        <button className="nav-cta" onClick={() => go("login")}>Sign in</button>
+        <button className="nav-cta" onClick={() => go("login")}>{t("auth.login")}</button>
       )}
     </nav>
   );
@@ -3756,11 +5231,12 @@ function Navbar({ page }) {
 
 // ─── Footer ───────────────────────────────────────────────────────
 function Footer() {
+  const { t } = useTranslation();
   return (
     <footer>
-      <p>Built with care · <strong>Cyberly</strong> · {new Date().getFullYear()}</p>
+      <p>{t("footer.builtWithCare")} · <strong>Cyberly</strong> · {new Date().getFullYear()}</p>
       <p style={{ marginTop: "0.4rem", fontSize: "0.78rem" }}>
-        Cyber wellness education for everyone · AI Gateway coming in a later phase.
+        {t("footer.description")}
       </p>
     </footer>
   );
@@ -3768,6 +5244,7 @@ function Footer() {
 
 // ─── Root App ─────────────────────────────────────────────────────
 export default function App() {
+  const { t } = useTranslation();
   const [page, setPage] = useState("home");
   const [user, setUser] = useState(null);
   const [checkingSession, setCheckingSession] = useState(true);
@@ -3786,6 +5263,44 @@ export default function App() {
     });
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+
+    const storedLocale =
+      getStoredUiLanguage();
+
+    if (storedLocale) {
+      if (
+        normalizeLocale(i18n.language) !==
+        storedLocale
+      ) {
+        i18n.changeLanguage(storedLocale);
+      }
+
+      return;
+    }
+
+    const profilePreference =
+      user.profile?.preferredLanguage ||
+      user.preferredLanguage;
+
+    const profileLocale =
+      profileLanguageToLocale(
+        profilePreference
+      );
+
+    if (
+      normalizeLocale(i18n.language) !==
+      profileLocale
+    ) {
+      i18n.changeLanguage(profileLocale);
+    }
+  }, [
+    user?.id,
+    user?.profile?.preferredLanguage,
+    user?.preferredLanguage,
+  ]);
 
   function login(userData, profileData, preferredPage) {
     const nextUser = normalizeSessionUser(userData, profileData);
@@ -3868,8 +5383,8 @@ export default function App() {
       <main className="page-wrap">
         {checkingSession ? (
           <div className="section">
-            <p className="section-title">Loading Cyberly…</p>
-            <p className="section-sub">Checking your session.</p>
+            <p className="section-title">{t("app.loadingTitle")}</p>
+            <p className="section-sub">{t("app.checkingSession")}</p>
           </div>
         ) : (PAGES[page] ?? <HomePage />)}
       </main>
@@ -3878,5 +5393,3 @@ export default function App() {
     </AppCtx.Provider>
   );
 }
-
-// --------------------- MYSQL 
