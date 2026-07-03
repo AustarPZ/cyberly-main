@@ -747,6 +747,20 @@ async function dbGetScenarioDashboard(locale) {
   }
 }
 
+async function dbGetResources(locale) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/resources?${localeQuery(locale)}`, {
+      method: "GET",
+      credentials: "include",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return { ok: false, error: data.message || "Unable to load resources." };
+    return { ok: true, ...data };
+  } catch {
+    return { ok: false, error: "Network error. Could not load resources." };
+  }
+}
+
 async function dbLogout() {
   try {
     await fetch(`${API_BASE_URL}/api/auth/logout`, {
@@ -2683,108 +2697,6 @@ function AgentPanel() {
 }
 
 // ─── Page: Resources ──────────────────────────────────────────────
-const TOPICS = [
-  {
-    id: 1, category: "Scams", title: "Phishing",
-    summary: "Recognise the bait before you take it.",
-    content: [
-      "Phishing is a type of cyber attack where criminals impersonate legitimate organisations — banks, delivery services, or even government agencies — through emails, SMS messages, or fake websites. The goal is to trick you into handing over sensitive information like passwords, credit card numbers, or one-time PINs. These messages often create a false sense of urgency, warning you that your account will be suspended or that a parcel is waiting unless you act immediately.",
-      "Modern phishing attacks have become highly sophisticated. Spear phishing targets specific individuals using personal details gathered from social media, making the message feel genuine. Smishing uses SMS, while vishing is conducted over phone calls. Even tech-savvy users fall victim because attackers study their targets carefully and craft believable scenarios tailored to their situation.",
-      "To protect yourself, always verify the sender's email address carefully — look for subtle misspellings like 'paypa1.com' instead of 'paypal.com'. Never click links in unsolicited messages; instead, navigate directly to the official website. Enable multi-factor authentication on your accounts so that even if your password is stolen, attackers cannot easily access your data.",
-    ],
-    source: "https://www.csa.gov.sg/our-programmes/cybersecurity-outreach/cybersecurity-awareness/resources/phishing",
-    sourceLabel: "Cyber Security Agency of Singapore",
-  },
-  {
-    id: 2, category: "Scams", title: "Online Scams",
-    summary: "Know the tricks fraudsters use to steal your money.",
-    content: [
-      "Online scams encompass a wide range of fraudulent schemes designed to deceive people into sending money or revealing personal information. Common types include e-commerce scams (fake online shops that take payment but never deliver), investment scams promising unrealistically high returns, love scams where criminals build fake romantic relationships over weeks or months before requesting money, and job scams offering easy income for minimal work.",
-      "Malaysia consistently ranks among the countries with high rates of online fraud. The Royal Malaysia Police (PDRM) reported billions in losses annually, with Macau scams, phone scams, and investment fraud being the most prevalent. Victims often feel embarrassed to report these crimes, which allows scammers to continue operating and targeting others.",
-      "The best defence is healthy scepticism. If an offer sounds too good to be true, it almost certainly is. Always verify the legitimacy of websites, sellers, and investment platforms before transferring any money. Use secure payment methods with buyer protection, and report suspected scams to the National Scam Response Centre (NSRC) hotline at 997.",
-    ],
-    source: "https://www.nsrc.my/",
-    sourceLabel: "National Scam Response Centre (NSRC) Malaysia",
-  },
-  {
-    id: 3, category: "Misinformation", title: "Misinformation & Fake News",
-    summary: "Stop false information from spreading through your network.",
-    content: [
-      "Misinformation refers to false or inaccurate information spread regardless of intent, while disinformation is deliberately fabricated to deceive. In the social media era, both travel at extraordinary speed. A single misleading post can reach thousands of people within hours, shaping opinions on health, elections, and public safety before any correction can catch up.",
-      "Malaysia introduced the Anti-Fake News Act in 2018, reflecting how seriously governments treat this issue. False information about health treatments, political figures, and natural disasters has caused real-world harm — from people refusing vaccines to mob violence triggered by rumours. The viral nature of social media platforms incentivises outrage and novelty over accuracy, making misinformation particularly potent.",
-      "Before sharing anything, apply the SIFT method: Stop before reacting, Investigate the source, Find better coverage from credible outlets, and Trace claims back to their origin. Fact-checking websites like Sebenarnya.my (Malaysia's official fact-check portal) and AFP Fact Check provide verified information on viral claims. Remember that sharing false information, even unintentionally, makes you part of the problem.",
-    ],
-    source: "https://sebenarnya.my/",
-    sourceLabel: "Sebenarnya.my — Malaysia's Official Fact Check Portal",
-  },
-  {
-    id: 4, category: "AI & Technology", title: "AI-Generated Content",
-    summary: "Understand what machines can create — and why it matters.",
-    content: [
-      "Artificial intelligence can now generate text, images, audio, and video that are virtually indistinguishable from human-created content. Tools like large language models (LLMs) can write convincing articles, product reviews, and social media posts at scale. AI image generators can produce photorealistic pictures of events that never happened. This capability has enormous legitimate uses — from design and accessibility to education — but also serious risks.",
-      "AI-generated content becomes dangerous when it is used without disclosure to deceive. Fake reviews manipulate purchasing decisions. AI-written propaganda floods information ecosystems. Synthetic media is used in scams where criminals impersonate executives or family members in audio or video calls. As these tools become cheaper and easier to use, the volume of synthetic content online is growing rapidly.",
-      "Critical evaluation is essential. Look for unnatural repetition, overly formal language, or images with subtle errors (distorted hands, inconsistent backgrounds). Many AI tools now embed watermarks or metadata, and AI-detection platforms are improving. When consuming content on important topics, prioritise established news organisations and primary sources over viral social media posts, regardless of how polished they appear.",
-    ],
-    source: "https://www.mcmc.gov.my/en/media/press-clippings/understanding-ai-generated-content",
-    sourceLabel: "Malaysian Communications and Multimedia Commission (MCMC)",
-  },
-  {
-    id: 5, category: "AI & Technology", title: "Deepfakes",
-    summary: "AI-manipulated media and how to spot it.",
-    content: [
-      "Deepfakes are synthetic media — most commonly videos or audio recordings — in which a person's likeness, voice, or words are digitally replaced or manipulated using artificial intelligence. The technology has advanced so rapidly that high-quality deepfakes can now be created by anyone with a consumer-grade computer and freely available software. While deepfakes have legitimate creative applications in film and entertainment, they are increasingly weaponised for harm.",
-      "The threats posed by deepfakes are serious and varied. Politicians and public figures have been targeted with fabricated videos that misrepresent their statements. Revenge porn deepfakes — non-consensual synthetic intimate images — cause devastating psychological harm, particularly to women. Business email compromise scams now use deepfake audio to impersonate CEOs and authorise fraudulent wire transfers. In Malaysia, deepfake scam videos impersonating celebrities and public figures to promote fake investment schemes have become a serious problem.",
-      "Detecting deepfakes requires careful observation: look for unnatural blinking patterns, inconsistent lighting on the face, blurry or morphing edges around the hairline, and audio that does not quite match lip movements. Reverse image searches and tools like Microsoft's Video Authenticator can help verify media authenticity. If you receive an unexpected request via video or audio — especially involving money — verify it through an independent channel before acting.",
-    ],
-    source: "https://www.interpol.int/en/Crimes/Cybercrime/Deepfakes",
-    sourceLabel: "INTERPOL — Deepfakes Resource",
-  },
-  {
-    id: 6, category: "Privacy", title: "Privacy & Personal Data",
-    summary: "Take control of who knows what about you online.",
-    content: [
-      "Every time you use an app, browse a website, or make an online purchase, you generate data. This data — your location, browsing habits, purchase history, health information, and more — is collected, analysed, and often sold by companies to advertisers and data brokers. Malaysia's Personal Data Protection Act (PDPA) 2010 provides some legal safeguards, but individuals must also take proactive steps to protect their own privacy.",
-      "Data breaches are a constant risk. When companies that hold your information are hacked, your personal details can end up on the dark web, sold to fraudsters, or used for identity theft. Large-scale breaches affecting millions of Malaysians have been reported involving telecommunications companies, financial institutions, and government databases. Once your data is out, it is very difficult to contain.",
-      "Minimise your digital footprint by only providing necessary information to online services. Read privacy policies and adjust app permissions — does a flashlight app really need access to your contacts? Use a different strong password for every service (a password manager makes this easy), enable two-factor authentication, and regularly check whether your email appears in known data breaches at HaveIBeenPwned.com.",
-    ],
-    source: "https://www.pdp.gov.my/jpdpv2/",
-    sourceLabel: "Department of Personal Data Protection Malaysia (JPDP)",
-  },
-  {
-    id: 7, category: "Safety", title: "Cyberbullying",
-    summary: "Recognise, respond to, and prevent online harassment.",
-    content: [
-      "Cyberbullying is the use of digital technology — social media, messaging apps, gaming platforms, or email — to repeatedly harass, threaten, humiliate, or target another person. Unlike traditional bullying, it can occur 24 hours a day, reach a vast audience instantly, and follow victims wherever they go. Screenshots and viral sharing mean hurtful content can be nearly impossible to completely remove. Young people are disproportionately affected, but adults experience cyberbullying too, particularly in the form of workplace harassment and coordinated online pile-ons.",
-      "The psychological impact of cyberbullying is severe and well-documented: victims commonly experience anxiety, depression, low self-esteem, and in serious cases, suicidal ideation. In Malaysia, cyberbullying is addressed under Section 233 of the Communications and Multimedia Act 1998, which makes it illegal to transmit offensive or menacing content online. Penalties can include fines and imprisonment.",
-      "If you or someone you know is being cyberbullied: do not respond to the bully, document everything with screenshots, block and report the user on the platform, and — critically — tell a trusted adult, school counsellor, or contact Talian Kasih at 15999 for support. Bystanders play a powerful role: refusing to share or engage with bullying content and offering support to victims can significantly reduce harm.",
-    ],
-    source: "https://www.unicef.org/malaysia/what-is-cyberbullying",
-    sourceLabel: "UNICEF Malaysia — Cyberbullying Resources",
-  },
-  {
-    id: 8, category: "Passwords", title: "Password Security",
-    summary: "Why length beats complexity — and how to remember them.",
-    content: [
-      "Weak passwords remain the single most common way accounts are compromised. Attackers use automated tools that can try billions of password combinations per second, meaning a short password — even one with numbers and symbols — can be cracked in minutes. The most effective passwords are long passphrases: a string of four or more random words is far harder to crack than a short complex password, and much easier for a human to remember.",
-      "Password reuse is equally dangerous. When one website suffers a data breach, attackers take the stolen username-password combinations and automatically try them on hundreds of other sites (a technique called credential stuffing). If you use the same password everywhere, a breach at one obscure forum can lead to your bank account being compromised. Each account you own should have a unique password.",
-      "A password manager — such as Bitwarden (free and open source), 1Password, or the password manager built into your browser — solves both problems. It generates and stores long, random, unique passwords for every site, so you only need to remember one master password. Pair this with two-factor authentication (2FA) on all important accounts: even if your password is stolen, an attacker cannot log in without access to your phone or authenticator app.",
-    ],
-    source: "https://www.cisa.gov/secure-our-world/use-strong-passwords",
-    sourceLabel: "CISA — Use Strong Passwords",
-  },
-  {
-    id: 9, category: "Beginner", title: "Digital Citizenship",
-    summary: "Be responsible, respectful, and rights-aware online.",
-    content: [
-      "Digital citizenship refers to the responsible and ethical use of technology and the internet. Just as physical citizenship carries rights and responsibilities, being active online means participating in a shared space that is shaped by how all of us behave. Good digital citizens think critically about the content they consume and share, respect others' privacy and dignity, and contribute constructively to online communities.",
-      "The digital world carries real legal responsibilities. Sharing someone else's copyrighted content, posting defamatory statements, distributing intimate images without consent, and inciting hatred online are all illegal in Malaysia under various laws including the Communications and Multimedia Act, the Defamation Act, and the Penal Code. The anonymity of the internet is increasingly illusory — authorities regularly identify and prosecute individuals for online offences.",
-      "Practising good digital citizenship starts with small habits: pause before posting to consider how your words might affect others; verify information before sharing it; protect your personal information and respect others'; speak up when you witness online abuse. Digital literacy education is expanding in Malaysian schools, but everyone — regardless of age — benefits from regularly reflecting on how they show up in digital spaces.",
-    ],
-    source: "https://www.digitalcitizenship.net/",
-    sourceLabel: "DigitalCitizenship.net",
-  },
-];
-
 const TOPIC_COLORS = {
   Scams:             { bg: "#FFF3E0", text: "#E65100", dot: "#FF9800" },
   Misinformation:    { bg: "#F3E5F5", text: "#6A1B9A", dot: "#AB47BC" },
@@ -2795,25 +2707,44 @@ const TOPIC_COLORS = {
   Beginner:          { bg: "#E8F5E9", text: "#2E7D32", dot: "#66BB6A" },
 };
 
-const RESOURCE_CATEGORIES = ["All", ...Array.from(new Set(TOPICS.map(t => t.category)))];
-
 function ResourcesPage() {
-  const { t } = useTranslation();
+  const { t, i18n: activeI18n } = useTranslation();
   const { go, resourceFocusTopic, clearResourceFocus } = useApp();
+  const resourceLocale = normalizeLocale(activeI18n.language);
+  const [resourceState, setResourceState] = useState({ loading: true, resources: [] });
   const [selected, setSelected]   = useState(null);
   const [filter,   setFilter]     = useState("All");
-  const topic = TOPICS.find(t => t.id === selected);
+  const topic = resourceState.resources.find(resource => resource.slug === selected);
 
-  const categories = RESOURCE_CATEGORIES;
-  const filtered   = filter === "All" ? TOPICS : TOPICS.filter(t => t.category === filter);
+  const categories = ["All", ...Array.from(new Set(resourceState.resources.map(resource => resource.categoryCode)))];
+  const filtered = filter === "All"
+    ? resourceState.resources
+    : resourceState.resources.filter(resource => resource.categoryCode === filter);
   const focusedCategory = resourceFocusTopic ? PROGRESS_TOPIC_META[resourceFocusTopic]?.category : null;
   const categoryLabel = category => t(`resources.categories.${category}`, { defaultValue: category });
 
   useEffect(() => {
-    if (focusedCategory && categories.includes(focusedCategory)) {
+    if (focusedCategory && resourceState.resources.some(resource => resource.categoryCode === focusedCategory)) {
       setFilter(focusedCategory);
     }
-  }, [focusedCategory, categories]);
+  }, [focusedCategory, resourceState.resources]);
+
+  useEffect(() => {
+    let active = true;
+    setResourceState(current => ({ ...current, loading: true, error: null }));
+    dbGetResources(resourceLocale).then(result => {
+      if (!active) return;
+      if (result.ok) {
+        setResourceState({ loading: false, resources: result.resources || [] });
+        if (selected && !(result.resources || []).some(resource => resource.slug === selected)) {
+          setSelected(null);
+        }
+      } else {
+        setResourceState({ loading: false, resources: [], error: result.error });
+      }
+    });
+    return () => { active = false; };
+  }, [resourceLocale, selected]);
 
   const BackBtn = () => (
     <button
@@ -2851,7 +2782,7 @@ function ResourcesPage() {
           </p>
           <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
             {[
-              { val: "9", labelKey: "resources.stats.topicsCovered" },
+              { val: String(resourceState.resources.length || 9), labelKey: "resources.stats.topicsCovered" },
               { val: "100%", labelKey: "resources.stats.freeToRead" },
               { val: "MY", labelKey: "resources.stats.malaysiaFocused" },
             ].map(s => (
@@ -2905,13 +2836,20 @@ function ResourcesPage() {
         </div>
 
         {/* Cards grid */}
+        {resourceState.loading ? (
+          <div className="card">{t("resources.loading", { defaultValue: "Loading resources..." })}</div>
+        ) : resourceState.error ? (
+          <div className="card">{t("resources.error", { defaultValue: resourceState.error })}</div>
+        ) : filtered.length === 0 ? (
+          <div className="card">{t("resources.empty", { defaultValue: "No resources found." })}</div>
+        ) : (
         <div className="res-grid">
           {filtered.map(resource => {
-            const cat = TOPIC_COLORS[resource.category] || { bg: "#E8EDE8", text: "#1D9E75", dot: "#1D9E75" };
+            const cat = TOPIC_COLORS[resource.categoryCode] || { bg: "#E8EDE8", text: "#1D9E75", dot: "#1D9E75" };
             return (
               <button
                 key={resource.id}
-                onClick={() => setSelected(resource.id)}
+                onClick={() => setSelected(resource.slug)}
                 style={{
                   background: "#fff", border: "1px solid rgba(0,0,0,0.07)",
                   borderRadius: 14, padding: "1.25rem", textAlign: "left",
@@ -2937,7 +2875,7 @@ function ResourcesPage() {
                   fontSize: "0.72rem", fontWeight: 600, alignSelf: "flex-start",
                 }}>
                   <span style={{ width: 6, height: 6, borderRadius: "50%", background: cat.dot, display: "inline-block" }} />
-                  {categoryLabel(resource.category)}
+                  {categoryLabel(resource.categoryCode)}
                 </span>
                 <div className="res-title">{resource.title}</div>
                 <div className="res-desc">{resource.summary}</div>
@@ -2948,6 +2886,7 @@ function ResourcesPage() {
             );
           })}
         </div>
+        )}
 
         {/* Safety tip banner */}
         <div style={{
@@ -2994,7 +2933,7 @@ function ResourcesPage() {
             >✕</button>
 
             {(() => {
-              const cat = TOPIC_COLORS[topic.category] || { bg: "#E8EDE8", text: "#1D9E75", dot: "#1D9E75" };
+              const cat = TOPIC_COLORS[topic.categoryCode] || { bg: "#E8EDE8", text: "#1D9E75", dot: "#1D9E75" };
               return (
                 <span style={{
                   display: "inline-flex", alignItems: "center", gap: 5,
@@ -3003,7 +2942,7 @@ function ResourcesPage() {
                   fontSize: "0.72rem", fontWeight: 600, marginBottom: "0.9rem",
                 }}>
                   <span style={{ width: 6, height: 6, borderRadius: "50%", background: cat.dot, display: "inline-block" }} />
-                  {categoryLabel(topic.category)}
+                  {categoryLabel(topic.categoryCode)}
                 </span>
               );
             })()}
@@ -3023,7 +2962,7 @@ function ResourcesPage() {
             <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
               <span style={{ fontSize: "0.78rem", color: "#aaa" }}>{t("resources.source")}: <em>{topic.sourceLabel}</em></span>
               <a
-                href={topic.source} target="_blank" rel="noopener noreferrer"
+                href={topic.sourceUrl} target="_blank" rel="noopener noreferrer"
                 style={{
                   display: "inline-flex", alignItems: "center", gap: 6,
                   background: "var(--teal)", color: "#fff",

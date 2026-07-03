@@ -25,6 +25,9 @@ const { createProgressRouter } = require('./src/progress/progress.routes');
 const { createScenarioRepository } = require('./src/scenario/scenario.repository');
 const { createScenarioService } = require('./src/scenario/scenario.service');
 const { createScenarioRouter } = require('./src/scenario/scenario.routes');
+const { createResourceRepository } = require('./src/resource/resource.repository');
+const { createResourceService } = require('./src/resource/resource.service');
+const { createResourceRouter } = require('./src/resource/resource.routes');
 const { createAccountRepository } = require("./src/account/account.repository");
 const { createAccountService } = require("./src/account/account.service");
 const { createAccountRouter } = require("./src/account/account.routes");
@@ -46,6 +49,8 @@ const progressService = createProgressService(progressRepository);
 const assessmentService = createAssessmentService(assessmentRepository, progressService);
 const scenarioRepository = createScenarioRepository(pool);
 const scenarioService = createScenarioService(scenarioRepository, progressService);
+const resourceRepository = createResourceRepository(pool);
+const resourceService = createResourceService(resourceRepository);
 
 app.set('trust proxy', 1);
 app.use(cors({ origin: clientOrigin, credentials: true }));
@@ -68,6 +73,7 @@ app.use("/api/account", createAccountRouter(accountService));
 app.use(createAssessmentRouter(assessmentService));
 app.use(createProgressRouter(progressService));
 app.use(createScenarioRouter(scenarioService));
+app.use(createResourceRouter(resourceService));
 
 const rateLimitBuckets = new Map();
 
