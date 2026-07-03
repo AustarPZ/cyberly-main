@@ -8,8 +8,10 @@
     "@testing-library/react": "^16.3.2",
     "@testing-library/user-event": "^13.5.0",
     "dotenv": "^17.4.2",
+    "i18next": "^22.5.1",
     "react": "^19.2.7",
     "react-dom": "^19.2.7",
+    "react-i18next": "^12.3.1",
     "react-scripts": "5.0.1",
     "web-vitals": "^2.1.4"
   },

@@ -1,12 +1,13 @@
 const express = require('express');
 const { requireAuth } = require('../auth/middleware');
+const { localeFromRequest } = require('../i18n/locale');
 
 function createAssessmentRouter(assessmentService) {
   const router = express.Router();
 
-  router.get('/api/assessments/initial', requireAuth, async (_req, res, next) => {
+  router.get('/api/assessments/initial', requireAuth, async (req, res, next) => {
     try {
-      res.json(await assessmentService.getInitialAssessment());
+      res.json(await assessmentService.getInitialAssessment(localeFromRequest(req)));
     } catch (error) {
       next(error);
     }
@@ -14,7 +15,7 @@ function createAssessmentRouter(assessmentService) {
 
   router.post('/api/assessments/initial/attempts', requireAuth, async (req, res, next) => {
     try {
-      res.status(201).json(await assessmentService.startOrResumeInitialAttempt(req.session.userId));
+      res.status(201).json(await assessmentService.startOrResumeInitialAttempt(req.session.userId, localeFromRequest(req)));
     } catch (error) {
       next(error);
     }
@@ -22,7 +23,7 @@ function createAssessmentRouter(assessmentService) {
 
   router.get('/api/assessments/initial/result', requireAuth, async (req, res, next) => {
     try {
-      res.json(await assessmentService.getLatestInitialResult(req.session.userId));
+      res.json(await assessmentService.getLatestInitialResult(req.session.userId, localeFromRequest(req)));
     } catch (error) {
       next(error);
     }
@@ -30,7 +31,7 @@ function createAssessmentRouter(assessmentService) {
 
   router.get('/api/assessments/initial/status', requireAuth, async (req, res, next) => {
     try {
-      res.json(await assessmentService.getInitialStatus(req.session.userId));
+      res.json(await assessmentService.getInitialStatus(req.session.userId, localeFromRequest(req)));
     } catch (error) {
       next(error);
     }
@@ -38,7 +39,7 @@ function createAssessmentRouter(assessmentService) {
 
   router.get('/api/assessment-attempts/:attemptId', requireAuth, async (req, res, next) => {
     try {
-      res.json(await assessmentService.getAttemptForUser(req.session.userId, req.params.attemptId));
+      res.json(await assessmentService.getAttemptForUser(req.session.userId, req.params.attemptId, localeFromRequest(req)));
     } catch (error) {
       next(error);
     }
@@ -54,7 +55,7 @@ function createAssessmentRouter(assessmentService) {
 
   router.post('/api/assessment-attempts/:attemptId/submit', requireAuth, async (req, res, next) => {
     try {
-      res.json(await assessmentService.submitAttempt(req.session.userId, req.params.attemptId));
+      res.json(await assessmentService.submitAttempt(req.session.userId, req.params.attemptId, localeFromRequest(req)));
     } catch (error) {
       next(error);
     }

@@ -41,7 +41,7 @@ function mapQuestionForDelivery(row) {
     topicCode: row.topic_code,
     topicLabel: TOPIC_LABELS[row.topic_code] || row.topic_code,
     prompt: row.prompt,
-    options: parseOptions(row.options_json),
+    options: parseOptions(row.localized_options_json || row.options_json),
     displayOrder: row.display_order,
   };
 }
@@ -80,7 +80,7 @@ function mapCompletedResult(attempt, questions, answers, topicScores) {
     })),
     review: questions.map(question => {
       const answer = answerByQuestion.get(Number(question.id));
-      const options = parseOptions(question.options_json);
+      const options = parseOptions(question.localized_options_json || question.options_json);
       return {
         questionId: question.id,
         topicCode: question.topic_code,

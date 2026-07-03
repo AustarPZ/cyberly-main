@@ -1,10 +1,12 @@
 const { mapProgressSummary, mapRecommendation, mapTopicProgress } = require('./progress.mapper');
 const { getLevelForPercentage, selectRecommendation } = require('./progress.rules');
 const { normalizeLocale } = require('../i18n/locale');
+const { ERROR_CODES } = require('../errors/errorCodes');
 
-function httpError(status, message) {
+function httpError(status, code, message) {
   const error = new Error(message);
   error.status = status;
+  error.code = code;
   return error;
 }
 
@@ -28,10 +30,10 @@ function createProgressService(repository) {
     const locale = normalizeLocale(localeInput);
     const runner = async (connection) => {
       const attempt = await repository.findAttemptForUser(userId, attemptId, connection);
-      if (!attempt) throw httpError(404, 'Completed initial assessment was not found.');
+      if (!attempt) throw httpError(404, ERROR_CODES.PROGRESS_ASSESSMENT_NOT_FOUND, 'Completed initial assessment was not found.');
 
       const topicScores = await repository.listTopicScoresForAttempt(attempt.id, connection);
-      if (topicScores.length === 0) throw httpError(400, 'Assessment topic scores are not available.');
+      if (topicScores.length === 0) throw httpError(400, ERROR_CODES.PROGRESS_TOPIC_SCORES_UNAVAILABLE, 'Assessment topic scores are not available.');
 
       for (const topic of topicScores) {
         await repository.upsertTopicProgress(userId, {
@@ -123,14 +125,14 @@ function createProgressService(repository) {
   async function markViewed(userId, id, localeInput) {
     const locale = normalizeLocale(localeInput);
     const recommendation = await repository.markRecommendationViewed(userId, Number(id));
-    if (!recommendation || recommendation.user_id !== userId) throw httpError(404, 'Recommendation was not found.');
+    if (!recommendation || recommendation.user_id !== userId) throw httpError(404, ERROR_CODES.RECOMMENDATION_NOT_FOUND, 'Recommendation was not found.');
     return { recommendation: mapRecommendation(recommendation, locale) };
   }
 
   async function markCompleted(userId, id, localeInput) {
     const locale = normalizeLocale(localeInput);
     const recommendation = await repository.markRecommendationCompleted(userId, Number(id));
-    if (!recommendation || recommendation.user_id !== userId) throw httpError(404, 'Recommendation was not found.');
+    if (!recommendation || recommendation.user_id !== userId) throw httpError(404, ERROR_CODES.RECOMMENDATION_NOT_FOUND, 'Recommendation was not found.');
     return { recommendation: mapRecommendation(recommendation, locale) };
   }
 

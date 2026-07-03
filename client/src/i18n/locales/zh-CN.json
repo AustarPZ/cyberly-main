@@ -1,0 +1,765 @@
+{
+  "nav": {
+    "home": "首页",
+    "dashboard": "仪表板",
+    "assessment": "测评",
+    "scenarios": "情境练习",
+    "resources": "资源",
+    "about": "关于",
+    "profile": "个人资料",
+    "settings": "设置",
+    "signOut": "退出登录",
+    "language": "语言"
+  },
+  "auth": {
+    "login": "登录",
+    "register": "注册",
+    "email": "电子邮箱",
+    "password": "密码",
+    "displayName": "显示名称",
+    "age": "年龄",
+    "confirmPassword": "确认密码",
+    "continue": "继续",
+    "back": "返回",
+    "next": "下一步",
+    "submit": "提交",
+    "loading": "正在加载",
+    "invalidCredentials": "登录信息不正确",
+    "networkError": "网络错误",
+    "accountCreated": "账号已创建",
+    "signInPrompt": "已经有账号？",
+    "registerPrompt": "第一次使用 Cyberly？",
+    "createAccount": "创建你的账号",
+    "accountDetailsHint": "账号资料会保存在你的用户账号中。学习偏好会在引导完成后保存。",
+    "passwordRequirements": "密码必须至少包含 8 个字符，并同时包含字母和数字。",
+    "registerFailed": "无法创建账号。",
+    "goToLogin": "登录",
+    "emailPlaceholder": "xiaoming@example.com",
+    "displayNamePlaceholder": "你的名称",
+    "agePlaceholder": "例如：16",
+    "passwordPlaceholder": "至少 8 个字符",
+    "welcomeBack": "欢迎回来",
+    "loginDescription": "登录以继续你的网络安全之旅。",
+    "emailInvalid": "请输入有效的邮箱地址。",
+    "passwordRequired": "请输入你的密码。",
+    "signInButton": "登录",
+    "goToRegister": "创建账号",
+    "displayNameRequired": "显示名称必须是 2 到 50 个字符。",
+    "ageInvalid": "请输入 1 到 120 之间的整数年龄。"
+  },
+  "onboarding": {
+    "account": "账号",
+    "nickname": "昵称",
+    "education": "教育",
+    "language": "语言",
+    "experience": "经验",
+    "goals": "目标",
+    "learningStyle": "学习方式",
+    "progress": "第 {{step}} 步，共 {{total}} 步 — {{label}}",
+    "previous": "上一步",
+    "next": "下一步",
+    "completeSetup": "完成设置",
+    "aiNickname": "AI 昵称",
+    "educationLevel": "教育程度",
+    "preferredLanguage": "偏好语言",
+    "familiarityLevel": "熟悉程度",
+    "helpTopics": "想学习的主题",
+    "learningStyleLabel": "学习方式",
+    "nicknameQuestion": "你希望 AI 怎么称呼你？",
+    "nicknameHint": "可以是昵称或代号。这只会给 CyberGuard 使用。",
+    "educationQuestion": "哪一个教育程度最符合你？",
+    "languageQuestion": "你比较习惯使用哪种语言？",
+    "familiarityQuestion": "你对网络安全有多熟悉？",
+    "helpTopicsQuestion": "你想在哪些方面获得帮助？",
+    "helpTopicsHint": "最多选择 3 个主题。",
+    "learningStyleQuestion": "你比较喜欢怎样学习？",
+    "nicknameRequired": "请输入供 AI 使用的昵称。",
+    "educationRequired": "请选择教育程度。",
+    "languageRequired": "请选择偏好语言。",
+    "familiarityRequired": "请选择熟悉程度。",
+    "helpTopicsRequired": "请至少选择一个主题。",
+    "learningStyleRequired": "请选择学习方式。",
+    "profileSaveFailed": "账号已创建，但学习资料未成功保存。请重新保存资料后再继续。",
+    "savingProfile": "正在保存学习资料...",
+    "settingUp": "正在设置...",
+    "retrySavingProfile": "重新保存学习资料",
+    "letsGo": "🚀 开始吧！",
+    "continue": "继续 →",
+    "nicknamePlaceholder": "例如：Alex、Koko、ZK...",
+    "selectedCount": "已选择 {{count}}/{{max}}"
+  },
+  "profileOptions": {
+    "education": {
+      "form_1": "中一",
+      "form_2": "中二",
+      "form_3": "中三",
+      "form_4": "中四",
+      "form_5": "中五",
+      "other": "其他",
+      "prefer_not_to_say": "不想透露"
+    },
+    "language": {
+      "english": "English",
+      "bahasa_melayu": "Bahasa Melayu",
+      "chinese": "中文",
+      "mixed": "混合"
+    },
+    "familiarity": {
+      "beginner": {
+        "label": "初学者",
+        "description": "我刚开始学习，基础知识对我来说还很新。"
+      },
+      "intermediate": {
+        "label": "中级",
+        "description": "我了解基础知识，并想进一步深入学习。"
+      },
+      "advanced": {
+        "label": "高级",
+        "description": "我有信心，并希望挑战更高阶的内容。"
+      }
+    },
+    "helpTopics": {
+      "staying_safe_online": "保持网络安全",
+      "learning_cybersecurity": "学习网络安全",
+      "avoiding_scams": "避免诈骗",
+      "protecting_privacy": "保护隐私",
+      "understanding_cyber_threats": "理解网络威胁",
+      "cybersecurity_careers": "探索网络安全职业"
+    },
+    "learningStyle": {
+      "step_by_step": "逐步指导",
+      "short_explanations": "简短说明",
+      "quizzes_and_challenges": "测验与挑战"
+    }
+  },
+  "dashboard": {
+    "welcome": "欢迎回来，{{name}}",
+    "yourDashboard": "你的仪表板",
+    "recommendations": "推荐",
+    "assessmentStatus": "测评状态",
+    "scenarioProgress": "情境进度",
+    "resources": "资源",
+    "continueLearning": "继续学习",
+    "startAssessment": "开始测评",
+    "resumeAssessment": "继续测评",
+    "startScenario": "开始情境",
+    "resumeScenario": "继续情境",
+    "noRecommendationYet": "目前还没有推荐。",
+    "recommendedNextStep": "推荐的下一步",
+    "measuredProgress": "测评进度",
+    "welcomeBack": "欢迎回来，{{name}}",
+    "beginner": "初学者",
+    "levelDisplay": "{{level}}级",
+    "learningProfile": "你的学习资料",
+    "profileSavedDescription": "学习偏好已保存到你的资料中，并会在刷新页面或重新登录后恢复。",
+    "editProfile": "编辑资料",
+    "stats": {
+      "topics": "主题",
+      "languages": "语言",
+      "powered": "AI 驱动"
+    },
+    "assessment": {
+      "completed": "初始测评已完成",
+      "inProgress": "初始测评进行中",
+      "pending": "初始测评尚未完成",
+      "checking": "正在检查测评状态...",
+      "measuredLevel": "测量等级",
+      "score": "分数",
+      "resumeDescription": "继续已保存的答案，并在准备好后完成测评。",
+      "pendingDescription": "你可以现在或稍后完成。在建立基础水平前，自适应推荐不会启用。",
+      "viewResults": "查看结果",
+      "resume": "继续",
+      "start": "开始／稍后完成"
+    },
+    "tips": {
+      "phishing": "不要点击意外收到的电子邮件或短信中的链接，应直接前往官方网站。",
+      "password": "每个账号应使用不同密码。密码管理器可以让这项工作更轻松。",
+      "fakeNews": "在网上分享新闻前，请先通过马来西亚官方事实核查网站 Sebenarnya.my 验证。",
+      "phoneScam": "有人自称来自银行或政府机构时，应挂断电话并主动拨打官方号码确认。"
+    },
+    "actions": {
+      "resources": "浏览资源",
+      "resourcesDescription": "查看诈骗、隐私等主题指南",
+      "assessment": "初始测评",
+      "assessmentDescription": "建立你的测量基础水平",
+      "scenarios": "情境练习",
+      "scenariosDescription": "在真实情境中练习安全选择",
+      "profile": "编辑资料",
+      "profileDescription": "更新你的学习偏好",
+      "about": "关于项目",
+      "aboutDescription": "认识 Cyberly 项目团队",
+      "progress": "我的进度",
+      "progressDescription": "查看学习统计与主题",
+      "home": "返回首页",
+      "homeDescription": "返回网站首页"
+    },
+    "progress": {
+      "progress": "进度",
+      "title": "测量进度",
+      "loading": "正在载入你的基础水平...",
+      "summary": "已测量 {{count}} 个主题 · 结果基于测评，而不是个人偏好。",
+      "empty": "完成初始测评后即可建立测量进度。"
+    },
+    "recommendation": {
+      "title": "建议的下一步",
+      "loading": "正在检查建议...",
+      "initialAssessment": "初始测评",
+      "practiceScenario": "进行情境练习",
+      "readResource": "阅读资源",
+      "startAssessment": "开始测评",
+      "empty": "目前没有有效建议。"
+    },
+    "scenarios": {
+      "practiceTitle": "情境练习",
+      "loadingActivity": "正在载入情境活动...",
+      "completed": "已完成",
+      "inProgress": "进行中",
+      "latest": "最近完成",
+      "continueScenario": "继续情境练习",
+      "openLibrary": "打开情境库",
+      "recommendedTitle": "推荐情境",
+      "finding": "正在寻找合适的情境...",
+      "minutes": "{{count}} 分钟",
+      "unlockDescription": "完成测评后即可解锁情境推荐。"
+    },
+    "topicMastery": {
+      "title": "主题掌握情况",
+      "viewProgress": "查看进度"
+    },
+    "dailyTip": "每日网络安全提示",
+    "quickActions": {
+      "title": "快捷操作",
+      "description": "快速前往你需要的功能。"
+    },
+    "cyberGuard": {
+      "title": "CyberGuard AI",
+      "description": "预览聊天界面。实时 AI 回复将在后续阶段通过后端 AI Gateway 提供。",
+      "badge": "已保存资料预览"
+    }
+  },
+  "settings": {
+    "accountInformation": "账号信息",
+    "learningPreferences": "学习偏好",
+    "email": "电子邮箱",
+    "displayName": "显示名称",
+    "age": "年龄",
+    "ageGroup": "年龄组",
+    "aiNickname": "AI 昵称",
+    "educationLevel": "教育程度",
+    "preferredLanguage": "偏好语言",
+    "familiarity": "熟悉程度",
+    "helpTopics": "想学习的主题",
+    "learningStyle": "学习方式",
+    "saveAccount": "保存账号",
+    "savePreferences": "保存偏好",
+    "saving": "正在保存...",
+    "saved": "已保存。",
+    "accountSaved": "账号已保存。",
+    "preferencesSaved": "偏好已保存。",
+    "cancel": "取消",
+    "displayNameRequired": "显示名称必须是 2 到 50 个字符。",
+    "ageInvalid": "请输入 1 到 120 之间的整数年龄。",
+    "nicknameRequired": "请输入 AI 要使用的昵称。",
+    "chooseOne": "请选择",
+    "learnerProfile": "学习者资料",
+    "title": "定制你的 Cyberly 学习体验",
+    "description": "这些学习偏好与账号身份资料分开保存。年龄与教育程度也会分别处理。",
+    "finishOnboarding": "完成初始设置",
+    "finishOnboardingDescription": "你的账号已经登录，但学习者资料尚未完成。请保存此资料后再前往仪表板。",
+    "displayNamePlaceholder": "你的显示名称",
+    "aiNicknamePlaceholder": "你希望 CyberGuard 如何称呼你？",
+    "saveProfile": "保存学习资料",
+    "profileSaved": "学习资料已保存。",
+    "accountSaveFailed": "无法保存账号资料。",
+    "profileSaveFailed": "无法保存学习者资料。",
+    "identityNote": "显示名称与年龄属于账号资料。系统不会根据教育程度推断年龄，也不会将年龄或教育程度视为学习能力。",
+    "ageGroups": {
+      "child": "儿童（1–12 岁）",
+      "teen": "青少年（13–17 岁）",
+      "young_adult": "年轻成人（18–24 岁）",
+      "adult": "成人（25–120 岁）",
+      "invalid": "年龄无效"
+    }
+  },
+  "assessment": {
+    "title": "网络健康初始测评",
+    "introduction": "这是一项 12 题基础测评，帮助 Cyberly 之后的学习内容了解你的实际网络安全水平。",
+    "start": "开始测评",
+    "resume": "继续测评",
+    "questionProgress": "第 {{current}} 题，共 {{total}} 题",
+    "answeredProgress": "已回答 {{answered}}/{{total}}",
+    "previous": "上一题",
+    "next": "下一题",
+    "submit": "提交测评",
+    "submitting": "正在提交...",
+    "confirmSubmit": "要提交初始测评吗？这个基础结果会被保存。",
+    "score": "分数",
+    "level": "等级",
+    "measuredLevel": "测量等级",
+    "topicBreakdown": "主题分析",
+    "loading": "正在加载测评...",
+    "error": "无法加载测评。",
+    "retry": "重试",
+    "completed": "测评已完成",
+    "answerAll": "请先回答所有题目再提交。",
+    "finalSubmissionReminder": "请先回答所有题目，再进行最终提交。",
+    "result": "初始结果",
+    "resultSummary": "得分 {{score}}/{{maxScore}}。此测量等级仅根据你的答案计算。",
+    "questionReview": "题目回顾",
+    "reviewAnswers": "查看答案",
+    "correct": "正确",
+    "incorrect": "错误",
+    "yourAnswer": "你的答案",
+    "correctAnswer": "正确答案",
+    "explanation": "解释",
+    "backToDashboard": "返回仪表板",
+    "viewProgress": "查看进度",
+    "relativeStrength": "相对优势",
+    "areaToImprove": "需要提升",
+    "strengths": "优势",
+    "areasToImprove": "需要提升的方面",
+    "noStrengthsYet": "目前还没有主题达到优势阈值。没关系，这只是起始基线。",
+    "allTopicsMetThreshold": "所有主题都已达到当前优势阈值。",
+    "baselineLabel": "基础水平测评",
+    "measurementNote": "你自行填写的熟悉程度与本次测量结果分开处理。题目、评分和反馈均不使用 AI。",
+    "doLater": "稍后完成",
+    "stats": {
+      "questions": "道单选题",
+      "minutes": "分钟",
+      "negativeMarks": "倒扣分",
+      "topicAreas": "个主题领域"
+    }
+  },
+  "scenario": {
+    "title": "情境练习",
+    "library": "情境库",
+    "filterByTopic": "按主题筛选",
+    "start": "开始",
+    "resume": "继续",
+    "stepProgress": "第 {{current}} 步，共 {{total}} 步",
+    "chooseResponse": "选择回应",
+    "submitChoice": "提交选择",
+    "continue": "继续",
+    "result": "情境结果",
+    "score": "分数",
+    "feedback": "反馈",
+    "recommendation": "推荐",
+    "completed": "已完成",
+    "loading": "正在加载情境...",
+    "error": "无法加载情境。",
+    "retry": "重试",
+    "allTopics": "所有主题",
+    "allDifficulty": "所有难度",
+    "recommended": "推荐",
+    "completeScenario": "完成情境"
+  },
+  "scenarios": {
+    "library": {
+      "title": "情境库",
+      "description": "练习真实的网络安全决策，并在每次最终选择后立即获得反馈。",
+      "recommended": "推荐",
+      "all": "所有情境",
+      "loading": "正在加载情境...",
+      "empty": "未找到情境",
+      "backToDashboard": "返回仪表板"
+    },
+    "filters": {
+      "topic": "主题筛选",
+      "difficulty": "难度筛选",
+      "allTopics": "所有主题",
+      "allDifficulties": "所有难度"
+    },
+    "card": {
+      "estimatedTime": "预计时间",
+      "minutes": "{{count}} 分钟",
+      "decisions": "{{count}} 个决策",
+      "start": "开始情境",
+      "resume": "继续情境",
+      "viewResult": "查看结果"
+    },
+    "intro": {
+      "details": "情境详情",
+      "topic": "主题",
+      "difficulty": "难度",
+      "estimatedDuration": "预计时长",
+      "whatYouWillPractise": "你将练习的内容",
+      "choiceNotice": "选择提交后即为最终答案。每次决策后都会显示反馈，评分由后端计算。",
+      "startPractice": "开始练习",
+      "continueSavedAttempt": "继续已保存的尝试"
+    },
+    "attempt": {
+      "stepProgress": "第 {{current}} 步，共 {{total}} 步",
+      "confirmChoice": "确认选择",
+      "savingDecision": "正在保存决策...",
+      "decisionSaved": "决策已保存",
+      "complete": "完成情境",
+      "completing": "正在完成...",
+      "exit": "退出情境",
+      "progressSaved": "进度已保存",
+      "chooseOption": "请先选择一个选项再继续",
+      "readyToComplete": "可以完成了",
+      "readyToCompleteDescription": "所有决策都已提交。完成情境后将计算你的结果并更新进度。"
+    },
+    "result": {
+      "completed": "情境已完成",
+      "result": "结果",
+      "score": "分数",
+      "percentage": "百分比",
+      "performanceLevel": "表现等级",
+      "masteryDelta": "掌握度变化",
+      "decisionsReviewed": "已回顾的决策",
+      "yourChoice": "你的选择",
+      "recommendedChoice": "推荐选择",
+      "feedback": "反馈",
+      "keyLesson": "关键收获",
+      "tryAnother": "尝试另一个情境",
+      "returnToLibrary": "返回情境库",
+      "viewProgress": "查看进度",
+      "step": "第 {{step}} 步",
+      "stepChoice": "第 {{step}} 步：你的选择 {{choice}}",
+      "updatedRecommendation": "已更新推荐"
+    }
+  },
+  "home": {
+    "hero": {
+      "title": "在数字世界中保持安全 🛡",
+      "description": "Cyberly 是你的个人网络安全指南，由 AI 驱动，并会根据你的水平、语言和学习方式进行调整。",
+      "cta": "免费开始 →",
+      "chips": {
+        "students": "为马来西亚学生打造",
+        "languages": "支持 3 种语言",
+        "aiPersonalised": "AI 个性化"
+      }
+    },
+    "threats": {
+      "eyebrow": "你知道吗？— 马来西亚青少年正在面对的网络威胁"
+    },
+    "stats": {
+      "scamVictim": "的马来西亚青少年曾成为网络诈骗受害者",
+      "scamMessages": "的学生曾收到与诈骗相关的电子邮件或短信",
+      "noWorkshop": "的学生从未参加过诈骗意识工作坊",
+      "dailyOnline": "的 12–17 岁马来西亚青少年每天都会上网"
+    },
+    "why": {
+      "title": "为什么选择 Cyberly？",
+      "description": "从你的当前水平出发的网络安全教育。",
+      "cards": {
+        "adaptive": { "title": "自适应 AI", "description": "我们的 AI 会根据你的经验水平和偏好语言调整解释方式。" },
+        "skills": { "title": "真实技能", "description": "学习实用技能，包括识别诈骗、保护账号和安全浏览。" },
+        "topics": { "title": "聚焦主题", "description": "选择对你重要的内容，从网络安全到网络安全职业方向。" }
+      }
+    },
+    "threatOfWeek": {
+      "badge": "本周威胁",
+      "title": "AI 语音与视频诈骗（Deepfake）",
+      "description": "马来西亚的诈骗者现在会使用 AI 克隆名人和家人的声音与面孔，诱骗人们汇款。如果你收到意外的视频通话或语音消息要求转账，即使看起来很真实，也请先通过其他渠道确认。"
+    },
+    "quickTopics": {
+      "title": "你今天想学什么？",
+      "description": "选择一个主题，马上开始。"
+    },
+    "topics": {
+      "phishing": "网络钓鱼",
+      "onlineScams": "网络诈骗",
+      "fakeNews": "假新闻",
+      "aiDeepfakes": "AI 与 Deepfake",
+      "passwords": "密码",
+      "privacy": "隐私"
+    },
+    "how": {
+      "title": "Cyberly 如何运作",
+      "description": "三个简单步骤即可开始。"
+    },
+    "steps": {
+      "signUp": { "title": "免费注册", "description": "不到一分钟即可创建个人资料，告诉我们你的年龄、语言和想学习的内容。" },
+      "aiTutor": { "title": "认识你的 AI 导师", "description": "CyberGuard AI 会根据你的水平调整，并可用英语、马来语或中文与你聊天。" },
+      "levelUp": { "title": "学习并提升", "description": "探索指南、完成模拟，并在网络安全技能提升时追踪你的进度。" }
+    },
+    "bottomCta": {
+      "title": "准备提升你的网络安全技能了吗？",
+      "description": "加入成千上万正在学习如何安全上网的马来西亚青少年，免费、使用你的语言、按照你的节奏学习。",
+      "note": "无需信用卡 · 支持 English、BM 和中文"
+    }
+  },
+  "resources": {
+    "title": "网络健康资源",
+    "description": "精选指南，涵盖马来西亚青少年最需要关注的网络威胁。点击任意卡片即可阅读完整指南。",
+    "loading": "正在加载资源...",
+    "error": "无法加载资源。",
+    "empty": "未找到资源。",
+    "stats": {
+      "topicsCovered": "涵盖主题",
+      "freeToRead": "免费阅读",
+      "malaysiaFocused": "聚焦马来西亚"
+    },
+    "focus": {
+      "title": "推荐关注",
+      "description": "根据你的测评结果，正在显示 {{topic}} 相关指南。",
+      "showAll": "显示所有指南"
+    },
+    "guideCount_one": "{{count}} 篇指南",
+    "guideCount_other": "{{count}} 篇指南",
+    "readGuide": "阅读指南 →",
+    "source": "来源",
+    "tip": {
+      "title": "小提示",
+      "prefix": "不知道从哪里开始？可以试试",
+      "phishing": "网络钓鱼",
+      "or": "或",
+      "passwordSecurity": "密码安全",
+      "suffix": "— 它们是目前马来西亚青少年最常面对的威胁。"
+    },
+    "categories": {
+      "All": "全部",
+      "Scams": "诈骗",
+      "Misinformation": "虚假信息",
+      "AI & Technology": "AI 与科技",
+      "Privacy": "隐私",
+      "Safety": "安全",
+      "Passwords": "密码",
+      "Beginner": "初学者"
+    }
+  },
+  "about": {
+    "hero": {
+      "eyebrow": "Capstone 项目 · 第 20 组 · Taylor's University",
+      "title": "面向青少年的互动网络健康工具包",
+      "description": "一个由 AI 驱动的平台，旨在提升 13–17 岁马来西亚青少年的网络安全意识，并促进更安全的数字行为。",
+      "collaboration": "与 Cybersecurity Hub DISS – Impact Lab 合作"
+    },
+    "why": {
+      "title": "为什么这很重要",
+      "description": "马来西亚青少年面对的网络威胁形势严峻且持续增长。"
+    },
+    "stats": {
+      "identifyScams": "的马来西亚青少年表示自己能识别诈骗",
+      "scamVictim": "已经成为网络诈骗受害者",
+      "noWorkshop": "的学生从未参加过诈骗意识工作坊",
+      "dailyOnline": "的 12–17 岁青少年每天都会上网"
+    },
+    "built": {
+      "title": "我们构建了什么",
+      "description": "一个模块化、AI 驱动的工具包，具备六项核心能力。"
+    },
+    "features": {
+      "agentic": { "title": "Agentic AI 指导", "description": "自主、目标导向的学习支持，结合情境决策帮助与实时个性化推荐。" },
+      "chatbot": { "title": "网络健康聊天机器人", "description": "通过自然语言互动，实时回答网络安全问题。" },
+      "adaptive": { "title": "自适应难度", "description": "根据用户的知识和进度自动选择难度，提供更有效的学习体验。" },
+      "simulations": { "title": "网络威胁模拟", "description": "模拟网络钓鱼、诈骗和虚假信息情境，锻炼批判性思维和网络安全决策能力。" },
+      "progress": { "title": "进度追踪", "description": "监测学习进度和参与模式，以评估效果并推动自适应推荐。" },
+      "gamified": { "title": "游戏化挑战", "description": "可选测验、成就和互动活动，用于提升动力、参与度和知识保留。" }
+    },
+    "how": {
+      "title": "它如何运作",
+      "description": "每一次体验都会围绕个人学习者进行调整。",
+      "steps": {
+        "signUp": { "title": "你注册账号", "description": "完成简短的入门资料，包括年龄、语言、熟悉程度和学习目标。" },
+        "path": { "title": "AI 构建你的路径", "description": "Agentic AI 模块会根据你的回答构建个性化学习路径。" },
+        "learn": { "title": "按你的方式学习", "description": "与 CyberGuard AI 聊天、探索资源并完成模拟，全部都会根据你的水平调整。" },
+        "track": { "title": "追踪你的成长", "description": "系统会追踪你的进度，并持续优化后续推荐。" }
+      }
+    },
+    "objectives": {
+      "title": "项目目标",
+      "description": "五个目标指引我们构建的一切。",
+      "items": {
+        "toolkit": "设计并开发 AI 驱动的网络健康工具包，提升 13–17 岁马来西亚青少年的网络安全意识。",
+        "chatbot": "创建智能网络安全聊天机器人，支持多语言实时对话式学习。",
+        "agentic": "构建 Agentic AI 模块，用于个性化学习推荐和自适应难度调整。",
+        "gamified": "加入可选的游戏化学习区域，包括测验、模拟和真实网络威胁情境。",
+        "evaluate": "通过用户互动分析、前后测评和反馈收集来评估系统。"
+      }
+    },
+    "team": {
+      "title": "认识团队",
+      "description": "第 20 组 — Taylor's University Capstone 项目",
+      "supervisor": {
+        "role": "项目导师 · Cybersecurity Hub DISS – Impact Lab",
+        "description": "在整个项目期间提供指导、专业监督和行业客户方向。"
+      },
+      "members": {
+        "jayron": { "role": "网页开发", "description": "确保逻辑和网页可用性正常，并负责实现 Agentic AI 功能和自适应学习工具。" },
+        "jinHong": { "role": "UI/UX 设计师", "description": "开发核心线框图和低保真原型设计，确保界面适合青少年目标用户。" },
+        "edward": { "role": "系统架构师与聊天机器人负责人", "description": "负责后端架构和 AI 工作流规划，确保组件能支持自适应学习功能。" },
+        "arman": { "role": "Agentic AI 个性化", "description": "构建用于个性化功能和自适应学习的 Agentic AI 分析，关注用户行为分析。" },
+        "puah": { "role": "Agentic AI 模块负责人", "description": "负责系统架构和 Agentic AI 模块实现，并支持聊天机器人功能。" }
+      }
+    }
+  },
+  "progress": {
+    "title": "我的进度",
+    "heroTitle": "{{name}} 的学习旅程 📊",
+    "measuredLevelSummary": "{{level}} 测量等级",
+    "profileFamiliaritySummary": "{{level}} 资料熟悉度",
+    "backToDashboard": "返回仪表板",
+    "selectedTopics": "已选择 {{count}} 个",
+    "snapshot": {
+      "measuredLevel": "测量等级",
+      "language": "语言",
+      "style": "学习方式",
+      "topics": "主题"
+    },
+    "mastery": {
+      "title": "测量掌握度",
+      "description": "根据已完成测评的主题分数计算，而不是根据年龄、教育程度或自我报告的熟悉度。",
+      "loading": "正在加载进度...",
+      "empty": "目前还没有测量基线。完成初始测评即可开启进度追踪。"
+    },
+    "assessmentTopics": {
+      "title": "测评主题",
+      "description": "来自初始网络健康测评的主题掌握情况。",
+      "source": "来源：初始测评"
+    },
+    "recommendation": {
+      "title": "当前推荐",
+      "markComplete": "标记完成"
+    },
+    "learningTopics": {
+      "title": "你正在学习的主题",
+      "description": "根据你的资料，为每个主题探索指南。",
+      "exploreAll": "探索所有指南 →"
+    },
+    "badges": {
+      "title": "徽章",
+      "description": "根据你的活动解锁的成就。",
+      "joined": "加入 Cyberly",
+      "chatPreview": "打开聊天预览",
+      "exploredResources": "探索资源",
+      "setGoals": "设置学习目标",
+      "multilingual": "多语言学习者",
+      "measuredBaseline": "测量基线",
+      "earned": "已获得 ✓"
+    }
+  },
+  "agent": {
+    "title": "CyberGuard AI",
+    "welcome": "嗨，{{name}}！CyberGuard 聊天界面已准备好，但实时 AI 回复将在后端 AI Gateway 阶段启用。",
+    "thinking": "CyberGuard 正在思考...",
+    "placeholder": "询问网络安全问题...",
+    "send": "发送"
+  },
+  "chat": {
+    "title": "网络健康助手",
+    "welcome": "嗨，{{name}}！这个聊天界面已准备好，但实时 CyberGuard 回复将在后端 AI Gateway 阶段启用。",
+    "disabledReply": "CyberGuard 聊天界面已准备好，但实时 AI 回复要等到后端 AI Gateway 阶段才会启用。你的消息目前只保存在这个页面会话中。",
+    "guest": "访客",
+    "signInPrompt": "登录后可使用你的会话资料预览 CyberGuard 聊天界面。",
+    "signInCta": "登录 / 注册",
+    "thinking": "正在思考...",
+    "placeholder": "输入问题..."
+  },
+  "footer": {
+    "builtWithCare": "用心构建",
+    "description": "面向所有人的网络健康教育 · AI Gateway 将在后续阶段推出。"
+  },
+  "app": {
+    "loadingTitle": "正在加载 Cyberly...",
+    "checkingSession": "正在检查你的会话。"
+  },
+  "common": {
+    "loading": "正在加载",
+    "save": "保存",
+    "saving": "正在保存...",
+    "saved": "已保存。",
+    "cancel": "取消",
+    "retry": "重试",
+    "close": "关闭",
+    "yes": "是",
+    "no": "否",
+    "back": "返回",
+    "next": "下一步",
+    "notFound": "未找到",
+    "unauthorized": "未授权",
+    "networkError": "网络错误",
+    "somethingWentWrong": "出现问题。请再试一次。",
+    "backToHome": "返回首页",
+    "learnMore": "了解更多 →",
+    "notSet": "未设置"
+  },
+  "errors": {
+    "codes": {
+      "ACCOUNT_INVALID": "请检查你的账号资料，然后再试一次。",
+      "ACCOUNT_NOT_FOUND": "找不到这个账号。",
+      "ASSESSMENT_ALREADY_SUBMITTED": "这份评估已经提交。",
+      "ASSESSMENT_ANSWER_INVALID": "请选择有效的答案。",
+      "ASSESSMENT_ATTEMPT_NOT_FOUND": "找不到这次评估记录。",
+      "ASSESSMENT_ATTEMPT_NOT_OPEN": "这份评估已不能继续作答。",
+      "ASSESSMENT_INCOMPLETE": "请回答所有问题后再提交。",
+      "ASSESSMENT_NOT_AVAILABLE": "初始评估目前不可用。",
+      "ASSESSMENT_OPTION_INVALID": "请选择其中一个可用选项。",
+      "ASSESSMENT_QUESTION_MISMATCH": "这道题不属于这份评估。",
+      "AUTH_ACCOUNT_DISABLED": "这个账号已被停用。",
+      "AUTH_EMAIL_ALREADY_REGISTERED": "这个电子邮箱已注册账号。",
+      "AUTH_FORBIDDEN": "你没有权限进入这个页面。",
+      "AUTH_INVALID_CREDENTIALS": "电子邮箱或密码不正确。",
+      "AUTH_LEGACY_INVALID_CREDENTIALS": "用户名或密码不正确。",
+      "AUTH_LOGIN_FIELDS_REQUIRED": "需要填写电子邮箱和密码。",
+      "AUTH_RATE_LIMITED": "验证尝试次数太多。请稍后再试。",
+      "AUTH_REGISTRATION_INVALID": "请检查你的注册资料。",
+      "AUTH_REQUIRED": "请先登录以继续。",
+      "INTERNAL_SERVER_ERROR": "我们这边出了点问题。请再试一次。",
+      "NETWORK_UNAVAILABLE": "网络错误。请检查连接后再试一次。",
+      "PROFILE_INVALID": "请检查你的学习资料。",
+      "PROGRESS_ASSESSMENT_NOT_FOUND": "找不到已完成的初始评估。",
+      "PROGRESS_TOPIC_SCORES_UNAVAILABLE": "评估主题分数还不可用。",
+      "RECOMMENDATION_NOT_FOUND": "找不到这项推荐。",
+      "RESOURCE_NOT_FOUND": "找不到这个资源。",
+      "SCENARIO_ALREADY_COMPLETED": "这次情境练习已经完成。",
+      "SCENARIO_ATTEMPT_NOT_FOUND": "找不到这次情境练习记录。",
+      "SCENARIO_CHOICE_FINAL": "情境选择提交后不能更改。",
+      "SCENARIO_DECISION_INVALID": "请选择有效的情境决定。",
+      "SCENARIO_INCOMPLETE": "请完成所有情境步骤后再结束。",
+      "SCENARIO_NOT_FOUND": "找不到这个情境。",
+      "SCENARIO_OPTION_INVALID": "请选择其中一个可用的情境选项。",
+      "SCENARIO_RESULT_NOT_FOUND": "找不到这个已完成的情境结果。",
+      "SCENARIO_STEP_MISMATCH": "这个步骤不属于该情境。",
+      "SCENARIO_STEP_OUT_OF_ORDER": "请先完成当前情境步骤，再继续下一步。"
+    },
+    "fallback": {
+      "completeRecommendation": "无法完成推荐。",
+      "completeScenario": "无法完成情境。",
+      "generic": "出现问题。请再试一次。",
+      "loadAssessment": "无法加载评估。",
+      "loadAssessmentStatus": "无法加载评估状态。",
+      "loadProgress": "无法加载进度。",
+      "loadRecommendation": "无法加载推荐。",
+      "loadRecommendedScenarios": "无法加载推荐情境。",
+      "loadResources": "无法加载资源。",
+      "loadScenario": "无法加载情境。",
+      "loadScenarioActivity": "无法加载情境活动。",
+      "loadScenarioResult": "无法加载情境结果。",
+      "loadScenarios": "无法加载情境。",
+      "network": "网络错误。请检查连接后再试一次。",
+      "register": "注册失败。请再试一次。",
+      "restoreScenario": "无法恢复情境。",
+      "saveAccount": "无法保存账号资料。",
+      "saveAssessmentAnswer": "无法保存答案。",
+      "saveProfile": "无法保存学习资料。",
+      "saveScenarioDecision": "无法保存决定。",
+      "session": "无法检查你的会话。",
+      "signIn": "无法登录。",
+      "startAssessment": "无法开始评估。",
+      "startScenario": "无法开始情境。",
+      "submitAssessment": "无法提交评估。",
+      "updateRecommendation": "无法更新推荐。"
+    }
+  },
+  "levels": {
+    "beginner": "初学",
+    "developing": "发展中",
+    "intermediate": "中级",
+    "advanced": "高级"
+  },
+  "scenarioResults": {
+    "needs_review": "需要复习",
+    "developing": "发展中",
+    "proficient": "熟练",
+    "strong": "表现优秀"
+  },
+  "topics": {
+    "phishing_and_scams": "网络钓鱼与诈骗",
+    "password_and_account_security": "密码与账号安全",
+    "privacy_and_personal_information": "隐私与个人资料",
+    "misinformation_and_deepfakes": "虚假信息与深度伪造"
+  }
+}

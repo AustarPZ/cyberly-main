@@ -14,12 +14,14 @@ const {
   validateDecisionInput,
 } = require('./scenario.validation');
 const { normalizeLocale } = require('../i18n/locale');
+const { ERROR_CODES } = require('../errors/errorCodes');
 
 const DIFFICULTY_ORDER = ['beginner', 'developing', 'intermediate', 'advanced'];
 
-function httpError(status, message, errors) {
+function httpError(status, code, message, errors) {
   const error = new Error(message);
   error.status = status;
+  error.code = code;
   if (errors) error.errors = errors;
   return error;
 }
@@ -45,7 +47,7 @@ function createScenarioService(repository, progressService) {
   async function getScenario(slug, localeInput) {
     const locale = normalizeLocale(localeInput);
     const scenario = await repository.findPublishedBySlug(normalizeSlug(slug), locale);
-    if (!scenario) throw httpError(404, 'Scenario was not found.');
+    if (!scenario) throw httpError(404, ERROR_CODES.SCENARIO_NOT_FOUND, 'Scenario was not found.');
     const firstStep = await repository.findStepByOrder(scenario.id, 1, locale);
     return {
       scenario: mapScenarioMeta(scenario),
@@ -58,7 +60,7 @@ function createScenarioService(repository, progressService) {
     const locale = normalizeLocale(localeInput);
     return repository.withTransaction(async (connection) => {
       const scenario = await repository.findPublishedBySlug(normalizeSlug(slug), locale, connection);
-      if (!scenario) throw httpError(404, 'Scenario was not found.');
+      if (!scenario) throw httpError(404, ERROR_CODES.SCENARIO_NOT_FOUND, 'Scenario was not found.');
       let attempt = await repository.findInProgressAttempt(userId, scenario.id, connection);
       if (!attempt) attempt = await repository.createAttempt(userId, scenario.id, connection);
       const steps = await repository.listSteps(scenario.id, locale, connection);
@@ -73,7 +75,7 @@ function createScenarioService(repository, progressService) {
   async function getAttempt(userId, attemptId, localeInput) {
     const locale = normalizeLocale(localeInput);
     const attempt = await repository.findAttemptById(Number(attemptId));
-    if (!attempt || attempt.user_id !== userId) throw httpError(404, 'Scenario attempt was not found.');
+    if (!attempt || attempt.user_id !== userId) throw httpError(404, ERROR_CODES.SCENARIO_ATTEMPT_NOT_FOUND, 'Scenario attempt was not found.');
     const scenario = await repository.findScenarioById(attempt.scenario_id, locale);
     const steps = await repository.listSteps(scenario.id, locale);
     const decisions = await repository.listDecisions(attempt.id);
@@ -86,25 +88,25 @@ function createScenarioService(repository, progressService) {
   async function saveDecision(userId, attemptId, body, localeInput) {
     const locale = normalizeLocale(localeInput);
     const validation = validateDecisionInput(body);
-    if (!validation.ok) throw httpError(400, 'Decision details are invalid.', validation.errors);
+    if (!validation.ok) throw httpError(400, ERROR_CODES.SCENARIO_DECISION_INVALID, 'Decision details are invalid.', validation.errors);
 
     return repository.withTransaction(async (connection) => {
       const attempt = await repository.findAttemptById(Number(attemptId), connection);
-      if (!attempt || attempt.user_id !== userId) throw httpError(404, 'Scenario attempt was not found.');
-      if (attempt.status !== 'in_progress') throw httpError(409, 'Scenario attempt is already completed.');
+      if (!attempt || attempt.user_id !== userId) throw httpError(404, ERROR_CODES.SCENARIO_ATTEMPT_NOT_FOUND, 'Scenario attempt was not found.');
+      if (attempt.status !== 'in_progress') throw httpError(409, ERROR_CODES.SCENARIO_ALREADY_COMPLETED, 'Scenario attempt is already completed.');
 
       const scenario = await repository.findScenarioById(attempt.scenario_id, locale, connection);
       const step = await repository.findStep(validation.value.stepId, locale, connection);
-      if (!step || step.scenario_id !== scenario.id) throw httpError(400, 'Step does not belong to this scenario.');
+      if (!step || step.scenario_id !== scenario.id) throw httpError(400, ERROR_CODES.SCENARIO_STEP_MISMATCH, 'Step does not belong to this scenario.');
       if (Number(step.step_order) !== Number(attempt.current_step_order)) {
-        throw httpError(409, 'Complete the current scenario step before moving ahead.');
+        throw httpError(409, ERROR_CODES.SCENARIO_STEP_OUT_OF_ORDER, 'Complete the current scenario step before moving ahead.');
       }
 
       const existingDecision = await repository.findDecision(attempt.id, step.id, connection);
-      if (existingDecision) throw httpError(409, 'Scenario choices are final after submission.');
+      if (existingDecision) throw httpError(409, ERROR_CODES.SCENARIO_CHOICE_FINAL, 'Scenario choices are final after submission.');
 
       const option = parseOptions(step.options_json).find(item => item.key === validation.value.selectedOptionKey);
-      if (!option) throw httpError(400, 'Selected option is not valid for this step.');
+      if (!option) throw httpError(400, ERROR_CODES.SCENARIO_OPTION_INVALID, 'Selected option is not valid for this step.');
 
       const decision = await repository.createDecision(attempt.id, {
         stepId: step.id,
@@ -134,7 +136,7 @@ function createScenarioService(repository, progressService) {
     const locale = normalizeLocale(localeInput);
     return repository.withTransaction(async (connection) => {
       const attempt = await repository.findAttemptById(Number(attemptId), connection);
-      if (!attempt || attempt.user_id !== userId) throw httpError(404, 'Scenario attempt was not found.');
+      if (!attempt || attempt.user_id !== userId) throw httpError(404, ERROR_CODES.SCENARIO_ATTEMPT_NOT_FOUND, 'Scenario attempt was not found.');
       const scenario = await repository.findScenarioById(attempt.scenario_id, locale, connection);
       const steps = await repository.listSteps(scenario.id, locale, connection);
       const decisions = await repository.listDecisions(attempt.id, connection);
@@ -148,7 +150,7 @@ function createScenarioService(repository, progressService) {
       }
 
       if (decisions.length !== steps.length) {
-        throw httpError(409, 'All scenario steps must be answered before completion.');
+        throw httpError(409, ERROR_CODES.SCENARIO_INCOMPLETE, 'All scenario steps must be answered before completion.');
       }
 
       const score = calculateScenarioScore(steps, decisions);
@@ -180,7 +182,7 @@ function createScenarioService(repository, progressService) {
     const locale = normalizeLocale(localeInput);
     const attempt = await repository.findAttemptById(Number(attemptId));
     if (!attempt || attempt.user_id !== userId || attempt.status !== 'completed') {
-      throw httpError(404, 'Completed scenario result was not found.');
+      throw httpError(404, ERROR_CODES.SCENARIO_RESULT_NOT_FOUND, 'Completed scenario result was not found.');
     }
     const scenario = await repository.findScenarioById(attempt.scenario_id, locale);
     const [steps, decisions, progressEvent, currentRecommendation] = await Promise.all([

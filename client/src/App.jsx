@@ -360,7 +360,47 @@ function normalizeSessionUser(userData, profileData) {
   };
 }
 
-// Returns { ok: true } or { ok: false, error: string }
+function localizedApiError(t, result = {}, fallbackKey = "errors.fallback.generic") {
+  if (result.code) {
+    const key = `errors.codes.${result.code}`;
+    const translated = t(key, { defaultValue: "" });
+    if (translated && translated !== key) return translated;
+  }
+
+  if (result.message) return result.message;
+
+  return t(fallbackKey, {
+    defaultValue: t("errors.fallback.generic"),
+  });
+}
+
+function apiFailure(data = {}, fallbackKey = "errors.fallback.generic", fallbackErrors = {}) {
+  const result = {
+    ok: false,
+    code: data.code,
+    message: data.message,
+    errors: data.errors || fallbackErrors,
+  };
+  return {
+    ...result,
+    error: localizedApiError(i18n.t.bind(i18n), result, fallbackKey),
+  };
+}
+
+function networkFailure(fallbackKey = "errors.fallback.network", fallbackErrors = {}) {
+  const result = {
+    ok: false,
+    code: "NETWORK_UNAVAILABLE",
+    network: true,
+    errors: fallbackErrors,
+  };
+  return {
+    ...result,
+    error: localizedApiError(i18n.t.bind(i18n), result, fallbackKey),
+  };
+}
+
+// Returns { ok: true } or { ok: false, error: string, code?: string }
 async function dbRegister(account) {
   try {
     const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
@@ -379,15 +419,13 @@ async function dbRegister(account) {
 
     const data = await response.json().catch(() => ({}));
 
-    if (!response.ok) {
-      return { ok: false, error: data.message || "Failed to register. Please try again." };
-    }
+    if (!response.ok) return apiFailure(data, "errors.fallback.register");
 
     return { ok: true, user: data.user, profile: data.profile };
 
   } catch (error) {
     console.error("Registration error:", error);
-    return { ok: false, error: "Network error. Could not connect to the server." };
+    return networkFailure("errors.fallback.network");
   }
 }
 
@@ -401,13 +439,11 @@ async function dbLogin(email, password) {
     });
 
     const data = await response.json();
-    if (!response.ok) {
-      return { ok: false, error: data.message || "Unable to sign in." };
-    }
+    if (!response.ok) return apiFailure(data, "errors.fallback.signIn");
 
     return { ok: true, user: data.user, profile: data.profile };
   } catch {
-    return { ok: false, error: "Network error. Could not connect to the server." };
+    return networkFailure("errors.fallback.network");
   }
 }
 
@@ -418,10 +454,10 @@ async function dbMe() {
       credentials: "include",
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) return { ok: false };
+    if (!response.ok) return apiFailure(data, "errors.fallback.session");
     return { ok: true, user: data.user, profile: data.profile };
   } catch {
-    return { ok: false };
+    return networkFailure("errors.fallback.session");
   }
 }
 
@@ -434,12 +470,10 @@ async function dbSaveProfile(profile) {
       body: JSON.stringify(profile),
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) {
-      return { ok: false, error: data.message || "Unable to save learner profile.", errors: data.errors || {} };
-    }
+    if (!response.ok) return apiFailure(data, "errors.fallback.saveProfile");
     return { ok: true, profile: data.profile };
   } catch {
-    return { ok: false, error: "Network error. Could not save learner profile." };
+    return networkFailure("errors.fallback.saveProfile");
   }
 }
 
@@ -459,27 +493,14 @@ async function dbSaveAccount(account) {
 
     const data = await response.json().catch(() => ({}));
 
-    if (!response.ok) {
-      return {
-        ok: false,
-        error:
-          data.message ||
-          "Unable to save account information.",
-        errors: data.errors || {},
-      };
-    }
+    if (!response.ok) return apiFailure(data, "errors.fallback.saveAccount");
 
     return {
       ok: true,
       account: data.account,
     };
   } catch {
-    return {
-      ok: false,
-      error:
-        "Network error. Could not save account information.",
-      errors: {},
-    };
+    return networkFailure("errors.fallback.saveAccount");
   }
 }
 
@@ -494,10 +515,10 @@ async function dbGetInitialAssessment(locale) {
       credentials: "include",
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) return { ok: false, error: data.message || "Unable to load assessment." };
+    if (!response.ok) return apiFailure(data, "errors.fallback.loadAssessment");
     return { ok: true, ...data };
   } catch {
-    return { ok: false, error: "Network error. Could not load assessment." };
+    return networkFailure("errors.fallback.loadAssessment");
   }
 }
 
@@ -508,10 +529,10 @@ async function dbGetAssessmentStatus(locale) {
       credentials: "include",
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) return { ok: false, error: data.message || "Unable to load assessment status." };
+    if (!response.ok) return apiFailure(data, "errors.fallback.loadAssessmentStatus");
     return { ok: true, ...data };
   } catch {
-    return { ok: false, error: "Network error. Could not load assessment status." };
+    return networkFailure("errors.fallback.loadAssessmentStatus");
   }
 }
 
@@ -522,10 +543,10 @@ async function dbStartInitialAttempt(locale) {
       credentials: "include",
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) return { ok: false, error: data.message || "Unable to start assessment." };
+    if (!response.ok) return apiFailure(data, "errors.fallback.startAssessment");
     return { ok: true, ...data };
   } catch {
-    return { ok: false, error: "Network error. Could not start assessment." };
+    return networkFailure("errors.fallback.startAssessment");
   }
 }
 
@@ -538,10 +559,10 @@ async function dbSaveAssessmentAnswer(attemptId, questionId, selectedOptionKey) 
       body: JSON.stringify({ questionId, selectedOptionKey }),
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) return { ok: false, error: data.message || "Unable to save answer." };
+    if (!response.ok) return apiFailure(data, "errors.fallback.saveAssessmentAnswer");
     return { ok: true, ...data };
   } catch {
-    return { ok: false, error: "Network error. Could not save answer." };
+    return networkFailure("errors.fallback.saveAssessmentAnswer");
   }
 }
 
@@ -552,10 +573,10 @@ async function dbSubmitAssessment(attemptId, locale) {
       credentials: "include",
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) return { ok: false, error: data.message || "Unable to submit assessment." };
+    if (!response.ok) return apiFailure(data, "errors.fallback.submitAssessment");
     return { ok: true, result: data };
   } catch {
-    return { ok: false, error: "Network error. Could not submit assessment." };
+    return networkFailure("errors.fallback.submitAssessment");
   }
 }
 
@@ -566,10 +587,10 @@ async function dbGetProgress() {
       credentials: "include",
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) return { ok: false, error: data.message || "Unable to load progress." };
+    if (!response.ok) return apiFailure(data, "errors.fallback.loadProgress");
     return { ok: true, ...data };
   } catch {
-    return { ok: false, error: "Network error. Could not load progress." };
+    return networkFailure("errors.fallback.loadProgress");
   }
 }
 
@@ -580,10 +601,10 @@ async function dbGetCurrentRecommendation(locale) {
       credentials: "include",
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) return { ok: false, error: data.message || "Unable to load recommendation." };
+    if (!response.ok) return apiFailure(data, "errors.fallback.loadRecommendation");
     return { ok: true, ...data };
   } catch {
-    return { ok: false, error: "Network error. Could not load recommendation." };
+    return networkFailure("errors.fallback.loadRecommendation");
   }
 }
 
@@ -594,10 +615,10 @@ async function dbMarkRecommendationViewed(id, locale) {
       credentials: "include",
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) return { ok: false, error: data.message || "Unable to update recommendation." };
+    if (!response.ok) return apiFailure(data, "errors.fallback.updateRecommendation");
     return { ok: true, ...data };
   } catch {
-    return { ok: false, error: "Network error. Could not update recommendation." };
+    return networkFailure("errors.fallback.updateRecommendation");
   }
 }
 
@@ -608,10 +629,10 @@ async function dbMarkRecommendationCompleted(id, locale) {
       credentials: "include",
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) return { ok: false, error: data.message || "Unable to complete recommendation." };
+    if (!response.ok) return apiFailure(data, "errors.fallback.completeRecommendation");
     return { ok: true, ...data };
   } catch {
-    return { ok: false, error: "Network error. Could not complete recommendation." };
+    return networkFailure("errors.fallback.completeRecommendation");
   }
 }
 
@@ -626,10 +647,10 @@ async function dbGetScenarios(filters = {}, locale) {
       credentials: "include",
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) return { ok: false, error: data.message || "Unable to load scenarios." };
+    if (!response.ok) return apiFailure(data, "errors.fallback.loadScenarios");
     return { ok: true, ...data };
   } catch {
-    return { ok: false, error: "Network error. Could not load scenarios." };
+    return networkFailure("errors.fallback.loadScenarios");
   }
 }
 
@@ -640,10 +661,10 @@ async function dbGetScenario(slug, locale) {
       credentials: "include",
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) return { ok: false, error: data.message || "Unable to load scenario." };
+    if (!response.ok) return apiFailure(data, "errors.fallback.loadScenario");
     return { ok: true, ...data };
   } catch {
-    return { ok: false, error: "Network error. Could not load scenario." };
+    return networkFailure("errors.fallback.loadScenario");
   }
 }
 
@@ -654,10 +675,10 @@ async function dbStartScenario(slug, locale) {
       credentials: "include",
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) return { ok: false, error: data.message || "Unable to start scenario." };
+    if (!response.ok) return apiFailure(data, "errors.fallback.startScenario");
     return { ok: true, ...data };
   } catch {
-    return { ok: false, error: "Network error. Could not start scenario." };
+    return networkFailure("errors.fallback.startScenario");
   }
 }
 
@@ -668,10 +689,10 @@ async function dbGetScenarioAttempt(attemptId, locale) {
       credentials: "include",
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) return { ok: false, error: data.message || "Unable to restore scenario." };
+    if (!response.ok) return apiFailure(data, "errors.fallback.restoreScenario");
     return { ok: true, ...data };
   } catch {
-    return { ok: false, error: "Network error. Could not restore scenario." };
+    return networkFailure("errors.fallback.restoreScenario");
   }
 }
 
@@ -684,10 +705,10 @@ async function dbSaveScenarioDecision(attemptId, stepId, selectedOptionKey, loca
       body: JSON.stringify({ stepId, selectedOptionKey }),
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) return { ok: false, error: data.message || "Unable to save decision." };
+    if (!response.ok) return apiFailure(data, "errors.fallback.saveScenarioDecision");
     return { ok: true, ...data };
   } catch {
-    return { ok: false, error: "Network error. Could not save decision." };
+    return networkFailure("errors.fallback.saveScenarioDecision");
   }
 }
 
@@ -698,10 +719,10 @@ async function dbCompleteScenario(attemptId, locale) {
       credentials: "include",
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) return { ok: false, error: data.message || "Unable to complete scenario." };
+    if (!response.ok) return apiFailure(data, "errors.fallback.completeScenario");
     return { ok: true, result: data };
   } catch {
-    return { ok: false, error: "Network error. Could not complete scenario." };
+    return networkFailure("errors.fallback.completeScenario");
   }
 }
 
@@ -712,10 +733,10 @@ async function dbGetScenarioResult(attemptId, locale) {
       credentials: "include",
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) return { ok: false, error: data.message || "Unable to load scenario result." };
+    if (!response.ok) return apiFailure(data, "errors.fallback.loadScenarioResult");
     return { ok: true, result: data };
   } catch {
-    return { ok: false, error: "Network error. Could not load scenario result." };
+    return networkFailure("errors.fallback.loadScenarioResult");
   }
 }
 
@@ -726,10 +747,10 @@ async function dbGetRecommendedScenarios(locale) {
       credentials: "include",
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) return { ok: false, error: data.message || "Unable to load recommended scenarios." };
+    if (!response.ok) return apiFailure(data, "errors.fallback.loadRecommendedScenarios");
     return { ok: true, ...data };
   } catch {
-    return { ok: false, error: "Network error. Could not load recommended scenarios." };
+    return networkFailure("errors.fallback.loadRecommendedScenarios");
   }
 }
 
@@ -740,10 +761,10 @@ async function dbGetScenarioDashboard(locale) {
       credentials: "include",
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) return { ok: false, error: data.message || "Unable to load scenario activity." };
+    if (!response.ok) return apiFailure(data, "errors.fallback.loadScenarioActivity");
     return { ok: true, ...data };
   } catch {
-    return { ok: false, error: "Network error. Could not load scenario activity." };
+    return networkFailure("errors.fallback.loadScenarioActivity");
   }
 }
 
@@ -754,10 +775,10 @@ async function dbGetResources(locale) {
       credentials: "include",
     });
     const data = await response.json().catch(() => ({}));
-    if (!response.ok) return { ok: false, error: data.message || "Unable to load resources." };
+    if (!response.ok) return apiFailure(data, "errors.fallback.loadResources");
     return { ok: true, ...data };
   } catch {
-    return { ok: false, error: "Network error. Could not load resources." };
+    return networkFailure("errors.fallback.loadResources");
   }
 }
 
@@ -818,10 +839,10 @@ function topicLabel(topicCode, fallback) {
 }
 
 // ─── AI helper ────────────────────────────────────────────────────
-async function askClaude(messages, systemPrompt) {
+async function askClaude(messages, systemPrompt, t) {
   void messages;
   void systemPrompt;
-  return "CyberGuard chat is ready visually, but live AI replies are disabled until the backend AI Gateway phase. Your message is kept only in this page session for now.";
+  return t("chat.disabledReply");
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -2431,7 +2452,7 @@ function DashboardPage() {
             <div style={{ fontSize: "0.86rem", color: "#5f4a1d", lineHeight: 1.6 }}>
               {assessmentStatus.loading && t("dashboard.assessment.checking")}
               {!assessmentStatus.loading && assessmentStatus.status === "completed" && (
-                <> {t("dashboard.assessment.measuredLevel")} {": "} <strong> {t( `levels.${assessmentStatus.result?.attempt?.measuredLevel}`, { defaultValue: assessmentStatus.result?.attempt?.measuredLevel } )} </strong> {" · "} {t("dashboard.assessment.score")} {": "} <strong> { assessmentStatus.result?.attempt ?.totalScore } / { assessmentStatus.result?.attempt ?.maximumScore} </strong></>
+                <> {t("dashboard.assessment.measuredLevel")} {": "} <strong> {t( `levels.${assessmentStatus.result?.attempt?.measuredLevel}`, { defaultValue: assessmentStatus.result?.attempt?.measuredLevel } )} </strong> {" · "} {t("dashboard.assessment.score")} {": "} <strong> { assessmentStatus.result?.attempt?.totalScore } / { assessmentStatus.result?.attempt?.maximumScore} </strong></>
               )}
               {!assessmentStatus.loading && assessmentStatus.status === "in_progress" && t("dashboard.assessment.resumeDescription")}
               {!assessmentStatus.loading && assessmentStatus.status !== "completed" && assessmentStatus.status !== "in_progress" && t("dashboard.assessment.pendingDescription")}
@@ -2647,7 +2668,8 @@ function AgentPanel() {
       const systemPrompt = buildSystemPrompt(user);
       const aiText = await askClaude(
         [...history, { role: "user", content: q }],
-        systemPrompt
+        systemPrompt,
+        t
       );
       setMessages(prev => [...prev, { role: "ai", text: aiText }]);
       setHistory(prev => [
@@ -2837,11 +2859,11 @@ function ResourcesPage() {
 
         {/* Cards grid */}
         {resourceState.loading ? (
-          <div className="card">{t("resources.loading", { defaultValue: "Loading resources..." })}</div>
+          <div className="card">{t("resources.loading")}</div>
         ) : resourceState.error ? (
           <div className="card">{t("resources.error", { defaultValue: resourceState.error })}</div>
         ) : filtered.length === 0 ? (
-          <div className="card">{t("resources.empty", { defaultValue: "No resources found." })}</div>
+          <div className="card">{t("resources.empty")}</div>
         ) : (
         <div className="res-grid">
           {filtered.map(resource => {
@@ -5025,7 +5047,8 @@ function ChatWidget() {
     try {
       const aiText = await askClaude(
         [...history, { role: "user", content: q }],
-        buildSystemPrompt(user)
+        buildSystemPrompt(user),
+        t
       );
       setMessages(prev => [...prev, { role: "ai", text: aiText }]);
       setHistory(prev => [
@@ -5189,6 +5212,11 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [resourceFocusTopic, setResourceFocusTopic] = useState(null);
+  const userId = user?.id;
+  const userProfilePreferredLanguage =
+    user?.profile?.preferredLanguage;
+  const userPreferredLanguage =
+    user?.preferredLanguage;
 
   useEffect(() => {
     let active = true;
@@ -5205,7 +5233,7 @@ export default function App() {
   }, []);
 
   useEffect(() => {
-    if (!user) return;
+    if (!userId) return;
 
     const storedLocale =
       getStoredUiLanguage();
@@ -5222,8 +5250,8 @@ export default function App() {
     }
 
     const profilePreference =
-      user.profile?.preferredLanguage ||
-      user.preferredLanguage;
+      userProfilePreferredLanguage ||
+      userPreferredLanguage;
 
     const profileLocale =
       profileLanguageToLocale(
@@ -5237,9 +5265,9 @@ export default function App() {
       i18n.changeLanguage(profileLocale);
     }
   }, [
-    user?.id,
-    user?.profile?.preferredLanguage,
-    user?.preferredLanguage,
+    userId,
+    userProfilePreferredLanguage,
+    userPreferredLanguage,
   ]);
 
   function login(userData, profileData, preferredPage) {

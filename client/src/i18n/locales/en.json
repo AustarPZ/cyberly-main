@@ -1,0 +1,783 @@
+{
+  "nav": {
+    "home": "Home",
+    "dashboard": "Dashboard",
+    "assessment": "Assessment",
+    "scenarios": "Scenarios",
+    "resources": "Resources",
+    "about": "About",
+    "profile": "Profile",
+    "settings": "Settings",
+    "signOut": "Sign out",
+    "language": "Language"
+  },
+  "auth": {
+    "login": "Login",
+    "register": "Register",
+    "email": "Email",
+    "password": "Password",
+    "displayName": "Display name",
+    "age": "Age",
+    "confirmPassword": "Confirm password",
+    "continue": "Continue",
+    "back": "Back",
+    "next": "Next",
+    "submit": "Submit",
+    "loading": "Loading",
+    "invalidCredentials": "Invalid credentials",
+    "networkError": "Network error",
+    "accountCreated": "Account created",
+    "signInPrompt": "Already have an account?",
+    "registerPrompt": "New to Cyberly?",
+    "createAccount": "Create your account",
+    "accountDetailsHint": "Account details stay with your user account. Learning preferences are saved after onboarding.",
+    "passwordRequirements": "Password must be at least 8 characters and include a letter and a number.",
+    "registerFailed": "Unable to create the account.",
+    "goToLogin": "Sign in",
+    "emailPlaceholder": "you@example.com",
+    "displayNamePlaceholder": "Your name",
+    "agePlaceholder": "e.g. 16",
+    "passwordPlaceholder": "At least 8 characters",
+    "welcomeBack": "Welcome back",
+    "loginDescription": "Sign in to continue your cyber wellness journey.",
+    "emailInvalid": "Please enter a valid email address.",
+    "passwordRequired": "Please enter your password.",
+    "signInButton": "Sign in",
+    "goToRegister": "Create an account",
+    "displayNameRequired": "Display name must be 2 to 50 characters.",
+    "ageInvalid": "Please enter a whole-number age from 1 to 120."  
+  },
+  "onboarding": {
+    "account": "Account",
+    "nickname": "Nickname",
+    "education": "Education",
+    "language": "Language",
+    "experience": "Experience",
+    "goals": "Goals",
+    "learningStyle": "Learning style",
+    "progress": "Step {{step}} of {{total}} — {{label}}",
+    "previous": "Previous",
+    "next": "Next",
+    "completeSetup": "Complete setup",
+    "aiNickname": "AI nickname",
+    "educationLevel": "Education level",
+    "preferredLanguage": "Preferred language",
+    "familiarityLevel": "Familiarity level",
+    "helpTopics": "Help topics",
+    "learningStyleLabel": "Learning style",
+    "nicknameQuestion": "What should the AI call you?",
+    "nicknameHint": "This can be a nickname or alias. It is just for CyberGuard.",
+    "educationQuestion": "What education level best fits you?",
+    "languageQuestion": "Which language do you prefer?",
+    "familiarityQuestion": "How familiar are you with cybersecurity?",
+    "helpTopicsQuestion": "What would you like help with?",
+    "helpTopicsHint": "Choose up to 3 topics.",
+    "learningStyleQuestion": "How do you prefer learning?",
+    "nicknameRequired": "Please enter a nickname for the AI to use.",
+    "educationRequired": "Please choose an education level.",
+    "languageRequired": "Please choose a preferred language.",
+    "familiarityRequired": "Please choose your familiarity level.",
+    "helpTopicsRequired": "Please choose at least one topic.",
+    "learningStyleRequired": "Please choose a learning style.",
+    "profileSaveFailed": "Your account was created, but your learner profile was not saved. Please retry saving your profile before continuing.",
+    "savingProfile": "Saving profile...",
+    "settingUp": "Setting up...",
+    "retrySavingProfile": "Retry saving profile",
+    "letsGo": "🚀 Let's go!",
+    "continue": "Continue →",
+    "nicknamePlaceholder": "e.g. Alex, Koko, ZK...",
+    "selectedCount": "{{count}}/{{max}} selected"
+  },
+  "profileOptions": {
+    "education": {
+      "form_1": "Form 1",
+      "form_2": "Form 2",
+      "form_3": "Form 3",
+      "form_4": "Form 4",
+      "form_5": "Form 5",
+      "other": "Other",
+      "prefer_not_to_say": "Prefer not to say"
+    },
+    "language": {
+      "english": "English",
+      "bahasa_melayu": "Bahasa Melayu",
+      "chinese": "中文",
+      "mixed": "Mixed"
+    },
+    "familiarity": {
+      "beginner": {
+        "label": "Beginner",
+        "description": "I'm just getting started; the basics are new to me."
+      },
+      "intermediate": {
+        "label": "Intermediate",
+        "description": "I know the fundamentals and want to go deeper."
+      },
+      "advanced": {
+        "label": "Advanced",
+        "description": "I'm confident and looking for advanced challenges."
+      }
+    },
+    "helpTopics": {
+      "staying_safe_online": "Staying safe online",
+      "learning_cybersecurity": "Learning cybersecurity",
+      "avoiding_scams": "Avoiding scams",
+      "protecting_privacy": "Protecting privacy",
+      "understanding_cyber_threats": "Understanding cyber threats",
+      "cybersecurity_careers": "Exploring cybersecurity careers"
+    },
+    "learningStyle": {
+      "step_by_step": "Step-by-step guidance",
+      "short_explanations": "Short explanations",
+      "quizzes_and_challenges": "Quizzes & challenges"
+    }
+  },
+  "dashboard": {
+    "welcome": "Welcome back, {{name}}",
+    "yourDashboard": "Your Dashboard",
+    "recommendations": "Recommendations",
+    "assessmentStatus": "Assessment status",
+    "scenarioProgress": "Scenario progress",
+    "resources": "Resources",
+    "continueLearning": "Continue learning",
+    "startAssessment": "Start assessment",
+    "resumeAssessment": "Resume assessment",
+    "startScenario": "Start scenario",
+    "resumeScenario": "Resume scenario",
+    "noRecommendationYet": "No active recommendation yet.",
+    "recommendedNextStep": "Recommended next step",
+    "measuredProgress": "Measured progress",
+    "welcomeBack": "Welcome back, {{name}}",
+    "beginner": "Beginner",
+    "levelDisplay": "{{level}} level",
+    "learningProfile": "Your learning profile",
+    "profileSavedDescription": "Learner preferences are saved to your profile and restored after refresh or login.",
+    "editProfile": "Edit profile",
+    "stats": {
+      "topics": "Topics",
+      "languages": "Languages",
+      "powered": "Powered"
+    },
+    "assessment": {
+      "completed": "Initial assessment completed",
+      "inProgress": "Initial assessment in progress",
+      "pending": "Initial assessment pending",
+      "checking": "Checking assessment status...",
+      "measuredLevel": "Measured level",
+      "score": "Score",
+      "resumeDescription": "Resume your saved answers and continue when ready.",
+      "pendingDescription": "Complete it now or later. Adaptive recommendations remain inactive until this baseline exists.",
+      "viewResults": "View results",
+      "resume": "Resume",
+      "start": "Start / do later"
+    },
+    "tips": {
+      "phishing": "Never click links in unexpected emails or SMS. Visit the official website directly instead.",
+      "password": "Use a different password for every account. A password manager makes this easier.",
+      "fakeNews": "Before sharing news online, verify it through Sebenarnya.my, Malaysia's official fact-checking website.",
+      "phoneScam": "If someone claims to represent a bank or government agency, hang up and call the official number."
+    },
+    "actions": {
+      "resources": "Browse Resources",
+      "resourcesDescription": "Guides on scams, privacy and more",
+      "assessment": "Initial Assessment",
+      "assessmentDescription": "Set your measured baseline",
+      "scenarios": "Practice Scenarios",
+      "scenariosDescription": "Make safe choices in realistic situations",
+      "profile": "Edit Profile",
+      "profileDescription": "Update your learner preferences",
+      "about": "About the Project",
+      "aboutDescription": "Meet the team behind Cyberly",
+      "progress": "My Progress",
+      "progressDescription": "View your learning statistics and topics",
+      "home": "Back to Home",
+      "homeDescription": "Return to the landing page"
+    },
+    "progress": {
+      "progress": "Progress",
+      "title": "Measured progress",
+      "loading": "Loading your measured baseline...",
+      "summary": "{{count}} measured topics · Based on assessment results, not profile preferences.",
+      "empty": "Complete the initial assessment to create measured progress."
+    },
+    "recommendation": {
+      "title": "Recommended next step",
+      "loading": "Checking recommendation...",
+      "initialAssessment": "Initial assessment",
+      "practiceScenario": "Practice with scenario",
+      "readResource": "Read resource",
+      "startAssessment": "Start assessment",
+      "empty": "No active recommendation yet."
+    },
+    "scenarios": {
+      "practiceTitle": "Scenario practice",
+      "loadingActivity": "Loading scenario activity...",
+      "completed": "Completed",
+      "inProgress": "In progress",
+      "latest": "Latest",
+      "continueScenario": "Continue scenario",
+      "openLibrary": "Open scenario library",
+      "recommendedTitle": "Recommended scenario",
+      "finding": "Finding a matching scenario...",
+      "minutes": "{{count}} min",
+      "unlockDescription": "Complete the assessment to unlock scenario recommendations."
+    },
+    "topicMastery": {
+      "title": "Topic mastery",
+      "viewProgress": "View progress"
+    },
+    "dailyTip": "Daily Cyber Tip",
+    "quickActions": {
+      "title": "Quick actions",
+      "description": "Jump to what you need."
+    },
+    "cyberGuard": {
+      "title": "CyberGuard AI",
+      "description": "Preview the chat interface. Live AI replies will use the backend AI Gateway in a later phase.",
+      "badge": "Saved profile preview"
+    }
+  },
+  "settings": {
+    "accountInformation": "Account Information",
+    "learningPreferences": "Learning Preferences",
+    "email": "Email",
+    "displayName": "Display name",
+    "age": "Age",
+    "ageGroup": "Age group",
+    "aiNickname": "AI nickname",
+    "educationLevel": "Education level",
+    "preferredLanguage": "Preferred language",
+    "familiarity": "Familiarity",
+    "helpTopics": "Help topics",
+    "learningStyle": "Learning style",
+    "saveAccount": "Save account",
+    "savePreferences": "Save preferences",
+    "saving": "Saving...",
+    "saved": "Saved.",
+    "accountSaved": "Account saved.",
+    "preferencesSaved": "Preferences saved.",
+    "cancel": "Cancel",
+    "displayNameRequired": "Display name must be 2 to 50 characters.",
+    "ageInvalid": "Please enter a whole-number age from 1 to 120.",
+    "nicknameRequired": "Please enter a nickname for the AI to use.",
+    "chooseOne": "Choose one",
+      "learnerProfile": "Learner Profile",
+    "title": "Shape your Cyberly experience",
+    "description": "These preferences are saved separately from your account identity. Age and education level stay separate.",
+    "finishOnboarding": "Finish onboarding",
+    "finishOnboardingDescription": "Your account is signed in, but your learner profile is incomplete. Save this profile to continue to the dashboard.",
+    "displayNamePlaceholder": "Your display name",
+    "aiNicknamePlaceholder": "What should CyberGuard call you?",
+    "saveProfile": "Save profile",
+    "profileSaved": "Profile saved.",
+    "accountSaveFailed": "Unable to save account information.",
+    "profileSaveFailed": "Unable to save learner profile.",
+    "identityNote": "Display name and age belong to your account information. Age is not inferred from education level, and neither is treated as learning ability.",
+    "ageGroups": {
+      "child": "Child (1–12)",
+      "teen": "Teen (13–17)",
+      "young_adult": "Young adult (18–24)",
+      "adult": "Adult (25–120)",
+      "invalid": "Invalid age"
+    }
+  },
+  "assessment": {
+    "title": "Initial Cyber Wellness Assessment",
+    "introduction": "A 12-question baseline check that helps future Cyberly lessons understand your measured cyber wellness level.",
+    "start": "Start assessment",
+    "resume": "Resume assessment",
+    "questionProgress": "Question {{current}} of {{total}}",
+    "answeredProgress": "{{answered}}/{{total}} answered",
+    "previous": "Previous",
+    "next": "Next",
+    "submit": "Submit assessment",
+    "submitting": "Submitting...",
+    "confirmSubmit": "Submit your initial assessment? This baseline result will be preserved.",
+    "score": "Score",
+    "level": "Level",
+    "measuredLevel": "Measured level",
+    "topicBreakdown": "Topic breakdown",
+    "loading": "Loading assessment...",
+    "error": "Unable to load assessment.",
+    "retry": "Retry",
+    "completed": "Assessment completed",
+    "answerAll": "Please answer all questions before submitting.",
+    "finalSubmissionReminder": "Answer all questions before final submission.",
+    "result": "Initial result",
+    "resultSummary": "Score {{score}}/{{maxScore}}. This measured level is based only on your answers.",
+    "questionReview": "Question review",
+    "reviewAnswers": "Review answers",
+    "correct": "Correct",
+    "incorrect": "Incorrect",
+    "yourAnswer": "Your answer",
+    "correctAnswer": "Correct answer",
+    "explanation": "Explanation",
+    "backToDashboard": "Back to dashboard",
+    "viewProgress": "View progress",
+    "relativeStrength": "Relative strength",
+    "areaToImprove": "Area to improve",
+    "strengths": "Strengths",
+    "areasToImprove": "Areas to improve",
+    "noStrengthsYet": "No topic crossed the strength threshold yet. That is okay; this is a starting baseline.",
+    "allTopicsMetThreshold": "All topics met the current strength threshold.",
+    "baselineLabel": "Baseline Assessment",
+    "measurementNote": "Your self-reported familiarity stays separate from this measured result. No AI is used for questions, scoring, or feedback.",
+    "doLater": "Do later",
+    "stats": {
+      "questions": "single-choice questions",
+      "minutes": "minutes",
+      "negativeMarks": "negative marks",
+      "topicAreas": "topic areas"
+    }
+  },
+  "scenario": {
+    "title": "Scenario Practice",
+    "library": "Scenario library",
+    "filterByTopic": "Filter by topic",
+    "start": "Start",
+    "resume": "Resume",
+    "stepProgress": "Step {{current}} of {{total}}",
+    "chooseResponse": "Choose a response",
+    "submitChoice": "Submit choice",
+    "continue": "Continue",
+    "result": "Scenario result",
+    "score": "Score",
+    "feedback": "Feedback",
+    "recommendation": "Recommendation",
+    "completed": "Completed",
+    "loading": "Loading scenarios...",
+    "error": "Unable to load scenarios.",
+    "retry": "Retry",
+    "allTopics": "All topics",
+    "allDifficulty": "All difficulty",
+    "recommended": "Recommended",
+    "completeScenario": "Complete scenario"
+  },
+  "scenarios": {
+    "library": {
+      "title": "Scenario Library",
+      "description": "Practice realistic cyber safety decisions with immediate feedback after each final choice.",
+      "recommended": "Recommended",
+      "all": "All scenarios",
+      "loading": "Loading scenarios...",
+      "empty": "No scenarios found",
+      "backToDashboard": "Back to dashboard"
+    },
+    "filters": {
+      "topic": "Topic filter",
+      "difficulty": "Difficulty filter",
+      "allTopics": "All topics",
+      "allDifficulties": "All difficulties"
+    },
+    "card": {
+      "estimatedTime": "Estimated time",
+      "minutes": "{{count}} min",
+      "decisions": "{{count}} decisions",
+      "start": "Start scenario",
+      "resume": "Resume scenario",
+      "viewResult": "View result"
+    },
+    "intro": {
+      "details": "Scenario details",
+      "topic": "Topic",
+      "difficulty": "Difficulty",
+      "estimatedDuration": "Estimated duration",
+      "whatYouWillPractise": "What you will practise",
+      "choiceNotice": "Choices are final once submitted. Feedback appears after each decision, and scoring is calculated by the backend.",
+      "startPractice": "Start practice",
+      "continueSavedAttempt": "Continue saved attempt"
+    },
+    "attempt": {
+      "stepProgress": "Step {{current}} of {{total}}",
+      "confirmChoice": "Confirm choice",
+      "savingDecision": "Saving decision...",
+      "decisionSaved": "Decision saved",
+      "complete": "Complete scenario",
+      "completing": "Completing...",
+      "exit": "Exit scenario",
+      "progressSaved": "Progress saved",
+      "chooseOption": "Choose an option before continuing",
+      "readyToComplete": "Ready to complete",
+      "readyToCompleteDescription": "All decisions are submitted. Complete the scenario to calculate your result and apply progress."
+    },
+    "result": {
+      "completed": "Scenario completed",
+      "result": "Result",
+      "score": "Score",
+      "percentage": "Percentage",
+      "performanceLevel": "Performance level",
+      "masteryDelta": "Mastery delta",
+      "decisionsReviewed": "Decisions reviewed",
+      "yourChoice": "Your choice",
+      "recommendedChoice": "Recommended choice",
+      "feedback": "Feedback",
+      "keyLesson": "Key lesson",
+      "tryAnother": "Try another scenario",
+      "returnToLibrary": "Return to scenario library",
+      "viewProgress": "View progress",
+      "step": "Step {{step}}",
+      "stepChoice": "Step {{step}}: your choice {{choice}}",
+      "updatedRecommendation": "Updated recommendation"
+    }
+  },
+  "home": {
+    "hero": {
+      "title": "Stay Safe in the Digital World 🛡",
+      "description": "Cyberly is your personal cybersecurity guide — powered by AI that adapts to your level, language, and learning style.",
+      "cta": "Get started free →",
+      "chips": {
+        "students": "Built for Malaysian students",
+        "languages": "Supports 3 languages",
+        "aiPersonalised": "AI-personalised"
+      }
+    },
+    "threats": {
+      "eyebrow": "Did you know? — Cyber threats facing Malaysian teens right now"
+    },
+    "stats": {
+      "scamVictim": "of Malaysian teens have fallen victim to an online scam",
+      "scamMessages": "of students have received scam-related emails or SMS",
+      "noWorkshop": "of students never attended a scam awareness workshop",
+      "dailyOnline": "of Malaysian teens aged 12–17 go online every single day"
+    },
+    "why": {
+      "title": "Why Cyberly?",
+      "description": "Cybersecurity education that meets you where you are.",
+      "cards": {
+        "adaptive": {
+          "title": "Adaptive AI",
+          "description": "Our AI adjusts explanations based on your experience level and preferred language."
+        },
+        "skills": {
+          "title": "Real Skills",
+          "description": "Learn practical skills — spotting scams, protecting accounts, and browsing safely."
+        },
+        "topics": {
+          "title": "Focused Topics",
+          "description": "Choose what matters to you — from online safety to cybersecurity careers."
+        }
+      }
+    },
+    "threatOfWeek": {
+      "badge": "THREAT OF THE WEEK",
+      "title": "AI Voice & Video Scams (Deepfakes)",
+      "description": "Scammers in Malaysia are now using AI to clone the voices and faces of celebrities and family members to trick people into sending money. If you get an unexpected video call or voice message asking for money — even if it looks real — always verify through another channel before acting."
+    },
+    "quickTopics": {
+      "title": "What do you want to learn today?",
+      "description": "Pick a topic and jump straight in."
+    },
+    "topics": {
+      "phishing": "Phishing",
+      "onlineScams": "Online Scams",
+      "fakeNews": "Fake News",
+      "aiDeepfakes": "AI & Deepfakes",
+      "passwords": "Passwords",
+      "privacy": "Privacy"
+    },
+    "how": {
+      "title": "How Cyberly works",
+      "description": "Up and running in three simple steps."
+    },
+    "steps": {
+      "signUp": {
+        "title": "Sign up free",
+        "description": "Create your profile in under a minute — tell us your age, language, and what you want to learn."
+      },
+      "aiTutor": {
+        "title": "Meet your AI tutor",
+        "description": "CyberGuard AI adapts to your level and chats with you in English, BM, or Chinese."
+      },
+      "levelUp": {
+        "title": "Learn & level up",
+        "description": "Explore guides, beat simulations, and track your progress as your cyber skills grow."
+      }
+    },
+    "bottomCta": {
+      "title": "Ready to level up your cyber skills?",
+      "description": "Join thousands of Malaysian teens learning how to stay safe online — for free, in your language, at your pace.",
+      "note": "No credit card needed · Available in English, BM & 中文"
+    }
+  },
+  "resources": {
+    "title": "Cyber Wellness Resources",
+    "description": "Curated guides on the cyber threats that matter most to Malaysian teens. Click any card to read the full guide.",
+    "loading": "Loading resources...",
+    "error": "Unable to load resources.",
+    "empty": "No resources found.",
+    "stats": {
+      "topicsCovered": "Topics covered",
+      "freeToRead": "Free to read",
+      "malaysiaFocused": "Malaysia focused"
+    },
+    "focus": {
+      "title": "Recommended focus",
+      "description": "Showing guides for {{topic}} based on your measured assessment result.",
+      "showAll": "Show all guides"
+    },
+    "guideCount_one": "{{count}} guide",
+    "guideCount_other": "{{count}} guides",
+    "readGuide": "Read guide →",
+    "source": "Source",
+    "tip": {
+      "title": "Pro tip",
+      "prefix": "Not sure where to start? Try",
+      "phishing": "Phishing",
+      "or": "or",
+      "passwordSecurity": "Password Security",
+      "suffix": "— they are the most common threats facing Malaysian teens right now."
+    },
+    "categories": {
+      "All": "All",
+      "Scams": "Scams",
+      "Misinformation": "Misinformation",
+      "AI & Technology": "AI & Technology",
+      "Privacy": "Privacy",
+      "Safety": "Safety",
+      "Passwords": "Passwords",
+      "Beginner": "Beginner"
+    }
+  },
+  "about": {
+    "hero": {
+      "eyebrow": "Capstone Project · Group 20 · Taylor's University",
+      "title": "Interactive Cyber Wellness Toolkit for Teens",
+      "description": "An AI-driven platform built to enhance cybersecurity awareness and promote safer digital behaviour among Malaysian teenagers aged 13–17.",
+      "collaboration": "In collaboration with Cybersecurity Hub DISS – Impact Lab"
+    },
+    "why": {
+      "title": "Why this matters",
+      "description": "The cyber threat landscape facing Malaysian teenagers is serious and growing."
+    },
+    "stats": {
+      "identifyScams": "of Malaysian teens say they can identify scams",
+      "scamVictim": "have already fallen victim to an online scam",
+      "noWorkshop": "of students never attended a scam awareness workshop",
+      "dailyOnline": "of teens aged 12–17 go online daily"
+    },
+    "built": {
+      "title": "What we built",
+      "description": "A modular, AI-powered toolkit with six core capabilities."
+    },
+    "features": {
+      "agentic": { "title": "Agentic AI Guidance", "description": "Autonomous, goal-oriented learning support with scenario-based decision assistance and real-time personalised recommendations." },
+      "chatbot": { "title": "Cyber Wellness Chatbot", "description": "Real-time conversational support that answers cybersecurity questions through natural language interaction." },
+      "adaptive": { "title": "Adaptive Difficulty", "description": "Auto-selects difficulty based on the user's knowledge and progress for a more effective lesson experience." },
+      "simulations": { "title": "Cyber Threat Simulations", "description": "Simulate phishing, scams, and misinformation scenarios to sharpen critical thinking and cybersecurity decisions." },
+      "progress": { "title": "Progress Tracking", "description": "Monitors learning progress and engagement patterns to assess effectiveness and drive adaptive recommendations." },
+      "gamified": { "title": "Gamified Challenges", "description": "Optional quizzes, achievements, and interactive activities to boost motivation, engagement, and knowledge retention." }
+    },
+    "how": {
+      "title": "How it works",
+      "description": "Every experience is shaped around the individual learner.",
+      "steps": {
+        "signUp": { "title": "You sign up", "description": "Complete a short onboarding profile — your age, language, familiarity, and learning goals." },
+        "path": { "title": "AI builds your path", "description": "The Agentic AI module constructs a personalised learning path based on your responses." },
+        "learn": { "title": "Learn your way", "description": "Chat with CyberGuard AI, explore resources, and tackle simulations — all adapted to your level." },
+        "track": { "title": "Track your growth", "description": "Your progress is tracked to continuously refine recommendations over time." }
+      }
+    },
+    "objectives": {
+      "title": "Project objectives",
+      "description": "Five goals that guide everything we build.",
+      "items": {
+        "toolkit": "Design and develop an AI-driven Cyber Wellness Toolkit that enhances cybersecurity awareness among Malaysian teenagers aged 13–17.",
+        "chatbot": "Create an intelligent cybersecurity chatbot for real-time conversational learning in multiple languages.",
+        "agentic": "Build an Agentic AI module for personalised learning recommendations and adaptive difficulty adjustment.",
+        "gamified": "Incorporate optional gamified learning areas — quizzes, simulations, and real-life cyber threat scenarios.",
+        "evaluate": "Evaluate the system through user interaction analysis, pre/post assessments, and feedback collection."
+      }
+    },
+    "team": {
+      "title": "Meet the team",
+      "description": "Group 20 — Taylor's University Capstone Project",
+      "supervisor": {
+        "role": "Project Supervisor · Cybersecurity Hub DISS – Impact Lab",
+        "description": "Provides guidance, professional oversight, and industry client direction throughout the project."
+      },
+      "members": {
+        "jayron": { "role": "Web Developer", "description": "Ensures logic and webpage usability are functional, and leads implementation of Agentic AI features and adaptive learning tools." },
+        "jinHong": { "role": "UI/UX Designer", "description": "Develops the core wireframe and low-fidelity prototype design, ensuring the interface is tailored to our teenage target demographic." },
+        "edward": { "role": "System Architect & Chatbot Lead", "description": "Handles backend architecture and AI workflow planning, ensuring components are streamlined for adaptive learning features." },
+        "arman": { "role": "Agentic AI Personalisation", "description": "Builds Agentic AI analytics for personalised features and adaptive learning, focusing on user behaviour analysis." },
+        "puah": { "role": "Agentic AI Module Lead", "description": "Leads the implementation of system architecture and the Agentic AI module, with support in chatbot functionalities." }
+      }
+    }
+  },
+  "progress": {
+    "title": "My Progress",
+    "heroTitle": "{{name}}'s Learning Journey 📊",
+    "measuredLevelSummary": "{{level}} measured level",
+    "profileFamiliaritySummary": "{{level}} profile familiarity",
+    "backToDashboard": "Back to Dashboard",
+    "selectedTopics": "{{count}} selected",
+    "snapshot": {
+      "measuredLevel": "Measured level",
+      "language": "Language",
+      "style": "Style",
+      "topics": "Topics"
+    },
+    "mastery": {
+      "title": "Measured Mastery",
+      "description": "Calculated from completed assessment topic scores, not from age, education level, or self-reported familiarity.",
+      "loading": "Loading progress...",
+      "empty": "No measured baseline yet. Complete the initial assessment to unlock progress tracking."
+    },
+    "assessmentTopics": {
+      "title": "Assessment Topics",
+      "description": "Topic-level mastery from your initial cyber wellness assessment.",
+      "source": "Source: initial assessment"
+    },
+    "recommendation": {
+      "title": "Current recommendation",
+      "markComplete": "Mark complete"
+    },
+    "learningTopics": {
+      "title": "Topics You're Learning",
+      "description": "Based on your profile — explore guides for each one.",
+      "exploreAll": "Explore all guides →"
+    },
+    "badges": {
+      "title": "Badges",
+      "description": "Achievements unlocked from your activity.",
+      "joined": "Joined Cyberly",
+      "chatPreview": "Chat Preview Open",
+      "exploredResources": "Explored Resources",
+      "setGoals": "Set Learning Goals",
+      "multilingual": "Multilingual Learner",
+      "measuredBaseline": "Measured Baseline",
+      "earned": "Earned ✓"
+    }
+  },
+  "agent": {
+    "title": "CyberGuard AI",
+    "welcome": "Hi {{name}}! CyberGuard's chat interface is ready, but live AI replies will be enabled after the backend AI Gateway phase.",
+    "thinking": "CyberGuard is thinking...",
+    "placeholder": "Ask about cybersecurity...",
+    "send": "Send"
+  },
+  "chat": {
+    "title": "Cyber Wellness Assistant",
+    "welcome": "Hi {{name}}! This chat UI is ready, but live CyberGuard replies will be enabled after the backend AI Gateway phase.",
+    "disabledReply": "CyberGuard chat is ready visually, but live AI replies are disabled until the backend AI Gateway phase. Your message is kept only in this page session for now.",
+    "guest": "Guest",
+    "signInPrompt": "Sign in to preview the CyberGuard chat interface with your session profile.",
+    "signInCta": "Sign in / Sign up",
+    "thinking": "Thinking...",
+    "placeholder": "Type a question..."
+  },
+  "footer": {
+    "builtWithCare": "Built with care",
+    "description": "Cyber wellness education for everyone · AI Gateway coming in a later phase."
+  },
+  "app": {
+    "loadingTitle": "Loading Cyberly...",
+    "checkingSession": "Checking your session."
+  },
+  "common": {
+    "loading": "Loading",
+    "save": "Save",
+    "saving": "Saving...",
+    "saved": "Saved.",
+    "cancel": "Cancel",
+    "retry": "Retry",
+    "close": "Close",
+    "yes": "Yes",
+    "no": "No",
+    "back": "Back",
+    "next": "Next",
+    "notFound": "Not found",
+    "unauthorized": "Unauthorized",
+    "networkError": "Network error",
+    "somethingWentWrong": "Something went wrong. Please try again.",
+    "backToHome": "Back to Home",
+    "learnMore": "Learn more →",
+    "notSet": "Not set"
+  },
+  "errors": {
+    "codes": {
+      "ACCOUNT_INVALID": "Please check your account details and try again.",
+      "ACCOUNT_NOT_FOUND": "We could not find this account.",
+      "ASSESSMENT_ALREADY_SUBMITTED": "This assessment has already been submitted.",
+      "ASSESSMENT_ANSWER_INVALID": "Please choose a valid answer.",
+      "ASSESSMENT_ATTEMPT_NOT_FOUND": "We could not find this assessment attempt.",
+      "ASSESSMENT_ATTEMPT_NOT_OPEN": "This assessment is no longer open for answers.",
+      "ASSESSMENT_INCOMPLETE": "Please answer all questions before submitting.",
+      "ASSESSMENT_NOT_AVAILABLE": "The initial assessment is not available right now.",
+      "ASSESSMENT_OPTION_INVALID": "Please choose one of the available options.",
+      "ASSESSMENT_QUESTION_MISMATCH": "That question does not belong to this assessment.",
+      "AUTH_ACCOUNT_DISABLED": "This account is disabled.",
+      "AUTH_EMAIL_ALREADY_REGISTERED": "An account with this email already exists.",
+      "AUTH_FORBIDDEN": "You do not have access to this page.",
+      "AUTH_INVALID_CREDENTIALS": "Invalid email or password.",
+      "AUTH_LEGACY_INVALID_CREDENTIALS": "Invalid username or password.",
+      "AUTH_LOGIN_FIELDS_REQUIRED": "Email and password are required.",
+      "AUTH_RATE_LIMITED": "Too many authentication attempts. Please try again later.",
+      "AUTH_REGISTRATION_INVALID": "Please check your registration details.",
+      "AUTH_REQUIRED": "Please sign in to continue.",
+      "INTERNAL_SERVER_ERROR": "Something went wrong on our side. Please try again.",
+      "NETWORK_UNAVAILABLE": "Network error. Please check your connection and try again.",
+      "PROFILE_INVALID": "Please check your learner profile details.",
+      "PROGRESS_ASSESSMENT_NOT_FOUND": "We could not find a completed initial assessment.",
+      "PROGRESS_TOPIC_SCORES_UNAVAILABLE": "Assessment topic scores are not available yet.",
+      "RECOMMENDATION_NOT_FOUND": "We could not find this recommendation.",
+      "RESOURCE_NOT_FOUND": "We could not find this resource.",
+      "SCENARIO_ALREADY_COMPLETED": "This scenario attempt is already completed.",
+      "SCENARIO_ATTEMPT_NOT_FOUND": "We could not find this scenario attempt.",
+      "SCENARIO_CHOICE_FINAL": "Scenario choices are final after submission.",
+      "SCENARIO_DECISION_INVALID": "Please choose a valid scenario decision.",
+      "SCENARIO_INCOMPLETE": "Please answer all scenario steps before completing.",
+      "SCENARIO_NOT_FOUND": "We could not find this scenario.",
+      "SCENARIO_OPTION_INVALID": "Please choose one of the available scenario options.",
+      "SCENARIO_RESULT_NOT_FOUND": "We could not find this completed scenario result.",
+      "SCENARIO_STEP_MISMATCH": "That step does not belong to this scenario.",
+      "SCENARIO_STEP_OUT_OF_ORDER": "Complete the current scenario step before moving ahead."
+    },
+    "fallback": {
+      "completeRecommendation": "Unable to complete recommendation.",
+      "completeScenario": "Unable to complete scenario.",
+      "generic": "Something went wrong. Please try again.",
+      "loadAssessment": "Unable to load assessment.",
+      "loadAssessmentStatus": "Unable to load assessment status.",
+      "loadProgress": "Unable to load progress.",
+      "loadRecommendation": "Unable to load recommendation.",
+      "loadRecommendedScenarios": "Unable to load recommended scenarios.",
+      "loadResources": "Unable to load resources.",
+      "loadScenario": "Unable to load scenario.",
+      "loadScenarioActivity": "Unable to load scenario activity.",
+      "loadScenarioResult": "Unable to load scenario result.",
+      "loadScenarios": "Unable to load scenarios.",
+      "network": "Network error. Please check your connection and try again.",
+      "register": "Failed to register. Please try again.",
+      "restoreScenario": "Unable to restore scenario.",
+      "saveAccount": "Unable to save account information.",
+      "saveAssessmentAnswer": "Unable to save answer.",
+      "saveProfile": "Unable to save learner profile.",
+      "saveScenarioDecision": "Unable to save decision.",
+      "session": "Unable to check your session.",
+      "signIn": "Unable to sign in.",
+      "startAssessment": "Unable to start assessment.",
+      "startScenario": "Unable to start scenario.",
+      "submitAssessment": "Unable to submit assessment.",
+      "updateRecommendation": "Unable to update recommendation."
+    }
+  },
+  "levels": {
+  "beginner": "Beginner",
+  "developing": "Developing",
+  "intermediate": "Intermediate",
+  "advanced": "Advanced"
+  },
+  "scenarioResults": {
+    "needs_review": "Needs review",
+    "developing": "Developing",
+    "proficient": "Proficient",
+    "strong": "Strong"
+  },
+  "topics": {
+    "phishing_and_scams": "Phishing and scams",
+    "password_and_account_security": "Password and account security",
+    "privacy_and_personal_information": "Privacy and personal information",
+    "misinformation_and_deepfakes": "Misinformation and deepfakes"
+  }
+}

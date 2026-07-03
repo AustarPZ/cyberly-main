@@ -1,0 +1,765 @@
+{
+  "nav": {
+    "home": "Laman Utama",
+    "dashboard": "Papan Pemuka",
+    "assessment": "Penilaian",
+    "scenarios": "Senario",
+    "resources": "Sumber",
+    "about": "Tentang",
+    "profile": "Profil",
+    "settings": "Tetapan",
+    "signOut": "Log keluar",
+    "language": "Bahasa"
+  },
+  "auth": {
+    "login": "Log masuk",
+    "register": "Daftar",
+    "email": "E-mel",
+    "password": "Kata laluan",
+    "displayName": "Nama paparan",
+    "age": "Umur",
+    "confirmPassword": "Sahkan kata laluan",
+    "continue": "Teruskan",
+    "back": "Kembali",
+    "next": "Seterusnya",
+    "submit": "Hantar",
+    "loading": "Memuatkan",
+    "invalidCredentials": "Maklumat log masuk tidak sah",
+    "networkError": "Ralat rangkaian",
+    "accountCreated": "Akaun berjaya dibuat",
+    "signInPrompt": "Sudah ada akaun?",
+    "registerPrompt": "Baru menggunakan Cyberly?",
+    "createAccount": "Cipta akaun anda",
+    "accountDetailsHint": "Butiran akaun disimpan dengan akaun pengguna anda. Pilihan pembelajaran disimpan selepas onboarding.",
+    "passwordRequirements": "Kata laluan mesti sekurang-kurangnya 8 aksara serta mengandungi huruf dan nombor.",
+    "registerFailed": "Tidak dapat mencipta akaun.",
+    "goToLogin": "Log masuk",
+    "emailPlaceholder": "anda@contoh.com",
+    "displayNamePlaceholder": "Nama anda",
+    "agePlaceholder": "contoh: 16",
+    "passwordPlaceholder": "Sekurang-kurangnya 8 aksara",
+    "welcomeBack": "Selamat kembali",
+    "loginDescription": "Log masuk untuk meneruskan perjalanan kesejahteraan siber anda.",
+    "emailInvalid": "Sila masukkan alamat e-mel yang sah.",
+    "passwordRequired": "Sila masukkan kata laluan anda.",
+    "signInButton": "Log masuk",
+    "goToRegister": "Cipta akaun",
+    "displayNameRequired": "Nama paparan mesti antara 2 hingga 50 aksara.",
+    "ageInvalid": "Sila masukkan umur dalam nombor bulat dari 1 hingga 120."  
+  },
+  "onboarding": {
+    "account": "Akaun",
+    "nickname": "Nama panggilan",
+    "education": "Pendidikan",
+    "language": "Bahasa",
+    "experience": "Pengalaman",
+    "goals": "Matlamat",
+    "learningStyle": "Cara belajar",
+    "progress": "Langkah {{step}} daripada {{total}} — {{label}}",
+    "previous": "Sebelumnya",
+    "next": "Seterusnya",
+    "completeSetup": "Selesaikan tetapan",
+    "aiNickname": "Nama panggilan AI",
+    "educationLevel": "Tahap pendidikan",
+    "preferredLanguage": "Bahasa pilihan",
+    "familiarityLevel": "Tahap kebiasaan",
+    "helpTopics": "Topik bantuan",
+    "learningStyleLabel": "Cara belajar",
+    "nicknameQuestion": "Apa nama yang patut AI gunakan untuk anda?",
+    "nicknameHint": "Boleh guna nama panggilan atau alias. Ini hanya untuk CyberGuard.",
+    "educationQuestion": "Tahap pendidikan mana paling sesuai untuk anda?",
+    "languageQuestion": "Bahasa mana yang anda lebih selesa gunakan?",
+    "familiarityQuestion": "Sejauh mana anda biasa dengan keselamatan siber?",
+    "helpTopicsQuestion": "Anda mahu bantuan tentang apa?",
+    "helpTopicsHint": "Pilih sehingga 3 topik.",
+    "learningStyleQuestion": "Bagaimana anda lebih suka belajar?",
+    "nicknameRequired": "Sila masukkan nama panggilan untuk digunakan oleh AI.",
+    "educationRequired": "Sila pilih tahap pendidikan.",
+    "languageRequired": "Sila pilih bahasa pilihan.",
+    "familiarityRequired": "Sila pilih tahap kebiasaan anda.",
+    "helpTopicsRequired": "Sila pilih sekurang-kurangnya satu topik.",
+    "learningStyleRequired": "Sila pilih cara belajar.",
+    "profileSaveFailed": "Akaun anda telah dibuat, tetapi profil pembelajaran tidak dapat disimpan. Sila cuba simpan profil semula sebelum meneruskan.",
+    "savingProfile": "Menyimpan profil...",
+    "settingUp": "Menyediakan akaun...",
+    "retrySavingProfile": "Cuba simpan profil semula",
+    "letsGo": "🚀 Mari mula!",
+    "continue": "Teruskan →",
+    "nicknamePlaceholder": "e.g. Alex, Koko, ZK...",
+    "selectedCount": "{{count}}/{{max}} dipilih"
+  },
+  "profileOptions": {
+    "education": {
+      "form_1": "Tingkatan 1",
+      "form_2": "Tingkatan 2",
+      "form_3": "Tingkatan 3",
+      "form_4": "Tingkatan 4",
+      "form_5": "Tingkatan 5",
+      "other": "Lain-lain",
+      "prefer_not_to_say": "Lebih suka tidak menyatakan"
+    },
+    "language": {
+      "english": "English",
+      "bahasa_melayu": "Bahasa Melayu",
+      "chinese": "中文",
+      "mixed": "Campuran"
+    },
+    "familiarity": {
+      "beginner": {
+        "label": "Pemula",
+        "description": "Saya baru bermula; asasnya masih baru bagi saya."
+      },
+      "intermediate": {
+        "label": "Pertengahan",
+        "description": "Saya tahu asasnya dan mahu belajar dengan lebih mendalam."
+      },
+      "advanced": {
+        "label": "Lanjutan",
+        "description": "Saya yakin dan mencari cabaran lanjutan."
+      }
+    },
+    "helpTopics": {
+      "staying_safe_online": "Kekal selamat dalam talian",
+      "learning_cybersecurity": "Mempelajari keselamatan siber",
+      "avoiding_scams": "Mengelakkan penipuan",
+      "protecting_privacy": "Melindungi privasi",
+      "understanding_cyber_threats": "Memahami ancaman siber",
+      "cybersecurity_careers": "Meneroka kerjaya keselamatan siber"
+    },
+    "learningStyle": {
+      "step_by_step": "Panduan langkah demi langkah",
+      "short_explanations": "Penerangan ringkas",
+      "quizzes_and_challenges": "Kuiz & cabaran"
+    }
+  },
+  "dashboard": {
+    "welcome": "Selamat kembali, {{name}}",
+    "yourDashboard": "Papan Pemuka Anda",
+    "recommendations": "Cadangan",
+    "assessmentStatus": "Status penilaian",
+    "scenarioProgress": "Kemajuan senario",
+    "resources": "Sumber",
+    "continueLearning": "Terus belajar",
+    "startAssessment": "Mulakan penilaian",
+    "resumeAssessment": "Sambung penilaian",
+    "startScenario": "Mulakan senario",
+    "resumeScenario": "Sambung senario",
+    "noRecommendationYet": "Belum ada cadangan aktif.",
+    "recommendedNextStep": "Langkah seterusnya yang dicadangkan",
+    "measuredProgress": "Kemajuan terukur",
+    "welcomeBack": "Selamat kembali, {{name}}",
+    "beginner": "Pemula",
+    "levelDisplay": "Tahap {{level}}",
+    "learningProfile": "Profil pembelajaran anda",
+    "profileSavedDescription": "Pilihan pembelajaran disimpan dalam profil anda dan dipulihkan selepas halaman dimuat semula atau anda log masuk.",
+    "editProfile": "Edit profil",
+    "stats": {
+      "topics": "Topik",
+      "languages": "Bahasa",
+      "powered": "Dikuasakan"
+    },
+    "assessment": {
+      "completed": "Penilaian awal telah selesai",
+      "inProgress": "Penilaian awal sedang dijalankan",
+      "pending": "Penilaian awal belum dilakukan",
+      "checking": "Sedang menyemak status penilaian...",
+      "measuredLevel": "Tahap yang diukur",
+      "score": "Markah",
+      "resumeDescription": "Sambung jawapan yang disimpan apabila anda sudah bersedia.",
+      "pendingDescription": "Anda boleh melengkapkannya sekarang atau kemudian. Cadangan adaptif belum aktif sehingga tahap asas ini diwujudkan.",
+      "viewResults": "Lihat keputusan",
+      "resume": "Sambung",
+      "start": "Mula / lakukan kemudian"
+    },
+    "tips": {
+      "phishing": "Jangan klik pautan dalam e-mel atau SMS yang tidak dijangka. Pergi terus ke laman web rasmi.",
+      "password": "Gunakan kata laluan yang berbeza untuk setiap akaun. Pengurus kata laluan dapat memudahkan perkara ini.",
+      "fakeNews": "Sebelum berkongsi berita dalam talian, semak melalui Sebenarnya.my, laman semakan fakta rasmi Malaysia.",
+      "phoneScam": "Jika seseorang mengaku mewakili bank atau kerajaan, tamatkan panggilan dan hubungi nombor rasmi."
+    },
+    "actions": {
+      "resources": "Lihat Sumber",
+      "resourcesDescription": "Panduan tentang penipuan, privasi dan banyak lagi",
+      "assessment": "Penilaian Awal",
+      "assessmentDescription": "Tetapkan tahap asas yang diukur",
+      "scenarios": "Latihan Senario",
+      "scenariosDescription": "Buat pilihan selamat dalam situasi realistik",
+      "profile": "Edit Profil",
+      "profileDescription": "Kemas kini pilihan pembelajaran anda",
+      "about": "Tentang Projek",
+      "aboutDescription": "Kenali pasukan di sebalik Cyberly",
+      "progress": "Kemajuan Saya",
+      "progressDescription": "Lihat statistik dan topik pembelajaran",
+      "home": "Kembali ke Laman Utama",
+      "homeDescription": "Kembali ke halaman utama"
+    },
+    "progress": {
+      "progress": "Kemajuan",
+      "title": "Kemajuan yang diukur",
+      "loading": "Sedang memuat tahap asas anda...",
+      "summary": "{{count}} topik telah diukur · Berdasarkan keputusan penilaian, bukan pilihan profil.",
+      "empty": "Lengkapkan penilaian awal untuk menghasilkan kemajuan yang diukur."
+    },
+    "recommendation": {
+      "title": "Langkah seterusnya yang disyorkan",
+      "loading": "Sedang menyemak cadangan...",
+      "initialAssessment": "Penilaian awal",
+      "practiceScenario": "Berlatih dengan senario",
+      "readResource": "Baca sumber",
+      "startAssessment": "Mulakan penilaian",
+      "empty": "Belum ada cadangan aktif."
+    },
+    "scenarios": {
+      "practiceTitle": "Latihan senario",
+      "loadingActivity": "Sedang memuat aktiviti senario...",
+      "completed": "Selesai",
+      "inProgress": "Sedang dijalankan",
+      "latest": "Terkini",
+      "continueScenario": "Teruskan senario",
+      "openLibrary": "Buka pustaka senario",
+      "recommendedTitle": "Senario yang disyorkan",
+      "finding": "Sedang mencari senario yang sesuai...",
+      "minutes": "{{count}} minit",
+      "unlockDescription": "Lengkapkan penilaian untuk membuka cadangan senario."
+    },
+    "topicMastery": {
+      "title": "Penguasaan topik",
+      "viewProgress": "Lihat kemajuan"
+    },
+    "dailyTip": "Tip Siber Harian",
+    "quickActions": {
+      "title": "Tindakan pantas",
+      "description": "Pergi terus ke bahagian yang anda perlukan."
+    },
+    "cyberGuard": {
+      "title": "CyberGuard AI",
+      "description": "Pratonton antara muka sembang. Respons AI secara langsung akan menggunakan AI Gateway bahagian belakang dalam fasa akan datang.",
+      "badge": "Pratonton profil tersimpan"
+    }
+  },
+  "settings": {
+    "accountInformation": "Maklumat Akaun",
+    "learningPreferences": "Pilihan Pembelajaran",
+    "email": "E-mel",
+    "displayName": "Nama paparan",
+    "age": "Umur",
+    "ageGroup": "Kumpulan umur",
+    "aiNickname": "Nama panggilan AI",
+    "educationLevel": "Tahap pendidikan",
+    "preferredLanguage": "Bahasa pilihan",
+    "familiarity": "Kebiasaan",
+    "helpTopics": "Topik bantuan",
+    "learningStyle": "Cara belajar",
+    "saveAccount": "Simpan akaun",
+    "savePreferences": "Simpan pilihan",
+    "saving": "Menyimpan...",
+    "saved": "Disimpan.",
+    "accountSaved": "Akaun disimpan.",
+    "preferencesSaved": "Pilihan disimpan.",
+    "cancel": "Batal",
+    "displayNameRequired": "Nama paparan mesti antara 2 hingga 50 aksara.",
+    "ageInvalid": "Masukkan umur nombor bulat dari 1 hingga 120.",
+    "nicknameRequired": "Masukkan nama panggilan untuk AI gunakan.",
+    "chooseOne": "Pilih satu",
+    "learnerProfile": "Profil Pelajar",
+    "title": "Sesuaikan pengalaman Cyberly anda",
+    "description": "Pilihan ini disimpan secara berasingan daripada identiti akaun anda. Umur dan tahap pendidikan dikendalikan secara berasingan.",
+    "finishOnboarding": "Lengkapkan proses permulaan",
+    "finishOnboardingDescription": "Akaun anda telah log masuk, tetapi profil pelajar masih belum lengkap. Simpan profil ini untuk meneruskan ke papan pemuka.",
+    "displayNamePlaceholder": "Nama paparan anda",
+    "aiNicknamePlaceholder": "Apakah nama yang patut digunakan oleh CyberGuard?",
+    "saveProfile": "Simpan profil",
+    "profileSaved": "Profil telah disimpan.",
+    "accountSaveFailed": "Tidak dapat menyimpan maklumat akaun.",
+    "profileSaveFailed": "Tidak dapat menyimpan profil pelajar.",
+    "identityNote": "Nama paparan dan umur ialah sebahagian daripada maklumat akaun anda. Umur tidak ditentukan berdasarkan tahap pendidikan dan kedua-duanya tidak dianggap sebagai tahap kebolehan belajar.",
+    "ageGroups": {
+      "child": "Kanak-kanak (1–12)",
+      "teen": "Remaja (13–17)",
+      "young_adult": "Dewasa muda (18–24)",
+      "adult": "Dewasa (25–120)",
+      "invalid": "Umur tidak sah"
+    }
+  },
+  "assessment": {
+    "title": "Penilaian Awal Kesihatan Siber",
+    "introduction": "Semakan asas 12 soalan yang membantu pelajaran Cyberly memahami tahap kesihatan siber anda yang terukur.",
+    "start": "Mulakan penilaian",
+    "resume": "Sambung penilaian",
+    "questionProgress": "Soalan {{current}} daripada {{total}}",
+    "answeredProgress": "{{answered}}/{{total}} dijawab",
+    "previous": "Sebelumnya",
+    "next": "Seterusnya",
+    "submit": "Hantar penilaian",
+    "submitting": "Sedang menghantar...",
+    "confirmSubmit": "Hantar penilaian awal anda? Keputusan asas ini akan disimpan.",
+    "score": "Skor",
+    "level": "Tahap",
+    "measuredLevel": "Tahap yang diukur",
+    "topicBreakdown": "Pecahan topik",
+    "loading": "Memuatkan penilaian...",
+    "error": "Tidak dapat memuatkan penilaian.",
+    "retry": "Cuba lagi",
+    "completed": "Penilaian selesai",
+    "answerAll": "Sila jawab semua soalan sebelum menghantar.",
+    "finalSubmissionReminder": "Jawab semua soalan sebelum penghantaran akhir.",
+    "result": "Keputusan awal",
+    "resultSummary": "Skor {{score}}/{{maxScore}}. Tahap yang diukur ini hanya berdasarkan jawapan anda.",
+    "questionReview": "Semakan soalan",
+    "reviewAnswers": "Semak jawapan",
+    "correct": "Betul",
+    "incorrect": "Salah",
+    "yourAnswer": "Jawapan anda",
+    "correctAnswer": "Jawapan betul",
+    "explanation": "Penjelasan",
+    "backToDashboard": "Kembali ke papan pemuka",
+    "viewProgress": "Lihat kemajuan",
+    "relativeStrength": "Kekuatan relatif",
+    "areaToImprove": "Bahagian untuk diperbaiki",
+    "strengths": "Kekuatan",
+    "areasToImprove": "Bahagian untuk diperbaiki",
+    "noStrengthsYet": "Belum ada topik yang melepasi ambang kekuatan. Tidak mengapa; ini ialah tahap asas permulaan.",
+    "allTopicsMetThreshold": "Semua topik memenuhi ambang kekuatan semasa.",
+    "baselineLabel": "Penilaian Tahap Asas",
+    "measurementNote": "Tahap kebiasaan yang anda nyatakan sendiri disimpan secara berasingan daripada keputusan yang diukur ini. AI tidak digunakan untuk soalan, pemarkahan atau maklum balas.",
+    "doLater": "Lakukan kemudian",
+    "stats": {
+      "questions": "soalan pilihan tunggal",
+      "minutes": "minit",
+      "negativeMarks": "markah negatif",
+      "topicAreas": "bidang topik"
+    }
+  },
+  "scenario": {
+    "title": "Latihan Senario",
+    "library": "Perpustakaan senario",
+    "filterByTopic": "Tapis mengikut topik",
+    "start": "Mula",
+    "resume": "Sambung",
+    "stepProgress": "Langkah {{current}} daripada {{total}}",
+    "chooseResponse": "Pilih respons",
+    "submitChoice": "Hantar pilihan",
+    "continue": "Teruskan",
+    "result": "Keputusan senario",
+    "score": "Skor",
+    "feedback": "Maklum balas",
+    "recommendation": "Cadangan",
+    "completed": "Selesai",
+    "loading": "Memuatkan senario...",
+    "error": "Tidak dapat memuatkan senario.",
+    "retry": "Cuba lagi",
+    "allTopics": "Semua topik",
+    "allDifficulty": "Semua tahap",
+    "recommended": "Dicadangkan",
+    "completeScenario": "Selesaikan senario"
+  },
+  "scenarios": {
+    "library": {
+      "title": "Perpustakaan Senario",
+      "description": "Berlatih membuat keputusan keselamatan siber yang realistik dengan maklum balas segera selepas setiap pilihan akhir.",
+      "recommended": "Dicadangkan",
+      "all": "Semua senario",
+      "loading": "Memuatkan senario...",
+      "empty": "Tiada senario dijumpai",
+      "backToDashboard": "Kembali ke papan pemuka"
+    },
+    "filters": {
+      "topic": "Tapis topik",
+      "difficulty": "Tapis tahap",
+      "allTopics": "Semua topik",
+      "allDifficulties": "Semua tahap"
+    },
+    "card": {
+      "estimatedTime": "Anggaran masa",
+      "minutes": "{{count}} minit",
+      "decisions": "{{count}} keputusan",
+      "start": "Mulakan senario",
+      "resume": "Sambung senario",
+      "viewResult": "Lihat keputusan"
+    },
+    "intro": {
+      "details": "Butiran senario",
+      "topic": "Topik",
+      "difficulty": "Tahap",
+      "estimatedDuration": "Anggaran tempoh",
+      "whatYouWillPractise": "Apa yang akan anda latih",
+      "choiceNotice": "Pilihan adalah muktamad selepas dihantar. Maklum balas muncul selepas setiap keputusan, dan pemarkahan dikira oleh bahagian belakang.",
+      "startPractice": "Mulakan latihan",
+      "continueSavedAttempt": "Teruskan percubaan tersimpan"
+    },
+    "attempt": {
+      "stepProgress": "Langkah {{current}} daripada {{total}}",
+      "confirmChoice": "Sahkan pilihan",
+      "savingDecision": "Menyimpan keputusan...",
+      "decisionSaved": "Keputusan disimpan",
+      "complete": "Selesaikan senario",
+      "completing": "Sedang menyelesaikan...",
+      "exit": "Keluar daripada senario",
+      "progressSaved": "Kemajuan disimpan",
+      "chooseOption": "Pilih satu pilihan sebelum meneruskan",
+      "readyToComplete": "Sedia untuk diselesaikan",
+      "readyToCompleteDescription": "Semua keputusan telah dihantar. Selesaikan senario untuk mengira keputusan anda dan mengemas kini kemajuan."
+    },
+    "result": {
+      "completed": "Senario selesai",
+      "result": "Keputusan",
+      "score": "Skor",
+      "percentage": "Peratusan",
+      "performanceLevel": "Tahap prestasi",
+      "masteryDelta": "Perubahan penguasaan",
+      "decisionsReviewed": "Keputusan disemak",
+      "yourChoice": "Pilihan anda",
+      "recommendedChoice": "Pilihan disyorkan",
+      "feedback": "Maklum balas",
+      "keyLesson": "Pengajaran utama",
+      "tryAnother": "Cuba senario lain",
+      "returnToLibrary": "Kembali ke perpustakaan senario",
+      "viewProgress": "Lihat kemajuan",
+      "step": "Langkah {{step}}",
+      "stepChoice": "Langkah {{step}}: pilihan anda {{choice}}",
+      "updatedRecommendation": "Cadangan dikemas kini"
+    }
+  },
+  "home": {
+    "hero": {
+      "title": "Kekal Selamat di Dunia Digital 🛡",
+      "description": "Cyberly ialah panduan keselamatan siber peribadi anda — dikuasakan oleh AI yang menyesuaikan diri dengan tahap, bahasa dan cara belajar anda.",
+      "cta": "Mula secara percuma →",
+      "chips": {
+        "students": "Dibina untuk pelajar Malaysia",
+        "languages": "Menyokong 3 bahasa",
+        "aiPersonalised": "Diperibadikan oleh AI"
+      }
+    },
+    "threats": {
+      "eyebrow": "Tahukah anda? — Ancaman siber yang dihadapi remaja Malaysia sekarang"
+    },
+    "stats": {
+      "scamVictim": "remaja Malaysia pernah menjadi mangsa penipuan dalam talian",
+      "scamMessages": "pelajar pernah menerima e-mel atau SMS berkaitan penipuan",
+      "noWorkshop": "pelajar tidak pernah menghadiri bengkel kesedaran penipuan",
+      "dailyOnline": "remaja Malaysia berumur 12–17 tahun masuk dalam talian setiap hari"
+    },
+    "why": {
+      "title": "Mengapa Cyberly?",
+      "description": "Pendidikan keselamatan siber yang bermula dari tahap anda.",
+      "cards": {
+        "adaptive": { "title": "AI Adaptif", "description": "AI kami menyesuaikan penerangan berdasarkan tahap pengalaman dan bahasa pilihan anda." },
+        "skills": { "title": "Kemahiran Sebenar", "description": "Pelajari kemahiran praktikal — mengenal pasti penipuan, melindungi akaun dan melayari internet dengan selamat." },
+        "topics": { "title": "Topik Berfokus", "description": "Pilih perkara yang penting untuk anda — daripada keselamatan dalam talian hingga kerjaya keselamatan siber." }
+      }
+    },
+    "threatOfWeek": {
+      "badge": "ANCAMAN MINGGU INI",
+      "title": "Penipuan Suara & Video AI (Deepfake)",
+      "description": "Penipu di Malaysia kini menggunakan AI untuk meniru suara dan wajah selebriti serta ahli keluarga bagi memperdaya orang menghantar wang. Jika anda menerima panggilan video atau mesej suara mengejut yang meminta wang — walaupun nampak benar — sentiasa sahkan melalui saluran lain sebelum bertindak."
+    },
+    "quickTopics": {
+      "title": "Apa yang anda mahu pelajari hari ini?",
+      "description": "Pilih topik dan terus mula belajar."
+    },
+    "topics": {
+      "phishing": "Pancingan data",
+      "onlineScams": "Penipuan Dalam Talian",
+      "fakeNews": "Berita Palsu",
+      "aiDeepfakes": "AI & Deepfake",
+      "passwords": "Kata Laluan",
+      "privacy": "Privasi"
+    },
+    "how": {
+      "title": "Cara Cyberly berfungsi",
+      "description": "Bermula dalam tiga langkah mudah."
+    },
+    "steps": {
+      "signUp": { "title": "Daftar percuma", "description": "Cipta profil anda dalam masa kurang seminit — beritahu umur, bahasa dan perkara yang ingin anda pelajari." },
+      "aiTutor": { "title": "Kenali tutor AI anda", "description": "CyberGuard AI menyesuaikan diri dengan tahap anda dan berbual dalam Bahasa Inggeris, BM atau Cina." },
+      "levelUp": { "title": "Belajar & tingkatkan kemahiran", "description": "Teroka panduan, selesaikan simulasi dan pantau kemajuan apabila kemahiran siber anda meningkat." }
+    },
+    "bottomCta": {
+      "title": "Sedia tingkatkan kemahiran siber anda?",
+      "description": "Sertai ribuan remaja Malaysia yang belajar cara kekal selamat dalam talian — percuma, dalam bahasa anda, mengikut rentak anda.",
+      "note": "Tiada kad kredit diperlukan · Tersedia dalam English, BM & 中文"
+    }
+  },
+  "resources": {
+    "title": "Sumber Kesihatan Siber",
+    "description": "Panduan terpilih tentang ancaman siber yang paling relevan kepada remaja Malaysia. Klik mana-mana kad untuk membaca panduan penuh.",
+    "loading": "Memuatkan sumber...",
+    "error": "Tidak dapat memuatkan sumber.",
+    "empty": "Tiada sumber dijumpai.",
+    "stats": {
+      "topicsCovered": "Topik diliputi",
+      "freeToRead": "Percuma dibaca",
+      "malaysiaFocused": "Berfokus Malaysia"
+    },
+    "focus": {
+      "title": "Fokus disyorkan",
+      "description": "Menunjukkan panduan untuk {{topic}} berdasarkan keputusan penilaian terukur anda.",
+      "showAll": "Tunjuk semua panduan"
+    },
+    "guideCount_one": "{{count}} panduan",
+    "guideCount_other": "{{count}} panduan",
+    "readGuide": "Baca panduan →",
+    "source": "Sumber",
+    "tip": {
+      "title": "Tip berguna",
+      "prefix": "Tidak pasti mahu mula di mana? Cuba",
+      "phishing": "Pancingan data",
+      "or": "atau",
+      "passwordSecurity": "Keselamatan Kata Laluan",
+      "suffix": "— kedua-duanya antara ancaman paling biasa kepada remaja Malaysia sekarang."
+    },
+    "categories": {
+      "All": "Semua",
+      "Scams": "Penipuan",
+      "Misinformation": "Maklumat palsu",
+      "AI & Technology": "AI & Teknologi",
+      "Privacy": "Privasi",
+      "Safety": "Keselamatan",
+      "Passwords": "Kata Laluan",
+      "Beginner": "Pemula"
+    }
+  },
+  "about": {
+    "hero": {
+      "eyebrow": "Projek Capstone · Kumpulan 20 · Taylor's University",
+      "title": "Toolkit Kesihatan Siber Interaktif untuk Remaja",
+      "description": "Platform berasaskan AI yang dibina untuk meningkatkan kesedaran keselamatan siber dan menggalakkan tingkah laku digital yang lebih selamat dalam kalangan remaja Malaysia berumur 13–17 tahun.",
+      "collaboration": "Dengan kerjasama Cybersecurity Hub DISS – Impact Lab"
+    },
+    "why": {
+      "title": "Mengapa ini penting",
+      "description": "Landskap ancaman siber yang dihadapi remaja Malaysia semakin serius dan berkembang."
+    },
+    "stats": {
+      "identifyScams": "remaja Malaysia berkata mereka boleh mengenal pasti penipuan",
+      "scamVictim": "telah menjadi mangsa penipuan dalam talian",
+      "noWorkshop": "pelajar tidak pernah menghadiri bengkel kesedaran penipuan",
+      "dailyOnline": "remaja berumur 12–17 tahun masuk dalam talian setiap hari"
+    },
+    "built": {
+      "title": "Apa yang kami bina",
+      "description": "Toolkit modular berkuasa AI dengan enam keupayaan utama."
+    },
+    "features": {
+      "agentic": { "title": "Panduan AI Agentic", "description": "Sokongan pembelajaran autonomi dan berorientasikan matlamat dengan bantuan keputusan berasaskan senario serta cadangan masa nyata yang diperibadikan." },
+      "chatbot": { "title": "Chatbot Kesihatan Siber", "description": "Sokongan perbualan masa nyata yang menjawab soalan keselamatan siber melalui interaksi bahasa semula jadi." },
+      "adaptive": { "title": "Kesukaran Adaptif", "description": "Memilih tahap kesukaran secara automatik berdasarkan pengetahuan dan kemajuan pengguna untuk pengalaman pembelajaran yang lebih berkesan." },
+      "simulations": { "title": "Simulasi Ancaman Siber", "description": "Mensimulasikan pancingan data, penipuan dan senario maklumat palsu untuk mengasah pemikiran kritis serta keputusan keselamatan siber." },
+      "progress": { "title": "Penjejakan Kemajuan", "description": "Memantau kemajuan pembelajaran dan corak penglibatan untuk menilai keberkesanan dan memacu cadangan adaptif." },
+      "gamified": { "title": "Cabaran Bergamifikasi", "description": "Kuiz, pencapaian dan aktiviti interaktif pilihan untuk meningkatkan motivasi, penglibatan dan pengekalan pengetahuan." }
+    },
+    "how": {
+      "title": "Cara ia berfungsi",
+      "description": "Setiap pengalaman dibentuk mengikut pelajar secara individu.",
+      "steps": {
+        "signUp": { "title": "Anda mendaftar", "description": "Lengkapkan profil permulaan ringkas — umur, bahasa, tahap kebiasaan dan matlamat pembelajaran anda." },
+        "path": { "title": "AI membina laluan anda", "description": "Modul Agentic AI membina laluan pembelajaran diperibadikan berdasarkan respons anda." },
+        "learn": { "title": "Belajar dengan cara anda", "description": "Berbual dengan CyberGuard AI, teroka sumber dan cuba simulasi — semuanya disesuaikan dengan tahap anda." },
+        "track": { "title": "Pantau perkembangan anda", "description": "Kemajuan anda dijejaki untuk terus memperhalusi cadangan dari semasa ke semasa." }
+      }
+    },
+    "objectives": {
+      "title": "Objektif projek",
+      "description": "Lima matlamat yang membimbing semua perkara yang kami bina.",
+      "items": {
+        "toolkit": "Mereka bentuk dan membangunkan Toolkit Kesihatan Siber berasaskan AI yang meningkatkan kesedaran keselamatan siber dalam kalangan remaja Malaysia berumur 13–17 tahun.",
+        "chatbot": "Mencipta chatbot keselamatan siber pintar untuk pembelajaran perbualan masa nyata dalam pelbagai bahasa.",
+        "agentic": "Membina modul Agentic AI untuk cadangan pembelajaran diperibadikan dan pelarasan kesukaran adaptif.",
+        "gamified": "Menggabungkan kawasan pembelajaran bergamifikasi pilihan — kuiz, simulasi dan senario ancaman siber kehidupan sebenar.",
+        "evaluate": "Menilai sistem melalui analisis interaksi pengguna, penilaian sebelum/selepas dan pengumpulan maklum balas."
+      }
+    },
+    "team": {
+      "title": "Kenali pasukan",
+      "description": "Kumpulan 20 — Projek Capstone Taylor's University",
+      "supervisor": {
+        "role": "Penyelia Projek · Cybersecurity Hub DISS – Impact Lab",
+        "description": "Memberikan panduan, penyeliaan profesional dan hala tuju klien industri sepanjang projek."
+      },
+      "members": {
+        "jayron": { "role": "Pembangun Web", "description": "Memastikan logik dan kebolehgunaan halaman web berfungsi, serta mengetuai pelaksanaan ciri Agentic AI dan alat pembelajaran adaptif." },
+        "jinHong": { "role": "Pereka UI/UX", "description": "Membangunkan wireframe utama dan reka bentuk prototaip fideliti rendah, memastikan antara muka disesuaikan untuk demografi sasaran remaja." },
+        "edward": { "role": "Arkitek Sistem & Ketua Chatbot", "description": "Mengendalikan seni bina bahagian belakang dan perancangan aliran kerja AI, memastikan komponen diperkemas untuk ciri pembelajaran adaptif." },
+        "arman": { "role": "Pemperibadian Agentic AI", "description": "Membina analitik Agentic AI untuk ciri diperibadikan dan pembelajaran adaptif, dengan fokus pada analisis tingkah laku pengguna." },
+        "puah": { "role": "Ketua Modul Agentic AI", "description": "Mengetuai pelaksanaan seni bina sistem dan modul Agentic AI, serta menyokong fungsi chatbot." }
+      }
+    }
+  },
+  "progress": {
+    "title": "Kemajuan Saya",
+    "heroTitle": "Perjalanan Pembelajaran {{name}} 📊",
+    "measuredLevelSummary": "Tahap terukur {{level}}",
+    "profileFamiliaritySummary": "Kebiasaan profil {{level}}",
+    "backToDashboard": "Kembali ke Papan Pemuka",
+    "selectedTopics": "{{count}} dipilih",
+    "snapshot": {
+      "measuredLevel": "Tahap yang diukur",
+      "language": "Bahasa",
+      "style": "Cara belajar",
+      "topics": "Topik"
+    },
+    "mastery": {
+      "title": "Penguasaan Terukur",
+      "description": "Dikira daripada skor topik penilaian yang selesai, bukan daripada umur, tahap pendidikan atau kebiasaan yang dilaporkan sendiri.",
+      "loading": "Memuatkan kemajuan...",
+      "empty": "Belum ada tahap asas terukur. Lengkapkan penilaian awal untuk membuka penjejakan kemajuan."
+    },
+    "assessmentTopics": {
+      "title": "Topik Penilaian",
+      "description": "Penguasaan per topik daripada penilaian kesihatan siber awal anda.",
+      "source": "Sumber: penilaian awal"
+    },
+    "recommendation": {
+      "title": "Cadangan semasa",
+      "markComplete": "Tanda selesai"
+    },
+    "learningTopics": {
+      "title": "Topik yang Anda Pelajari",
+      "description": "Berdasarkan profil anda — teroka panduan untuk setiap topik.",
+      "exploreAll": "Teroka semua panduan →"
+    },
+    "badges": {
+      "title": "Lencana",
+      "description": "Pencapaian yang dibuka daripada aktiviti anda.",
+      "joined": "Menyertai Cyberly",
+      "chatPreview": "Pratonton Sembang Dibuka",
+      "exploredResources": "Meneroka Sumber",
+      "setGoals": "Menetapkan Matlamat Pembelajaran",
+      "multilingual": "Pelajar Berbilang Bahasa",
+      "measuredBaseline": "Tahap Asas Terukur",
+      "earned": "Diperoleh ✓"
+    }
+  },
+  "agent": {
+    "title": "CyberGuard AI",
+    "welcome": "Hai {{name}}! Antara muka sembang CyberGuard sudah tersedia, tetapi respons AI secara langsung akan diaktifkan selepas fasa AI Gateway bahagian belakang.",
+    "thinking": "CyberGuard sedang berfikir...",
+    "placeholder": "Tanya tentang keselamatan siber...",
+    "send": "Hantar"
+  },
+  "chat": {
+    "title": "Pembantu Kesihatan Siber",
+    "welcome": "Hai {{name}}! UI sembang ini sudah tersedia, tetapi respons CyberGuard secara langsung akan diaktifkan selepas fasa AI Gateway bahagian belakang.",
+    "disabledReply": "Sembang CyberGuard sudah tersedia secara visual, tetapi respons AI langsung dinyahaktifkan sehingga fasa AI Gateway bahagian belakang. Mesej anda hanya disimpan dalam sesi halaman ini buat masa ini.",
+    "guest": "Tetamu",
+    "signInPrompt": "Log masuk untuk melihat pratonton antara muka sembang CyberGuard dengan profil sesi anda.",
+    "signInCta": "Log masuk / Daftar",
+    "thinking": "Sedang berfikir...",
+    "placeholder": "Taip soalan..."
+  },
+  "footer": {
+    "builtWithCare": "Dibina dengan teliti",
+    "description": "Pendidikan kesihatan siber untuk semua · AI Gateway akan hadir dalam fasa kemudian."
+  },
+  "app": {
+    "loadingTitle": "Memuatkan Cyberly...",
+    "checkingSession": "Sedang menyemak sesi anda."
+  },
+  "common": {
+    "loading": "Memuatkan",
+    "save": "Simpan",
+    "saving": "Menyimpan...",
+    "saved": "Disimpan.",
+    "cancel": "Batal",
+    "retry": "Cuba lagi",
+    "close": "Tutup",
+    "yes": "Ya",
+    "no": "Tidak",
+    "back": "Kembali",
+    "next": "Seterusnya",
+    "notFound": "Tidak dijumpai",
+    "unauthorized": "Tidak dibenarkan",
+    "networkError": "Ralat rangkaian",
+    "somethingWentWrong": "Ada sesuatu yang tidak kena. Sila cuba lagi.",
+    "backToHome": "Kembali ke Laman Utama",
+    "learnMore": "Ketahui lanjut →",
+    "notSet": "Belum ditetapkan"
+  },
+  "errors": {
+    "codes": {
+      "ACCOUNT_INVALID": "Sila semak butiran akaun anda dan cuba lagi.",
+      "ACCOUNT_NOT_FOUND": "Kami tidak dapat menemui akaun ini.",
+      "ASSESSMENT_ALREADY_SUBMITTED": "Penilaian ini telah dihantar.",
+      "ASSESSMENT_ANSWER_INVALID": "Sila pilih jawapan yang sah.",
+      "ASSESSMENT_ATTEMPT_NOT_FOUND": "Kami tidak dapat menemui cubaan penilaian ini.",
+      "ASSESSMENT_ATTEMPT_NOT_OPEN": "Penilaian ini tidak lagi dibuka untuk jawapan.",
+      "ASSESSMENT_INCOMPLETE": "Sila jawab semua soalan sebelum menghantar.",
+      "ASSESSMENT_NOT_AVAILABLE": "Penilaian awal tidak tersedia buat masa ini.",
+      "ASSESSMENT_OPTION_INVALID": "Sila pilih salah satu pilihan yang tersedia.",
+      "ASSESSMENT_QUESTION_MISMATCH": "Soalan itu bukan sebahagian daripada penilaian ini.",
+      "AUTH_ACCOUNT_DISABLED": "Akaun ini telah dinyahaktifkan.",
+      "AUTH_EMAIL_ALREADY_REGISTERED": "Akaun dengan e-mel ini sudah wujud.",
+      "AUTH_FORBIDDEN": "Anda tidak mempunyai akses ke halaman ini.",
+      "AUTH_INVALID_CREDENTIALS": "E-mel atau kata laluan tidak sah.",
+      "AUTH_LEGACY_INVALID_CREDENTIALS": "Nama pengguna atau kata laluan tidak sah.",
+      "AUTH_LOGIN_FIELDS_REQUIRED": "E-mel dan kata laluan diperlukan.",
+      "AUTH_RATE_LIMITED": "Terlalu banyak cubaan pengesahan. Sila cuba lagi kemudian.",
+      "AUTH_REGISTRATION_INVALID": "Sila semak butiran pendaftaran anda.",
+      "AUTH_REQUIRED": "Sila log masuk untuk meneruskan.",
+      "INTERNAL_SERVER_ERROR": "Ada masalah di pihak kami. Sila cuba lagi.",
+      "NETWORK_UNAVAILABLE": "Ralat rangkaian. Sila semak sambungan anda dan cuba lagi.",
+      "PROFILE_INVALID": "Sila semak butiran profil pembelajaran anda.",
+      "PROGRESS_ASSESSMENT_NOT_FOUND": "Kami tidak dapat menemui penilaian awal yang telah dilengkapkan.",
+      "PROGRESS_TOPIC_SCORES_UNAVAILABLE": "Skor topik penilaian belum tersedia.",
+      "RECOMMENDATION_NOT_FOUND": "Kami tidak dapat menemui cadangan ini.",
+      "RESOURCE_NOT_FOUND": "Kami tidak dapat menemui sumber ini.",
+      "SCENARIO_ALREADY_COMPLETED": "Cubaan senario ini telah dilengkapkan.",
+      "SCENARIO_ATTEMPT_NOT_FOUND": "Kami tidak dapat menemui cubaan senario ini.",
+      "SCENARIO_CHOICE_FINAL": "Pilihan senario adalah muktamad selepas dihantar.",
+      "SCENARIO_DECISION_INVALID": "Sila pilih keputusan senario yang sah.",
+      "SCENARIO_INCOMPLETE": "Sila jawab semua langkah senario sebelum melengkapkan.",
+      "SCENARIO_NOT_FOUND": "Kami tidak dapat menemui senario ini.",
+      "SCENARIO_OPTION_INVALID": "Sila pilih salah satu pilihan senario yang tersedia.",
+      "SCENARIO_RESULT_NOT_FOUND": "Kami tidak dapat menemui keputusan senario yang telah dilengkapkan ini.",
+      "SCENARIO_STEP_MISMATCH": "Langkah itu bukan sebahagian daripada senario ini.",
+      "SCENARIO_STEP_OUT_OF_ORDER": "Lengkapkan langkah senario semasa sebelum bergerak ke hadapan."
+    },
+    "fallback": {
+      "completeRecommendation": "Tidak dapat melengkapkan cadangan.",
+      "completeScenario": "Tidak dapat melengkapkan senario.",
+      "generic": "Ada sesuatu yang tidak kena. Sila cuba lagi.",
+      "loadAssessment": "Tidak dapat memuatkan penilaian.",
+      "loadAssessmentStatus": "Tidak dapat memuatkan status penilaian.",
+      "loadProgress": "Tidak dapat memuatkan kemajuan.",
+      "loadRecommendation": "Tidak dapat memuatkan cadangan.",
+      "loadRecommendedScenarios": "Tidak dapat memuatkan senario yang dicadangkan.",
+      "loadResources": "Tidak dapat memuatkan sumber.",
+      "loadScenario": "Tidak dapat memuatkan senario.",
+      "loadScenarioActivity": "Tidak dapat memuatkan aktiviti senario.",
+      "loadScenarioResult": "Tidak dapat memuatkan keputusan senario.",
+      "loadScenarios": "Tidak dapat memuatkan senario.",
+      "network": "Ralat rangkaian. Sila semak sambungan anda dan cuba lagi.",
+      "register": "Pendaftaran gagal. Sila cuba lagi.",
+      "restoreScenario": "Tidak dapat memulihkan senario.",
+      "saveAccount": "Tidak dapat menyimpan maklumat akaun.",
+      "saveAssessmentAnswer": "Tidak dapat menyimpan jawapan.",
+      "saveProfile": "Tidak dapat menyimpan profil pembelajaran.",
+      "saveScenarioDecision": "Tidak dapat menyimpan keputusan.",
+      "session": "Tidak dapat menyemak sesi anda.",
+      "signIn": "Tidak dapat log masuk.",
+      "startAssessment": "Tidak dapat memulakan penilaian.",
+      "startScenario": "Tidak dapat memulakan senario.",
+      "submitAssessment": "Tidak dapat menghantar penilaian.",
+      "updateRecommendation": "Tidak dapat mengemas kini cadangan."
+    }
+  },
+  "levels": {
+    "beginner": "Pemula",
+    "developing": "Sedang berkembang",
+    "intermediate": "Pertengahan",
+    "advanced": "Lanjutan"
+  },
+  "scenarioResults": {
+    "needs_review": "Perlu semakan",
+    "developing": "Sedang berkembang",
+    "proficient": "Mahir",
+    "strong": "Kukuh"
+  },
+  "topics": {
+    "phishing_and_scams": "Pancingan data dan penipuan",
+    "password_and_account_security": "Kata laluan dan keselamatan akaun",
+    "privacy_and_personal_information": "Privasi dan maklumat peribadi",
+    "misinformation_and_deepfakes": "Maklumat palsu dan deepfake"
+  }
+}

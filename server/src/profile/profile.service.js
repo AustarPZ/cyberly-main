@@ -1,5 +1,6 @@
 const { mapProfileRow } = require('./profile.mapper');
 const { validateProfileInput } = require('./profile.validation');
+const { ERROR_CODES } = require('../errors/errorCodes');
 
 function createProfileService(repository) {
   async function getProfileForUser(userId) {
@@ -12,6 +13,7 @@ function createProfileService(repository) {
     if (!validation.ok) {
       const error = new Error('Learner profile details are invalid.');
       error.status = 400;
+      error.code = ERROR_CODES.PROFILE_INVALID;
       error.errors = validation.errors;
       throw error;
     }

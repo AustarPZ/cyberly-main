@@ -31,6 +31,7 @@ const { createResourceRouter } = require('./src/resource/resource.routes');
 const { createAccountRepository } = require("./src/account/account.repository");
 const { createAccountService } = require("./src/account/account.service");
 const { createAccountRouter } = require("./src/account/account.routes");
+const { ERROR_CODES } = require('./src/errors/errorCodes');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -93,7 +94,10 @@ function authRateLimit(req, res, next) {
     rateLimitBuckets.set(key, bucket);
 
     if (bucket.count > maxAttempts) {
-        return res.status(429).json({ message: 'Too many authentication attempts. Please try again later.' });
+        return res.status(429).json({
+            code: ERROR_CODES.AUTH_RATE_LIMITED,
+            message: 'Too many authentication attempts. Please try again later.',
+        });
     }
 
     next();
@@ -176,12 +180,19 @@ app.post('/api/auth/register', authRateLimit, async (req, res, next) => {
         const validation = validateRegistration({ email, displayName, password, age });
 
         if (!validation.ok) {
-            return res.status(400).json({ message: 'Registration details are invalid.', errors: validation.errors });
+            return res.status(400).json({
+                code: ERROR_CODES.AUTH_REGISTRATION_INVALID,
+                message: 'Registration details are invalid.',
+                errors: validation.errors,
+            });
         }
 
         const [existing] = await pool.query('SELECT id FROM users WHERE email = ? LIMIT 1', [email]);
         if (existing.length > 0) {
-            return res.status(409).json({ message: 'An account with this email already exists.' });
+            return res.status(409).json({
+                code: ERROR_CODES.AUTH_EMAIL_ALREADY_REGISTERED,
+                message: 'An account with this email already exists.',
+            });
         }
 
         const passwordHash = await bcrypt.hash(password, 10);
@@ -207,7 +218,10 @@ app.post('/api/auth/login', authRateLimit, async (req, res, next) => {
         const password = String(req.body.password || '');
 
         if (!isValidEmail(email) || !password) {
-            return res.status(400).json({ message: 'Email and password are required.' });
+            return res.status(400).json({
+                code: ERROR_CODES.AUTH_LOGIN_FIELDS_REQUIRED,
+                message: 'Email and password are required.',
+            });
         }
 
         const [rows] = await pool.query(
@@ -220,17 +234,26 @@ app.post('/api/auth/login', authRateLimit, async (req, res, next) => {
 
         const invalidMessage = 'Invalid email or password.';
         if (rows.length === 0) {
-            return res.status(401).json({ message: invalidMessage });
+            return res.status(401).json({
+                code: ERROR_CODES.AUTH_INVALID_CREDENTIALS,
+                message: invalidMessage,
+            });
         }
 
         const user = rows[0];
         const isMatch = await bcrypt.compare(password, user.password_hash);
         if (!isMatch) {
-            return res.status(401).json({ message: invalidMessage });
+            return res.status(401).json({
+                code: ERROR_CODES.AUTH_INVALID_CREDENTIALS,
+                message: invalidMessage,
+            });
         }
 
         if (user.account_status !== 'active') {
-            return res.status(403).json({ message: 'This account is disabled.' });
+            return res.status(403).json({
+                code: ERROR_CODES.AUTH_ACCOUNT_DISABLED,
+                message: 'This account is disabled.',
+            });
         }
 
         await establishSession(req, user);
@@ -247,7 +270,10 @@ app.get('/api/auth/me', requireAuth, async (req, res, next) => {
         if (!user || user.account_status !== 'active') {
             await destroySession(req);
             res.clearCookie(sessionName);
-            return res.status(401).json({ message: 'Authentication required.' });
+            return res.status(401).json({
+                code: ERROR_CODES.AUTH_REQUIRED,
+                message: 'Authentication required.',
+            });
         }
 
         req.session.role = user.role;
@@ -305,13 +331,19 @@ app.post('/api/login', async (req, res, next) => {
         const [rows] = await pool.query('SELECT * FROM users WHERE username = ? LIMIT 1', [username]);
 
         if (rows.length === 0) {
-            return res.status(401).json({ message: 'Invalid username or password.' });
+            return res.status(401).json({
+                code: ERROR_CODES.AUTH_LEGACY_INVALID_CREDENTIALS,
+                message: 'Invalid username or password.',
+            });
         }
 
         const user = rows[0];
         const isMatch = await bcrypt.compare(password, user.password_hash);
         if (!isMatch) {
-            return res.status(401).json({ message: 'Invalid username or password.' });
+            return res.status(401).json({
+                code: ERROR_CODES.AUTH_LEGACY_INVALID_CREDENTIALS,
+                message: 'Invalid username or password.',
+            });
         }
 
         res.json({ user: buildSafeUser(user) });
@@ -324,11 +356,15 @@ app.use((error, _req, res, _next) => {
     console.error('Server error:', error.code || error.message);
     if (error.status && error.status < 500) {
         return res.status(error.status).json({
+            code: error.code || ERROR_CODES.INTERNAL_SERVER_ERROR,
             message: error.message,
             ...(error.errors ? { errors: error.errors } : {}),
         });
     }
-    res.status(500).json({ message: 'Server error.' });
+    res.status(500).json({
+        code: ERROR_CODES.INTERNAL_SERVER_ERROR,
+        message: 'Server error.',
+    });
 });
 
 app.listen(port, () => console.log(`Server running on port ${port}`));
