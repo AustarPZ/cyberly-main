@@ -573,9 +573,9 @@ async function dbGetProgress() {
   }
 }
 
-async function dbGetCurrentRecommendation() {
+async function dbGetCurrentRecommendation(locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/recommendations/current`, {
+    const response = await fetch(`${API_BASE_URL}/api/recommendations/current?${localeQuery(locale)}`, {
       method: "GET",
       credentials: "include",
     });
@@ -587,9 +587,9 @@ async function dbGetCurrentRecommendation() {
   }
 }
 
-async function dbMarkRecommendationViewed(id) {
+async function dbMarkRecommendationViewed(id, locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/recommendations/${id}/viewed`, {
+    const response = await fetch(`${API_BASE_URL}/api/recommendations/${id}/viewed?${localeQuery(locale)}`, {
       method: "POST",
       credentials: "include",
     });
@@ -601,9 +601,9 @@ async function dbMarkRecommendationViewed(id) {
   }
 }
 
-async function dbMarkRecommendationCompleted(id) {
+async function dbMarkRecommendationCompleted(id, locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/recommendations/${id}/completed`, {
+    const response = await fetch(`${API_BASE_URL}/api/recommendations/${id}/completed?${localeQuery(locale)}`, {
       method: "POST",
       credentials: "include",
     });
@@ -2236,7 +2236,7 @@ function DashboardPage() {
   useEffect(() => {
     let active = true;
     if (!user) return () => { active = false; };
-    Promise.all([dbGetProgress(), dbGetCurrentRecommendation()]).then(([progressResult, recommendationResult]) => {
+    Promise.all([dbGetProgress(), dbGetCurrentRecommendation(assessmentLocale)]).then(([progressResult, recommendationResult]) => {
       if (!active) return;
       setProgressState(progressResult.ok
         ? { loading: false, progress: progressResult }
@@ -2246,7 +2246,7 @@ function DashboardPage() {
         : { loading: false, recommendation: null, error: recommendationResult.error });
     });
     return () => { active = false; };
-  }, [user]);
+  }, [user, assessmentLocale]);
 
   if (!user) { go("login"); return null; }
 
@@ -2270,7 +2270,7 @@ function DashboardPage() {
 
   async function followRecommendation() {
     if (recommendation?.id) {
-      await dbMarkRecommendationViewed(recommendation.id);
+      await dbMarkRecommendationViewed(recommendation.id, assessmentLocale);
     }
     if (recommendedScenario) {
       go("scenarios");
@@ -4754,15 +4754,16 @@ function ProfilePage() {
 
 // ─── Page: Progress ──────────────────────────────────────────────
 function ProgressPage() {
-  const { t } = useTranslation();
+  const { t, i18n: activeI18n } = useTranslation();
   const { user, go, openRecommendedResource } = useApp();
+  const progressLocale = normalizeLocale(activeI18n.language);
   const [progressState, setProgressState] = useState({ loading: true, progress: null });
   const [recommendationState, setRecommendationState] = useState({ loading: true, recommendation: null });
 
   useEffect(() => {
     let active = true;
     if (!user) return () => { active = false; };
-    Promise.all([dbGetProgress(), dbGetCurrentRecommendation()]).then(([progressResult, recommendationResult]) => {
+    Promise.all([dbGetProgress(), dbGetCurrentRecommendation(progressLocale)]).then(([progressResult, recommendationResult]) => {
       if (!active) return;
       setProgressState(progressResult.ok
         ? { loading: false, progress: progressResult }
@@ -4772,7 +4773,7 @@ function ProgressPage() {
         : { loading: false, recommendation: null, error: recommendationResult.error });
     });
     return () => { active = false; };
-  }, [user]);
+  }, [user, progressLocale]);
 
   if (!user) { go("login"); return null; }
 
@@ -4810,7 +4811,7 @@ function ProgressPage() {
 
   async function completeRecommendation() {
     if (!recommendation?.id) return;
-    const result = await dbMarkRecommendationCompleted(recommendation.id);
+    const result = await dbMarkRecommendationCompleted(recommendation.id, progressLocale);
     if (result.ok) {
       setRecommendationState({ loading: false, recommendation: result.recommendation });
     }

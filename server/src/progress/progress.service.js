@@ -1,5 +1,6 @@
 const { mapProgressSummary, mapRecommendation, mapTopicProgress } = require('./progress.mapper');
 const { getLevelForPercentage, selectRecommendation } = require('./progress.rules');
+const { normalizeLocale } = require('../i18n/locale');
 
 function httpError(status, message) {
   const error = new Error(message);
@@ -23,7 +24,8 @@ function calculateSummary(topicRows) {
 }
 
 function createProgressService(repository) {
-  async function syncInitialAssessment(userId, attemptId, externalConnection) {
+  async function syncInitialAssessment(userId, attemptId, externalConnection, localeInput) {
+    const locale = normalizeLocale(localeInput);
     const runner = async (connection) => {
       const attempt = await repository.findAttemptForUser(userId, attemptId, connection);
       if (!attempt) throw httpError(404, 'Completed initial assessment was not found.');
@@ -57,7 +59,7 @@ function createProgressService(repository) {
       return {
         summary: mapProgressSummary(await repository.getSummary(userId, connection)),
         topics: topicProgressRows.map(mapTopicProgress),
-        recommendation: mapRecommendation(savedRecommendation),
+        recommendation: mapRecommendation(savedRecommendation, locale),
       };
     };
 
@@ -65,7 +67,8 @@ function createProgressService(repository) {
     return repository.withTransaction(runner);
   }
 
-  async function syncLatestInitialAssessment(userId) {
+  async function syncLatestInitialAssessment(userId, localeInput) {
+    const locale = normalizeLocale(localeInput);
     return repository.withTransaction(async (connection) => {
       const attempt = await repository.findLatestCompletedInitialAttempt(userId, connection);
       if (!attempt) {
@@ -74,10 +77,10 @@ function createProgressService(repository) {
         return {
           summary: mapProgressSummary(await repository.getSummary(userId, connection)),
           topics: (await repository.listTopicProgress(userId, connection)).map(mapTopicProgress),
-          recommendation: mapRecommendation(recommendation),
+          recommendation: mapRecommendation(recommendation, locale),
         };
       }
-      return syncInitialAssessment(userId, attempt.id, connection);
+      return syncInitialAssessment(userId, attempt.id, connection, locale);
     });
   }
 
@@ -100,35 +103,39 @@ function createProgressService(repository) {
     };
   }
 
-  async function getCurrentRecommendation(userId) {
+  async function getCurrentRecommendation(userId, localeInput) {
+    const locale = normalizeLocale(localeInput);
     let recommendation = await repository.getCurrentRecommendation(userId);
     if (!recommendation) {
       const latestAttempt = await repository.findLatestCompletedInitialAttempt(userId);
       if (!latestAttempt) {
-        const result = await syncLatestInitialAssessment(userId);
+        const result = await syncLatestInitialAssessment(userId, locale);
         recommendation = result.recommendation;
         return { exists: true, recommendation };
       }
-      const result = await syncInitialAssessment(userId, latestAttempt.id);
+      const result = await syncInitialAssessment(userId, latestAttempt.id, undefined, locale);
       recommendation = result.recommendation;
       return { exists: true, recommendation };
     }
-    return { exists: true, recommendation: mapRecommendation(recommendation) };
+    return { exists: true, recommendation: mapRecommendation(recommendation, locale) };
   }
 
-  async function markViewed(userId, id) {
+  async function markViewed(userId, id, localeInput) {
+    const locale = normalizeLocale(localeInput);
     const recommendation = await repository.markRecommendationViewed(userId, Number(id));
     if (!recommendation || recommendation.user_id !== userId) throw httpError(404, 'Recommendation was not found.');
-    return { recommendation: mapRecommendation(recommendation) };
+    return { recommendation: mapRecommendation(recommendation, locale) };
   }
 
-  async function markCompleted(userId, id) {
+  async function markCompleted(userId, id, localeInput) {
+    const locale = normalizeLocale(localeInput);
     const recommendation = await repository.markRecommendationCompleted(userId, Number(id));
     if (!recommendation || recommendation.user_id !== userId) throw httpError(404, 'Recommendation was not found.');
-    return { recommendation: mapRecommendation(recommendation) };
+    return { recommendation: mapRecommendation(recommendation, locale) };
   }
 
-  async function applyScenarioCompletion(userId, scenarioResult, externalConnection) {
+  async function applyScenarioCompletion(userId, scenarioResult, externalConnection, localeInput) {
+    const locale = normalizeLocale(localeInput);
     const runner = async (connection) => {
       const existingEvent = await repository.getScenarioProgressEvent(scenarioResult.scenarioAttemptId, connection);
       if (existingEvent) {
@@ -137,7 +144,7 @@ function createProgressService(repository) {
           masteryDelta: existingEvent.mastery_delta,
           summary: mapProgressSummary(await repository.getSummary(userId, connection)),
           topics: (await repository.listTopicProgress(userId, connection)).map(mapTopicProgress),
-          recommendation: mapRecommendation(await repository.getCurrentRecommendation(userId, connection)),
+          recommendation: mapRecommendation(await repository.getCurrentRecommendation(userId, connection), locale),
         };
       }
 
@@ -178,7 +185,7 @@ function createProgressService(repository) {
         masteryDelta,
         summary: mapProgressSummary(await repository.getSummary(userId, connection)),
         topics: topicProgressRows.map(mapTopicProgress),
-        recommendation: mapRecommendation(savedRecommendation),
+        recommendation: mapRecommendation(savedRecommendation, locale),
       };
     };
 

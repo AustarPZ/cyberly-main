@@ -144,7 +144,7 @@ function createScenarioService(repository, progressService) {
         return mapCompletedResult(attempt, scenario, steps, decisions, {
           applied: false,
           masteryDelta: existingImpact?.mastery_delta || getMasteryDelta(attempt.percentage),
-        }, (await progressService.getCurrentRecommendation(userId)).recommendation);
+        }, (await progressService.getCurrentRecommendation(userId, locale)).recommendation);
       }
 
       if (decisions.length !== steps.length) {
@@ -158,7 +158,7 @@ function createScenarioService(repository, progressService) {
         topicCode: scenario.topic_code,
         percentage: score.percentage,
         masteryDelta: getMasteryDelta(score.percentage),
-      }, connection);
+      }, connection, locale);
 
       return mapCompletedResult(
         completedAttempt,
@@ -187,7 +187,7 @@ function createScenarioService(repository, progressService) {
       repository.listSteps(scenario.id, locale),
       repository.listDecisions(attempt.id),
       repository.getProgressEventForAttempt(attempt.id),
-      progressService.getCurrentRecommendation(userId),
+      progressService.getCurrentRecommendation(userId, locale),
     ]);
     return mapCompletedResult(attempt, scenario, steps, decisions, {
       applied: Boolean(progressEvent),
@@ -197,7 +197,7 @@ function createScenarioService(repository, progressService) {
 
   async function getRecommendedScenarios(userId, localeInput) {
     const locale = normalizeLocale(localeInput);
-    const currentRecommendation = await progressService.getCurrentRecommendation(userId);
+    const currentRecommendation = await progressService.getCurrentRecommendation(userId, locale);
     const recommendation = currentRecommendation.recommendation;
     if (!recommendation?.topicCode) return { recommendation, scenarios: [] };
 

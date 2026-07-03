@@ -1,4 +1,5 @@
 const { TOPIC_LABELS } = require('./progress.rules');
+const { buildRecommendationReasonText } = require('./recommendationMessages');
 
 function toIso(value) {
   return value ? new Date(value).toISOString() : null;
@@ -40,7 +41,7 @@ function mapProgressSummary(row) {
   };
 }
 
-function mapRecommendation(row) {
+function mapRecommendation(row, locale = 'en') {
   if (!row) return null;
   return {
     id: row.id,
@@ -49,7 +50,7 @@ function mapRecommendation(row) {
     topicLabel: row.topic_code ? TOPIC_LABELS[row.topic_code] || row.topic_code : null,
     recommendedLevel: row.recommended_level,
     reasonCode: row.reason_code,
-    reasonText: row.reason_text,
+    reasonText: buildRecommendationReasonText(row, locale),
     sourceType: row.source_type,
     sourceReferenceId: row.source_reference_id,
     status: row.status,
