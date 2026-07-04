@@ -9,11 +9,33 @@
     "profile": "Profil",
     "settings": "Tetapan",
     "signOut": "Log keluar",
-    "language": "Bahasa"
+    "language": "Bahasa",
+    "languageControlTitle": "Tukar bahasa",
+    "languageAriaLabel": "Pilih bahasa antara muka",
+    "brandHomeAriaLabel": "Pergi ke Laman Utama Cyberly",
+    "brandDashboardAriaLabel": "Pergi ke Papan Pemuka Cyberly",
+    "primaryAriaLabel": "Navigasi utama",
+    "openMenuAriaLabel": "Buka menu navigasi",
+    "closeMenuAriaLabel": "Tutup menu navigasi",
+    "mobileNavigationLabel": "Navigasi mudah alih",
+    "accountMenu": {
+      "triggerAriaLabel": "Buka menu akaun untuk {{name}}",
+      "menuAriaLabel": "Menu akaun",
+      "userFallback": "Pengguna",
+      "profileSettings": "Profil & Tetapan",
+      "logOut": "Log keluar"
+    },
+    "logoutModal": {
+      "title": "Log keluar daripada Cyberly?",
+      "description": "Anda boleh membatalkan dengan selamat dan terus belajar. Jika anda log keluar, sesi semasa pada peranti ini akan tamat.",
+      "cancel": "Batal",
+      "confirm": "Log keluar"
+    }
   },
   "auth": {
     "login": "Log masuk",
     "register": "Daftar",
+    "getStarted": "Mula",
     "email": "E-mel",
     "password": "Kata laluan",
     "displayName": "Nama paparan",
@@ -157,6 +179,19 @@
       "topics": "Topik",
       "languages": "Bahasa",
       "powered": "Dikuasakan"
+    },
+    "sectionNav": {
+      "title": "Bahagian papan pemuka",
+      "ariaLabel": "Navigasi bahagian papan pemuka",
+      "overview": "Gambaran Keseluruhan",
+      "learningProfile": "Profil Pembelajaran",
+      "initialAssessment": "Penilaian Awal",
+      "measuredProgress": "Kemajuan Terukur",
+      "recommendedNextStep": "Langkah Seterusnya",
+      "scenarioPractice": "Latihan Senario",
+      "topicMastery": "Penguasaan Topik",
+      "quickActions": "Tindakan Pantas",
+      "cyberGuardAi": "CyberGuard AI"
     },
     "assessment": {
       "completed": "Penilaian awal telah selesai",
@@ -425,6 +460,7 @@
       "title": "Kekal Selamat di Dunia Digital 🛡",
       "description": "Cyberly ialah panduan keselamatan siber peribadi anda — dikuasakan oleh AI yang menyesuaikan diri dengan tahap, bahasa dan cara belajar anda.",
       "cta": "Mula secara percuma →",
+      "continueLearning": "Jom Mula!",
       "chips": {
         "students": "Dibina untuk pelajar Malaysia",
         "languages": "Menyokong 3 bahasa",

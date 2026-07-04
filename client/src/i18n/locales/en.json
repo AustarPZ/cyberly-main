@@ -9,11 +9,33 @@
     "profile": "Profile",
     "settings": "Settings",
     "signOut": "Sign out",
-    "language": "Language"
+    "language": "Language",
+    "languageControlTitle": "Change language",
+    "languageAriaLabel": "Choose interface language",
+    "brandHomeAriaLabel": "Go to Cyberly Home",
+    "brandDashboardAriaLabel": "Go to Cyberly Dashboard",
+    "primaryAriaLabel": "Primary navigation",
+    "openMenuAriaLabel": "Open navigation menu",
+    "closeMenuAriaLabel": "Close navigation menu",
+    "mobileNavigationLabel": "Mobile navigation",
+    "accountMenu": {
+      "triggerAriaLabel": "Open account menu for {{name}}",
+      "menuAriaLabel": "Account menu",
+      "userFallback": "User",
+      "profileSettings": "Profile & Settings",
+      "logOut": "Log out"
+    },
+    "logoutModal": {
+      "title": "Log out of Cyberly?",
+      "description": "You can safely cancel and keep learning. If you log out, your current session on this device will end.",
+      "cancel": "Cancel",
+      "confirm": "Log out"
+    }
   },
   "auth": {
     "login": "Login",
     "register": "Register",
+    "getStarted": "Get started",
     "email": "Email",
     "password": "Password",
     "displayName": "Display name",
@@ -157,6 +179,19 @@
       "topics": "Topics",
       "languages": "Languages",
       "powered": "Powered"
+    },
+    "sectionNav": {
+      "title": "Dashboard sections",
+      "ariaLabel": "Dashboard section navigation",
+      "overview": "Overview",
+      "learningProfile": "Learning Profile",
+      "initialAssessment": "Initial Assessment",
+      "measuredProgress": "Measured Progress",
+      "recommendedNextStep": "Recommended Next Step",
+      "scenarioPractice": "Scenario Practice",
+      "topicMastery": "Topic Mastery",
+      "quickActions": "Quick Actions",
+      "cyberGuardAi": "CyberGuard AI"
     },
     "assessment": {
       "completed": "Initial assessment completed",
@@ -425,6 +460,7 @@
       "title": "Stay Safe in the Digital World 🛡",
       "description": "Cyberly is your personal cybersecurity guide — powered by AI that adapts to your level, language, and learning style.",
       "cta": "Get started free →",
+      "continueLearning": "Let's Start!",
       "chips": {
         "students": "Built for Malaysian students",
         "languages": "Supports 3 languages",

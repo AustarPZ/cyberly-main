@@ -9,11 +9,33 @@
     "profile": "个人资料",
     "settings": "设置",
     "signOut": "退出登录",
-    "language": "语言"
+    "language": "语言",
+    "languageControlTitle": "切换语言",
+    "languageAriaLabel": "选择界面语言",
+    "brandHomeAriaLabel": "前往 Cyberly 首页",
+    "brandDashboardAriaLabel": "前往 Cyberly 仪表板",
+    "primaryAriaLabel": "主导航",
+    "openMenuAriaLabel": "打开导航菜单",
+    "closeMenuAriaLabel": "关闭导航菜单",
+    "mobileNavigationLabel": "移动端导航",
+    "accountMenu": {
+      "triggerAriaLabel": "打开 {{name}} 的账号菜单",
+      "menuAriaLabel": "账号菜单",
+      "userFallback": "用户",
+      "profileSettings": "个人资料与设置",
+      "logOut": "退出登录"
+    },
+    "logoutModal": {
+      "title": "退出 Cyberly？",
+      "description": "你可以安全取消并继续学习。如果退出登录，此设备上的当前会话将结束。",
+      "cancel": "取消",
+      "confirm": "退出登录"
+    }
   },
   "auth": {
     "login": "登录",
     "register": "注册",
+    "getStarted": "开始使用",
     "email": "电子邮箱",
     "password": "密码",
     "displayName": "显示名称",
@@ -157,6 +179,19 @@
       "topics": "主题",
       "languages": "语言",
       "powered": "AI 驱动"
+    },
+    "sectionNav": {
+      "title": "仪表板分区",
+      "ariaLabel": "仪表板分区导航",
+      "overview": "概览",
+      "learningProfile": "学习资料",
+      "initialAssessment": "初始测评",
+      "measuredProgress": "测量进度",
+      "recommendedNextStep": "推荐的下一步",
+      "scenarioPractice": "情境练习",
+      "topicMastery": "主题掌握度",
+      "quickActions": "快捷操作",
+      "cyberGuardAi": "CyberGuard AI"
     },
     "assessment": {
       "completed": "初始测评已完成",
@@ -425,6 +460,7 @@
       "title": "在数字世界中保持安全 🛡",
       "description": "Cyberly 是你的个人网络安全指南，由 AI 驱动，并会根据你的水平、语言和学习方式进行调整。",
       "cta": "免费开始 →",
+      "continueLearning": "开始吧！",
       "chips": {
         "students": "为马来西亚学生打造",
         "languages": "支持 3 种语言",

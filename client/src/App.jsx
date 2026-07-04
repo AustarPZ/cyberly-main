@@ -22,6 +22,7 @@ body {
   background: #f7f8f5;
   color: #1a1a18;
   min-height: 100vh;
+  overflow-x: hidden;
 }
 :root {
   --teal:     #1D9E75;
@@ -41,39 +42,144 @@ body {
   height: var(--nav-h);
   background: #fff;
   border-bottom: 1px solid rgba(0,0,0,0.08);
-  display: flex; align-items: center; gap: 0.25rem;
+  display: flex; align-items: center; gap: 1.25rem;
   padding: 0 1.5rem;
 }
 .nav-logo {
   font-family: 'Space Grotesk', sans-serif;
   font-size: 1.1rem; font-weight: 600; color: var(--teal);
-  margin-right: auto; display: flex; align-items: center; gap: 0.4rem;
+  display: flex; align-items: center; gap: 0.4rem;
+  background: none; border: none; cursor: pointer; flex: 0 0 auto;
+  padding: 0.35rem 0.15rem; border-radius: 8px;
 }
+.nav-logo:hover, .nav-logo:focus-visible { background: var(--teal-lt); outline: none; }
+.nav-primary { display: flex; align-items: center; gap: 0.25rem; flex: 0 1 auto; min-width: 0; }
+.nav-utility { margin-left: auto; display: flex; align-items: center; gap: 0.7rem; flex: 0 0 auto; }
+.nav-divider { width: 1px; height: 28px; background: rgba(0,0,0,0.1); }
+.desktop-auth-actions { display: flex; gap: 0.5rem; align-items: center; }
+.mobile-menu-wrap { display: none; position: relative; }
+.mobile-menu-button {
+  width: 40px; height: 40px; border: 1px solid rgba(0,0,0,0.12); border-radius: 10px;
+  background: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+  color: #333; font-size: 1.15rem;
+}
+.mobile-menu-button:hover,
+.mobile-menu-button:focus-visible,
+.mobile-menu-button.open {
+  background: var(--teal-lt); border-color: rgba(29,158,117,0.35); outline: 2px solid transparent;
+}
+.mobile-menu-button:focus-visible { box-shadow: 0 0 0 3px rgba(29,158,117,0.25); }
+.mobile-menu-panel {
+  position: fixed; top: calc(var(--nav-h) + 0.5rem); left: 1rem; right: 1rem; z-index: 150;
+  background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: 12px;
+  box-shadow: 0 18px 45px rgba(0,0,0,0.18); padding: 0.55rem;
+}
+.mobile-menu-panel[hidden] { display: none; }
+.mobile-nav-item {
+  width: 100%; border: none; background: none; cursor: pointer; text-align: left;
+  padding: 0.75rem 0.85rem; border-radius: 9px; font-family: 'DM Sans', sans-serif;
+  font-size: 0.96rem; color: #333; display: flex; align-items: center; justify-content: space-between;
+}
+.mobile-nav-item:hover,
+.mobile-nav-item:focus-visible,
+.mobile-nav-item.active {
+  background: var(--teal-lt); outline: none;
+}
+.mobile-nav-item:focus-visible { box-shadow: inset 0 0 0 2px rgba(29,158,117,0.35); }
+.mobile-menu-actions { border-top: 1px solid rgba(0,0,0,0.08); margin-top: 0.45rem; padding-top: 0.45rem; display: grid; gap: 0.45rem; }
 .nav-link {
   background: none; border: none; cursor: pointer;
   font-family: 'DM Sans', sans-serif; font-size: 0.875rem;
   color: #555; padding: 0.4rem 0.75rem; border-radius: 8px;
+  white-space: nowrap;
 }
-.nav-link:hover { background: var(--gray-lt); }
+.nav-link:hover, .nav-link:focus-visible { background: var(--gray-lt); outline: none; box-shadow: inset 0 0 0 2px rgba(29,158,117,0.2); }
 .nav-link.active { color: var(--teal); font-weight: 600; background: var(--teal-lt); }
 .nav-cta {
   background: var(--teal); color: #fff; border: none; cursor: pointer;
   font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500;
-  padding: 0.45rem 1.1rem; border-radius: 20px; margin-left: 0.5rem;
+  padding: 0.45rem 1.1rem; border-radius: 20px;
 }
-.nav-cta:hover { opacity: 0.88; }
+.nav-cta.secondary { background: #fff; color: var(--teal); border: 1px solid rgba(29,158,117,0.35); }
+.nav-cta:hover, .nav-cta:focus-visible { opacity: 0.88; outline: none; box-shadow: 0 0 0 3px rgba(29,158,117,0.18); }
 .nav-user { display: flex; align-items: center; gap: 0.5rem; font-size: 0.85rem; color: #555; }
+.nav-language {
+  display: flex; align-items: center; gap: 0.45rem; color: #555;
+}
+.nav-language select {
+  border: 1px solid rgba(0,0,0,0.14); background: #fff; border-radius: 8px;
+  padding: 0.35rem 0.55rem; font-family: 'DM Sans', sans-serif; font-size: 0.82rem;
+}
+.nav-language select:hover { border-color: rgba(29,158,117,0.35); }
+.nav-language select:focus-visible { outline: 2px solid rgba(29,158,117,0.35); outline-offset: 2px; }
 .nav-avatar {
   width: 30px; height: 30px; border-radius: 50%;
   background: var(--teal); color: #fff;
   display: flex; align-items: center; justify-content: center;
   font-size: 0.75rem; font-weight: 600;
 }
-.nav-logout {
-  font-size: 0.8rem; color: var(--coral); cursor: pointer;
-  border: none; background: none; padding: 0.2rem 0.5rem; border-radius: 4px;
+.account-menu-wrap { position: relative; }
+.account-trigger {
+  border: 1px solid rgba(0,0,0,0.1); background: #fff; border-radius: 999px; cursor: pointer;
+  display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.45rem 0.25rem 0.25rem;
+  font-family: 'DM Sans', sans-serif; color: #333;
 }
-.nav-logout:hover { background: var(--coral-lt); }
+.account-trigger:hover, .account-trigger:focus-visible, .account-trigger.open { background: var(--gray-lt); outline: none; box-shadow: 0 0 0 3px rgba(29,158,117,0.18); }
+.account-name { max-width: 150px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem; font-weight: 600; }
+.account-chevron { font-size: 0.75rem; color: #777; }
+.account-dropdown {
+  position: absolute; top: calc(100% + 0.6rem); right: 0; width: min(240px, calc(100vw - 2rem)); z-index: 160;
+  background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: 10px;
+  box-shadow: 0 14px 35px rgba(0,0,0,0.14); padding: 0.5rem;
+}
+.account-menu-header { padding: 0.65rem 0.7rem 0.75rem; border-bottom: 1px solid rgba(0,0,0,0.07); margin-bottom: 0.35rem; }
+.account-menu-name { font-weight: 700; font-size: 0.92rem; color: #1a1a18; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-menu-email { margin-top: 0.15rem; font-size: 0.78rem; color: #777; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.account-menu-item {
+  width: 100%; border: none; background: none; cursor: pointer; text-align: left;
+  padding: 0.6rem 0.7rem; border-radius: 8px; font-family: 'DM Sans', sans-serif;
+  font-size: 0.86rem; color: #333;
+}
+.account-menu-item:hover, .account-menu-item:focus-visible, .account-menu-item.active { background: var(--gray-lt); outline: none; box-shadow: inset 0 0 0 2px rgba(29,158,117,0.18); }
+.account-menu-item.danger { color: var(--coral); font-weight: 600; }
+.logout-modal-backdrop {
+  position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.36);
+  display: flex; align-items: center; justify-content: center; padding: 1.5rem;
+}
+.logout-modal {
+  width: min(420px, 100%); background: #fff; border-radius: 12px; padding: 1.4rem;
+  box-shadow: 0 22px 60px rgba(0,0,0,0.24);
+}
+.logout-modal h2 { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; margin-bottom: 0.45rem; }
+.logout-modal p { color: #666; font-size: 0.92rem; line-height: 1.6; margin-bottom: 1.2rem; }
+.logout-modal-actions { display: flex; justify-content: flex-end; gap: 0.65rem; }
+.modal-cancel, .modal-confirm {
+  border: none; border-radius: 9px; padding: 0.6rem 1rem; cursor: pointer;
+  font-family: 'DM Sans', sans-serif; font-weight: 700; font-size: 0.88rem;
+}
+.modal-cancel { background: var(--gray-lt); color: #333; }
+.modal-confirm { background: var(--coral); color: #fff; }
+.modal-cancel:hover, .modal-cancel:focus-visible, .modal-confirm:hover, .modal-confirm:focus-visible { opacity: 0.9; outline: none; box-shadow: 0 0 0 3px rgba(29,158,117,0.2); }
+
+@media (max-width: 1050px) {
+  .navbar { gap: 0.65rem; padding: 0 0.85rem; }
+  .nav-primary { display: none; }
+  .mobile-menu-wrap { display: block; }
+  .nav-utility { gap: 0.5rem; }
+  .desktop-auth-actions { display: none; }
+  .nav-divider { display: none; }
+  .account-name { max-width: min(120px, 22vw); }
+  .nav-language { gap: 0.3rem; }
+  .nav-language select { max-width: 86px; padding: 0.35rem 0.35rem; }
+}
+
+@media (max-width: 560px) {
+  .navbar { padding: 0 0.65rem; }
+  .nav-logo span:last-child { display: none; }
+  .account-name { display: none; }
+  .account-trigger { gap: 0.25rem; padding-right: 0.35rem; }
+  .nav-language select { max-width: 72px; font-size: 0.78rem; }
+}
 
 /* ── Layout ── */
 .page-wrap { margin-top: var(--nav-h); min-height: calc(100vh - var(--nav-h)); }
@@ -248,7 +354,63 @@ body {
   font-family: 'DM Sans', sans-serif; font-size: 0.9rem; cursor: pointer;
   color: #555;
 }
-.btn-ghost:hover { background: var(--gray-lt); }
+.btn-ghost:hover, .btn-ghost:focus-visible { background: var(--gray-lt); outline: none; box-shadow: 0 0 0 3px rgba(29,158,117,0.16); }
+.page-back {
+  display: inline-flex; align-items: center; gap: 0.45rem;
+  background: #fff; border: 1.5px solid rgba(0,0,0,0.13);
+  border-radius: 10px; padding: 0.6rem 0.9rem;
+  font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 600;
+  color: #555; cursor: pointer; margin-bottom: 1.5rem;
+}
+.page-back:hover, .page-back:focus-visible {
+  background: var(--teal-lt); color: var(--teal); outline: none;
+  box-shadow: 0 0 0 3px rgba(29,158,117,0.16);
+}
+.page-state {
+  background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 14px;
+  padding: 1.2rem 1.35rem; color: #555; font-size: 0.9rem; line-height: 1.55;
+}
+.page-state.error { border-color: rgba(216,90,48,0.25); background: var(--coral-lt); color: #5f4036; }
+.page-state.empty { background: #fafafa; }
+.page-state-title { font-weight: 700; color: #1a1a18; margin-bottom: 0.25rem; }
+.page-state.error .page-state-title { color: var(--coral); }
+.dashboard-anchor { scroll-margin-top: calc(var(--nav-h) + 1rem); }
+.dashboard-shell {
+  max-width: 1180px; margin: 0 auto; padding: 2.25rem 1.5rem 3rem;
+  display: grid; grid-template-columns: minmax(190px, 230px) minmax(0, 1fr); gap: 1.5rem;
+}
+.dashboard-section-nav {
+  position: sticky; top: calc(var(--nav-h) + 1rem); align-self: start;
+  background: #fff; border: 1px solid rgba(0,0,0,0.07); border-radius: 14px;
+  padding: 0.85rem; box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+}
+.dashboard-section-nav-title {
+  font-size: 0.76rem; font-weight: 800; color: #77827d; letter-spacing: 0.07em;
+  text-transform: uppercase; margin: 0 0 0.55rem 0.25rem;
+}
+.dashboard-section-nav-list { display: grid; gap: 0.2rem; }
+.dashboard-section-nav-button {
+  border: none; background: none; cursor: pointer; text-align: left; border-radius: 9px;
+  padding: 0.55rem 0.65rem; font-family: 'DM Sans', sans-serif; font-size: 0.84rem;
+  color: #56615c;
+}
+.dashboard-section-nav-button:hover,
+.dashboard-section-nav-button:focus-visible,
+.dashboard-section-nav-button.active {
+  background: var(--teal-lt); color: var(--teal); outline: none;
+  box-shadow: inset 0 0 0 2px rgba(29,158,117,0.16);
+}
+.dashboard-content { min-width: 0; }
+@media (max-width: 900px) {
+  .dashboard-shell { display: block; padding: 1.25rem 1rem 2.5rem; }
+  .dashboard-section-nav {
+    position: static; margin-bottom: 1rem; overflow-x: auto; padding: 0.65rem;
+  }
+  .dashboard-section-nav-list {
+    display: flex; gap: 0.35rem; min-width: max-content;
+  }
+  .dashboard-section-nav-button { white-space: nowrap; }
+}
 
 /* Auth switch link */
 .auth-switch { text-align: center; margin-top: 1.25rem; font-size: 0.83rem; color: #888; }
@@ -324,6 +486,45 @@ const {
   labelFor,
   labelsFor,
 } = profileMappings;
+
+function PageBackButton({ className = "", style }) {
+  const { t } = useTranslation();
+  const { user, go } = useApp();
+  const target = user ? "dashboard" : "home";
+  const label = user ? t("common.backToDashboard") : t("common.backToHome");
+
+  return (
+    <button
+      type="button"
+      className={`page-back${className ? ` ${className}` : ""}`}
+      style={style}
+      onClick={() => go(target)}
+      aria-label={label}
+    >
+      <span aria-hidden="true">←</span>
+      <span>{label}</span>
+    </button>
+  );
+}
+
+function PageState({ type = "loading", title, message, actionLabel, onAction }) {
+  return (
+    <div className={`page-state ${type}`}>
+      {title && <div className="page-state-title">{title}</div>}
+      {message && <div>{message}</div>}
+      {actionLabel && onAction && (
+        <button type="button" className="btn-ghost" style={{ marginTop: "0.85rem" }} onClick={onAction}>
+          {actionLabel}
+        </button>
+      )}
+    </div>
+  );
+}
+
+function prefersReducedMotion() {
+  return typeof window !== "undefined" &&
+    window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+}
 
 function normalizeProfile(profileData) {
   const profile = profileData || {};
@@ -1939,8 +2140,9 @@ function LoginPage({ onSwitch }) {
 // ─── Auth Gate (toggles between Login & Register) ─────────────────
 function AuthGate() {
   const { t } = useTranslation();
-  const { go } = useApp();
-  const [mode, setMode] = useState("login");
+  const { go, authMode, setAuthMode } = useApp();
+  const mode = authMode;
+  const setMode = setAuthMode;
   return (
     <div>
       <button
@@ -2000,7 +2202,16 @@ Keep responses concise and encouraging. Use their nickname when appropriate.`;
 // ─── Page: Home ───────────────────────────────────────────────────
 function HomePage() {
   const { t } = useTranslation();
-  const { go } = useApp();
+  const { go, user, openAuth } = useApp();
+  const homeCta = user
+    ? {
+        label: t("home.hero.continueLearning"),
+        action: () => go("dashboard"),
+      }
+    : {
+        label: t("home.hero.cta"),
+        action: () => openAuth("register"),
+      };
 
   const threatStats = [
     { emoji: "😨", value: "11%", descKey: "home.stats.scamVictim" },
@@ -2032,8 +2243,8 @@ function HomePage() {
         <p>
           {t("home.hero.description")}
         </p>
-        <button className="hero-cta" onClick={() => go("login")}>
-          {t("home.hero.cta")}
+        <button className="hero-cta" onClick={homeCta.action}>
+          {homeCta.label}
         </button>
         <div className="stat-row">
           <div className="stat-chip">🎓 {t("home.hero.chips.students")}</div>
@@ -2200,10 +2411,10 @@ function HomePage() {
           </p>
           <button
             className="hero-cta"
-            onClick={() => go("login")}
+            onClick={homeCta.action}
             style={{ fontSize: "1rem", padding: "0.85rem 2.5rem" }}
           >
-            {t("home.hero.cta")}
+            {homeCta.label}
           </button>
           <div style={{ marginTop: "1.25rem", fontSize: "0.8rem", color: "rgba(255,255,255,0.35)" }}>
             {t("home.bottomCta.note")}
@@ -2215,6 +2426,18 @@ function HomePage() {
 }
 
 // ─── Page: Dashboard ──────────────────────────────────────────────
+const DASHBOARD_SECTIONS = [
+  { id: "dashboard-overview", labelKey: "dashboard.sectionNav.overview" },
+  { id: "dashboard-learning-profile", labelKey: "dashboard.sectionNav.learningProfile" },
+  { id: "dashboard-initial-assessment", labelKey: "dashboard.sectionNav.initialAssessment" },
+  { id: "dashboard-measured-progress", labelKey: "dashboard.sectionNav.measuredProgress" },
+  { id: "dashboard-recommended-next-step", labelKey: "dashboard.sectionNav.recommendedNextStep" },
+  { id: "dashboard-scenario-practice", labelKey: "dashboard.sectionNav.scenarioPractice" },
+  { id: "dashboard-topic-mastery", labelKey: "dashboard.sectionNav.topicMastery" },
+  { id: "dashboard-quick-actions", labelKey: "dashboard.sectionNav.quickActions" },
+  { id: "dashboard-cyberguard-ai", labelKey: "dashboard.sectionNav.cyberGuardAi" },
+];
+
 function DashboardPage() {
   const { t, i18n: activeI18n } = useTranslation();
   const { user, go, openRecommendedResource } = useApp();
@@ -2224,6 +2447,13 @@ function DashboardPage() {
   const [progressState, setProgressState] = useState({ loading: true, progress: null });
   const [recommendationState, setRecommendationState] = useState({ loading: true, recommendation: null });
   const [scenarioState, setScenarioState] = useState({ loading: true, recommended: [], dashboard: null });
+  const [activeSection, setActiveSection] = useState("dashboard-overview");
+  const hasLearningProfileSection = Boolean(user?.helpTopics?.length);
+  const hasTopicMasterySection = Boolean(progressState.progress?.topics?.length);
+  const dashboardSections = DASHBOARD_SECTIONS.filter(section => (
+    (section.id !== "dashboard-learning-profile" || hasLearningProfileSection) &&
+    (section.id !== "dashboard-topic-mastery" || hasTopicMasterySection)
+  ));
 
   useEffect(() => {
     let active = true;
@@ -2238,6 +2468,40 @@ function DashboardPage() {
     });
     return () => { active = false; };
   }, [user, assessmentLocale]);
+
+  useEffect(() => {
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, []);
+
+  useEffect(() => {
+    const sectionIds = DASHBOARD_SECTIONS
+      .filter(section => (
+        (section.id !== "dashboard-learning-profile" || hasLearningProfileSection) &&
+        (section.id !== "dashboard-topic-mastery" || hasTopicMasterySection)
+      ))
+      .map(section => section.id);
+    const sections = sectionIds
+      .map(id => document.getElementById(id))
+      .filter(Boolean);
+
+    if (sections.length === 0) return undefined;
+
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries
+        .filter(entry => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+      if (visible?.target?.id) {
+        setActiveSection(visible.target.id);
+      }
+    }, {
+      rootMargin: "-80px 0px -65% 0px",
+      threshold: [0.1, 0.35, 0.6],
+    });
+
+    sections.forEach(section => observer.observe(section));
+    return () => observer.disconnect();
+  }, [hasLearningProfileSection, hasTopicMasterySection]);
 
   useEffect(() => {
     let active = true;
@@ -2382,10 +2646,19 @@ function DashboardPage() {
 
   const todayTip = tips[tipIndex];
 
+  function scrollToDashboardSection(sectionId) {
+    const target = document.getElementById(sectionId);
+    if (!target) return;
+    target.scrollIntoView({
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+      block: "start",
+    });
+  }
+
   return (
     <div>
       {/* Welcome hero */}
-      <div style={{
+      <div id="dashboard-overview" className="dashboard-anchor" style={{
         background: "linear-gradient(135deg, var(--teal) 0%, #1a5c4a 100%)",
         padding: "2.5rem 1.5rem", color: "#fff",
       }}>
@@ -2416,11 +2689,29 @@ function DashboardPage() {
         </div>
       </div>
 
-      <div className="section">
+      <div className="dashboard-shell">
+        <aside className="dashboard-section-nav" aria-label={t("dashboard.sectionNav.ariaLabel")}>
+          <div className="dashboard-section-nav-title">{t("dashboard.sectionNav.title")}</div>
+          <div className="dashboard-section-nav-list">
+            {dashboardSections.map(section => (
+              <button
+                key={section.id}
+                type="button"
+                className={`dashboard-section-nav-button${activeSection === section.id ? " active" : ""}`}
+                onClick={() => scrollToDashboardSection(section.id)}
+                aria-current={activeSection === section.id ? "true" : undefined}
+              >
+                {t(section.labelKey)}
+              </button>
+            ))}
+          </div>
+        </aside>
+
+      <div className="dashboard-content">
 
         {/* Profile summary */}
         {user.helpTopics?.length > 0 && (
-          <div className="card" style={{ marginBottom: "2rem", background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)", display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
+          <div id="dashboard-learning-profile" className="card dashboard-anchor" style={{ marginBottom: "2rem", background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)", display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
             <div style={{ flex: 1, minWidth: 200 }}>
               <div style={{ fontWeight: 600, marginBottom: "0.4rem", color: "var(--teal)" }}>🎯 {t("dashboard.learningProfile")}</div>
               <div style={{ fontSize: "0.85rem", color: "#333", lineHeight: 1.7 }}>
@@ -2440,7 +2731,7 @@ function DashboardPage() {
           </div>
         )}
 
-        <div className="card" style={{ marginBottom: "2rem", background: "#fff8e1", border: "1px solid #ffe082", display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
+        <div id="dashboard-initial-assessment" className="card dashboard-anchor" style={{ marginBottom: "2rem", background: "#fff8e1", border: "1px solid #ffe082", display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
           <div style={{ flex: 1, minWidth: 220 }}>
             <div style={{ fontWeight: 700, color: "#e65100", marginBottom: "0.25rem" }}>
               {assessmentStatus.status === "completed"
@@ -2464,10 +2755,10 @@ function DashboardPage() {
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
-          <div className="card" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.07)" }}>
+          <div id="dashboard-measured-progress" className="card dashboard-anchor" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.07)" }}>
             <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.35rem" }}>{t("dashboard.progress.title")}</div>
             {progressState.loading ? (
-              <div style={{ fontSize: "0.86rem", color: "#666" }}>{t("dashboard.progress.loading")}</div>
+              <PageState message={t("dashboard.progress.loading")} />
             ) : summary?.exists ? (
               <>
                 <div style={{ display: "flex", alignItems: "flex-end", gap: "0.45rem", marginBottom: "0.65rem" }}>
@@ -2482,16 +2773,14 @@ function DashboardPage() {
                 </div>
               </>
             ) : (
-              <div style={{ fontSize: "0.86rem", color: "#666", lineHeight: 1.6 }}>
-                {t("dashboard.progress.empty")}
-              </div>
+              <PageState type="empty" message={t("dashboard.progress.empty")} />
             )}
           </div>
 
-          <div className="card" style={{ background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.18)" }}>
+          <div id="dashboard-recommended-next-step" className="card dashboard-anchor" style={{ background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.18)" }}>
             <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.35rem" }}>{t("dashboard.recommendation.title")}</div>
             {recommendationState.loading ? (
-              <div style={{ fontSize: "0.86rem", color: "#666" }}>{t("dashboard.recommendation.loading")}</div>
+              <PageState message={t("dashboard.recommendation.loading")} />
             ) : recommendation ? (
               <>
                 <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.05rem", marginBottom: "0.35rem", color: "#1a1a18" }}>
@@ -2505,16 +2794,16 @@ function DashboardPage() {
                 </button>
               </>
             ) : (
-              <div style={{ fontSize: "0.86rem", color: "#666" }}>{t("dashboard.recommendation.empty")}</div>
+              <PageState type="empty" message={t("dashboard.recommendation.empty")} />
             )}
           </div>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
+        <div id="dashboard-scenario-practice" className="dashboard-anchor" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
           <div className="card" style={{ border: "1px solid rgba(0,0,0,0.07)" }}>
             <div style={{ fontWeight: 700, color: "#2E7D32", marginBottom: "0.35rem" }}>{t("dashboard.scenarios.practiceTitle")}</div>
             {scenarioState.loading ? (
-              <div style={{ fontSize: "0.86rem", color: "#666" }}>{t("dashboard.scenarios.loadingActivity")}</div>
+              <PageState message={t("dashboard.scenarios.loadingActivity")} />
             ) : (
               <>
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0.75rem", marginBottom: "0.85rem" }}>
@@ -2542,7 +2831,7 @@ function DashboardPage() {
           <div className="card" style={{ background: "#E8F5E9", border: "1px solid rgba(46,125,50,0.18)" }}>
             <div style={{ fontWeight: 700, color: "#2E7D32", marginBottom: "0.35rem" }}>{t("dashboard.scenarios.recommendedTitle")}</div>
             {scenarioState.loading ? (
-              <div style={{ fontSize: "0.86rem", color: "#666" }}>{t("dashboard.scenarios.finding")}</div>
+              <PageState message={t("dashboard.scenarios.finding")} />
             ) : recommendedScenario ? (
               <>
                 <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.02rem", marginBottom: "0.35rem" }}>{recommendedScenario.title}</div>
@@ -2554,13 +2843,13 @@ function DashboardPage() {
                 </button>
               </>
             ) : (
-              <div style={{ fontSize: "0.86rem", color: "#666", lineHeight: 1.6 }}>{t("dashboard.scenarios.unlockDescription")}</div>
+              <PageState type="empty" message={t("dashboard.scenarios.unlockDescription")} />
             )}
           </div>
         </div>
 
         {topicsMeasured.length > 0 && (
-          <div style={{ marginBottom: "2rem" }}>
+          <div id="dashboard-topic-mastery" className="dashboard-anchor" style={{ marginBottom: "2rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap" }}>
               <p className="section-title" style={{ fontSize: "1.1rem", margin: 0 }}>{t("dashboard.topicMastery.title")}</p>
               <button onClick={() => go("progress")} style={{ background: "transparent", color: "var(--teal)", border: "none", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>{t("dashboard.topicMastery.viewProgress")}</button>
@@ -2596,6 +2885,7 @@ function DashboardPage() {
         </div>
 
         {/* Quick actions */}
+        <div id="dashboard-quick-actions" className="dashboard-anchor">
         <p className="section-title" style={{ fontSize: "1.1rem", marginBottom: "0.4rem" }}>{t("dashboard.quickActions.title")}</p>
         <p className="section-sub" style={{ marginBottom: "1.25rem" }}>{t("dashboard.quickActions.description")}</p>
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem", marginBottom: "2.5rem" }}>
@@ -2618,9 +2908,10 @@ function DashboardPage() {
             </button>
           ))}
         </div>
+        </div>
 
         {/* CyberGuard AI */}
-        <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem", marginBottom: "0.75rem" }}>
+        <div id="dashboard-cyberguard-ai" className="dashboard-anchor" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem", marginBottom: "0.75rem" }}>
           <div>
             <p className="section-title" style={{ fontSize: "1.1rem", margin: 0 }}>🛡 {t("dashboard.cyberGuard.title")}</p>
             <p className="section-sub" style={{ margin: "0.25rem 0 0" }}>{t("dashboard.cyberGuard.description")}</p>
@@ -2630,6 +2921,7 @@ function DashboardPage() {
           </span>
         </div>
         <AgentPanel />
+      </div>
       </div>
     </div>
   );
@@ -2645,6 +2937,8 @@ function AgentPanel() {
   const [loading,  setLoading]  = useState(false);
   const [error,    setError]    = useState(null);
   const endRef = useRef(null);
+  const messagesRef = useRef(null);
+  const shouldAutoScrollRef = useRef(false);
 
   const nick = user?.aiNickname || user?.displayName || user?.name || "there";
 
@@ -2656,10 +2950,19 @@ function AgentPanel() {
     }]);
   }, [nick, t]);
 
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
+  useEffect(() => {
+    if (!shouldAutoScrollRef.current) return;
+    const container = messagesRef.current;
+    if (!container) return;
+    container.scrollTo({
+      top: container.scrollHeight,
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+    });
+  }, [messages]);
 
   async function sendMessage(q) {
     if (!q.trim() || loading) return;
+    shouldAutoScrollRef.current = true;
     setInput("");
     setError(null);
     setMessages(prev => [...prev, { role: "user", text: q }]);
@@ -2687,7 +2990,7 @@ function AgentPanel() {
   return (
     <div className="agent-panel">
       <div className="agent-header">🛡 {t("agent.title")}</div>
-      <div className="agent-messages">
+      <div className="agent-messages" ref={messagesRef}>
         {messages.map((m, i) => (
           <div key={i} className={`agent-bubble ${m.role}`} style={{ whiteSpace: "pre-wrap" }}>
             {m.text}
@@ -2731,7 +3034,7 @@ const TOPIC_COLORS = {
 
 function ResourcesPage() {
   const { t, i18n: activeI18n } = useTranslation();
-  const { go, resourceFocusTopic, clearResourceFocus } = useApp();
+  const { resourceFocusTopic, clearResourceFocus } = useApp();
   const resourceLocale = normalizeLocale(activeI18n.language);
   const [resourceState, setResourceState] = useState({ loading: true, resources: [] });
   const [selected, setSelected]   = useState(null);
@@ -2768,25 +3071,6 @@ function ResourcesPage() {
     return () => { active = false; };
   }, [resourceLocale, selected]);
 
-  const BackBtn = () => (
-    <button
-      onClick={() => go("home")}
-      style={{
-        display: "inline-flex", alignItems: "center", gap: "0.4rem",
-        background: "none", border: "none", cursor: "pointer",
-        color: "#555", fontSize: "0.875rem", fontWeight: 500,
-        padding: "0", marginBottom: "1.5rem", transition: "color 0.15s",
-      }}
-      onMouseEnter={e => e.currentTarget.style.color = "var(--teal)"}
-      onMouseLeave={e => e.currentTarget.style.color = "#555"}
-    >
-      <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-        <path d="M19 12H5M12 5l-7 7 7 7"/>
-      </svg>
-      {t("common.backToHome")}
-    </button>
-  );
-
   return (
     <div>
       {/* Hero banner */}
@@ -2818,7 +3102,7 @@ function ResourcesPage() {
       </div>
 
       <div className="section">
-        <BackBtn />
+        <PageBackButton />
 
         {focusedCategory && (
           <div className="card" style={{ marginBottom: "1rem", background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)", display: "flex", gap: "0.85rem", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}>
@@ -3003,7 +3287,6 @@ function ResourcesPage() {
 // ─── Page: About ──────────────────────────────────────────────────
 function AboutPage() {
   const { t } = useTranslation();
-  const { go } = useApp();
 
   const members = [
     { initials: "JJ",  name: "Jayron Poi",     roleKey: "about.team.members.jayron.role", descKey: "about.team.members.jayron.description" },
@@ -3062,23 +3345,7 @@ function AboutPage() {
 
       <div className="section">
 
-        {/* Back button */}
-        <button
-          onClick={() => go("home")}
-          style={{
-            display: "inline-flex", alignItems: "center", gap: "0.4rem",
-            background: "none", border: "none", cursor: "pointer",
-            color: "#555", fontSize: "0.875rem", fontWeight: 500,
-            padding: "0", marginBottom: "2rem", transition: "color 0.15s",
-          }}
-          onMouseEnter={e => e.currentTarget.style.color = "var(--teal)"}
-          onMouseLeave={e => e.currentTarget.style.color = "#555"}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M19 12H5M12 5l-7 7 7 7"/>
-          </svg>
-          {t("common.backToHome")}
-        </button>
+        <PageBackButton />
 
         {/* Stats */}
         <div style={{ marginBottom: "3rem" }}>
@@ -3346,7 +3613,7 @@ function AssessmentPage() {
 
     return (
       <div className="section" style={{ maxWidth: 860 }}>
-        <button className="btn-ghost" style={{ marginBottom: "1rem" }} onClick={() => go("dashboard")}>{t("nav.dashboard")}</button>
+        <PageBackButton style={{ marginBottom: "1rem" }} />
         <div className="card">
           <div className="auth-progress" style={{ marginBottom: "1.25rem" }}>
             <div className="auth-progress-track">
@@ -3395,6 +3662,7 @@ function AssessmentPage() {
     const improvements = (result?.topicScores || []).filter(topic => topic.classification === "improvement");
     return (
       <div className="section" style={{ maxWidth: 980 }}>
+        <PageBackButton />
         <div className="card" style={{ marginBottom: "1.5rem", background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)" }}>
           <div style={{ fontSize: "0.78rem", color: "var(--teal)", fontWeight: 700, textTransform: "uppercase" }}>{t("assessment.result")}</div>
           <h1 className="section-title" style={{ marginTop: "0.25rem" }}>{t("assessment.completed")}</h1>
@@ -3475,6 +3743,11 @@ function AssessmentPage() {
           <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.5rem, 3vw, 2.2rem)", marginTop: "0.35rem" }}> {t("assessment.title")}</h1>
         </div>
       </div>
+      {!attempt && !result && (
+        <div className="section" style={{ paddingBottom: 0 }}>
+          <PageBackButton />
+        </div>
+      )}
       {error && <div className="section" style={{ paddingBottom: 0 }}><div className="field-error">{error || t("assessment.error")}</div></div>}
       {loading ? (
         <div className="section"><p className="section-title">{t("assessment.loading")}</p></div>
@@ -3807,9 +4080,13 @@ function ScenariosPage() {
         </div>
       </div>
       <div className="section">
-        <button className="btn-ghost" onClick={() => view.mode === "library" ? go("dashboard") : setView({ mode: "library" })} style={{ marginBottom: "1.5rem" }}>
-          {view.mode === "library" ? t("scenarios.library.backToDashboard") : view.mode === "attempt" ? t("scenarios.attempt.exit") : t("common.back")}
-        </button>
+        {view.mode === "library" ? (
+          <PageBackButton style={{ marginBottom: "1.5rem" }} />
+        ) : (
+          <button className="btn-ghost" onClick={() => setView({ mode: "library" })} style={{ marginBottom: "1.5rem" }}>
+            {view.mode === "attempt" ? t("scenarios.attempt.exit") : t("common.back")}
+          </button>
+        )}
         {error && <div className="field-error" style={{ marginBottom: "1rem" }}>{error}</div>}
         {view.mode === "intro" ? renderIntro() : view.mode === "attempt" ? renderAttempt() : view.mode === "result" ? renderResult() : renderLibrary()}
       </div>
@@ -4176,52 +4453,7 @@ function ProfilePage() {
           maxWidth: 900,
         }}
       >
-        {/* Back */}
-        <button
-          onClick={() =>
-            go(
-              user.onboardingCompleted
-                ? "dashboard"
-                : "login"
-            )
-          }
-          style={{
-            display:
-              "inline-flex",
-
-            alignItems:
-              "center",
-
-            gap:
-              "0.4rem",
-
-            background:
-              "none",
-
-            border:
-              "none",
-
-            cursor:
-              "pointer",
-
-            color:
-              "#555",
-
-            fontSize:
-              "0.875rem",
-
-            fontWeight:
-              500,
-
-            padding:
-              0,
-
-            marginBottom:
-              "1.5rem",
-          }}
-        >
-          ← {t("common.back")}
-        </button>
+        <PageBackButton style={{ marginBottom: "1.5rem" }} />
 
         {/* Incomplete onboarding */}
         {!user.onboardingCompleted && (
@@ -4855,16 +5087,7 @@ function ProgressPage() {
       </div>
 
       <div className="section">
-        {/* Back button */}
-        <button
-          onClick={() => go("dashboard")}
-          style={{ display: "inline-flex", alignItems: "center", gap: "0.4rem", background: "none", border: "none", cursor: "pointer", color: "#555", fontSize: "0.875rem", fontWeight: 500, padding: "0", marginBottom: "2rem", transition: "color 0.15s" }}
-          onMouseEnter={e => e.currentTarget.style.color = "var(--teal)"}
-          onMouseLeave={e => e.currentTarget.style.color = "#555"}
-        >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M19 12H5M12 5l-7 7 7 7"/></svg>
-          {t("progress.backToDashboard")}
-        </button>
+        <PageBackButton style={{ marginBottom: "2rem" }} />
 
         {/* Profile snapshot */}
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "1rem", marginBottom: "2.5rem" }}>
@@ -5146,9 +5369,9 @@ function LanguageSelector() {
   }
 
   return (
-    <label className="nav-user" style={{ gap: "0.35rem" }}>
-      <span>{t("nav.language")}</span>
-      <select value={locale} onChange={changeLocale} aria-label={t("nav.language")}>
+    <label className="nav-language" title={t("nav.languageControlTitle")}>
+      <span aria-hidden="true">🌐</span>
+      <select value={locale} onChange={changeLocale} aria-label={t("nav.languageAriaLabel")}>
         {LANGUAGE_OPTIONS.map(option => (
           <option key={option.locale} value={option.locale}>{option.label}</option>
         ))}
@@ -5166,27 +5389,385 @@ const NAV_ITEMS = [
   { id: "about", labelKey: "nav.about" },
 ];
 
-function Navbar({ page }) {
-  const { go, user, logout } = useApp();
+const LOGGED_OUT_NAV_ITEMS = NAV_ITEMS.filter(item =>
+  ["home", "resources", "about"].includes(item.id)
+);
+
+function useMediaQuery(query) {
+  const [matches, setMatches] = useState(() => {
+    if (typeof window === "undefined") return false;
+    return window.matchMedia(query).matches;
+  });
+
+  useEffect(() => {
+    const mediaQuery = window.matchMedia(query);
+    function update() {
+      setMatches(mediaQuery.matches);
+    }
+
+    update();
+    mediaQuery.addEventListener("change", update);
+    return () => mediaQuery.removeEventListener("change", update);
+  }, [query]);
+
+  return matches;
+}
+
+function MobileNavMenu({ page, items, user, openAuth, onNavigate }) {
   const { t } = useTranslation();
-  const displayName = user?.displayName || user?.name;
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  const buttonRef = useRef(null);
+  const panelId = "mobile-navigation-menu";
+
+  useEffect(() => {
+    setOpen(false);
+  }, [page, user?.id]);
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    function handlePointerDown(event) {
+      if (!wrapRef.current?.contains(event.target)) {
+        setOpen(false);
+      }
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        setOpen(false);
+        buttonRef.current?.focus();
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
+  function navigate(pageId) {
+    setOpen(false);
+    onNavigate(pageId);
+  }
+
+  function auth(mode) {
+    setOpen(false);
+    openAuth(mode);
+  }
+
+  return (
+    <div className="mobile-menu-wrap" ref={wrapRef}>
+      <button
+        type="button"
+        ref={buttonRef}
+        className={`mobile-menu-button${open ? " open" : ""}`}
+        onClick={() => setOpen(current => !current)}
+        aria-label={t(open ? "nav.closeMenuAriaLabel" : "nav.openMenuAriaLabel")}
+        aria-expanded={open}
+        aria-controls={panelId}
+        aria-haspopup="menu"
+      >
+        <span aria-hidden="true">{open ? "×" : "☰"}</span>
+      </button>
+      {open && (
+        <div className="mobile-menu-panel" id={panelId} role="menu" aria-label={t("nav.mobileNavigationLabel")}>
+          {items.map(item => (
+            <button
+              key={item.id}
+              type="button"
+              className={`mobile-nav-item${page === item.id ? " active" : ""}`}
+              role="menuitem"
+              onClick={() => navigate(item.id)}
+            >
+              <span>{t(item.labelKey)}</span>
+            </button>
+          ))}
+          {!user && (
+            <div className="mobile-menu-actions">
+              <button type="button" className="mobile-nav-item" role="menuitem" onClick={() => auth("login")}>
+                <span>{t("auth.login")}</span>
+              </button>
+              <button type="button" className="mobile-nav-item" role="menuitem" onClick={() => auth("register")}>
+                <span>{t("auth.getStarted")}</span>
+              </button>
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AccountMenu({ user, onNavigate, onRequestLogout }) {
+  const { t } = useTranslation();
+  const [open, setOpen] = useState(false);
+  const wrapRef = useRef(null);
+  const triggerRef = useRef(null);
+  const itemRefs = useRef([]);
+  const menuId = "account-navigation-menu";
+  const displayName = user?.displayName || user?.name || t("nav.accountMenu.userFallback");
+  const email = user?.email;
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    window.setTimeout(() => {
+      itemRefs.current[0]?.focus();
+    }, 0);
+
+    function handlePointerDown(event) {
+      if (!wrapRef.current?.contains(event.target)) {
+        setOpen(false);
+      }
+    }
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        setOpen(false);
+        triggerRef.current?.focus();
+      }
+    }
+
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [open]);
+
+  useEffect(() => {
+    setOpen(false);
+  }, [user?.id]);
+
+  function navigate(pageId) {
+    setOpen(false);
+    onNavigate(pageId);
+  }
+
+  function requestLogout() {
+    setOpen(false);
+    onRequestLogout(triggerRef.current);
+  }
+
+  function handleTriggerKeyDown(event) {
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      setOpen(true);
+    }
+  }
+
+  function handleMenuKeyDown(event, index) {
+    const items = itemRefs.current.filter(Boolean);
+
+    if (event.key === "ArrowDown") {
+      event.preventDefault();
+      items[(index + 1) % items.length]?.focus();
+    }
+
+    if (event.key === "ArrowUp") {
+      event.preventDefault();
+      items[(index - 1 + items.length) % items.length]?.focus();
+    }
+  }
+
+  return (
+    <div className="account-menu-wrap" ref={wrapRef}>
+      <button
+        type="button"
+        ref={triggerRef}
+        className={`account-trigger${open ? " open" : ""}`}
+        onClick={() => setOpen(current => !current)}
+        onKeyDown={handleTriggerKeyDown}
+        aria-haspopup="menu"
+        aria-expanded={open}
+        aria-controls={menuId}
+        aria-label={t("nav.accountMenu.triggerAriaLabel", { name: displayName })}
+      >
+        <span className="nav-avatar" aria-hidden="true">{displayName[0]?.toUpperCase() || "U"}</span>
+        <span className="account-name">{displayName}</span>
+        <span className="account-chevron" aria-hidden="true">▾</span>
+      </button>
+
+      {open && (
+        <div className="account-dropdown" id={menuId} role="menu" aria-label={t("nav.accountMenu.menuAriaLabel")}>
+          <div className="account-menu-header">
+            <div className="account-menu-name">{displayName}</div>
+            {email && <div className="account-menu-email">{email}</div>}
+          </div>
+          <button
+            type="button"
+            className="account-menu-item"
+            role="menuitem"
+            ref={element => { itemRefs.current[0] = element; }}
+            onKeyDown={event => handleMenuKeyDown(event, 0)}
+            onClick={() => navigate("dashboard")}
+          >
+            {t("nav.dashboard")}
+          </button>
+          <button
+            type="button"
+            className="account-menu-item"
+            role="menuitem"
+            ref={element => { itemRefs.current[1] = element; }}
+            onKeyDown={event => handleMenuKeyDown(event, 1)}
+            onClick={() => navigate("profile")}
+          >
+            {t("nav.accountMenu.profileSettings")}
+          </button>
+          <button
+            type="button"
+            className="account-menu-item danger"
+            role="menuitem"
+            ref={element => { itemRefs.current[2] = element; }}
+            onKeyDown={event => handleMenuKeyDown(event, 2)}
+            onClick={requestLogout}
+          >
+            {t("nav.accountMenu.logOut")}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function LogoutConfirmModal({ onCancel, onConfirm }) {
+  const { t } = useTranslation();
+  const cancelRef = useRef(null);
+  const confirmRef = useRef(null);
+
+  useEffect(() => {
+    cancelRef.current?.focus();
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") onCancel();
+      if (event.key !== "Tab") return;
+
+      const focusable = [cancelRef.current, confirmRef.current].filter(Boolean);
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onCancel]);
+
+  return (
+    <div className="logout-modal-backdrop" role="presentation" onMouseDown={event => {
+      if (event.target === event.currentTarget) onCancel();
+    }}>
+      <div
+        className="logout-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="logout-modal-title"
+        aria-describedby="logout-modal-description"
+      >
+        <h2 id="logout-modal-title">{t("nav.logoutModal.title")}</h2>
+        <p id="logout-modal-description">{t("nav.logoutModal.description")}</p>
+        <div className="logout-modal-actions">
+          <button type="button" className="modal-cancel" ref={cancelRef} onClick={onCancel}>
+            {t("nav.logoutModal.cancel")}
+          </button>
+          <button type="button" className="modal-confirm" ref={confirmRef} onClick={onConfirm}>
+            {t("nav.logoutModal.confirm")}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+function Navbar({ page }) {
+  const { go, user, logout, openAuth } = useApp();
+  const { t } = useTranslation();
+  const [logoutModalOpen, setLogoutModalOpen] = useState(false);
+  const isMobileNav = useMediaQuery("(max-width: 1050px)");
+  const logoutReturnFocusRef = useRef(null);
+  const navItems = user ? NAV_ITEMS : LOGGED_OUT_NAV_ITEMS;
+
+  async function confirmLogout() {
+    setLogoutModalOpen(false);
+    await logout();
+  }
+
+  function requestLogout(focusTarget) {
+    logoutReturnFocusRef.current = focusTarget || null;
+    setLogoutModalOpen(true);
+  }
+
+  function closeLogoutModal() {
+    setLogoutModalOpen(false);
+    window.setTimeout(() => {
+      logoutReturnFocusRef.current?.focus();
+      logoutReturnFocusRef.current = null;
+    }, 0);
+  }
+
   return (
     <nav className="navbar">
-      <div className="nav-logo" onClick={() => go("home")} style={{ cursor: "pointer" }}>🛡 <span>Cyberly</span></div>
-      {NAV_ITEMS.map(n => (
-        <button key={n.id} className={`nav-link${page === n.id ? " active" : ""}`} onClick={() => go(n.id)}>
-          {t(n.labelKey)}
-        </button>
-      ))}
-      <LanguageSelector />
-      {user ? (
-        <div className="nav-user">
-          <div className="nav-avatar">{(displayName || "U")[0].toUpperCase()}</div>
-          <span>{displayName}</span>
-          <button className="nav-logout" onClick={logout}>{t("nav.signOut")}</button>
-        </div>
-      ) : (
-        <button className="nav-cta" onClick={() => go("login")}>{t("auth.login")}</button>
+      <button
+        type="button"
+        className="nav-logo"
+        onClick={() => go(user ? "dashboard" : "home")}
+        aria-label={t(user ? "nav.brandDashboardAriaLabel" : "nav.brandHomeAriaLabel")}
+      >
+        <span aria-hidden="true">🛡</span>
+        <span>Cyberly</span>
+      </button>
+
+      {isMobileNav && (
+        <MobileNavMenu
+          page={page}
+          items={navItems}
+          user={user}
+          openAuth={openAuth}
+          onNavigate={go}
+        />
+      )}
+
+      <div className="nav-primary" aria-label={t("nav.primaryAriaLabel")}>
+        {navItems.map(n => (
+          <button key={n.id} className={`nav-link${page === n.id ? " active" : ""}`} onClick={() => go(n.id)}>
+            {t(n.labelKey)}
+          </button>
+        ))}
+      </div>
+
+      <div className="nav-utility">
+        <LanguageSelector />
+        <div className="nav-divider" aria-hidden="true" />
+        {user ? (
+          <AccountMenu
+            user={user}
+            onNavigate={go}
+            onRequestLogout={requestLogout}
+          />
+        ) : (
+          <div className="desktop-auth-actions">
+            <button className="nav-cta secondary" onClick={() => openAuth("login")}>{t("auth.login")}</button>
+            <button className="nav-cta" onClick={() => openAuth("register")}>{t("auth.getStarted")}</button>
+          </div>
+        )}
+      </div>
+
+      {logoutModalOpen && (
+        <LogoutConfirmModal
+          onCancel={closeLogoutModal}
+          onConfirm={confirmLogout}
+        />
       )}
     </nav>
   );
@@ -5212,6 +5793,7 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [resourceFocusTopic, setResourceFocusTopic] = useState(null);
+  const [authMode, setAuthMode] = useState("login");
   const userId = user?.id;
   const userProfilePreferredLanguage =
     user?.profile?.preferredLanguage;
@@ -5314,8 +5896,14 @@ export default function App() {
     setResourceFocusTopic(topicCode);
     setPage("resources");
   }
+  function openAuth(mode = "login") {
+    setAuthMode(mode);
+    setResourceFocusTopic(null);
+    setPage("login");
+  }
   function go(nextPage) {
     if (nextPage !== "resources") setResourceFocusTopic(null);
+    if (nextPage === "login") setAuthMode("login");
     setPage(nextPage);
   }
 
@@ -5325,6 +5913,9 @@ export default function App() {
     user,
     login,
     logout,
+    authMode,
+    setAuthMode,
+    openAuth,
     updateProfile,
     updateAccount,
     resourceFocusTopic,
