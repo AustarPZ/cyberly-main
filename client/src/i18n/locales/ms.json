@@ -709,7 +709,8 @@
       "chatHistory": "Sejarah Sembang",
       "rename": "Namakan semula",
       "delete": "Padam",
-      "renameConversation": "Namakan semula perbualan"
+      "renameConversation": "Namakan semula perbualan",
+      "deleteConversation": "Padam perbualan"
     },
     "conversation": {
       "newTitle": "Sembang baharu"
@@ -725,7 +726,8 @@
       "noActive": "Belum ada perbualan aktif"
     },
     "validation": {
-      "titleRequired": "Masukkan tajuk perbualan."
+      "titleRequired": "Masukkan tajuk perbualan.",
+      "titleTooLong": "Hadkan tajuk kepada {{max}} aksara atau kurang."
     },
     "delete": {
       "title": "Padam perbualan?",
@@ -752,6 +754,7 @@
       "newChat": "Mulakan sembang baharu",
       "openWidget": "Buka widget sembang",
       "conversationMenu": "Buka menu untuk {{title}}",
+      "deleteConversation": "Padam perbualan {{title}}",
       "dashboardLauncher": "Tanya soalan baharu kepada CyberGuard daripada papan pemuka"
     }
   },

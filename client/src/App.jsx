@@ -139,10 +139,11 @@ body {
 .account-menu-item {
   width: 100%; border: none; background: none; cursor: pointer; text-align: left;
   padding: 0.6rem 0.7rem; border-radius: 8px; font-family: 'DM Sans', sans-serif;
-  font-size: 0.86rem; color: #333;
+  font-size: 0.86rem; color: #333; display: flex; align-items: center; gap: 0.55rem;
 }
 .account-menu-item:hover, .account-menu-item:focus-visible, .account-menu-item.active { background: var(--gray-lt); outline: none; box-shadow: inset 0 0 0 2px rgba(29,158,117,0.18); }
 .account-menu-item.danger { color: var(--coral); font-weight: 600; }
+.account-menu-icon { width: 16px; height: 16px; flex: 0 0 16px; color: var(--teal); }
 .logout-modal-backdrop {
   position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.36);
   display: flex; align-items: center; justify-content: center; padding: 1.5rem;
@@ -475,10 +476,32 @@ body {
 .chat-input { flex: 1; border: 1px solid rgba(0,0,0,0.12); border-radius: 8px; padding: 0.52rem 0.7rem; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; outline: none; resize: none; min-height: 38px; max-height: 110px; }
 .chat-input:focus { border-color: var(--teal); }
 .chat-send { background: var(--teal); color: #fff; border: none; border-radius: 8px; padding: 0.55rem 0.85rem; cursor: pointer; font-size: 0.85rem; font-weight: 700; min-width: 44px; }
-.chat-send:hover { opacity: 0.88; }
+.chat-send:hover, .chat-send:focus-visible { opacity: 0.88; outline: none; box-shadow: 0 0 0 3px rgba(29,158,117,0.18); }
 .chat-send:disabled { opacity: 0.45; cursor: not-allowed; }
 .chat-login-prompt { padding: 1.25rem; text-align: center; color: #666; font-size: 0.85rem; }
 .chat-login-prompt button { margin-top: 0.75rem; background: var(--teal); color: #fff; border: none; border-radius: 8px; padding: 0.5rem 1.25rem; cursor: pointer; font-size: 0.875rem; }
+.dashboard-chat-launcher { margin-bottom: 0.5rem; }
+.dashboard-chat-launcher .agent-header { justify-content: space-between; align-items: flex-start; gap: 1rem; }
+.dashboard-chat-title { display: flex; align-items: center; gap: 0.55rem; min-width: 0; }
+.dashboard-chat-badge {
+  flex: 0 0 auto; border: 1px solid rgba(255,255,255,0.35); border-radius: 999px;
+  padding: 0.24rem 0.55rem; font-size: 0.72rem; font-weight: 800; background: rgba(255,255,255,0.14);
+}
+.dashboard-chat-welcome {
+  min-height: 210px; display: grid; place-content: center; gap: 0.35rem;
+  background: linear-gradient(180deg, #fff 0%, #f7fbf9 100%);
+}
+.dashboard-chat-welcome .chat-empty-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.05rem; }
+.dashboard-chat-actions {
+  display: flex; justify-content: flex-end; gap: 0.65rem; flex-wrap: wrap; padding: 0 1rem 1rem;
+}
+.dashboard-chat-actions .btn-ghost { min-height: 42px; }
+@media (max-width: 560px) {
+  .dashboard-chat-launcher .agent-header { display: grid; }
+  .dashboard-chat-badge { justify-self: start; }
+  .dashboard-chat-actions { justify-content: stretch; }
+  .dashboard-chat-actions .btn-ghost { width: 100%; }
+}
 .ai-chat-shell {
   max-width: 1180px; margin: 0 auto; padding: 2.25rem 1.5rem 3rem;
   display: grid; grid-template-columns: minmax(230px, 290px) minmax(0, 1fr); gap: 1.25rem;
@@ -489,34 +512,36 @@ body {
 }
 .ai-chat-sidebar { padding: 1rem; align-self: start; }
 .ai-chat-sidebar-header { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-bottom: 0.85rem; }
-.ai-chat-list { display: grid; gap: 0.45rem; max-height: 560px; overflow-y: auto; }
+.ai-chat-list { display: grid; gap: 0.45rem; max-height: 560px; overflow-y: auto; overflow-x: hidden; padding-right: 0.15rem; }
 .ai-chat-list-item {
   border: 1px solid rgba(0,0,0,0.08); background: #fff; border-radius: 10px; padding: 0.7rem;
-  text-align: left; cursor: pointer; color: #333;
+  text-align: left; cursor: pointer; color: #333; min-width: 0;
 }
-.ai-chat-list-row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.35rem; align-items: stretch; }
+.ai-chat-list-row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 40px; gap: 0.35rem; align-items: stretch; }
 .ai-chat-list-item:hover, .ai-chat-list-item:focus-visible, .ai-chat-list-item.active {
   outline: none; background: var(--teal-lt); border-color: rgba(29,158,117,0.28);
   box-shadow: inset 0 0 0 2px rgba(29,158,117,0.13);
 }
 .ai-chat-menu-button {
   border: 1px solid rgba(0,0,0,0.08); background: #fff; border-radius: 10px; cursor: pointer;
-  padding: 0 0.55rem; color: #56615c; font-weight: 800;
+  padding: 0; color: #56615c; font-weight: 800; min-width: 40px; min-height: 40px;
 }
 .ai-chat-menu-button:hover, .ai-chat-menu-button:focus-visible, .ai-chat-menu-button.open {
   background: var(--gray-lt); outline: none; box-shadow: inset 0 0 0 2px rgba(29,158,117,0.14);
 }
 .ai-chat-menu {
-  position: absolute; right: 0; top: calc(100% + 0.25rem); z-index: 20; min-width: 140px;
+  position: absolute; right: 0; top: calc(100% + 0.25rem); z-index: 20; width: min(160px, 100%);
   background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: 10px;
   box-shadow: 0 12px 28px rgba(0,0,0,0.14); padding: 0.35rem;
 }
 .ai-chat-menu-item {
   width: 100%; border: none; background: none; text-align: left; cursor: pointer;
-  padding: 0.55rem 0.65rem; border-radius: 8px; font-family: 'DM Sans', sans-serif;
+  padding: 0.6rem 0.65rem; border-radius: 8px; font-family: 'DM Sans', sans-serif; min-height: 40px;
 }
 .ai-chat-menu-item:hover, .ai-chat-menu-item:focus-visible { background: var(--gray-lt); outline: none; }
 .ai-chat-menu-item.danger { color: var(--coral); font-weight: 700; }
+.ai-chat-rename-row { display: block; }
+.ai-chat-rename-row .ai-chat-list-item { width: 100%; }
 .ai-chat-rename-form { display: grid; gap: 0.4rem; }
 .ai-chat-rename-input {
   width: 100%; border: 1.5px solid rgba(0,0,0,0.13); border-radius: 8px;
@@ -567,6 +592,7 @@ function useChat() { return useContext(ChatCtx); }
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
 const CHAT_STORAGE_PREFIX = "cyberly.chat.v1";
+const MAX_CONVERSATION_TITLE_LENGTH = 80;
 const PUBLIC_PAGES = new Set(["home", "resources", "about", "login"]);
 const PROTECTED_PAGES = new Set(["dashboard", "assessment", "scenarios", "progress", "profile", "ai-chat"]);
 const VALID_PAGES = new Set([...PUBLIC_PAGES, ...PROTECTED_PAGES]);
@@ -778,7 +804,7 @@ function titleFromMessage(text) {
 }
 
 function normalizeConversationTitle(title) {
-  return title.trim().replace(/\s+/g, " ").slice(0, 60);
+  return title.trim().replace(/\s+/g, " ");
 }
 
 function ChatProvider({ user, children }) {
@@ -831,6 +857,10 @@ function ChatProvider({ user, children }) {
     return createConversation(text);
   }
 
+  function startDashboardConversation(firstMessage) {
+    return createConversation(firstMessage);
+  }
+
   function ensureConversation() {
     if (state.activeConversationId && state.conversations.some(conversation => conversation.id === state.activeConversationId)) {
       return state.activeConversationId;
@@ -846,7 +876,7 @@ function ChatProvider({ user, children }) {
 
   function renameConversation(id, title) {
     const nextTitle = normalizeConversationTitle(title);
-    if (!nextTitle) return false;
+    if (!nextTitle || nextTitle.length > MAX_CONVERSATION_TITLE_LENGTH) return false;
     setState(current => ({
       ...current,
       conversations: current.conversations.map(conversation => conversation.id === id
@@ -932,6 +962,7 @@ function ChatProvider({ user, children }) {
     sending,
     createConversation,
     createConversationFromMessage,
+    startDashboardConversation,
     selectConversation,
     renameConversation,
     deleteConversation,
@@ -3451,31 +3482,38 @@ function ChatComposer({ compact = false }) {
 function DashboardChatPreview() {
   const { t } = useTranslation();
   const { go } = useApp();
-  const { conversations, createConversationFromMessage, createConversation, selectConversation } = useChat();
+  const { conversations, startDashboardConversation, selectConversation } = useChat();
   const [input, setInput] = useState("");
+  const [launching, setLaunching] = useState(false);
 
   function viewHistory() {
     if (conversations[0]) selectConversation(conversations[0].id);
     go("ai-chat");
   }
 
-  function startEmptyConversation() {
-    createConversation();
-    go("ai-chat");
-  }
-
   function submitLauncher() {
     const clean = input.trim();
-    if (!clean) return;
-    createConversationFromMessage(clean);
+    if (!clean || launching) return;
+    setLaunching(true);
+    const conversationId = startDashboardConversation(clean);
+    if (!conversationId) {
+      setLaunching(false);
+      return;
+    }
     setInput("");
     go("ai-chat");
   }
 
   return (
-    <div className="agent-panel" style={{ marginBottom: "0.5rem" }}>
-      <div className="agent-header">🛡 {t("dashboard.cyberGuard.title")}</div>
-      <div className="chat-empty" style={{ minHeight: 170 }}>
+    <div className="agent-panel dashboard-chat-launcher">
+      <div className="agent-header">
+        <div className="dashboard-chat-title">
+          <span aria-hidden="true">🛡</span>
+          <span>{t("dashboard.cyberGuard.title")}</span>
+        </div>
+        <span className="dashboard-chat-badge">{t("chat.dashboard.ready")}</span>
+      </div>
+      <div className="chat-empty dashboard-chat-welcome">
         <div className="chat-empty-title">{t("chat.dashboard.launcherTitle")}</div>
         <div>{t("chat.dashboard.launcherDescription")}</div>
       </div>
@@ -3494,18 +3532,15 @@ function DashboardChatPreview() {
             }
           }}
         />
-        <button className="chat-send" onClick={submitLauncher} disabled={!input.trim()} aria-label={t("chat.accessibility.send")}>
+        <button className="chat-send" onClick={submitLauncher} disabled={launching || !input.trim()} aria-label={t("chat.accessibility.send")}>
           {t("chat.send")}
         </button>
       </div>
-      <div style={{ display: "flex", gap: "0.65rem", flexWrap: "wrap", padding: "0 1rem 1rem" }}>
-        <button className="btn-primary" style={{ flex: "0 0 auto" }} onClick={startEmptyConversation}>
-          {t("chat.actions.startConversation")}
-        </button>
+      <div className="dashboard-chat-actions">
         <button className="btn-ghost" onClick={viewHistory}>
           {t("chat.actions.chatHistory")}
         </button>
-        </div>
+      </div>
     </div>
   );
 }
@@ -5802,7 +5837,11 @@ function ConversationHistoryItem({
   const [draftTitle, setDraftTitle] = useState(conversation.title);
   const [titleError, setTitleError] = useState("");
   const wrapRef = useRef(null);
+  const itemButtonRef = useRef(null);
+  const menuButtonRef = useRef(null);
   const inputRef = useRef(null);
+  const titleErrorId = `rename-error-${conversation.id}`;
+  const menuId = `conversation-menu-${conversation.id}`;
 
   useEffect(() => {
     setDraftTitle(conversation.title);
@@ -5820,7 +5859,10 @@ function ConversationHistoryItem({
       if (!wrapRef.current?.contains(event.target)) setOpenMenu(null);
     }
     function handleKeyDown(event) {
-      if (event.key === "Escape") setOpenMenu(null);
+      if (event.key === "Escape") {
+        setOpenMenu(null);
+        menuButtonRef.current?.focus();
+      }
     }
     document.addEventListener("mousedown", handlePointerDown);
     document.addEventListener("keydown", handleKeyDown);
@@ -5830,35 +5872,61 @@ function ConversationHistoryItem({
     };
   }, [conversation.id, openMenu, setOpenMenu]);
 
-  function saveRename() {
+  function restoreItemFocus() {
+    window.setTimeout(() => {
+      if (menuButtonRef.current) {
+        menuButtonRef.current.focus();
+      } else {
+        itemButtonRef.current?.focus();
+      }
+    }, 0);
+  }
+
+  function validateTitle() {
     const nextTitle = normalizeConversationTitle(draftTitle);
     if (!nextTitle) {
       setTitleError(t("chat.validation.titleRequired"));
+      return null;
+    }
+    if (nextTitle.length > MAX_CONVERSATION_TITLE_LENGTH) {
+      setTitleError(t("chat.validation.titleTooLong", { max: MAX_CONVERSATION_TITLE_LENGTH }));
+      return null;
+    }
+    return nextTitle;
+  }
+
+  function saveRename() {
+    const nextTitle = validateTitle();
+    if (!nextTitle) return;
+    const saved = onRename(conversation.id, nextTitle);
+    if (!saved) {
+      setTitleError(t("chat.validation.titleRequired"));
       return;
     }
-    onRename(conversation.id, nextTitle);
     setRenaming(false);
     setTitleError("");
+    restoreItemFocus();
   }
 
   function cancelRename() {
     setDraftTitle(conversation.title);
     setTitleError("");
     setRenaming(false);
+    restoreItemFocus();
   }
 
   if (renaming) {
     return (
-      <div className="ai-chat-list-row">
+      <div className="ai-chat-rename-row">
         <div className="ai-chat-list-item active">
           <div className="ai-chat-rename-form">
             <input
               ref={inputRef}
               className="ai-chat-rename-input"
               value={draftTitle}
-              maxLength={60}
               aria-label={t("chat.actions.renameConversation")}
               aria-invalid={Boolean(titleError)}
+              aria-describedby={titleError ? titleErrorId : undefined}
               onChange={event => {
                 setDraftTitle(event.target.value);
                 setTitleError("");
@@ -5868,7 +5936,7 @@ function ConversationHistoryItem({
                 if (event.key === "Escape") cancelRename();
               }}
             />
-            {titleError && <div className="field-error" role="alert">{titleError}</div>}
+            {titleError && <div id={titleErrorId} className="field-error" role="alert">{titleError}</div>}
             <div style={{ display: "flex", gap: "0.4rem" }}>
               <button type="button" className="btn-primary" style={{ padding: "0.45rem 0.65rem" }} onClick={saveRename}>
                 {t("common.save")}
@@ -5887,6 +5955,7 @@ function ConversationHistoryItem({
     <div className="ai-chat-list-row" ref={wrapRef}>
       <button
         type="button"
+        ref={itemButtonRef}
         className={`ai-chat-list-item${active ? " active" : ""}`}
         onClick={() => onSelect(conversation.id)}
         aria-current={active ? "true" : undefined}
@@ -5896,26 +5965,33 @@ function ConversationHistoryItem({
       </button>
       <button
         type="button"
+        ref={menuButtonRef}
         className={`ai-chat-menu-button${openMenu === conversation.id ? " open" : ""}`}
-        onClick={() => setOpenMenu(openMenu === conversation.id ? null : conversation.id)}
+        onClick={event => {
+          event.stopPropagation();
+          setOpenMenu(openMenu === conversation.id ? null : conversation.id);
+        }}
         aria-label={t("chat.accessibility.conversationMenu", { title: conversation.title })}
         aria-haspopup="menu"
         aria-expanded={openMenu === conversation.id}
+        aria-controls={openMenu === conversation.id ? menuId : undefined}
       >
         ⋯
       </button>
       {openMenu === conversation.id && (
-        <div className="ai-chat-menu" role="menu">
-          <button type="button" className="ai-chat-menu-item" role="menuitem" onClick={() => {
+        <div className="ai-chat-menu" id={menuId} role="menu">
+          <button type="button" className="ai-chat-menu-item" role="menuitem" onClick={event => {
+            event.stopPropagation();
             setOpenMenu(null);
             setRenaming(true);
           }}>
             {t("chat.actions.rename")}
           </button>
-          <button type="button" className="ai-chat-menu-item danger" role="menuitem" onClick={() => {
+          <button type="button" className="ai-chat-menu-item danger" role="menuitem" onClick={event => {
+            event.stopPropagation();
             setOpenMenu(null);
-            onDelete(conversation);
-          }}>
+            onDelete(conversation, menuButtonRef.current);
+          }} aria-label={t("chat.accessibility.deleteConversation", { title: conversation.title })}>
             {t("chat.actions.delete")}
           </button>
         </div>
@@ -5930,8 +6006,33 @@ function AIChatPage() {
   const { conversations, activeConversation, activeConversationId, createConversation, selectConversation, renameConversation, deleteConversation } = useChat();
   const [openMenu, setOpenMenu] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const deleteReturnFocusRef = useRef(null);
+  const newChatButtonRef = useRef(null);
 
   if (!user) { go("login"); return null; }
+
+  function requestDeleteConversation(conversation, returnFocusElement) {
+    deleteReturnFocusRef.current = returnFocusElement;
+    setDeleteTarget(conversation);
+  }
+
+  function closeDeleteDialog() {
+    setDeleteTarget(null);
+    window.setTimeout(() => deleteReturnFocusRef.current?.focus(), 0);
+  }
+
+  function confirmDeleteConversation() {
+    const returnFocusElement = deleteReturnFocusRef.current;
+    deleteConversation(deleteTarget.id);
+    setDeleteTarget(null);
+    window.setTimeout(() => {
+      if (returnFocusElement?.isConnected) {
+        returnFocusElement.focus();
+      } else {
+        newChatButtonRef.current?.focus();
+      }
+    }, 0);
+  }
 
   return (
     <div>
@@ -5957,7 +6058,7 @@ function AIChatPage() {
               <div style={{ fontWeight: 800 }}>{t("chat.history.title")}</div>
               <div style={{ fontSize: "0.76rem", color: "#77827d" }}>{t("chat.history.description")}</div>
             </div>
-            <button className="btn-ghost" style={{ padding: "0.45rem 0.65rem" }} onClick={createConversation} aria-label={t("chat.accessibility.newChat")}>
+            <button className="btn-ghost" style={{ padding: "0.45rem 0.65rem" }} ref={newChatButtonRef} onClick={createConversation} aria-label={t("chat.accessibility.newChat")}>
               +
             </button>
           </div>
@@ -5972,7 +6073,7 @@ function AIChatPage() {
                   active={conversation.id === activeConversationId}
                   onSelect={selectConversation}
                   onRename={renameConversation}
-                  onDelete={setDeleteTarget}
+                  onDelete={requestDeleteConversation}
                   openMenu={openMenu}
                   setOpenMenu={setOpenMenu}
                 />
@@ -6007,11 +6108,8 @@ function AIChatPage() {
           description={t("chat.delete.description", { title: deleteTarget.title })}
           cancelLabel={t("common.cancel")}
           confirmLabel={t("chat.actions.delete")}
-          onCancel={() => setDeleteTarget(null)}
-          onConfirm={() => {
-            deleteConversation(deleteTarget.id);
-            setDeleteTarget(null);
-          }}
+          onCancel={closeDeleteDialog}
+          onConfirm={confirmDeleteConversation}
           danger
         />
       )}
@@ -6364,7 +6462,14 @@ function AccountMenu({ user, onNavigate, onRequestLogout }) {
             onKeyDown={event => handleMenuKeyDown(event, 1)}
             onClick={() => navigate("progress")}
           >
-            {t("nav.accountMenu.personalProgress")}
+            <svg className="account-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+              <path d="M4 19V5" />
+              <path d="M4 19h16" />
+              <path d="M8 16v-5" />
+              <path d="M12 16V8" />
+              <path d="M16 16v-3" />
+            </svg>
+            <span>{t("nav.accountMenu.personalProgress")}</span>
           </button>
           <button
             type="button"

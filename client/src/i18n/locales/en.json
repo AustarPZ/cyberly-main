@@ -727,7 +727,8 @@
       "chatHistory": "Chat History",
       "rename": "Rename",
       "delete": "Delete",
-      "renameConversation": "Rename conversation"
+      "renameConversation": "Rename conversation",
+      "deleteConversation": "Delete conversation"
     },
     "conversation": {
       "newTitle": "New chat"
@@ -743,7 +744,8 @@
       "noActive": "No active conversation yet"
     },
     "validation": {
-      "titleRequired": "Enter a conversation title."
+      "titleRequired": "Enter a conversation title.",
+      "titleTooLong": "Keep the title to {{max}} characters or fewer."
     },
     "delete": {
       "title": "Delete conversation?",
@@ -770,6 +772,7 @@
       "newChat": "Start a new chat",
       "openWidget": "Open chat widget",
       "conversationMenu": "Open menu for {{title}}",
+      "deleteConversation": "Delete conversation {{title}}",
       "dashboardLauncher": "Ask CyberGuard a new question from the dashboard"
     }
   },

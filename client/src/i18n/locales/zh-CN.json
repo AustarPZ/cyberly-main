@@ -709,7 +709,8 @@
       "chatHistory": "聊天历史",
       "rename": "重命名",
       "delete": "删除",
-      "renameConversation": "重命名对话"
+      "renameConversation": "重命名对话",
+      "deleteConversation": "删除对话"
     },
     "conversation": {
       "newTitle": "新聊天"
@@ -725,7 +726,8 @@
       "noActive": "还没有当前对话"
     },
     "validation": {
-      "titleRequired": "请输入对话标题。"
+      "titleRequired": "请输入对话标题。",
+      "titleTooLong": "标题请控制在 {{max}} 个字符以内。"
     },
     "delete": {
       "title": "删除对话？",
@@ -752,6 +754,7 @@
       "newChat": "开始新聊天",
       "openWidget": "打开聊天组件",
       "conversationMenu": "打开 {{title}} 的菜单",
+      "deleteConversation": "删除对话 {{title}}",
       "dashboardLauncher": "从仪表板向 CyberGuard 提出新问题"
     }
   },
