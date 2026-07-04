@@ -5,6 +5,7 @@
     "assessment": "Assessment",
     "scenarios": "Scenarios",
     "resources": "Resources",
+    "aiChat": "AI Chatbot",
     "about": "About",
     "profile": "Profile",
     "settings": "Settings",
@@ -22,6 +23,7 @@
       "triggerAriaLabel": "Open account menu for {{name}}",
       "menuAriaLabel": "Account menu",
       "userFallback": "User",
+      "personalProgress": "Personal Progress",
       "profileSettings": "Profile & Settings",
       "logOut": "Log out"
     },
@@ -338,6 +340,11 @@
     "completed": "Assessment completed",
     "answerAll": "Please answer all questions before submitting.",
     "finalSubmissionReminder": "Answer all questions before final submission.",
+    "loadingTitle": "Loading assessment",
+    "errorTitle": "Assessment could not load",
+    "submitConfirmTitle": "Submit assessment?",
+    "leaveTitle": "Leave this assessment?",
+    "leaveDescription": "Your saved answers will remain available, and you can resume this assessment later.",
     "result": "Initial result",
     "resultSummary": "Score {{score}}/{{maxScore}}. This measured level is based only on your answers.",
     "questionReview": "Question review",
@@ -394,10 +401,14 @@
       "description": "Practice realistic cyber safety decisions with immediate feedback after each final choice.",
       "recommended": "Recommended",
       "all": "All scenarios",
+      "loadingTitle": "Loading scenarios",
       "loading": "Loading scenarios...",
       "empty": "No scenarios found",
+      "emptyDescription": "Try a different topic or difficulty filter.",
       "backToDashboard": "Back to dashboard"
     },
+    "leaveTitle": "Leave this scenario?",
+    "leaveDescription": "Your saved decisions will remain available, and you can resume this scenario later from the library.",
     "filters": {
       "topic": "Topic filter",
       "difficulty": "Difficulty filter",
@@ -666,7 +677,8 @@
     },
     "recommendation": {
       "title": "Current recommendation",
-      "markComplete": "Mark complete"
+      "markComplete": "Mark complete",
+      "completedSaved": "Recommendation marked complete."
     },
     "learningTopics": {
       "title": "Topics You're Learning",
@@ -700,7 +712,66 @@
     "signInPrompt": "Sign in to preview the CyberGuard chat interface with your session profile.",
     "signInCta": "Sign in / Sign up",
     "thinking": "Thinking...",
-    "placeholder": "Type a question..."
+    "placeholder": "Type a question...",
+    "send": "Send",
+    "page": {
+      "title": "AI Chatbot",
+      "description": "Use CyberGuard AI as a focused learning companion. Live AI replies will connect during the AI Gateway phase.",
+      "chatAreaLabel": "Active chat conversation"
+    },
+    "actions": {
+      "fullPage": "Full Page",
+      "newChat": "New Chat",
+      "continueChat": "Continue Chat",
+      "startConversation": "Start Conversation",
+      "chatHistory": "Chat History",
+      "rename": "Rename",
+      "delete": "Delete",
+      "renameConversation": "Rename conversation"
+    },
+    "conversation": {
+      "newTitle": "New chat"
+    },
+    "history": {
+      "title": "Conversation history",
+      "description": "Saved on this device for your account.",
+      "ariaLabel": "Conversation history",
+      "emptyTitle": "No conversations yet",
+      "emptyDescription": "Start a chat and it will appear here.",
+      "lastUpdated": "Last updated {{time}}",
+      "unknownTime": "Unknown time",
+      "noActive": "No active conversation yet"
+    },
+    "validation": {
+      "titleRequired": "Enter a conversation title."
+    },
+    "delete": {
+      "title": "Delete conversation?",
+      "description": "Delete “{{title}}”? This removes only this local conversation from this device."
+    },
+    "empty": {
+      "title": "Ask CyberGuard anything",
+      "description": "Start with a question about scams, privacy, passwords, misinformation, or safe online choices.",
+      "shortDescription": "Start a conversation when you are ready."
+    },
+    "dashboard": {
+      "ready": "Ready for a new conversation",
+      "latestConversation": "Latest conversation",
+      "description": "Open the full chatbot page to continue learning with CyberGuard.",
+      "launcherTitle": "Start a fresh CyberGuard chat",
+      "launcherDescription": "Ask one question here and Cyberly will open a dedicated chat page with that new conversation.",
+      "launcherPlaceholder": "Ask your first question..."
+    },
+    "accessibility": {
+      "messageHistory": "Chat message history",
+      "composer": "Type your chat message",
+      "send": "Send chat message",
+      "fullPage": "Open chatbot full page",
+      "newChat": "Start a new chat",
+      "openWidget": "Open chat widget",
+      "conversationMenu": "Open menu for {{title}}",
+      "dashboardLauncher": "Ask CyberGuard a new question from the dashboard"
+    }
   },
   "footer": {
     "builtWithCare": "Built with care",
@@ -722,11 +793,15 @@
     "no": "No",
     "back": "Back",
     "next": "Next",
+    "continueActivity": "Continue activity",
+    "leaveToDashboard": "Leave and return to Dashboard",
+    "leavePage": "Leave Page",
     "notFound": "Not found",
     "unauthorized": "Unauthorized",
     "networkError": "Network error",
     "somethingWentWrong": "Something went wrong. Please try again.",
     "backToHome": "Back to Home",
+    "backToDashboard": "Back to Dashboard",
     "learnMore": "Learn more →",
     "notSet": "Not set"
   },

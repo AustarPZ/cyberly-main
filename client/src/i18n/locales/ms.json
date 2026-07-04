@@ -5,6 +5,7 @@
     "assessment": "Penilaian",
     "scenarios": "Senario",
     "resources": "Sumber",
+    "aiChat": "Chatbot AI",
     "about": "Tentang",
     "profile": "Profil",
     "settings": "Tetapan",
@@ -22,6 +23,7 @@
       "triggerAriaLabel": "Buka menu akaun untuk {{name}}",
       "menuAriaLabel": "Menu akaun",
       "userFallback": "Pengguna",
+      "personalProgress": "Kemajuan Peribadi",
       "profileSettings": "Profil & Tetapan",
       "logOut": "Log keluar"
     },
@@ -338,6 +340,11 @@
     "completed": "Penilaian selesai",
     "answerAll": "Sila jawab semua soalan sebelum menghantar.",
     "finalSubmissionReminder": "Jawab semua soalan sebelum penghantaran akhir.",
+    "loadingTitle": "Memuatkan penilaian",
+    "errorTitle": "Penilaian tidak dapat dimuatkan",
+    "submitConfirmTitle": "Hantar penilaian?",
+    "leaveTitle": "Keluar daripada penilaian ini?",
+    "leaveDescription": "Jawapan yang telah disimpan masih tersedia, dan anda boleh menyambung penilaian ini kemudian.",
     "result": "Keputusan awal",
     "resultSummary": "Skor {{score}}/{{maxScore}}. Tahap yang diukur ini hanya berdasarkan jawapan anda.",
     "questionReview": "Semakan soalan",
@@ -394,10 +401,14 @@
       "description": "Berlatih membuat keputusan keselamatan siber yang realistik dengan maklum balas segera selepas setiap pilihan akhir.",
       "recommended": "Dicadangkan",
       "all": "Semua senario",
+      "loadingTitle": "Memuatkan senario",
       "loading": "Memuatkan senario...",
       "empty": "Tiada senario dijumpai",
+      "emptyDescription": "Cuba tapis dengan topik atau tahap yang lain.",
       "backToDashboard": "Kembali ke papan pemuka"
     },
+    "leaveTitle": "Keluar daripada senario ini?",
+    "leaveDescription": "Keputusan yang telah disimpan masih tersedia, dan anda boleh menyambung senario ini kemudian daripada pustaka.",
     "filters": {
       "topic": "Tapis topik",
       "difficulty": "Tapis tahap",
@@ -648,7 +659,8 @@
     },
     "recommendation": {
       "title": "Cadangan semasa",
-      "markComplete": "Tanda selesai"
+      "markComplete": "Tanda selesai",
+      "completedSaved": "Cadangan ditanda sebagai selesai."
     },
     "learningTopics": {
       "title": "Topik yang Anda Pelajari",
@@ -682,7 +694,66 @@
     "signInPrompt": "Log masuk untuk melihat pratonton antara muka sembang CyberGuard dengan profil sesi anda.",
     "signInCta": "Log masuk / Daftar",
     "thinking": "Sedang berfikir...",
-    "placeholder": "Taip soalan..."
+    "placeholder": "Taip soalan...",
+    "send": "Hantar",
+    "page": {
+      "title": "Chatbot AI",
+      "description": "Gunakan CyberGuard AI sebagai rakan pembelajaran yang fokus. Respons AI langsung akan disambungkan semasa fasa AI Gateway.",
+      "chatAreaLabel": "Perbualan sembang aktif"
+    },
+    "actions": {
+      "fullPage": "Halaman Penuh",
+      "newChat": "Sembang Baharu",
+      "continueChat": "Teruskan Sembang",
+      "startConversation": "Mulakan Perbualan",
+      "chatHistory": "Sejarah Sembang",
+      "rename": "Namakan semula",
+      "delete": "Padam",
+      "renameConversation": "Namakan semula perbualan"
+    },
+    "conversation": {
+      "newTitle": "Sembang baharu"
+    },
+    "history": {
+      "title": "Sejarah perbualan",
+      "description": "Disimpan pada peranti ini untuk akaun anda.",
+      "ariaLabel": "Sejarah perbualan",
+      "emptyTitle": "Belum ada perbualan",
+      "emptyDescription": "Mulakan sembang dan ia akan muncul di sini.",
+      "lastUpdated": "Dikemas kini {{time}}",
+      "unknownTime": "Masa tidak diketahui",
+      "noActive": "Belum ada perbualan aktif"
+    },
+    "validation": {
+      "titleRequired": "Masukkan tajuk perbualan."
+    },
+    "delete": {
+      "title": "Padam perbualan?",
+      "description": "Padam “{{title}}”? Ini hanya membuang perbualan tempatan ini daripada peranti ini."
+    },
+    "empty": {
+      "title": "Tanya CyberGuard apa-apa sahaja",
+      "description": "Mulakan dengan soalan tentang penipuan, privasi, kata laluan, maklumat palsu atau pilihan selamat dalam talian.",
+      "shortDescription": "Mulakan perbualan apabila anda bersedia."
+    },
+    "dashboard": {
+      "ready": "Sedia untuk perbualan baharu",
+      "latestConversation": "Perbualan terkini",
+      "description": "Buka halaman chatbot penuh untuk terus belajar dengan CyberGuard.",
+      "launcherTitle": "Mulakan sembang CyberGuard baharu",
+      "launcherDescription": "Tanya satu soalan di sini dan Cyberly akan membuka halaman sembang khusus dengan perbualan baharu itu.",
+      "launcherPlaceholder": "Tanya soalan pertama anda..."
+    },
+    "accessibility": {
+      "messageHistory": "Sejarah mesej sembang",
+      "composer": "Taip mesej sembang anda",
+      "send": "Hantar mesej sembang",
+      "fullPage": "Buka halaman penuh chatbot",
+      "newChat": "Mulakan sembang baharu",
+      "openWidget": "Buka widget sembang",
+      "conversationMenu": "Buka menu untuk {{title}}",
+      "dashboardLauncher": "Tanya soalan baharu kepada CyberGuard daripada papan pemuka"
+    }
   },
   "footer": {
     "builtWithCare": "Dibina dengan teliti",
@@ -704,11 +775,15 @@
     "no": "Tidak",
     "back": "Kembali",
     "next": "Seterusnya",
+    "continueActivity": "Teruskan aktiviti",
+    "leaveToDashboard": "Keluar dan kembali ke Papan Pemuka",
+    "leavePage": "Keluar dari Halaman",
     "notFound": "Tidak dijumpai",
     "unauthorized": "Tidak dibenarkan",
     "networkError": "Ralat rangkaian",
     "somethingWentWrong": "Ada sesuatu yang tidak kena. Sila cuba lagi.",
     "backToHome": "Kembali ke Laman Utama",
+    "backToDashboard": "Kembali ke Papan Pemuka",
     "learnMore": "Ketahui lanjut →",
     "notSet": "Belum ditetapkan"
   },

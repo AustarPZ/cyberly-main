@@ -5,6 +5,7 @@
     "assessment": "测评",
     "scenarios": "情境练习",
     "resources": "资源",
+    "aiChat": "AI 聊天助手",
     "about": "关于",
     "profile": "个人资料",
     "settings": "设置",
@@ -22,6 +23,7 @@
       "triggerAriaLabel": "打开 {{name}} 的账号菜单",
       "menuAriaLabel": "账号菜单",
       "userFallback": "用户",
+      "personalProgress": "个人进度",
       "profileSettings": "个人资料与设置",
       "logOut": "退出登录"
     },
@@ -338,6 +340,11 @@
     "completed": "测评已完成",
     "answerAll": "请先回答所有题目再提交。",
     "finalSubmissionReminder": "请先回答所有题目，再进行最终提交。",
+    "loadingTitle": "正在加载测评",
+    "errorTitle": "无法加载测评",
+    "submitConfirmTitle": "提交测评？",
+    "leaveTitle": "离开这个测评？",
+    "leaveDescription": "已保存的答案会保留，你之后可以继续这个测评。",
     "result": "初始结果",
     "resultSummary": "得分 {{score}}/{{maxScore}}。此测量等级仅根据你的答案计算。",
     "questionReview": "题目回顾",
@@ -394,10 +401,14 @@
       "description": "练习真实的网络安全决策，并在每次最终选择后立即获得反馈。",
       "recommended": "推荐",
       "all": "所有情境",
+      "loadingTitle": "正在加载情境",
       "loading": "正在加载情境...",
       "empty": "未找到情境",
+      "emptyDescription": "可以尝试选择其他主题或难度筛选。",
       "backToDashboard": "返回仪表板"
     },
+    "leaveTitle": "离开这个情境练习？",
+    "leaveDescription": "已保存的决策会保留，你之后可以从情境库继续这个练习。",
     "filters": {
       "topic": "主题筛选",
       "difficulty": "难度筛选",
@@ -648,7 +659,8 @@
     },
     "recommendation": {
       "title": "当前推荐",
-      "markComplete": "标记完成"
+      "markComplete": "标记完成",
+      "completedSaved": "推荐已标记为完成。"
     },
     "learningTopics": {
       "title": "你正在学习的主题",
@@ -682,7 +694,66 @@
     "signInPrompt": "登录后可使用你的会话资料预览 CyberGuard 聊天界面。",
     "signInCta": "登录 / 注册",
     "thinking": "正在思考...",
-    "placeholder": "输入问题..."
+    "placeholder": "输入问题...",
+    "send": "发送",
+    "page": {
+      "title": "AI 聊天助手",
+      "description": "把 CyberGuard AI 当作专注的学习伙伴使用。实时 AI 回复会在 AI Gateway 阶段连接。",
+      "chatAreaLabel": "当前聊天对话"
+    },
+    "actions": {
+      "fullPage": "完整页面",
+      "newChat": "新聊天",
+      "continueChat": "继续聊天",
+      "startConversation": "开始对话",
+      "chatHistory": "聊天历史",
+      "rename": "重命名",
+      "delete": "删除",
+      "renameConversation": "重命名对话"
+    },
+    "conversation": {
+      "newTitle": "新聊天"
+    },
+    "history": {
+      "title": "对话历史",
+      "description": "为你的账号保存在此设备上。",
+      "ariaLabel": "对话历史",
+      "emptyTitle": "还没有对话",
+      "emptyDescription": "开始聊天后，对话会出现在这里。",
+      "lastUpdated": "最后更新 {{time}}",
+      "unknownTime": "未知时间",
+      "noActive": "还没有当前对话"
+    },
+    "validation": {
+      "titleRequired": "请输入对话标题。"
+    },
+    "delete": {
+      "title": "删除对话？",
+      "description": "删除“{{title}}”？这只会从此设备删除这个本地对话。"
+    },
+    "empty": {
+      "title": "向 CyberGuard 提问",
+      "description": "可以先询问诈骗、隐私、密码、错误信息，或安全上网选择。",
+      "shortDescription": "准备好后开始对话。"
+    },
+    "dashboard": {
+      "ready": "可以开始新对话",
+      "latestConversation": "最近对话",
+      "description": "打开完整聊天页面，继续和 CyberGuard 学习。",
+      "launcherTitle": "开始新的 CyberGuard 聊天",
+      "launcherDescription": "在这里提一个问题，Cyberly 会打开专属聊天页面并使用这个新对话。",
+      "launcherPlaceholder": "输入你的第一个问题..."
+    },
+    "accessibility": {
+      "messageHistory": "聊天消息历史",
+      "composer": "输入你的聊天消息",
+      "send": "发送聊天消息",
+      "fullPage": "打开聊天助手完整页面",
+      "newChat": "开始新聊天",
+      "openWidget": "打开聊天组件",
+      "conversationMenu": "打开 {{title}} 的菜单",
+      "dashboardLauncher": "从仪表板向 CyberGuard 提出新问题"
+    }
   },
   "footer": {
     "builtWithCare": "用心构建",
@@ -704,11 +775,15 @@
     "no": "否",
     "back": "返回",
     "next": "下一步",
+    "continueActivity": "继续活动",
+    "leaveToDashboard": "离开并返回仪表板",
+    "leavePage": "离开页面",
     "notFound": "未找到",
     "unauthorized": "未授权",
     "networkError": "网络错误",
     "somethingWentWrong": "出现问题。请再试一次。",
     "backToHome": "返回首页",
+    "backToDashboard": "返回仪表板",
     "learnMore": "了解更多 →",
     "notSet": "未设置"
   },

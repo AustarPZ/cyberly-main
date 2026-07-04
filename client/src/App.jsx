@@ -1,4 +1,4 @@
-import { useState, createContext, useContext, useRef, useEffect } from "react";
+import { useState, createContext, useContext, useRef, useEffect, useCallback } from "react";
 import { useTranslation } from "react-i18next";
 import profileMappings from "./profileMappings";
 import i18n, { STORAGE_KEY as UI_LANGUAGE_STORAGE_KEY, getStoredUiLanguage} from "./i18n";
@@ -133,6 +133,7 @@ body {
   box-shadow: 0 14px 35px rgba(0,0,0,0.14); padding: 0.5rem;
 }
 .account-menu-header { padding: 0.65rem 0.7rem 0.75rem; border-bottom: 1px solid rgba(0,0,0,0.07); margin-bottom: 0.35rem; }
+.account-menu-divider { height: 1px; background: rgba(0,0,0,0.08); margin: 0.35rem 0; }
 .account-menu-name { font-weight: 700; font-size: 0.92rem; color: #1a1a18; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .account-menu-email { margin-top: 0.15rem; font-size: 0.78rem; color: #777; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .account-menu-item {
@@ -374,6 +375,16 @@ body {
 .page-state.empty { background: #fafafa; }
 .page-state-title { font-weight: 700; color: #1a1a18; margin-bottom: 0.25rem; }
 .page-state.error .page-state-title { color: var(--coral); }
+.success-feedback {
+  display: flex; align-items: flex-start; gap: 0.55rem;
+  color: #14684f; background: var(--teal-lt); border: 1px solid rgba(29,158,117,0.24);
+  border-radius: 10px; padding: 0.7rem 0.85rem; font-size: 0.86rem;
+  font-weight: 700; margin-bottom: 0.75rem;
+}
+.field-error[role="alert"] {
+  background: var(--coral-lt); border: 1px solid rgba(216,90,48,0.18);
+  border-radius: 9px; padding: 0.55rem 0.7rem;
+}
 .dashboard-anchor { scroll-margin-top: calc(var(--nav-h) + 1rem); }
 .dashboard-shell {
   max-width: 1180px; margin: 0 auto; padding: 2.25rem 1.5rem 3rem;
@@ -438,26 +449,103 @@ body {
   width: 340px; background: #fff; border-radius: 16px;
   border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 8px 32px rgba(0,0,0,0.14);
   display: flex; flex-direction: column; overflow: hidden;
+  max-height: min(560px, calc(100vh - 6rem));
 }
 .chat-header {
   background: var(--teal); color: #fff;
   padding: 0.75rem 1rem; font-weight: 600; font-size: 0.875rem;
   display: flex; align-items: center; justify-content: space-between;
+  gap: 0.75rem;
 }
 .chat-header-sub { font-size: 0.75rem; font-weight: 400; opacity: 0.8; }
-.chat-messages { height: 280px; overflow-y: auto; padding: 0.75rem; display: flex; flex-direction: column; gap: 0.6rem; }
+.chat-header-actions { display: flex; align-items: center; gap: 0.4rem; flex: 0 0 auto; }
+.chat-header-button {
+  border: 1px solid rgba(255,255,255,0.28); background: rgba(255,255,255,0.12); color: #fff;
+  border-radius: 8px; padding: 0.32rem 0.5rem; cursor: pointer; font-size: 0.76rem; font-weight: 700;
+}
+.chat-header-button:hover, .chat-header-button:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,0.24); background: rgba(255,255,255,0.18); }
+.chat-messages { min-height: 280px; height: 320px; overflow-y: auto; padding: 0.85rem; display: flex; flex-direction: column; gap: 0.6rem; }
 .chat-bubble { max-width: 85%; padding: 0.55rem 0.85rem; border-radius: 12px; font-size: 0.82rem; line-height: 1.5; }
 .chat-bubble.user { align-self: flex-end; background: var(--teal); color: #fff; border-bottom-right-radius: 3px; }
 .chat-bubble.ai { align-self: flex-start; background: var(--gray-lt); border-bottom-left-radius: 3px; }
 .chat-bubble.ai.loading { opacity: 0.6; font-style: italic; }
-.chat-input-row { display: flex; gap: 0.5rem; padding: 0.6rem 0.75rem; border-top: 1px solid rgba(0,0,0,0.07); }
-.chat-input { flex: 1; border: 1px solid rgba(0,0,0,0.12); border-radius: 8px; padding: 0.45rem 0.7rem; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; outline: none; resize: none; }
+.chat-empty { margin: auto; text-align: center; color: #66736d; line-height: 1.55; padding: 1rem; }
+.chat-empty-title { font-weight: 800; color: #1a1a18; margin-bottom: 0.3rem; }
+.chat-input-row { display: flex; gap: 0.5rem; padding: 0.65rem 0.75rem; border-top: 1px solid rgba(0,0,0,0.07); align-items: flex-end; }
+.chat-input { flex: 1; border: 1px solid rgba(0,0,0,0.12); border-radius: 8px; padding: 0.52rem 0.7rem; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; outline: none; resize: none; min-height: 38px; max-height: 110px; }
 .chat-input:focus { border-color: var(--teal); }
-.chat-send { background: var(--teal); color: #fff; border: none; border-radius: 8px; padding: 0.5rem 0.85rem; cursor: pointer; font-size: 0.85rem; font-weight: 500; }
+.chat-send { background: var(--teal); color: #fff; border: none; border-radius: 8px; padding: 0.55rem 0.85rem; cursor: pointer; font-size: 0.85rem; font-weight: 700; min-width: 44px; }
 .chat-send:hover { opacity: 0.88; }
 .chat-send:disabled { opacity: 0.45; cursor: not-allowed; }
 .chat-login-prompt { padding: 1.25rem; text-align: center; color: #666; font-size: 0.85rem; }
 .chat-login-prompt button { margin-top: 0.75rem; background: var(--teal); color: #fff; border: none; border-radius: 8px; padding: 0.5rem 1.25rem; cursor: pointer; font-size: 0.875rem; }
+.ai-chat-shell {
+  max-width: 1180px; margin: 0 auto; padding: 2.25rem 1.5rem 3rem;
+  display: grid; grid-template-columns: minmax(230px, 290px) minmax(0, 1fr); gap: 1.25rem;
+}
+.ai-chat-sidebar, .ai-chat-main {
+  background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 14px;
+  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+}
+.ai-chat-sidebar { padding: 1rem; align-self: start; }
+.ai-chat-sidebar-header { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-bottom: 0.85rem; }
+.ai-chat-list { display: grid; gap: 0.45rem; max-height: 560px; overflow-y: auto; }
+.ai-chat-list-item {
+  border: 1px solid rgba(0,0,0,0.08); background: #fff; border-radius: 10px; padding: 0.7rem;
+  text-align: left; cursor: pointer; color: #333;
+}
+.ai-chat-list-row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 0.35rem; align-items: stretch; }
+.ai-chat-list-item:hover, .ai-chat-list-item:focus-visible, .ai-chat-list-item.active {
+  outline: none; background: var(--teal-lt); border-color: rgba(29,158,117,0.28);
+  box-shadow: inset 0 0 0 2px rgba(29,158,117,0.13);
+}
+.ai-chat-menu-button {
+  border: 1px solid rgba(0,0,0,0.08); background: #fff; border-radius: 10px; cursor: pointer;
+  padding: 0 0.55rem; color: #56615c; font-weight: 800;
+}
+.ai-chat-menu-button:hover, .ai-chat-menu-button:focus-visible, .ai-chat-menu-button.open {
+  background: var(--gray-lt); outline: none; box-shadow: inset 0 0 0 2px rgba(29,158,117,0.14);
+}
+.ai-chat-menu {
+  position: absolute; right: 0; top: calc(100% + 0.25rem); z-index: 20; min-width: 140px;
+  background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: 10px;
+  box-shadow: 0 12px 28px rgba(0,0,0,0.14); padding: 0.35rem;
+}
+.ai-chat-menu-item {
+  width: 100%; border: none; background: none; text-align: left; cursor: pointer;
+  padding: 0.55rem 0.65rem; border-radius: 8px; font-family: 'DM Sans', sans-serif;
+}
+.ai-chat-menu-item:hover, .ai-chat-menu-item:focus-visible { background: var(--gray-lt); outline: none; }
+.ai-chat-menu-item.danger { color: var(--coral); font-weight: 700; }
+.ai-chat-rename-form { display: grid; gap: 0.4rem; }
+.ai-chat-rename-input {
+  width: 100%; border: 1.5px solid rgba(0,0,0,0.13); border-radius: 8px;
+  padding: 0.55rem 0.65rem; font-family: 'DM Sans', sans-serif; font-size: 0.86rem;
+}
+.ai-chat-rename-input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(29,158,117,0.12); }
+.ai-chat-list-title { font-weight: 800; font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.ai-chat-list-time { margin-top: 0.2rem; font-size: 0.72rem; color: #77827d; }
+.ai-chat-main { min-height: 620px; display: flex; flex-direction: column; overflow: hidden; }
+.ai-chat-main-header { padding: 1rem 1.1rem; border-bottom: 1px solid rgba(0,0,0,0.07); }
+.ai-chat-full-messages { flex: 1; min-height: 420px; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; background: #fbfcfa; }
+.ai-chat-full-messages .chat-bubble { max-width: min(680px, 88%); font-size: 0.92rem; }
+.dashboard-ai-preview {
+  background: #fff; border: 1px solid rgba(29,158,117,0.18); border-radius: 14px;
+  padding: 1.25rem; box-shadow: 0 2px 12px rgba(0,0,0,0.05); margin-bottom: 0.5rem;
+}
+.dashboard-ai-preview-text { color: #52615b; font-size: 0.88rem; line-height: 1.6; margin: 0.65rem 0 1rem; }
+@media (max-width: 820px) {
+  .ai-chat-shell { display: block; padding: 1.25rem 1rem 2.5rem; }
+  .ai-chat-sidebar { margin-bottom: 1rem; }
+  .ai-chat-list { max-height: 180px; }
+  .ai-chat-main { min-height: 560px; }
+  .chat-panel { left: 1rem; right: 1rem; width: auto; }
+}
+@media (max-width: 430px) {
+  .chat-header { align-items: flex-start; }
+  .chat-header-actions { flex-direction: column; align-items: stretch; }
+  .chat-header-button { font-size: 0.72rem; }
+}
 
 /* ── Resources ── */
 .res-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 1rem; }
@@ -474,8 +562,14 @@ footer strong { color: #fff; }
 // ─── Context ──────────────────────────────────────────────────────
 const AppCtx = createContext(null);
 function useApp() { return useContext(AppCtx); }
+const ChatCtx = createContext(null);
+function useChat() { return useContext(ChatCtx); }
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
+const CHAT_STORAGE_PREFIX = "cyberly.chat.v1";
+const PUBLIC_PAGES = new Set(["home", "resources", "about", "login"]);
+const PROTECTED_PAGES = new Set(["dashboard", "assessment", "scenarios", "progress", "profile", "ai-chat"]);
+const VALID_PAGES = new Set([...PUBLIC_PAGES, ...PROTECTED_PAGES]);
 
 const {
   EDUCATION_LEVELS,
@@ -486,6 +580,23 @@ const {
   labelFor,
   labelsFor,
 } = profileMappings;
+
+function parseHashPage() {
+  if (typeof window === "undefined") return "home";
+  const raw = window.location.hash.replace(/^#\/?/, "").split(/[/?#]/)[0];
+  return VALID_PAGES.has(raw) ? raw : "home";
+}
+
+function writeHashPage(page, replace = false) {
+  if (typeof window === "undefined") return;
+  const nextHash = `#/${VALID_PAGES.has(page) ? page : "home"}`;
+  if (window.location.hash === nextHash) return;
+  if (replace) {
+    window.history.replaceState(null, "", nextHash);
+  } else {
+    window.location.hash = nextHash;
+  }
+}
 
 function PageBackButton({ className = "", style }) {
   const { t } = useTranslation();
@@ -508,8 +619,9 @@ function PageBackButton({ className = "", style }) {
 }
 
 function PageState({ type = "loading", title, message, actionLabel, onAction }) {
+  const isError = type === "error";
   return (
-    <div className={`page-state ${type}`}>
+    <div className={`page-state ${type}`} role={isError ? "alert" : "status"} aria-live={isError ? "assertive" : "polite"}>
       {title && <div className="page-state-title">{title}</div>}
       {message && <div>{message}</div>}
       {actionLabel && onAction && (
@@ -521,9 +633,312 @@ function PageState({ type = "loading", title, message, actionLabel, onAction }) 
   );
 }
 
+function SuccessFeedback({ message }) {
+  if (!message) return null;
+  return (
+    <div className="success-feedback" role="status" aria-live="polite">
+      <span aria-hidden="true">✓</span>
+      <span>{message}</span>
+    </div>
+  );
+}
+
+function ConfirmationDialog({
+  title,
+  description,
+  cancelLabel,
+  confirmLabel,
+  onCancel,
+  onConfirm,
+  danger = false,
+}) {
+  const cancelRef = useRef(null);
+  const confirmRef = useRef(null);
+
+  useEffect(() => {
+    cancelRef.current?.focus();
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") onCancel();
+      if (event.key !== "Tab") return;
+
+      const focusable = [cancelRef.current, confirmRef.current].filter(Boolean);
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [onCancel]);
+
+  return (
+    <div className="logout-modal-backdrop" role="presentation" onMouseDown={event => {
+      if (event.target === event.currentTarget) onCancel();
+    }}>
+      <div
+        className="logout-modal"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="confirmation-dialog-title"
+        aria-describedby="confirmation-dialog-description"
+      >
+        <h2 id="confirmation-dialog-title">{title}</h2>
+        <p id="confirmation-dialog-description">{description}</p>
+        <div className="logout-modal-actions">
+          <button type="button" className="modal-cancel" ref={cancelRef} onClick={onCancel}>
+            {cancelLabel}
+          </button>
+          <button type="button" className={danger ? "modal-confirm" : "modal-cancel"} ref={confirmRef} onClick={onConfirm}>
+            {confirmLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function prefersReducedMotion() {
   return typeof window !== "undefined" &&
     window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
+}
+
+function focusFirstNamedField(fieldNames) {
+  window.setTimeout(() => {
+    const first = fieldNames
+      .map(name => document.querySelector(`[data-field="${name}"]`))
+      .find(Boolean);
+    first?.focus?.();
+  }, 0);
+}
+
+function chatStorageKey(userId) {
+  return `${CHAT_STORAGE_PREFIX}.${userId}`;
+}
+
+function safeReadChatState(userId) {
+  if (!userId || typeof window === "undefined") return null;
+  try {
+    const raw = window.localStorage.getItem(chatStorageKey(userId));
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    if (!parsed || !Array.isArray(parsed.conversations)) return null;
+    return {
+      activeConversationId: parsed.activeConversationId || parsed.conversations[0]?.id || null,
+      conversations: parsed.conversations
+        .filter(conversation => conversation?.id && Array.isArray(conversation.messages))
+        .map(conversation => ({
+          id: String(conversation.id),
+          title: String(conversation.title || "New chat"),
+          createdAt: conversation.createdAt || new Date().toISOString(),
+          updatedAt: conversation.updatedAt || conversation.createdAt || new Date().toISOString(),
+          messages: conversation.messages
+            .filter(message => message?.role && typeof message.text === "string")
+            .map(message => ({
+              id: String(message.id || `msg-${Date.now()}`),
+              role: message.role === "user" ? "user" : "ai",
+              text: message.text,
+              createdAt: message.createdAt || new Date().toISOString(),
+            })),
+        })),
+    };
+  } catch {
+    return null;
+  }
+}
+
+function safeWriteChatState(userId, state) {
+  if (!userId || typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(chatStorageKey(userId), JSON.stringify({
+      activeConversationId: state.activeConversationId,
+      conversations: state.conversations,
+    }));
+  } catch {
+    // Temporary local storage is best-effort until backend chat history exists.
+  }
+}
+
+function createChatId(prefix) {
+  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+}
+
+function titleFromMessage(text) {
+  const trimmed = text.trim().replace(/\s+/g, " ");
+  if (!trimmed) return "New chat";
+  return trimmed.length > 42 ? `${trimmed.slice(0, 39)}...` : trimmed;
+}
+
+function normalizeConversationTitle(title) {
+  return title.trim().replace(/\s+/g, " ").slice(0, 60);
+}
+
+function ChatProvider({ user, children }) {
+  const { t } = useTranslation();
+  const [state, setState] = useState({ conversations: [], activeConversationId: null });
+  const [sending, setSending] = useState(false);
+  const userId = user?.id;
+
+  useEffect(() => {
+    if (!userId) {
+      setState({ conversations: [], activeConversationId: null });
+      setSending(false);
+      return;
+    }
+
+    setState(safeReadChatState(userId) || { conversations: [], activeConversationId: null });
+    setSending(false);
+  }, [userId]);
+
+  useEffect(() => {
+    if (!userId) return;
+    safeWriteChatState(userId, state);
+  }, [userId, state]);
+
+  const activeConversation = state.conversations.find(conversation => conversation.id === state.activeConversationId) || null;
+  const conversations = [...state.conversations].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+  function createConversation(initialText = "") {
+    if (!userId) return null;
+    const now = new Date().toISOString();
+    const clean = initialText.trim();
+    const initialMessages = clean
+      ? [{ id: createChatId("msg"), role: "user", text: clean, createdAt: now }]
+      : [];
+    const conversation = {
+      id: createChatId("chat"),
+      title: clean ? titleFromMessage(clean) : t("chat.conversation.newTitle"),
+      createdAt: now,
+      updatedAt: now,
+      messages: initialMessages,
+    };
+    setState(current => ({
+      conversations: [conversation, ...current.conversations],
+      activeConversationId: conversation.id,
+    }));
+    return conversation.id;
+  }
+
+  function createConversationFromMessage(text) {
+    return createConversation(text);
+  }
+
+  function ensureConversation() {
+    if (state.activeConversationId && state.conversations.some(conversation => conversation.id === state.activeConversationId)) {
+      return state.activeConversationId;
+    }
+    return createConversation();
+  }
+
+  function selectConversation(id) {
+    setState(current => current.conversations.some(conversation => conversation.id === id)
+      ? { ...current, activeConversationId: id }
+      : current);
+  }
+
+  function renameConversation(id, title) {
+    const nextTitle = normalizeConversationTitle(title);
+    if (!nextTitle) return false;
+    setState(current => ({
+      ...current,
+      conversations: current.conversations.map(conversation => conversation.id === id
+        ? { ...conversation, title: nextTitle, updatedAt: new Date().toISOString() }
+        : conversation),
+    }));
+    return true;
+  }
+
+  function deleteConversation(id) {
+    setState(current => {
+      const remaining = current.conversations.filter(conversation => conversation.id !== id);
+      const nextActive = current.activeConversationId === id
+        ? [...remaining].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))[0]?.id || null
+        : current.activeConversationId;
+      return {
+        conversations: remaining,
+        activeConversationId: nextActive,
+      };
+    });
+  }
+
+  async function sendMessage(text) {
+    const clean = text.trim();
+    if (!clean || sending || !userId) return;
+    const now = new Date().toISOString();
+    const conversationId = ensureConversation();
+    if (!conversationId) return;
+    const userMessage = { id: createChatId("msg"), role: "user", text: clean, createdAt: now };
+
+    setSending(true);
+    setState(current => ({
+      activeConversationId: conversationId,
+      conversations: current.conversations.map(conversation => {
+        if (conversation.id !== conversationId) return conversation;
+        const wasEmpty = conversation.messages.length === 0;
+        return {
+          ...conversation,
+          title: wasEmpty ? titleFromMessage(clean) : conversation.title,
+          updatedAt: now,
+          messages: [...conversation.messages, userMessage],
+        };
+      }),
+    }));
+
+    try {
+      const aiText = await askClaude([{ role: "user", content: clean }], buildSystemPrompt(user), t);
+      const aiMessage = {
+        id: createChatId("msg"),
+        role: "ai",
+        text: aiText,
+        createdAt: new Date().toISOString(),
+      };
+      setState(current => ({
+        activeConversationId: conversationId,
+        conversations: current.conversations.map(conversation => conversation.id === conversationId
+          ? { ...conversation, updatedAt: aiMessage.createdAt, messages: [...conversation.messages, aiMessage] }
+          : conversation),
+      }));
+    } catch {
+      const aiMessage = {
+        id: createChatId("msg"),
+        role: "ai",
+        text: t("common.somethingWentWrong"),
+        createdAt: new Date().toISOString(),
+      };
+      setState(current => ({
+        activeConversationId: conversationId,
+        conversations: current.conversations.map(conversation => conversation.id === conversationId
+          ? { ...conversation, updatedAt: aiMessage.createdAt, messages: [...conversation.messages, aiMessage] }
+          : conversation),
+      }));
+    } finally {
+      setSending(false);
+    }
+  }
+
+  const value = {
+    conversations,
+    activeConversation,
+    activeConversationId: state.activeConversationId,
+    messages: activeConversation?.messages || [],
+    sending,
+    createConversation,
+    createConversationFromMessage,
+    selectConversation,
+    renameConversation,
+    deleteConversation,
+    sendMessage,
+  };
+
+  return <ChatCtx.Provider value={value}>{children}</ChatCtx.Provider>;
 }
 
 function normalizeProfile(profileData) {
@@ -1068,9 +1483,12 @@ function StepCredentials({ data, onChange, errors }) {
         </label>
 
         <input
+          data-field="email"
           type="email"
           placeholder={t("auth.emailPlaceholder")}
           value={data.email}
+          aria-invalid={Boolean(errors.email)}
+          aria-describedby={errors.email ? "register-email-error" : undefined}
           onChange={event =>
             onChange(
               "email",
@@ -1080,7 +1498,7 @@ function StepCredentials({ data, onChange, errors }) {
         />
 
         {errors.email && (
-          <div className="field-error">
+          <div className="field-error" id="register-email-error" role="alert">
             {errors.email}
           </div>
         )}
@@ -1092,10 +1510,13 @@ function StepCredentials({ data, onChange, errors }) {
         </label>
 
         <input
+          data-field="displayName"
           placeholder={t(
             "auth.displayNamePlaceholder"
           )}
           value={data.displayName}
+          aria-invalid={Boolean(errors.displayName)}
+          aria-describedby={errors.displayName ? "register-display-name-error" : undefined}
           onChange={event =>
             onChange(
               "displayName",
@@ -1105,7 +1526,7 @@ function StepCredentials({ data, onChange, errors }) {
         />
 
         {errors.displayName && (
-          <div className="field-error">
+          <div className="field-error" id="register-display-name-error" role="alert">
             {errors.displayName}
           </div>
         )}
@@ -1117,11 +1538,14 @@ function StepCredentials({ data, onChange, errors }) {
         </label>
 
         <input
+          data-field="age"
           type="number"
           placeholder={t(
             "auth.agePlaceholder"
           )}
           value={data.age}
+          aria-invalid={Boolean(errors.age)}
+          aria-describedby={errors.age ? "register-age-error" : undefined}
           onChange={event =>
             onChange(
               "age",
@@ -1131,7 +1555,7 @@ function StepCredentials({ data, onChange, errors }) {
         />
 
         {errors.age && (
-          <div className="field-error">
+          <div className="field-error" id="register-age-error" role="alert">
             {errors.age}
           </div>
         )}
@@ -1143,11 +1567,14 @@ function StepCredentials({ data, onChange, errors }) {
         </label>
 
         <input
+          data-field="password"
           type="password"
           placeholder={t(
             "auth.passwordPlaceholder"
           )}
           value={data.password}
+          aria-invalid={Boolean(errors.password)}
+          aria-describedby={errors.password ? "register-password-error" : undefined}
           onChange={event =>
             onChange(
               "password",
@@ -1157,7 +1584,7 @@ function StepCredentials({ data, onChange, errors }) {
         />
 
         {errors.password && (
-          <div className="field-error">
+          <div className="field-error" id="register-password-error" role="alert">
             {errors.password}
           </div>
         )}
@@ -1188,10 +1615,13 @@ function StepNickname({
 
       <div className="field">
         <input
+          data-field="aiNickname"
           placeholder={t(
             "onboarding.nicknamePlaceholder"
           )}
           value={data.aiNickname}
+          aria-invalid={Boolean(errors.aiNickname)}
+          aria-describedby={errors.aiNickname ? "register-ai-nickname-error" : undefined}
           onChange={event =>
             onChange(
               "aiNickname",
@@ -1201,7 +1631,7 @@ function StepNickname({
         />
 
         {errors.aiNickname && (
-          <div className="field-error">
+          <div className="field-error" id="register-ai-nickname-error" role="alert">
             {errors.aiNickname}
           </div>
         )}
@@ -1229,6 +1659,7 @@ function StepEducationLevel({
         {EDUCATION_LEVELS.map(level => (
           <button
             key={level.value}
+            data-field="educationLevel"
             className={`opt-btn full-width ${
               data.educationLevel === level.value
                 ? "selected"
@@ -1273,6 +1704,7 @@ function StepLanguage({
         {LANGUAGES.map(languageOption => (
           <button
             key={languageOption.value}
+            data-field="language"
             className={`opt-btn full-width ${
               data.language ===
               languageOption.value
@@ -1321,6 +1753,7 @@ function StepFamiliarity({
         {FAMILIARITY.map(level => (
           <button
             key={level.value}
+            data-field="familiarity"
             className={`opt-btn full-width ${
               data.familiarity === level.value
                 ? "selected"
@@ -1410,6 +1843,7 @@ function StepHelpTopics({
         {HELP_OPTIONS.map(topic => (
           <button
             key={topic.value}
+            data-field="helpTopics"
             className={`chip-btn ${
               selected.includes(topic.value)
                 ? "selected"
@@ -1467,6 +1901,7 @@ function StepLearningStyle({
         {LEARNING_STYLES.map(style => (
           <button
             key={style.value}
+            data-field="learningStyle"
             className={`opt-btn full-width ${
               data.learningStyle === style.value
                 ? "selected"
@@ -1652,6 +2087,7 @@ function RegisterPage({ onSwitch }) {
       Object.keys(validationErrors).length > 0
     ) {
       setErrors(validationErrors);
+      focusFirstNamedField(Object.keys(validationErrors));
       return;
     }
 
@@ -1722,6 +2158,7 @@ function RegisterPage({ onSwitch }) {
               result.error ||
               t("auth.registerFailed"),
           });
+          focusFirstNamedField(["email"]);
           return;
         }
 
@@ -1741,6 +2178,7 @@ function RegisterPage({ onSwitch }) {
 
           ...profileResult.errors,
         });
+        focusFirstNamedField(Object.keys(profileResult.errors || {}));
         return;
       }
 
@@ -1867,6 +2305,7 @@ function RegisterPage({ onSwitch }) {
         {errors.form && (
           <div
             className="field-error"
+            role="alert"
             style={{
               marginTop: "0.5rem",
             }}
@@ -1973,6 +2412,7 @@ function LoginPage({ onSwitch }) {
       Object.keys(validationErrors).length
     ) {
       setErrors(validationErrors);
+      focusFirstNamedField(Object.keys(validationErrors));
       return;
     }
 
@@ -2038,9 +2478,12 @@ function LoginPage({ onSwitch }) {
           </label>
 
           <input
+            data-field="email"
             type="email"
             placeholder={t("auth.email")}
             value={form.email}
+            aria-invalid={Boolean(errors.email)}
+            aria-describedby={errors.email ? "login-email-error" : undefined}
             onChange={event => {
               setForm(current => ({
                 ...current,
@@ -2056,7 +2499,7 @@ function LoginPage({ onSwitch }) {
           />
 
           {errors.email && (
-            <div className="field-error">
+            <div className="field-error" id="login-email-error" role="alert">
               {errors.email}
             </div>
           )}
@@ -2068,9 +2511,12 @@ function LoginPage({ onSwitch }) {
           </label>
 
           <input
+            data-field="password"
             type="password"
             placeholder={t("auth.password")}
             value={form.password}
+            aria-invalid={Boolean(errors.password)}
+            aria-describedby={errors.password ? "login-password-error" : undefined}
             onChange={event => {
               setForm(current => ({
                 ...current,
@@ -2086,7 +2532,7 @@ function LoginPage({ onSwitch }) {
           />
 
           {errors.password && (
-            <div className="field-error">
+            <div className="field-error" id="login-password-error" role="alert">
               {errors.password}
             </div>
           )}
@@ -2095,6 +2541,7 @@ function LoginPage({ onSwitch }) {
         {errors.form && (
           <div
             className="field-error"
+            role="alert"
             style={{
               marginTop: "0.5rem",
             }}
@@ -2920,103 +3367,145 @@ function DashboardPage() {
             {t("dashboard.cyberGuard.badge")}
           </span>
         </div>
-        <AgentPanel />
+        <DashboardChatPreview />
       </div>
       </div>
     </div>
   );
 }
 
-// ─── Agent Panel ──────────────────────────────────────────────────
-function AgentPanel() {
+function ChatMessageList({ className = "chat-messages", emptyCompact = false }) {
   const { t } = useTranslation();
-  const { user } = useApp();
-  const [messages, setMessages] = useState([]);
-  const [history,  setHistory]  = useState([]);
-  const [input,    setInput]    = useState("");
-  const [loading,  setLoading]  = useState(false);
-  const [error,    setError]    = useState(null);
+  const { messages, sending } = useChat();
   const endRef = useRef(null);
-  const messagesRef = useRef(null);
   const shouldAutoScrollRef = useRef(false);
-
-  const nick = user?.aiNickname || user?.displayName || user?.name || "there";
-
-  
-  useEffect(() => {
-    setMessages([{
-      role: "ai",
-      text: t("agent.welcome", { name: nick }),
-    }]);
-  }, [nick, t]);
 
   useEffect(() => {
     if (!shouldAutoScrollRef.current) return;
-    const container = messagesRef.current;
-    if (!container) return;
-    container.scrollTo({
-      top: container.scrollHeight,
+    endRef.current?.scrollIntoView({
       behavior: prefersReducedMotion() ? "auto" : "smooth",
+      block: "end",
     });
-  }, [messages]);
+  }, [messages.length, sending]);
 
-  async function sendMessage(q) {
-    if (!q.trim() || loading) return;
+  useEffect(() => {
     shouldAutoScrollRef.current = true;
+  }, [messages.length, sending]);
+
+  return (
+    <div className={className} role="log" aria-live="polite" aria-label={t("chat.accessibility.messageHistory")}>
+      {messages.length === 0 ? (
+        <div className="chat-empty">
+          <div className="chat-empty-title">{t("chat.empty.title")}</div>
+          <div>{emptyCompact ? t("chat.empty.shortDescription") : t("chat.empty.description")}</div>
+        </div>
+      ) : (
+        messages.map(message => (
+          <div key={message.id} className={`chat-bubble ${message.role}`} style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+            {message.text}
+          </div>
+        ))
+      )}
+      {sending && <div className="chat-bubble ai loading">{t("chat.thinking")}</div>}
+      <div ref={endRef} />
+    </div>
+  );
+}
+
+function ChatComposer({ compact = false }) {
+  const { t } = useTranslation();
+  const { sendMessage, sending } = useChat();
+  const [input, setInput] = useState("");
+
+  async function send() {
+    const text = input.trim();
+    if (!text || sending) return;
     setInput("");
-    setError(null);
-    setMessages(prev => [...prev, { role: "user", text: q }]);
-    setLoading(true);
-    try {
-      const systemPrompt = buildSystemPrompt(user);
-      const aiText = await askClaude(
-        [...history, { role: "user", content: q }],
-        systemPrompt,
-        t
-      );
-      setMessages(prev => [...prev, { role: "ai", text: aiText }]);
-      setHistory(prev => [
-        ...prev,
-        { role: "user", content: q },
-        { role: "assistant", content: aiText },
-      ]);
-    } catch (err) {
-      setError(err.message);
-    } finally {
-      setLoading(false);
-    }
+    await sendMessage(text);
   }
 
   return (
-    <div className="agent-panel">
-      <div className="agent-header">🛡 {t("agent.title")}</div>
-      <div className="agent-messages" ref={messagesRef}>
-        {messages.map((m, i) => (
-          <div key={i} className={`agent-bubble ${m.role}`} style={{ whiteSpace: "pre-wrap" }}>
-            {m.text}
-          </div>
-        ))}
-        {loading && <div className="agent-bubble ai loading">{t("agent.thinking")}</div>}
-        {error && <p style={{ color: "var(--coral)", fontSize: "0.82rem" }}>⚠️ {error}</p>}
-        <div ref={endRef} />
+    <div className="chat-input-row">
+      <textarea
+        className="chat-input"
+        rows={compact ? 1 : 2}
+        placeholder={t("chat.placeholder")}
+        value={input}
+        aria-label={t("chat.accessibility.composer")}
+        onChange={event => setInput(event.target.value)}
+        onKeyDown={event => {
+          if (event.key === "Enter" && !event.shiftKey) {
+            event.preventDefault();
+            send();
+          }
+        }}
+        disabled={sending}
+      />
+      <button className="chat-send" onClick={send} disabled={sending || !input.trim()} aria-label={t("chat.accessibility.send")}>
+        {sending ? "…" : compact ? "↑" : t("chat.send")}
+      </button>
+    </div>
+  );
+}
+
+function DashboardChatPreview() {
+  const { t } = useTranslation();
+  const { go } = useApp();
+  const { conversations, createConversationFromMessage, createConversation, selectConversation } = useChat();
+  const [input, setInput] = useState("");
+
+  function viewHistory() {
+    if (conversations[0]) selectConversation(conversations[0].id);
+    go("ai-chat");
+  }
+
+  function startEmptyConversation() {
+    createConversation();
+    go("ai-chat");
+  }
+
+  function submitLauncher() {
+    const clean = input.trim();
+    if (!clean) return;
+    createConversationFromMessage(clean);
+    setInput("");
+    go("ai-chat");
+  }
+
+  return (
+    <div className="agent-panel" style={{ marginBottom: "0.5rem" }}>
+      <div className="agent-header">🛡 {t("dashboard.cyberGuard.title")}</div>
+      <div className="chat-empty" style={{ minHeight: 170 }}>
+        <div className="chat-empty-title">{t("chat.dashboard.launcherTitle")}</div>
+        <div>{t("chat.dashboard.launcherDescription")}</div>
       </div>
-      <div className="agent-input-row">
-        <input
-          className="agent-input"
-          placeholder={t("agent.placeholder")}
+      <div className="chat-input-row">
+        <textarea
+          className="chat-input"
+          rows={2}
           value={input}
-          onChange={e => setInput(e.target.value)}
-          onKeyDown={e => e.key === "Enter" && !e.shiftKey && sendMessage(input)}
-          disabled={loading}
+          placeholder={t("chat.dashboard.launcherPlaceholder")}
+          aria-label={t("chat.accessibility.dashboardLauncher")}
+          onChange={event => setInput(event.target.value)}
+          onKeyDown={event => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              submitLauncher();
+            }
+          }}
         />
-        <button
-          className="agent-send"
-          onClick={() => sendMessage(input)}
-          disabled={loading || !input.trim()}
-        >
-          {loading ? "…" : t("agent.send")}
+        <button className="chat-send" onClick={submitLauncher} disabled={!input.trim()} aria-label={t("chat.accessibility.send")}>
+          {t("chat.send")}
         </button>
       </div>
+      <div style={{ display: "flex", gap: "0.65rem", flexWrap: "wrap", padding: "0 1rem 1rem" }}>
+        <button className="btn-primary" style={{ flex: "0 0 auto" }} onClick={startEmptyConversation}>
+          {t("chat.actions.startConversation")}
+        </button>
+        <button className="btn-ghost" onClick={viewHistory}>
+          {t("chat.actions.chatHistory")}
+        </button>
+        </div>
     </div>
   );
 }
@@ -3454,7 +3943,7 @@ function AboutPage() {
 // ─── Page: Initial Assessment ────────────────────────────────────
 function AssessmentPage() {
   const { t, i18n: activeI18n } = useTranslation();
-  const { user, go } = useApp();
+  const { user, go, registerActivityGuard } = useApp();
   const assessmentLocale = normalizeLocale(activeI18n.language);
   const [assessment, setAssessment] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -3466,6 +3955,7 @@ function AssessmentPage() {
   const [saving, setSaving] = useState(false);
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
+  const [confirmAction, setConfirmAction] = useState(null);
 
   useEffect(() => {
     let active = true;
@@ -3497,6 +3987,15 @@ function AssessmentPage() {
     load();
     return () => { active = false; };
   }, [user, assessmentLocale]);
+
+  useEffect(() => {
+    if (!attempt || attempt.status !== "in_progress" || result) return undefined;
+    return registerActivityGuard({
+      type: "assessment",
+      title: t("assessment.leaveTitle"),
+      description: t("assessment.leaveDescription"),
+    });
+  }, [attempt, result, registerActivityGuard, t]);
 
   if (!user) { go("login"); return null; }
 
@@ -3543,8 +4042,12 @@ function AssessmentPage() {
       setError(t("assessment.answerAll"));
       return;
     }
-    const confirmed = window.confirm(t("assessment.confirmSubmit"));
-    if (!confirmed) return;
+    setConfirmAction("submit");
+  }
+
+  async function submitConfirmed() {
+    if (!attempt || submitting) return;
+    setConfirmAction(null);
     setSubmitting(true);
     setError("");
     const response = await dbSubmitAssessment(attempt.id, assessmentLocale);
@@ -3555,6 +4058,10 @@ function AssessmentPage() {
     }
     setResult(response.result);
     setAttempt(response.result.attempt);
+  }
+
+  function closeAssessmentConfirm() {
+    setConfirmAction(null);
   }
 
   function renderIntro() {
@@ -3748,10 +4255,24 @@ function AssessmentPage() {
           <PageBackButton />
         </div>
       )}
-      {error && <div className="section" style={{ paddingBottom: 0 }}><div className="field-error">{error || t("assessment.error")}</div></div>}
+      {error && (
+        <div className="section" style={{ paddingBottom: 0 }}>
+          <PageState type="error" title={t("assessment.errorTitle")} message={error || t("assessment.error")} />
+        </div>
+      )}
       {loading ? (
-        <div className="section"><p className="section-title">{t("assessment.loading")}</p></div>
+        <div className="section"><PageState title={t("assessment.loadingTitle")} message={t("assessment.loading")} /></div>
       ) : result ? renderResult() : attempt ? renderAttempt() : renderIntro()}
+      {confirmAction === "submit" && (
+        <ConfirmationDialog
+          title={t("assessment.submitConfirmTitle")}
+          description={t("assessment.confirmSubmit")}
+          cancelLabel={t("common.cancel")}
+          confirmLabel={t("assessment.submit")}
+          onCancel={closeAssessmentConfirm}
+          onConfirm={submitConfirmed}
+        />
+      )}
     </div>
   );
 }
@@ -3759,7 +4280,7 @@ function AssessmentPage() {
 // ─── Page: Scenarios ──────────────────────────────────────────────
 function ScenariosPage() {
   const { t, i18n: activeI18n } = useTranslation();
-  const { user, go } = useApp();
+  const { user, go, registerActivityGuard } = useApp();
   const scenarioLocale = normalizeLocale(activeI18n.language);
   const [filters, setFilters] = useState({ topicCode: "", difficulty: "" });
   const [library, setLibrary] = useState({ loading: true, scenarios: [], recommended: [] });
@@ -3807,6 +4328,15 @@ function ScenariosPage() {
     reloadScenarioContent();
     return () => { active = false; };
   }, [user, scenarioLocale, view.mode, view.scenario?.slug, view.attempt?.id, decisionFeedback]);
+
+  useEffect(() => {
+    if (view.mode !== "attempt" || !view.attempt || view.attempt.status === "completed") return undefined;
+    return registerActivityGuard({
+      type: "scenario",
+      title: t("scenarios.leaveTitle"),
+      description: t("scenarios.leaveDescription"),
+    });
+  }, [view.mode, view.attempt, registerActivityGuard, t]);
 
   if (!user) { go("login"); return null; }
 
@@ -3870,6 +4400,7 @@ function ScenariosPage() {
   }
 
   async function completeScenario() {
+    if (busy) return;
     setBusy(true);
     setError(null);
     const result = await dbCompleteScenario(view.attempt.id, scenarioLocale);
@@ -3913,9 +4444,9 @@ function ScenariosPage() {
       <>
         {filterBar}
         {library.loading ? (
-          <div className="card">{t("scenarios.library.loading")}</div>
+          <PageState title={t("scenarios.library.loadingTitle")} message={t("scenarios.library.loading")} />
         ) : library.scenarios.length === 0 ? (
-          <div className="card">{t("scenarios.library.empty")}</div>
+          <PageState type="empty" title={t("scenarios.library.empty")} message={t("scenarios.library.emptyDescription")} />
         ) : (
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "1rem" }}>
             {library.scenarios.map(scenario => {
@@ -4082,12 +4613,16 @@ function ScenariosPage() {
       <div className="section">
         {view.mode === "library" ? (
           <PageBackButton style={{ marginBottom: "1.5rem" }} />
+        ) : view.mode === "attempt" ? (
+          <button className="btn-ghost" onClick={() => go("dashboard")} style={{ marginBottom: "1.5rem" }}>
+            {t("scenarios.attempt.exit")}
+          </button>
         ) : (
           <button className="btn-ghost" onClick={() => setView({ mode: "library" })} style={{ marginBottom: "1.5rem" }}>
-            {view.mode === "attempt" ? t("scenarios.attempt.exit") : t("common.back")}
+            {t("common.back")}
           </button>
         )}
-        {error && <div className="field-error" style={{ marginBottom: "1rem" }}>{error}</div>}
+        {error && <div className="field-error" role="alert" style={{ marginBottom: "1rem" }}>{error}</div>}
         {view.mode === "intro" ? renderIntro() : view.mode === "attempt" ? renderAttempt() : view.mode === "result" ? renderResult() : renderLibrary()}
       </div>
     </div>
@@ -4161,6 +4696,18 @@ function ProfilePage() {
 
   const [saved, setSaved] =
     useState(false);
+
+  useEffect(() => {
+    if (!accountSaved) return undefined;
+    const timeout = window.setTimeout(() => setAccountSaved(false), prefersReducedMotion() ? 2500 : 3500);
+    return () => window.clearTimeout(timeout);
+  }, [accountSaved]);
+
+  useEffect(() => {
+    if (!saved) return undefined;
+    const timeout = window.setTimeout(() => setSaved(false), prefersReducedMotion() ? 2500 : 3500);
+    return () => window.clearTimeout(timeout);
+  }, [saved]);
 
   if (!user) {
     go("login");
@@ -4243,6 +4790,7 @@ function ProfilePage() {
 
         ...result.errors,
       });
+      focusFirstNamedField(Object.keys(result.errors || {}));
 
       return;
     }
@@ -4285,6 +4833,7 @@ function ProfilePage() {
 
         ...result.errors,
       });
+      focusFirstNamedField(Object.keys(result.errors || {}));
 
       return;
     }
@@ -4564,10 +5113,13 @@ function ProfilePage() {
               </label>
 
               <input
+                data-field="displayName"
                 value={
                   accountForm.displayName
                 }
                 maxLength={50}
+                aria-invalid={Boolean(accountErrors.displayName)}
+                aria-describedby={accountErrors.displayName ? "account-display-name-error" : undefined}
                 onChange={event =>
                   setAccount(
                     "displayName",
@@ -4580,7 +5132,7 @@ function ProfilePage() {
               />
 
               {accountErrors.displayName && (
-                <div className="field-error">
+                <div className="field-error" id="account-display-name-error" role="alert">
                   {
                     accountErrors.displayName
                   }
@@ -4594,12 +5146,15 @@ function ProfilePage() {
               </label>
 
               <input
+                data-field="age"
                 type="number"
                 min="1"
                 max="120"
                 value={
                   accountForm.age
                 }
+                aria-invalid={Boolean(accountErrors.age)}
+                aria-describedby={accountErrors.age ? "account-age-error" : undefined}
                 onChange={event =>
                   setAccount(
                     "age",
@@ -4609,7 +5164,7 @@ function ProfilePage() {
               />
 
               {accountErrors.age && (
-                <div className="field-error">
+                <div className="field-error" id="account-age-error" role="alert">
                   {accountErrors.age}
                 </div>
               )}
@@ -4635,6 +5190,7 @@ function ProfilePage() {
             accountErrors.forbidden) && (
             <div
               className="field-error"
+              role="alert"
               style={{
                 marginBottom:
                   "0.75rem",
@@ -4645,27 +5201,7 @@ function ProfilePage() {
             </div>
           )}
 
-          {accountSaved && (
-            <div
-              style={{
-                color:
-                  "var(--teal)",
-
-                fontSize:
-                  "0.85rem",
-
-                fontWeight:
-                  600,
-
-                marginBottom:
-                  "0.75rem",
-              }}
-            >
-              {t(
-                "settings.accountSaved"
-              )}
-            </div>
-          )}
+          {accountSaved && <SuccessFeedback message={t("settings.accountSaved")} />}
 
           <button
             className="btn-primary"
@@ -4718,10 +5254,13 @@ function ProfilePage() {
             </label>
 
             <input
+              data-field="aiNickname"
               value={
                 form.aiNickname
               }
               maxLength={50}
+              aria-invalid={Boolean(errors.aiNickname)}
+              aria-describedby={errors.aiNickname ? "profile-ai-nickname-error" : undefined}
               onChange={event =>
                 set(
                   "aiNickname",
@@ -4734,7 +5273,7 @@ function ProfilePage() {
             />
 
             {errors.aiNickname && (
-              <div className="field-error">
+              <div className="field-error" id="profile-ai-nickname-error" role="alert">
                 {errors.aiNickname}
               </div>
             )}
@@ -4762,9 +5301,12 @@ function ProfilePage() {
                 </label>
 
                 <select
+                  data-field={field.key}
                   value={
                     form[field.key]
                   }
+                  aria-invalid={Boolean(errors[field.key])}
+                  aria-describedby={errors[field.key] ? `profile-${field.key}-error` : undefined}
                   onChange={event =>
                     set(
                       field.key,
@@ -4820,7 +5362,7 @@ function ProfilePage() {
                 </select>
 
                 {errors[field.key] && (
-                  <div className="field-error">
+                  <div className="field-error" id={`profile-${field.key}-error`} role="alert">
                     {
                       errors[field.key]
                     }
@@ -4843,6 +5385,7 @@ function ProfilePage() {
                   key={
                     topic.value
                   }
+                  data-field="helpTopics"
                   className={`chip-btn ${
                     form.helpTopics.includes(
                       topic.value
@@ -4899,6 +5442,7 @@ function ProfilePage() {
           {errors.form && (
             <div
               className="field-error"
+              role="alert"
               style={{
                 marginBottom:
                   "0.75rem",
@@ -4908,27 +5452,7 @@ function ProfilePage() {
             </div>
           )}
 
-          {saved && (
-            <div
-              style={{
-                color:
-                  "var(--teal)",
-
-                fontSize:
-                  "0.85rem",
-
-                fontWeight:
-                  600,
-
-                marginBottom:
-                  "0.75rem",
-              }}
-            >
-              {t(
-                "settings.profileSaved"
-              )}
-            </div>
-          )}
+          {saved && <SuccessFeedback message={t("settings.profileSaved")} />}
 
           <div
             style={{
@@ -5013,6 +5537,8 @@ function ProgressPage() {
   const progressLocale = normalizeLocale(activeI18n.language);
   const [progressState, setProgressState] = useState({ loading: true, progress: null });
   const [recommendationState, setRecommendationState] = useState({ loading: true, recommendation: null });
+  const [recommendationCompleting, setRecommendationCompleting] = useState(false);
+  const [recommendationCompleteSaved, setRecommendationCompleteSaved] = useState(false);
 
   useEffect(() => {
     let active = true;
@@ -5028,6 +5554,12 @@ function ProgressPage() {
     });
     return () => { active = false; };
   }, [user, progressLocale]);
+
+  useEffect(() => {
+    if (!recommendationCompleteSaved) return undefined;
+    const timeout = window.setTimeout(() => setRecommendationCompleteSaved(false), prefersReducedMotion() ? 2500 : 3500);
+    return () => window.clearTimeout(timeout);
+  }, [recommendationCompleteSaved]);
 
   if (!user) { go("login"); return null; }
 
@@ -5064,10 +5596,13 @@ function ProgressPage() {
   ];
 
   async function completeRecommendation() {
-    if (!recommendation?.id) return;
+    if (!recommendation?.id || recommendationCompleting) return;
+    setRecommendationCompleting(true);
     const result = await dbMarkRecommendationCompleted(recommendation.id, progressLocale);
+    setRecommendationCompleting(false);
     if (result.ok) {
       setRecommendationState({ loading: false, recommendation: result.recommendation });
+      setRecommendationCompleteSaved(true);
     }
   }
 
@@ -5164,6 +5699,7 @@ function ProgressPage() {
 
         {recommendation && (
           <div className="card" style={{ marginBottom: "2.5rem", background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)" }}>
+            {recommendationCompleteSaved && <SuccessFeedback message={t("progress.recommendation.completedSaved")} />}
             <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.3rem" }}>{t("progress.recommendation.title")}</div>
             <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.05rem", marginBottom: "0.4rem" }}>
               {recommendation.topicCode ? t(`topics.${recommendation.topicCode}`, { defaultValue: topicLabel(recommendation.topicCode, recommendation.topicLabel) }) : t("dashboard.recommendation.initialAssessment")}
@@ -5181,8 +5717,8 @@ function ProgressPage() {
                 </button>
               )}
               {recommendation.topicCode && recommendation.status !== "completed" && (
-                <button onClick={completeRecommendation} style={{ background: "#fff", color: "var(--teal)", border: "1px solid rgba(29,158,117,0.3)", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>
-                  {t("progress.recommendation.markComplete")}
+                <button onClick={completeRecommendation} disabled={recommendationCompleting} style={{ background: "#fff", color: "var(--teal)", border: "1px solid rgba(29,158,117,0.3)", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: recommendationCompleting ? "not-allowed" : "pointer", opacity: recommendationCompleting ? 0.55 : 1 }}>
+                  {recommendationCompleting ? t("common.saving") : t("progress.recommendation.markComplete")}
                 </button>
               )}
             </div>
@@ -5238,55 +5774,265 @@ function ProgressPage() {
   );
 }
 
+function formatChatUpdatedAt(value, t) {
+  if (!value) return t("chat.history.unknownTime");
+  try {
+    return new Intl.DateTimeFormat(undefined, {
+      month: "short",
+      day: "numeric",
+      hour: "2-digit",
+      minute: "2-digit",
+    }).format(new Date(value));
+  } catch {
+    return t("chat.history.unknownTime");
+  }
+}
+
+function ConversationHistoryItem({
+  conversation,
+  active,
+  onSelect,
+  onRename,
+  onDelete,
+  openMenu,
+  setOpenMenu,
+}) {
+  const { t } = useTranslation();
+  const [renaming, setRenaming] = useState(false);
+  const [draftTitle, setDraftTitle] = useState(conversation.title);
+  const [titleError, setTitleError] = useState("");
+  const wrapRef = useRef(null);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    setDraftTitle(conversation.title);
+  }, [conversation.title]);
+
+  useEffect(() => {
+    if (renaming) {
+      window.setTimeout(() => inputRef.current?.focus(), 0);
+    }
+  }, [renaming]);
+
+  useEffect(() => {
+    if (openMenu !== conversation.id) return undefined;
+    function handlePointerDown(event) {
+      if (!wrapRef.current?.contains(event.target)) setOpenMenu(null);
+    }
+    function handleKeyDown(event) {
+      if (event.key === "Escape") setOpenMenu(null);
+    }
+    document.addEventListener("mousedown", handlePointerDown);
+    document.addEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("mousedown", handlePointerDown);
+      document.removeEventListener("keydown", handleKeyDown);
+    };
+  }, [conversation.id, openMenu, setOpenMenu]);
+
+  function saveRename() {
+    const nextTitle = normalizeConversationTitle(draftTitle);
+    if (!nextTitle) {
+      setTitleError(t("chat.validation.titleRequired"));
+      return;
+    }
+    onRename(conversation.id, nextTitle);
+    setRenaming(false);
+    setTitleError("");
+  }
+
+  function cancelRename() {
+    setDraftTitle(conversation.title);
+    setTitleError("");
+    setRenaming(false);
+  }
+
+  if (renaming) {
+    return (
+      <div className="ai-chat-list-row">
+        <div className="ai-chat-list-item active">
+          <div className="ai-chat-rename-form">
+            <input
+              ref={inputRef}
+              className="ai-chat-rename-input"
+              value={draftTitle}
+              maxLength={60}
+              aria-label={t("chat.actions.renameConversation")}
+              aria-invalid={Boolean(titleError)}
+              onChange={event => {
+                setDraftTitle(event.target.value);
+                setTitleError("");
+              }}
+              onKeyDown={event => {
+                if (event.key === "Enter") saveRename();
+                if (event.key === "Escape") cancelRename();
+              }}
+            />
+            {titleError && <div className="field-error" role="alert">{titleError}</div>}
+            <div style={{ display: "flex", gap: "0.4rem" }}>
+              <button type="button" className="btn-primary" style={{ padding: "0.45rem 0.65rem" }} onClick={saveRename}>
+                {t("common.save")}
+              </button>
+              <button type="button" className="btn-ghost" style={{ padding: "0.45rem 0.65rem" }} onClick={cancelRename}>
+                {t("common.cancel")}
+              </button>
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="ai-chat-list-row" ref={wrapRef}>
+      <button
+        type="button"
+        className={`ai-chat-list-item${active ? " active" : ""}`}
+        onClick={() => onSelect(conversation.id)}
+        aria-current={active ? "true" : undefined}
+      >
+        <div className="ai-chat-list-title">{conversation.title}</div>
+        <div className="ai-chat-list-time">{formatChatUpdatedAt(conversation.updatedAt, t)}</div>
+      </button>
+      <button
+        type="button"
+        className={`ai-chat-menu-button${openMenu === conversation.id ? " open" : ""}`}
+        onClick={() => setOpenMenu(openMenu === conversation.id ? null : conversation.id)}
+        aria-label={t("chat.accessibility.conversationMenu", { title: conversation.title })}
+        aria-haspopup="menu"
+        aria-expanded={openMenu === conversation.id}
+      >
+        ⋯
+      </button>
+      {openMenu === conversation.id && (
+        <div className="ai-chat-menu" role="menu">
+          <button type="button" className="ai-chat-menu-item" role="menuitem" onClick={() => {
+            setOpenMenu(null);
+            setRenaming(true);
+          }}>
+            {t("chat.actions.rename")}
+          </button>
+          <button type="button" className="ai-chat-menu-item danger" role="menuitem" onClick={() => {
+            setOpenMenu(null);
+            onDelete(conversation);
+          }}>
+            {t("chat.actions.delete")}
+          </button>
+        </div>
+      )}
+    </div>
+  );
+}
+
+function AIChatPage() {
+  const { t } = useTranslation();
+  const { user, go } = useApp();
+  const { conversations, activeConversation, activeConversationId, createConversation, selectConversation, renameConversation, deleteConversation } = useChat();
+  const [openMenu, setOpenMenu] = useState(null);
+  const [deleteTarget, setDeleteTarget] = useState(null);
+
+  if (!user) { go("login"); return null; }
+
+  return (
+    <div>
+      <div style={{ background: "linear-gradient(135deg, #1a2e1a 0%, #2d4a2d 100%)", padding: "2.5rem 1.5rem", color: "#fff" }}>
+        <div style={{ maxWidth: 1180, margin: "0 auto" }}>
+          <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.55)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.4rem" }}>
+            {t("nav.aiChat")}
+          </div>
+          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.5rem, 3vw, 2.2rem)", marginBottom: "0.4rem" }}>
+            {t("chat.page.title")}
+          </h1>
+          <p style={{ color: "rgba(255,255,255,0.68)", maxWidth: 680, lineHeight: 1.65 }}>
+            {t("chat.page.description")}
+          </p>
+        </div>
+      </div>
+
+      <div className="ai-chat-shell">
+        <aside className="ai-chat-sidebar" aria-label={t("chat.history.ariaLabel")}>
+          <PageBackButton style={{ marginBottom: "1rem" }} />
+          <div className="ai-chat-sidebar-header">
+            <div>
+              <div style={{ fontWeight: 800 }}>{t("chat.history.title")}</div>
+              <div style={{ fontSize: "0.76rem", color: "#77827d" }}>{t("chat.history.description")}</div>
+            </div>
+            <button className="btn-ghost" style={{ padding: "0.45rem 0.65rem" }} onClick={createConversation} aria-label={t("chat.accessibility.newChat")}>
+              +
+            </button>
+          </div>
+          {conversations.length === 0 ? (
+            <PageState type="empty" title={t("chat.history.emptyTitle")} message={t("chat.history.emptyDescription")} />
+          ) : (
+            <div className="ai-chat-list" role="list">
+              {conversations.map(conversation => (
+                <ConversationHistoryItem
+                  key={conversation.id}
+                  conversation={conversation}
+                  active={conversation.id === activeConversationId}
+                  onSelect={selectConversation}
+                  onRename={renameConversation}
+                  onDelete={setDeleteTarget}
+                  openMenu={openMenu}
+                  setOpenMenu={setOpenMenu}
+                />
+              ))}
+            </div>
+          )}
+        </aside>
+
+        <section className="ai-chat-main" aria-label={t("chat.page.chatAreaLabel")}>
+          <div className="ai-chat-main-header">
+            <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+              <div style={{ minWidth: 0 }}>
+                <div style={{ fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                  {activeConversation?.title || t("chat.conversation.newTitle")}
+                </div>
+                <div style={{ color: "#77827d", fontSize: "0.8rem", marginTop: "0.15rem" }}>
+                  {activeConversation ? t("chat.history.lastUpdated", { time: formatChatUpdatedAt(activeConversation.updatedAt, t) }) : t("chat.history.noActive")}
+                </div>
+              </div>
+              <button className="btn-ghost" onClick={createConversation} aria-label={t("chat.accessibility.newChat")}>
+                {t("chat.actions.newChat")}
+              </button>
+            </div>
+          </div>
+          <ChatMessageList className="ai-chat-full-messages" />
+          <ChatComposer />
+        </section>
+      </div>
+      {deleteTarget && (
+        <ConfirmationDialog
+          title={t("chat.delete.title")}
+          description={t("chat.delete.description", { title: deleteTarget.title })}
+          cancelLabel={t("common.cancel")}
+          confirmLabel={t("chat.actions.delete")}
+          onCancel={() => setDeleteTarget(null)}
+          onConfirm={() => {
+            deleteConversation(deleteTarget.id);
+            setDeleteTarget(null);
+          }}
+          danger
+        />
+      )}
+    </div>
+  );
+}
+
 // ─── Chat Widget (floating) ────────────────────────────────────────
 function ChatWidget() {
   const { t } = useTranslation();
   const { user, go } = useApp();
+  const { activeConversation, createConversation } = useChat();
   const [open,     setOpen]     = useState(false);
-  const [messages, setMessages] = useState([]);
-  const [history,  setHistory]  = useState([]);
-  const [input,    setInput]    = useState("");
-  const [loading,  setLoading]  = useState(false);
-  const endRef = useRef(null);
-
   const displayName = user?.displayName || user?.name;
-
-  useEffect(() => {
-    if (!user || messages.length > 0) return;
-    setMessages([{
-      role: "ai",
-      text: t("chat.welcome", { name: displayName }),
-    }]);
-  }, [user, open, messages.length, displayName, t]);
-
-  useEffect(() => { endRef.current?.scrollIntoView({ behavior: "smooth" }); }, [messages]);
-
-  async function send() {
-    if (!input.trim() || loading) return;
-    const q = input.trim();
-    setInput("");
-    setMessages(prev => [...prev, { role: "user", text: q }]);
-    setLoading(true);
-    try {
-      const aiText = await askClaude(
-        [...history, { role: "user", content: q }],
-        buildSystemPrompt(user),
-        t
-      );
-      setMessages(prev => [...prev, { role: "ai", text: aiText }]);
-      setHistory(prev => [
-        ...prev,
-        { role: "user", content: q },
-        { role: "assistant", content: aiText },
-      ]);
-    } catch {
-      setMessages(prev => [...prev, { role: "ai", text: t("common.somethingWentWrong") }]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   const group = user ? getAgeGroup(user.age) : null;
+
+  function openFullPage() {
+    if (user && !activeConversation) createConversation();
+    setOpen(false);
+    go(user ? "ai-chat" : "login");
+  }
 
   return (
     <>
@@ -5299,43 +6045,44 @@ function ChatWidget() {
                 {user ? `${displayName} · ${t(`settings.ageGroups.${group.key}`, { defaultValue: group.label })}` : t("chat.guest")}
               </div>
             </div>
+            <div className="chat-header-actions">
+              {user && (
+                <button
+                  type="button"
+                  className="chat-header-button"
+                  onClick={openFullPage}
+                  title={t("chat.actions.fullPage")}
+                  aria-label={t("chat.accessibility.fullPage")}
+                >
+                  ↗ {t("chat.actions.fullPage")}
+                </button>
+              )}
+              <button
+                type="button"
+                className="chat-header-button"
+                onClick={() => setOpen(false)}
+                aria-label={t("common.close")}
+              >
+                ×
+              </button>
+            </div>
           </div>
-          <div className="chat-messages">
-            {!user ? (
+          {!user ? (
+            <div className="chat-messages">
               <div className="chat-login-prompt">
                 <p>{t("chat.signInPrompt")}</p>
                 <button onClick={() => { setOpen(false); go("login"); }}>{t("chat.signInCta")}</button>
               </div>
-            ) : (
-              <>
-                {messages.map((m, i) => (
-                  <div key={i} className={`chat-bubble ${m.role}`} style={{ whiteSpace: "pre-wrap" }}>
-                    {m.text}
-                  </div>
-                ))}
-                {loading && <div className="chat-bubble ai loading">{t("chat.thinking")}</div>}
-                <div ref={endRef} />
-              </>
-            )}
-          </div>
-          {user && (
-            <div className="chat-input-row">
-              <textarea
-                className="chat-input"
-                rows={1}
-                placeholder={t("chat.placeholder")}
-                value={input}
-                onChange={e => setInput(e.target.value)}
-                onKeyDown={e => { if (e.key === "Enter" && !e.shiftKey) { e.preventDefault(); send(); } }}
-              />
-              <button className="chat-send" onClick={send} disabled={loading || !input.trim()}>
-                {loading ? "…" : "↑"}
-              </button>
             </div>
+          ) : (
+            <>
+              <ChatMessageList emptyCompact />
+              <ChatComposer compact />
+            </>
           )}
         </div>
       )}
-      <button className="chat-fab" onClick={() => setOpen(o => !o)}>
+      <button className="chat-fab" onClick={() => setOpen(o => !o)} aria-label={t(open ? "common.close" : "chat.accessibility.openWidget")}>
         {open ? "✕" : "💬"}
       </button>
     </>
@@ -5386,6 +6133,7 @@ const NAV_ITEMS = [
   { id: "assessment", labelKey: "nav.assessment" },
   { id: "scenarios", labelKey: "nav.scenarios" },
   { id: "resources", labelKey: "nav.resources" },
+  { id: "ai-chat", labelKey: "nav.aiChat" },
   { id: "about", labelKey: "nav.about" },
 ];
 
@@ -5614,16 +6362,27 @@ function AccountMenu({ user, onNavigate, onRequestLogout }) {
             role="menuitem"
             ref={element => { itemRefs.current[1] = element; }}
             onKeyDown={event => handleMenuKeyDown(event, 1)}
+            onClick={() => navigate("progress")}
+          >
+            {t("nav.accountMenu.personalProgress")}
+          </button>
+          <button
+            type="button"
+            className="account-menu-item"
+            role="menuitem"
+            ref={element => { itemRefs.current[2] = element; }}
+            onKeyDown={event => handleMenuKeyDown(event, 2)}
             onClick={() => navigate("profile")}
           >
             {t("nav.accountMenu.profileSettings")}
           </button>
+          <div className="account-menu-divider" role="separator" />
           <button
             type="button"
             className="account-menu-item danger"
             role="menuitem"
-            ref={element => { itemRefs.current[2] = element; }}
-            onKeyDown={event => handleMenuKeyDown(event, 2)}
+            ref={element => { itemRefs.current[3] = element; }}
+            onKeyDown={event => handleMenuKeyDown(event, 3)}
             onClick={requestLogout}
           >
             {t("nav.accountMenu.logOut")}
@@ -5789,11 +6548,14 @@ function Footer() {
 // ─── Root App ─────────────────────────────────────────────────────
 export default function App() {
   const { t } = useTranslation();
-  const [page, setPage] = useState("home");
+  const [page, setPage] = useState(() => parseHashPage());
   const [user, setUser] = useState(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [resourceFocusTopic, setResourceFocusTopic] = useState(null);
   const [authMode, setAuthMode] = useState("login");
+  const [activityGuard, setActivityGuard] = useState(null);
+  const [pendingNavigation, setPendingNavigation] = useState(null);
+  const suppressHashGuardRef = useRef(false);
   const userId = user?.id;
   const userProfilePreferredLanguage =
     user?.profile?.preferredLanguage;
@@ -5806,13 +6568,69 @@ export default function App() {
       if (!active) return;
       if (result.ok) {
         const restoredUser = normalizeSessionUser(result.user, result.profile);
+        const restoredPage = parseHashPage();
         setUser(restoredUser);
-        setPage(restoredUser.onboardingCompleted ? "dashboard" : "profile");
+        if (PROTECTED_PAGES.has(restoredPage)) {
+          setPage(restoredUser.onboardingCompleted ? restoredPage : "profile");
+          writeHashPage(restoredUser.onboardingCompleted ? restoredPage : "profile", true);
+        } else if (restoredPage === "login") {
+          setPage(restoredUser.onboardingCompleted ? "dashboard" : "profile");
+          writeHashPage(restoredUser.onboardingCompleted ? "dashboard" : "profile", true);
+        } else {
+          setPage(restoredPage);
+          writeHashPage(restoredPage, true);
+        }
+      } else {
+        const restoredPage = parseHashPage();
+        if (PROTECTED_PAGES.has(restoredPage)) {
+          setPage("home");
+          writeHashPage("home", true);
+        } else {
+          setPage(restoredPage);
+          writeHashPage(restoredPage, true);
+        }
       }
       setCheckingSession(false);
     });
     return () => { active = false; };
   }, []);
+
+  useEffect(() => {
+    function handleHashChange() {
+      const nextPage = parseHashPage();
+      if (suppressHashGuardRef.current) {
+        suppressHashGuardRef.current = false;
+        setPage(nextPage);
+        return;
+      }
+      if (activityGuard && nextPage !== page) {
+        setPendingNavigation({ page: nextPage });
+        suppressHashGuardRef.current = true;
+        writeHashPage(page, true);
+        suppressHashGuardRef.current = false;
+        return;
+      }
+      if (!user && PROTECTED_PAGES.has(nextPage)) {
+        setPage("home");
+        writeHashPage("home", true);
+        return;
+      }
+      setPage(nextPage);
+    }
+
+    window.addEventListener("hashchange", handleHashChange);
+    return () => window.removeEventListener("hashchange", handleHashChange);
+  }, [activityGuard, page, user]);
+
+  useEffect(() => {
+    if (!activityGuard) return undefined;
+    function handleBeforeUnload(event) {
+      event.preventDefault();
+      event.returnValue = "";
+    }
+    window.addEventListener("beforeunload", handleBeforeUnload);
+    return () => window.removeEventListener("beforeunload", handleBeforeUnload);
+  }, [activityGuard]);
 
   useEffect(() => {
     if (!userId) return;
@@ -5890,21 +6708,54 @@ export default function App() {
     await dbLogout();
     setUser(null);
     setResourceFocusTopic(null);
+    setActivityGuard(null);
+    setPendingNavigation(null);
     setPage("home");
+    writeHashPage("home", true);
   }
   function openRecommendedResource(topicCode) {
     setResourceFocusTopic(topicCode);
-    setPage("resources");
+    go("resources");
   }
   function openAuth(mode = "login") {
     setAuthMode(mode);
     setResourceFocusTopic(null);
-    setPage("login");
+    go("login");
   }
-  function go(nextPage) {
+  function completeNavigation(nextPage, replace = false) {
     if (nextPage !== "resources") setResourceFocusTopic(null);
     if (nextPage === "login") setAuthMode("login");
-    setPage(nextPage);
+    const safePage = VALID_PAGES.has(nextPage) ? nextPage : "home";
+    if (!user && PROTECTED_PAGES.has(safePage)) {
+      setPage("home");
+      writeHashPage("home", true);
+      return;
+    }
+    setPage(safePage);
+    writeHashPage(safePage, replace);
+  }
+  function go(nextPage, options = {}) {
+    const safePage = VALID_PAGES.has(nextPage) ? nextPage : "home";
+    if (activityGuard && safePage !== page && !options.bypassGuard) {
+      setPendingNavigation({ page: safePage });
+      return;
+    }
+    completeNavigation(safePage, options.replace);
+  }
+  const registerActivityGuard = useCallback((guard) => {
+    setActivityGuard(guard);
+    return () => {
+      setActivityGuard(current => current === guard ? null : current);
+    };
+  }, []);
+  function cancelPendingNavigation() {
+    setPendingNavigation(null);
+  }
+  function confirmPendingNavigation() {
+    const target = pendingNavigation?.page || "dashboard";
+    setPendingNavigation(null);
+    setActivityGuard(null);
+    completeNavigation(target);
   }
 
   const ctx = {
@@ -5921,6 +6772,7 @@ export default function App() {
     resourceFocusTopic,
     openRecommendedResource,
     clearResourceFocus: () => setResourceFocusTopic(null),
+    registerActivityGuard,
   };
 
   const PAGES = {
@@ -5929,6 +6781,7 @@ export default function App() {
     assessment: <AssessmentPage />,
     scenarios: <ScenariosPage />,
     resources: <ResourcesPage />,
+    "ai-chat": <AIChatPage />,
     about:     <AboutPage />,
     progress:  <ProgressPage />,
     profile:   <ProfilePage />,
@@ -5937,18 +6790,31 @@ export default function App() {
 
   return (
     <AppCtx.Provider value={ctx}>
-      <style>{globalStyle}</style>
-      <Navbar page={page} />
-      <main className="page-wrap">
-        {checkingSession ? (
-          <div className="section">
-            <p className="section-title">{t("app.loadingTitle")}</p>
-            <p className="section-sub">{t("app.checkingSession")}</p>
-          </div>
-        ) : (PAGES[page] ?? <HomePage />)}
-      </main>
-      <Footer />
-      {!checkingSession && <ChatWidget />}
+      <ChatProvider user={user}>
+        <style>{globalStyle}</style>
+        <Navbar page={page} />
+        <main className="page-wrap">
+          {checkingSession ? (
+            <div className="section">
+              <p className="section-title">{t("app.loadingTitle")}</p>
+              <p className="section-sub">{t("app.checkingSession")}</p>
+            </div>
+          ) : (PAGES[page] ?? <HomePage />)}
+        </main>
+        <Footer />
+        {!checkingSession && <ChatWidget />}
+        {pendingNavigation && activityGuard && (
+          <ConfirmationDialog
+            title={activityGuard.title}
+            description={activityGuard.description}
+            cancelLabel={t("common.continueActivity")}
+            confirmLabel={t("common.leavePage")}
+            onCancel={cancelPendingNavigation}
+            onConfirm={confirmPendingNavigation}
+            danger
+          />
+        )}
+      </ChatProvider>
     </AppCtx.Provider>
   );
 }
