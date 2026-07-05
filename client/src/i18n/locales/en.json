@@ -768,6 +768,13 @@
       "unableToRename": "Unable to rename this conversation.",
       "unableToDelete": "Unable to delete this conversation."
     },
+    "generation": {
+      "preparing": "CyberGuard is preparing a reply...",
+      "preparingShort": "Preparing...",
+      "failedTitle": "Reply could not be generated.",
+      "failedDescription": "CyberGuard could not prepare a reply. Try again shortly.",
+      "retry": "Retry reply"
+    },
     "migrationNotice": {
       "title": "Chat history now saves to your account",
       "description": "New conversations are saved securely to your Cyberly account. Older device-only chat history stays on this device and will not be uploaded or deleted.",
@@ -804,6 +811,7 @@
       "conversationMenu": "Open menu for {{title}}",
       "deleteConversation": "Delete conversation {{title}}",
       "dashboardLauncher": "Ask CyberGuard a new question from the dashboard",
+      "retryGeneration": "Retry CyberGuard reply",
       "retryMessages": "Retry loading chat messages"
     }
   },
@@ -860,6 +868,15 @@
       "AUTH_RATE_LIMITED": "Too many authentication attempts. Please try again later.",
       "AUTH_REGISTRATION_INVALID": "Please check your registration details.",
       "AUTH_REQUIRED": "Please sign in to continue.",
+      "AI_ASSISTANT_PERSISTENCE_FAILED": "CyberGuard could not save the reply. Try again.",
+      "AI_GENERATION_ALREADY_COMPLETED": "CyberGuard already prepared this reply.",
+      "AI_GENERATION_IN_PROGRESS": "CyberGuard is already preparing a reply.",
+      "AI_INVALID_RESPONSE": "CyberGuard could not prepare a safe reply. Try rephrasing the question.",
+      "AI_NOT_CONFIGURED": "CyberGuard is not configured yet.",
+      "AI_PROVIDER_UNAVAILABLE": "CyberGuard is temporarily unavailable. Try again shortly.",
+      "AI_RATE_LIMITED": "Too many requests. Wait briefly before trying again.",
+      "AI_TIMEOUT": "The reply took too long. Try again.",
+      "AI_UNSAFE_REQUEST": "CyberGuard cannot help with that request, but it can explain safe and defensive alternatives.",
       "CHAT_CONVERSATION_NOT_FOUND": "We could not find this chat conversation.",
       "CHAT_INVALID_ID": "Please choose a valid chat conversation.",
       "CHAT_INVALID_MESSAGE": "Enter a message from 1 to 4000 characters.",
@@ -889,6 +906,7 @@
       "generic": "Something went wrong. Please try again.",
       "createChatConversation": "Unable to create chat conversation.",
       "deleteChatConversation": "Unable to delete chat conversation.",
+      "generateChatReply": "Unable to generate a CyberGuard reply.",
       "loadChatConversations": "Unable to load chat conversations.",
       "loadChatMessages": "Unable to load chat messages.",
       "loadAssessment": "Unable to load assessment.",

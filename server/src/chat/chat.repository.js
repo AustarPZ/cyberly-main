@@ -82,7 +82,7 @@ function createChatRepository(pool) {
 
   async function listMessages(conversationId, connection) {
     const [rows] = await db(connection).query(
-      `SELECT id, conversation_id, role, content, created_at
+      `SELECT id, conversation_id, role, content, reply_to_message_id, created_at
        FROM chat_messages
        WHERE conversation_id = ?
        ORDER BY id`,
@@ -98,7 +98,7 @@ function createChatRepository(pool) {
       [conversationId, message.role, message.content]
     );
     const [rows] = await db(connection).query(
-      `SELECT id, conversation_id, role, content, created_at
+      `SELECT id, conversation_id, role, content, reply_to_message_id, created_at
        FROM chat_messages
        WHERE id = ?
        LIMIT 1`,

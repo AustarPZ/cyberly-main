@@ -113,3 +113,11 @@ export function createChatUserMessage(conversationId, payload = {}, options = {}
     "errors.fallback.sendChatMessage"
   );
 }
+
+export function generateChatAssistantReply(conversationId, messageId, payload = {}, options = {}) {
+  return chatRequest(
+    `/api/chat/conversations/${encodeURIComponent(conversationId)}/messages/${encodeURIComponent(messageId)}/generate`,
+    { method: "POST", body: JSON.stringify(payload), signal: options.signal },
+    "errors.fallback.generateChatReply"
+  );
+}

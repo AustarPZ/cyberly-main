@@ -34,6 +34,11 @@ const { createAccountRouter } = require("./src/account/account.routes");
 const { createChatRepository } = require('./src/chat/chat.repository');
 const { createChatService } = require('./src/chat/chat.service');
 const { createChatRouter } = require('./src/chat/chat.routes');
+const { createAiConfig } = require('./src/ai/ai.config');
+const { createAiProvider } = require('./src/ai/ai.provider');
+const { createAiRepository } = require('./src/ai/ai.repository');
+const { createAiService } = require('./src/ai/ai.service');
+const { createAiRouter } = require('./src/ai/ai.routes');
 const { ERROR_CODES } = require('./src/errors/errorCodes');
 
 const app = express();
@@ -57,6 +62,10 @@ const resourceRepository = createResourceRepository(pool);
 const resourceService = createResourceService(resourceRepository);
 const chatRepository = createChatRepository(pool);
 const chatService = createChatService(chatRepository);
+const aiConfig = createAiConfig();
+const aiRepository = createAiRepository(pool);
+const aiProvider = createAiProvider(aiConfig);
+const aiService = createAiService(aiRepository, aiProvider, aiConfig);
 
 app.set('trust proxy', 1);
 app.use(cors({ origin: clientOrigin, credentials: true }));
@@ -81,6 +90,7 @@ app.use(createProgressRouter(progressService));
 app.use(createScenarioRouter(scenarioService));
 app.use(createResourceRouter(resourceService));
 app.use('/api/chat', createChatRouter(chatService));
+app.use('/api/chat', createAiRouter(aiService));
 
 const rateLimitBuckets = new Map();
 
@@ -360,7 +370,7 @@ app.post('/api/login', async (req, res, next) => {
 
 app.use((error, _req, res, _next) => {
     console.error('Server error:', error.code || error.message);
-    if (error.status && error.status < 500) {
+    if (error.status && error.status < 600 && error.code) {
         return res.status(error.status).json({
             code: error.code || ERROR_CODES.INTERNAL_SERVER_ERROR,
             message: error.message,

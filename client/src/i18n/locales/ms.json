@@ -750,6 +750,13 @@
       "unableToRename": "Tidak dapat menamakan semula perbualan ini.",
       "unableToDelete": "Tidak dapat memadam perbualan ini."
     },
+    "generation": {
+      "preparing": "CyberGuard sedang menyediakan balasan...",
+      "preparingShort": "Menyediakan...",
+      "failedTitle": "Balasan tidak dapat dijana.",
+      "failedDescription": "CyberGuard tidak dapat menyediakan balasan. Cuba lagi sebentar lagi.",
+      "retry": "Cuba balasan semula"
+    },
     "migrationNotice": {
       "title": "Sejarah sembang kini disimpan ke akaun anda",
       "description": "Perbualan baharu disimpan dengan selamat ke akaun Cyberly anda. Sejarah sembang lama yang hanya berada pada peranti kekal pada peranti ini dan tidak akan dimuat naik atau dipadam.",
@@ -786,6 +793,7 @@
       "conversationMenu": "Buka menu untuk {{title}}",
       "deleteConversation": "Padam perbualan {{title}}",
       "dashboardLauncher": "Tanya soalan baharu kepada CyberGuard daripada papan pemuka",
+      "retryGeneration": "Cuba semula balasan CyberGuard",
       "retryMessages": "Cuba lagi memuatkan mesej sembang"
     }
   },
@@ -842,6 +850,15 @@
       "AUTH_RATE_LIMITED": "Terlalu banyak cubaan pengesahan. Sila cuba lagi kemudian.",
       "AUTH_REGISTRATION_INVALID": "Sila semak butiran pendaftaran anda.",
       "AUTH_REQUIRED": "Sila log masuk untuk meneruskan.",
+      "AI_ASSISTANT_PERSISTENCE_FAILED": "CyberGuard tidak dapat menyimpan balasan. Cuba lagi.",
+      "AI_GENERATION_ALREADY_COMPLETED": "CyberGuard sudah menyediakan balasan ini.",
+      "AI_GENERATION_IN_PROGRESS": "CyberGuard sedang menyediakan balasan.",
+      "AI_INVALID_RESPONSE": "CyberGuard tidak dapat menyediakan balasan yang selamat. Cuba ubah cara soalan anda.",
+      "AI_NOT_CONFIGURED": "CyberGuard belum dikonfigurasikan.",
+      "AI_PROVIDER_UNAVAILABLE": "CyberGuard tidak tersedia buat sementara waktu. Cuba lagi sebentar lagi.",
+      "AI_RATE_LIMITED": "Terlalu banyak permintaan. Tunggu sebentar sebelum cuba lagi.",
+      "AI_TIMEOUT": "Balasan mengambil masa terlalu lama. Cuba lagi.",
+      "AI_UNSAFE_REQUEST": "CyberGuard tidak boleh membantu permintaan itu, tetapi boleh menerangkan alternatif yang selamat dan defensif.",
       "CHAT_CONVERSATION_NOT_FOUND": "Kami tidak dapat mencari perbualan sembang ini.",
       "CHAT_INVALID_ID": "Sila pilih perbualan sembang yang sah.",
       "CHAT_INVALID_MESSAGE": "Masukkan mesej antara 1 hingga 4000 aksara.",
@@ -871,6 +888,7 @@
       "generic": "Ada sesuatu yang tidak kena. Sila cuba lagi.",
       "createChatConversation": "Tidak dapat mencipta perbualan sembang.",
       "deleteChatConversation": "Tidak dapat memadam perbualan sembang.",
+      "generateChatReply": "Tidak dapat menjana balasan CyberGuard.",
       "loadChatConversations": "Tidak dapat memuatkan perbualan sembang.",
       "loadChatMessages": "Tidak dapat memuatkan mesej sembang.",
       "loadAssessment": "Tidak dapat memuatkan penilaian.",

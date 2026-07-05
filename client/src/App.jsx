@@ -1,4 +1,4 @@
-import { useState, createContext, useContext, useRef, useEffect, useCallback } from "react";
+import { Fragment, useState, createContext, useContext, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import profileMappings from "./profileMappings";
@@ -8,6 +8,7 @@ import {
   createChatConversation,
   createChatUserMessage,
   deleteChatConversation,
+  generateChatAssistantReply,
   getChatConversation,
   listChatConversations,
   renameChatConversation,
@@ -511,6 +512,28 @@ body {
   border: 1px solid rgba(29,158,117,0.24); border-radius: 8px;
   padding: 0.65rem 0.8rem; font-size: 0.8rem; line-height: 1.45;
 }
+.chat-status-notice.generating { display: flex; align-items: center; gap: 0.55rem; }
+.chat-status-notice.failed {
+  background: var(--coral-lt); color: #7a2f18; border-color: rgba(216,90,48,0.24);
+}
+.chat-status-spinner {
+  width: 14px; height: 14px; border-radius: 999px;
+  border: 2px solid rgba(29,158,117,0.22); border-top-color: var(--teal);
+  flex: 0 0 auto; animation: chat-spin 0.8s linear infinite;
+}
+.chat-generation-retry {
+  margin-top: 0.55rem; border: 1px solid rgba(216,90,48,0.28); background: #fff;
+  color: #7a2f18; border-radius: 8px; padding: 0.45rem 0.7rem;
+  font-weight: 800; cursor: pointer; min-height: 40px;
+}
+.chat-generation-retry:hover, .chat-generation-retry:focus-visible {
+  outline: none; box-shadow: 0 0 0 3px rgba(216,90,48,0.16);
+}
+.chat-generation-retry:disabled { opacity: 0.55; cursor: not-allowed; }
+@keyframes chat-spin { to { transform: rotate(360deg); } }
+@media (prefers-reduced-motion: reduce) {
+  .chat-status-spinner { animation: none; }
+}
 .chat-empty { margin: auto; text-align: center; color: #66736d; line-height: 1.55; padding: 1rem; }
 .chat-empty-title { font-weight: 800; color: #1a1a18; margin-bottom: 0.3rem; }
 .chat-input-row { display: flex; gap: 0.5rem; padding: 0.65rem 0.75rem; border-top: 1px solid rgba(0,0,0,0.07); align-items: flex-end; }
@@ -617,8 +640,9 @@ body {
   .ai-chat-sidebar { max-height: 260px; margin-bottom: 0; }
   .ai-chat-list { max-height: 150px; }
   .ai-chat-main {
-    min-height: min(560px, calc(100vh - var(--nav-h) - 7rem));
-    min-height: min(560px, calc(100dvh - var(--nav-h) - 7rem));
+    height: min(560px, calc(100vh - var(--nav-h) - 7rem));
+    height: min(560px, calc(100dvh - var(--nav-h) - 7rem));
+    min-height: 420px;
   }
   .chat-panel { left: 1rem; right: 1rem; width: auto; }
 }
@@ -890,8 +914,36 @@ function mapServerMessage(message) {
     text: message.content,
     content: message.content,
     locale: message.locale,
+    replyToMessageId: message.replyToMessageId ? Number(message.replyToMessageId) : null,
     createdAt: message.createdAt,
   };
+}
+
+function mergeMessageById(messages, nextMessage) {
+  if (!nextMessage?.id) return messages;
+  const exists = messages.some(message => message.id === nextMessage.id);
+  if (exists) {
+    return messages.map(message => message.id === nextMessage.id ? nextMessage : message);
+  }
+  return [...messages, nextMessage];
+}
+
+function pruneGenerationForCompletedReplies(messages, generationState) {
+  const repliedToIds = new Set(
+    messages
+      .filter(message => message.role === "ai" && message.replyToMessageId)
+      .map(message => Number(message.replyToMessageId))
+  );
+  if (repliedToIds.size === 0) return generationState;
+  let changed = false;
+  const next = { ...generationState };
+  repliedToIds.forEach(id => {
+    if (next[id]) {
+      delete next[id];
+      changed = true;
+    }
+  });
+  return changed ? next : generationState;
 }
 
 function ChatProvider({ user, children }) {
@@ -907,10 +959,21 @@ function ChatProvider({ user, children }) {
   const [conversationError, setConversationError] = useState("");
   const [mutationError, setMutationError] = useState("");
   const [legacyNoticeVisible, setLegacyNoticeVisible] = useState(false);
+  const [generationByMessageId, setGenerationByMessageId] = useState({});
   const listRequestRef = useRef(0);
   const detailRequestRef = useRef(0);
   const userIdRef = useRef(null);
+  const activeConversationIdRef = useRef(null);
+  const conversationsRef = useRef([]);
   const userId = user?.id;
+
+  useEffect(() => {
+    activeConversationIdRef.current = activeConversationId;
+  }, [activeConversationId]);
+
+  useEffect(() => {
+    conversationsRef.current = conversations;
+  }, [conversations]);
 
   const loadConversations = useCallback(async () => {
     if (!userIdRef.current) return;
@@ -967,6 +1030,7 @@ function ChatProvider({ user, children }) {
       setConversationError("");
       setMutationError("");
       setLegacyNoticeVisible(false);
+      setGenerationByMessageId({});
       return;
     }
 
@@ -976,6 +1040,7 @@ function ChatProvider({ user, children }) {
     setSending(false);
     setSyncing(false);
     setMutationError("");
+    setGenerationByMessageId({});
     loadConversations();
   }, [userId, loadConversations]);
 
@@ -1014,7 +1079,9 @@ function ChatProvider({ user, children }) {
         return;
       }
 
-      setActiveMessages((result.messages || []).map(mapServerMessage));
+      const loadedMessages = (result.messages || []).map(mapServerMessage);
+      setActiveMessages(loadedMessages);
+      setGenerationByMessageId(current => pruneGenerationForCompletedReplies(loadedMessages, current));
       if (result.conversation) {
         const mapped = mapServerConversation(result.conversation);
         setConversations(current => current.map(conversation => conversation.id === mapped.id ? mapped : conversation));
@@ -1024,6 +1091,64 @@ function ChatProvider({ user, children }) {
   }, [userId, activeConversationId]);
 
   const activeConversation = conversations.find(conversation => conversation.id === activeConversationId) || null;
+  const generationActive = Object.values(generationByMessageId).some(item => item.status === "generating");
+
+  function clearGenerationState(userMessageId) {
+    setGenerationByMessageId(current => {
+      if (!current[userMessageId]) return current;
+      const next = { ...current };
+      delete next[userMessageId];
+      return next;
+    });
+  }
+
+  function setGenerationState(userMessageId, state) {
+    setGenerationByMessageId(current => ({
+      ...current,
+      [userMessageId]: state,
+    }));
+  }
+
+  async function generateReply(conversationIdInput, userMessageIdInput) {
+    const conversationId = Number(conversationIdInput);
+    const userMessageId = Number(userMessageIdInput);
+    if (!conversationId || !userMessageId || !userIdRef.current) return { ok: false };
+    if (generationActive || generationByMessageId[userMessageId]?.status === "generating") return { ok: false };
+
+    const requestUserId = userIdRef.current;
+    setMutationError("");
+    setGenerationState(userMessageId, { status: "generating", errorCode: null, error: "" });
+
+    const result = await generateChatAssistantReply(conversationId, userMessageId, {
+      locale: normalizeLocale(i18n.language),
+    });
+
+    if (userIdRef.current !== requestUserId) return { ok: false };
+
+    if (!result.ok) {
+      setGenerationState(userMessageId, {
+        status: "failed",
+        errorCode: result.code || null,
+        error: result.error || i18n.t("chat.generation.failedDescription"),
+      });
+      return { ok: false, error: result.error, code: result.code };
+    }
+
+    const conversation = mapServerConversation(result.conversation);
+    const userMessage = mapServerMessage(result.userMessage);
+    const assistantMessage = mapServerMessage(result.assistantMessage);
+
+    setConversations(current => {
+      if (!current.some(item => item.id === conversation.id)) return current;
+      return [conversation, ...current.filter(item => item.id !== conversation.id)];
+    });
+
+    if (activeConversationIdRef.current === conversation.id) {
+      setActiveMessages(current => mergeMessageById(mergeMessageById(current, userMessage), assistantMessage));
+    }
+    clearGenerationState(userMessageId);
+    return { ok: true, assistantMessage };
+  }
 
   function createConversation() {
     if (!userId) return null;
@@ -1031,6 +1156,7 @@ function ChatProvider({ user, children }) {
     setActiveMessages([]);
     setConversationError("");
     setMutationError("");
+    setGenerationByMessageId({});
     writeSavedActiveConversationId(userId, null);
     return null;
   }
@@ -1041,7 +1167,7 @@ function ChatProvider({ user, children }) {
 
   async function startDashboardConversation(firstMessage) {
     const clean = String(firstMessage || "").trim();
-    if (!clean || sending || syncing || !userIdRef.current) return { ok: false };
+    if (!clean || syncing || generationActive || !userIdRef.current) return { ok: false };
     setSyncing(true);
     setMutationError("");
 
@@ -1064,7 +1190,11 @@ function ChatProvider({ user, children }) {
     setActiveConversationId(conversation.id);
     setActiveMessages(messages);
     writeSavedActiveConversationId(userIdRef.current, conversation.id);
-    return { ok: true, conversationId: conversation.id };
+    const firstUserMessage = messages.find(message => message.role === "user");
+    if (firstUserMessage) {
+      generateReply(conversation.id, firstUserMessage.id);
+    }
+    return { ok: true, conversationId: conversation.id, messageId: firstUserMessage?.id || null };
   }
 
   function selectConversation(id) {
@@ -1110,7 +1240,10 @@ function ChatProvider({ user, children }) {
       const remaining = current.filter(conversation => conversation.id !== conversationId);
       const nextActiveId = activeConversationId === conversationId ? remaining[0]?.id || null : activeConversationId;
       setActiveConversationId(nextActiveId);
-      if (activeConversationId === conversationId) setActiveMessages([]);
+      if (activeConversationId === conversationId) {
+        setActiveMessages([]);
+        setGenerationByMessageId({});
+      }
       writeSavedActiveConversationId(userIdRef.current, nextActiveId);
       return remaining;
     });
@@ -1119,7 +1252,7 @@ function ChatProvider({ user, children }) {
 
   async function sendMessage(text) {
     const clean = text.trim();
-    if (!clean || sending || syncing || !userIdRef.current) return { ok: false };
+    if (!clean || sending || syncing || generationActive || !userIdRef.current) return { ok: false };
 
     setSending(true);
     setMutationError("");
@@ -1142,7 +1275,12 @@ function ChatProvider({ user, children }) {
     const conversation = mapServerConversation(result.conversation);
     setActiveMessages(current => [...current, message]);
     setConversations(current => [conversation, ...current.filter(item => item.id !== conversation.id)]);
+    generateReply(conversation.id, message.id);
     return { ok: true, message };
+  }
+
+  async function retryGeneration(conversationId, userMessageId) {
+    return generateReply(conversationId, userMessageId);
   }
 
   function dismissLegacyNotice() {
@@ -1160,6 +1298,8 @@ function ChatProvider({ user, children }) {
     conversationLoading,
     sending,
     syncing,
+    generating: generationActive,
+    generationByMessageId,
     mutatingConversationId,
     error,
     conversationError,
@@ -1173,6 +1313,8 @@ function ChatProvider({ user, children }) {
     renameConversation,
     deleteConversation,
     sendMessage,
+    generateReply,
+    retryGeneration,
     retry: loadConversations,
     retryConversation: () => {
       const id = activeConversationId;
@@ -3600,11 +3742,13 @@ function ChatMessageList({ className = "chat-messages", emptyCompact = false }) 
   const {
     messages,
     sending,
+    generating,
     initialLoading,
     conversationLoading,
     conversationError,
     retryConversation,
-    disabledAssistantNotice,
+    generationByMessageId,
+    retryGeneration,
   } = useChat();
   const endRef = useRef(null);
   const shouldAutoScrollRef = useRef(false);
@@ -3616,11 +3760,11 @@ function ChatMessageList({ className = "chat-messages", emptyCompact = false }) 
       top: container.scrollHeight,
       behavior: prefersReducedMotion() ? "auto" : "smooth",
     });
-  }, [messages.length, sending]);
+  }, [messages.length, sending, generating, generationByMessageId]);
 
   useEffect(() => {
     shouldAutoScrollRef.current = true;
-  }, [messages.length, sending]);
+  }, [messages.length, sending, generating, generationByMessageId]);
 
   return (
     <div className={className} role="log" aria-live="polite" aria-label={t("chat.accessibility.messageHistory")}>
@@ -3649,16 +3793,39 @@ function ChatMessageList({ className = "chat-messages", emptyCompact = false }) 
         </div>
       ) : (
         <>
-          {messages.map(message => (
-            <div key={message.id} className={`chat-bubble ${message.role === "system" ? "ai" : message.role}`} style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
-              {message.text}
-            </div>
-          ))}
-          {disabledAssistantNotice && (
-            <div className="chat-status-notice" role="status" aria-live="polite">
-              {t("chat.aiDisabledNotice")}
-            </div>
-          )}
+          {messages.map(message => {
+            const generation = message.role === "user" ? generationByMessageId[message.id] : null;
+            return (
+              <Fragment key={message.id}>
+                <div className={`chat-bubble ${message.role === "system" ? "ai" : message.role}`} style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+                  {message.text}
+                </div>
+                {generation?.status === "generating" && (
+                  <div className="chat-status-notice generating" role="status" aria-live="polite">
+                    <span className="chat-status-spinner" aria-hidden="true" />
+                    <span>{t("chat.generation.preparing")}</span>
+                  </div>
+                )}
+                {generation?.status === "failed" && (
+                  <div className="chat-status-notice failed" role="alert" aria-live="assertive">
+                    <div>
+                      <strong>{t("chat.generation.failedTitle")}</strong>
+                      <div>{generation.error || t("chat.generation.failedDescription")}</div>
+                      <button
+                        type="button"
+                        className="chat-generation-retry"
+                        onClick={() => retryGeneration(message.conversationId, message.id)}
+                        disabled={generating}
+                        aria-label={t("chat.accessibility.retryGeneration")}
+                      >
+                        {t("chat.generation.retry")}
+                      </button>
+                    </div>
+                  </div>
+                )}
+              </Fragment>
+            );
+          })}
         </>
       )}
       {sending && <div className="chat-status-notice" role="status" aria-live="polite">{t("chat.sending")}</div>}
@@ -3669,13 +3836,13 @@ function ChatMessageList({ className = "chat-messages", emptyCompact = false }) 
 
 function ChatComposer({ compact = false }) {
   const { t } = useTranslation();
-  const { sendMessage, sending, syncing, conversationLoading, mutationError } = useChat();
+  const { sendMessage, sending, syncing, generating, conversationLoading, mutationError } = useChat();
   const [input, setInput] = useState("");
   const inputRef = useRef(null);
 
   async function send() {
     const text = input.trim();
-    if (!text || sending || syncing || conversationLoading) return;
+    if (!text || sending || syncing || generating || conversationLoading) return;
     const result = await sendMessage(text);
     if (result?.ok) {
       setInput("");
@@ -3701,10 +3868,10 @@ function ChatComposer({ compact = false }) {
               send();
             }
           }}
-          disabled={sending || syncing || conversationLoading}
+          disabled={sending || syncing || generating || conversationLoading}
         />
-        <button className="chat-send" onClick={send} disabled={sending || syncing || conversationLoading || !input.trim()} aria-label={t("chat.accessibility.send")}>
-          {sending || syncing ? (compact ? "…" : t("chat.sending")) : compact ? "↑" : t("chat.send")}
+        <button className="chat-send" onClick={send} disabled={sending || syncing || generating || conversationLoading || !input.trim()} aria-label={t("chat.accessibility.send")}>
+          {sending || syncing ? (compact ? "…" : t("chat.sending")) : generating ? (compact ? "…" : t("chat.generation.preparingShort")) : compact ? "↑" : t("chat.send")}
         </button>
       </div>
       {mutationError && <div className="field-error chat-composer-error" role="alert">{mutationError}</div>}
@@ -3715,14 +3882,14 @@ function ChatComposer({ compact = false }) {
 function DashboardChatPreview() {
   const { t } = useTranslation();
   const { go } = useApp();
-  const { startDashboardConversation, syncing, mutationError } = useChat();
+  const { startDashboardConversation, syncing, generating, mutationError } = useChat();
   const [input, setInput] = useState("");
   const [launching, setLaunching] = useState(false);
   const [launcherError, setLauncherError] = useState("");
 
   async function submitLauncher() {
     const clean = input.trim();
-    if (!clean || launching || syncing) return;
+    if (!clean || launching || syncing || generating) return;
     setLaunching(true);
     setLauncherError("");
     const result = await startDashboardConversation(clean);
@@ -3756,9 +3923,9 @@ function DashboardChatPreview() {
               submitLauncher();
             }
           }}
-          disabled={launching || syncing}
+          disabled={launching || syncing || generating}
         />
-        <button className="chat-send" onClick={submitLauncher} disabled={launching || syncing || !input.trim()} aria-label={t("chat.accessibility.send")}>
+        <button className="chat-send" onClick={submitLauncher} disabled={launching || syncing || generating || !input.trim()} aria-label={t("chat.accessibility.send")}>
           {launching || syncing ? t("chat.sending") : t("chat.send")}
         </button>
       </div>

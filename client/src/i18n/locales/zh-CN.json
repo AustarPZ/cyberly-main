@@ -750,6 +750,13 @@
       "unableToRename": "无法重命名此对话。",
       "unableToDelete": "无法删除此对话。"
     },
+    "generation": {
+      "preparing": "CyberGuard 正在准备回复...",
+      "preparingShort": "正在准备...",
+      "failedTitle": "无法生成回复。",
+      "failedDescription": "CyberGuard 无法准备回复。请稍后再试。",
+      "retry": "重试回复"
+    },
     "migrationNotice": {
       "title": "聊天历史现在会保存到你的账号",
       "description": "新的对话会安全保存到你的 Cyberly 账号。旧的设备本地聊天历史会留在此设备上，不会被上传或删除。",
@@ -786,6 +793,7 @@
       "conversationMenu": "打开 {{title}} 的菜单",
       "deleteConversation": "删除对话 {{title}}",
       "dashboardLauncher": "从仪表板向 CyberGuard 提出新问题",
+      "retryGeneration": "重试 CyberGuard 回复",
       "retryMessages": "重试加载聊天消息"
     }
   },
@@ -842,6 +850,15 @@
       "AUTH_RATE_LIMITED": "验证尝试次数太多。请稍后再试。",
       "AUTH_REGISTRATION_INVALID": "请检查你的注册资料。",
       "AUTH_REQUIRED": "请先登录以继续。",
+      "AI_ASSISTANT_PERSISTENCE_FAILED": "CyberGuard 无法保存回复。请再试一次。",
+      "AI_GENERATION_ALREADY_COMPLETED": "CyberGuard 已经准备好这条回复。",
+      "AI_GENERATION_IN_PROGRESS": "CyberGuard 正在准备回复。",
+      "AI_INVALID_RESPONSE": "CyberGuard 无法准备安全回复。请换一种问法。",
+      "AI_NOT_CONFIGURED": "CyberGuard 尚未配置。",
+      "AI_PROVIDER_UNAVAILABLE": "CyberGuard 暂时不可用。请稍后再试。",
+      "AI_RATE_LIMITED": "请求过多。请稍等片刻再试。",
+      "AI_TIMEOUT": "回复耗时太久。请再试一次。",
+      "AI_UNSAFE_REQUEST": "CyberGuard 不能帮助完成该请求，但可以解释安全和防御性的替代做法。",
       "CHAT_CONVERSATION_NOT_FOUND": "找不到这个聊天对话。",
       "CHAT_INVALID_ID": "请选择有效的聊天对话。",
       "CHAT_INVALID_MESSAGE": "请输入 1 到 4000 个字符的消息。",
@@ -871,6 +888,7 @@
       "generic": "出现问题。请再试一次。",
       "createChatConversation": "无法创建聊天对话。",
       "deleteChatConversation": "无法删除聊天对话。",
+      "generateChatReply": "无法生成 CyberGuard 回复。",
       "loadChatConversations": "无法加载聊天对话。",
       "loadChatMessages": "无法加载聊天消息。",
       "loadAssessment": "无法加载评估。",
