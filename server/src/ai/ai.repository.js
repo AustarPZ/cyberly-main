@@ -29,7 +29,7 @@ function createAiRepository(pool) {
 
   async function findMessage(conversationId, messageId, connection) {
     const [rows] = await db(connection).query(
-      `SELECT id, conversation_id, role, content, reply_to_message_id, created_at
+      `SELECT id, conversation_id, role, content, locale, reply_to_message_id, created_at
        FROM chat_messages
        WHERE id = ? AND conversation_id = ?
        LIMIT 1`,
@@ -40,7 +40,7 @@ function createAiRepository(pool) {
 
   async function listLatestMessages(conversationId, limit, connection) {
     const [rows] = await db(connection).query(
-      `SELECT id, conversation_id, role, content, reply_to_message_id, created_at
+      `SELECT id, conversation_id, role, content, locale, reply_to_message_id, created_at
        FROM chat_messages
        WHERE conversation_id = ?
          AND role IN ('user', 'assistant')
@@ -111,7 +111,7 @@ function createAiRepository(pool) {
   async function findAssistantMessage(messageId, connection) {
     if (!messageId) return null;
     const [rows] = await db(connection).query(
-      `SELECT id, conversation_id, role, content, reply_to_message_id, created_at
+      `SELECT id, conversation_id, role, content, locale, reply_to_message_id, created_at
        FROM chat_messages
        WHERE id = ?
        LIMIT 1`,
@@ -122,9 +122,9 @@ function createAiRepository(pool) {
 
   async function completeGeneration(userId, generation, assistant, usage, connection) {
     const [messageResult] = await db(connection).query(
-      `INSERT INTO chat_messages (conversation_id, role, content, reply_to_message_id)
-       VALUES (?, 'assistant', ?, ?)`,
-      [generation.conversation_id, assistant.content, generation.user_message_id]
+      `INSERT INTO chat_messages (conversation_id, role, content, locale, reply_to_message_id)
+       VALUES (?, 'assistant', ?, ?, ?)`,
+      [generation.conversation_id, assistant.content, assistant.locale || null, generation.user_message_id]
     );
 
     await db(connection).query(
@@ -159,7 +159,7 @@ function createAiRepository(pool) {
 
     const [generationRows] = await db(connection).query('SELECT * FROM chat_message_generations WHERE id = ? LIMIT 1', [generation.id]);
     const [messageRows] = await db(connection).query(
-      `SELECT id, conversation_id, role, content, reply_to_message_id, created_at
+      `SELECT id, conversation_id, role, content, locale, reply_to_message_id, created_at
        FROM chat_messages
        WHERE id = ?
        LIMIT 1`,

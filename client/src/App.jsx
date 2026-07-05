@@ -1,6 +1,8 @@
 import { Fragment, useState, createContext, useContext, useRef, useEffect, useCallback } from "react";
 import { createPortal } from "react-dom";
+import ReactMarkdown from "react-markdown";
 import { useTranslation } from "react-i18next";
+import remarkGfm from "remark-gfm";
 import profileMappings from "./profileMappings";
 import i18n, { STORAGE_KEY as UI_LANGUAGE_STORAGE_KEY, getStoredUiLanguage} from "./i18n";
 import { normalizeLocale, profileLanguageToLocale } from "./i18n/languageMappings";
@@ -507,6 +509,36 @@ body {
 .chat-bubble.user { align-self: flex-end; background: var(--teal); color: #fff; border-bottom-right-radius: 3px; }
 .chat-bubble.ai { align-self: flex-start; background: var(--gray-lt); border-bottom-left-radius: 3px; }
 .chat-bubble.ai.loading { opacity: 0.6; font-style: italic; }
+.chat-markdown { overflow-wrap: anywhere; word-break: normal; line-height: 1.55; }
+.chat-markdown > *:first-child { margin-top: 0; }
+.chat-markdown > *:last-child { margin-bottom: 0; }
+.chat-markdown p { margin: 0 0 0.55rem; }
+.chat-markdown h1, .chat-markdown h2, .chat-markdown h3, .chat-markdown h4 {
+  margin: 0.75rem 0 0.35rem; line-height: 1.25; font-family: 'Space Grotesk', sans-serif;
+}
+.chat-markdown h1 { font-size: 1.05rem; }
+.chat-markdown h2 { font-size: 1rem; }
+.chat-markdown h3, .chat-markdown h4 { font-size: 0.94rem; }
+.chat-markdown ul, .chat-markdown ol { margin: 0.35rem 0 0.65rem 1.15rem; padding-left: 0.45rem; }
+.chat-markdown li { margin: 0.22rem 0; }
+.chat-markdown blockquote {
+  margin: 0.65rem 0; padding: 0.15rem 0 0.15rem 0.75rem;
+  border-left: 3px solid rgba(29,158,117,0.35); color: #52615b;
+}
+.chat-markdown code {
+  font-family: Consolas, Monaco, 'Courier New', monospace; background: rgba(0,0,0,0.07);
+  border-radius: 5px; padding: 0.08rem 0.25rem; font-size: 0.88em;
+}
+.chat-markdown pre {
+  margin: 0.65rem 0; max-width: 100%; overflow-x: auto; background: #202724; color: #f7fbf9;
+  border-radius: 8px; padding: 0.75rem; -webkit-overflow-scrolling: touch;
+}
+.chat-markdown pre code { background: transparent; color: inherit; padding: 0; white-space: pre; }
+.chat-markdown .chat-table-wrap { max-width: 100%; overflow-x: auto; margin: 0.65rem 0; }
+.chat-markdown table { border-collapse: collapse; min-width: 100%; font-size: 0.9em; }
+.chat-markdown th, .chat-markdown td { border: 1px solid rgba(0,0,0,0.12); padding: 0.4rem 0.5rem; text-align: left; }
+.chat-markdown th { background: rgba(29,158,117,0.08); }
+.chat-markdown a { color: #0d6b52; font-weight: 700; overflow-wrap: anywhere; }
 .chat-status-notice {
   align-self: stretch; background: var(--teal-lt); color: #14684f;
   border: 1px solid rgba(29,158,117,0.24); border-radius: 8px;
@@ -561,20 +593,34 @@ body {
   .dashboard-cyberguard-heading .btn-ghost { width: 100%; }
 }
 .ai-chat-shell {
-  max-width: 1180px; margin: 0 auto; padding: 1.25rem 1.5rem 1.5rem;
+  max-width: 1440px; margin: 0 auto; padding: 1.25rem 1.5rem 1.5rem;
   height: calc(100vh - var(--nav-h) - 13rem);
   height: calc(100dvh - var(--nav-h) - 13rem);
   min-height: 520px;
-  display: grid; grid-template-columns: minmax(230px, 290px) minmax(0, 1fr); gap: 1.25rem;
+  display: grid; grid-template-columns: minmax(260px, 300px) minmax(0, 1fr); gap: 1.25rem;
   overflow: hidden;
 }
+.ai-chat-shell.sidebar-collapsed { grid-template-columns: 68px minmax(0, 1fr); }
 .ai-chat-sidebar, .ai-chat-main {
   background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 14px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.05);
   min-height: 0;
 }
 .ai-chat-sidebar { padding: 1rem; align-self: stretch; display: flex; flex-direction: column; overflow: hidden; }
+.ai-chat-sidebar.collapsed { padding: 0.65rem; align-items: center; }
 .ai-chat-sidebar-header { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-bottom: 0.85rem; }
+.ai-chat-sidebar-title-block { min-width: 0; }
+.ai-chat-sidebar-actions { display: flex; align-items: center; gap: 0.45rem; flex: 0 0 auto; }
+.ai-chat-sidebar-rail-actions { display: grid; gap: 0.65rem; justify-items: center; width: 100%; }
+.ai-chat-icon-button {
+  width: 40px; height: 40px; border: 1px solid rgba(0,0,0,0.1); background: #fff;
+  border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+  color: #3f4a45; font-size: 1.15rem; font-weight: 900; line-height: 1;
+}
+.ai-chat-icon-button:hover, .ai-chat-icon-button:focus-visible {
+  outline: none; background: var(--teal-lt); box-shadow: 0 0 0 3px rgba(29,158,117,0.16);
+}
+.ai-chat-mobile-actions { display: none; }
 .ai-chat-list { display: grid; align-content: start; gap: 0.45rem; min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 0.15rem; }
 .ai-chat-list-item {
   position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 40px; gap: 0.35rem;
@@ -626,6 +672,7 @@ body {
 .ai-chat-full-messages { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; background: #fbfcfa; }
 .ai-chat-full-messages .chat-empty { margin: auto auto 1.25rem; max-width: 420px; padding: 1rem 1.1rem; }
 .ai-chat-full-messages .chat-bubble { max-width: min(680px, 88%); font-size: 0.92rem; }
+.ai-chat-drawer-layer { display: none; }
 .chat-migration-notice { margin-bottom: 0.85rem; }
 .dashboard-ai-preview {
   background: #fff; border: 1px solid rgba(29,158,117,0.18); border-radius: 14px;
@@ -637,13 +684,31 @@ body {
     display: grid; grid-template-columns: 1fr; padding: 1rem; height: auto;
     min-height: 0; overflow: visible;
   }
-  .ai-chat-sidebar { max-height: 260px; margin-bottom: 0; }
-  .ai-chat-list { max-height: 150px; }
+  .ai-chat-shell.sidebar-collapsed { grid-template-columns: 1fr; }
+  .ai-chat-sidebar { display: none; }
+  .ai-chat-mobile-actions { display: block; flex: 0 0 auto; width: 100%; }
+  .ai-chat-mobile-actions .btn-ghost { width: 100%; justify-content: center; }
   .ai-chat-main {
     height: min(560px, calc(100vh - var(--nav-h) - 7rem));
     height: min(560px, calc(100dvh - var(--nav-h) - 7rem));
     min-height: 420px;
   }
+  .ai-chat-drawer-layer { display: block; position: fixed; inset: 0; z-index: 250; }
+  .ai-chat-drawer-backdrop {
+    position: absolute; inset: 0; border: none; background: rgba(0,0,0,0.36); cursor: pointer;
+  }
+  .ai-chat-drawer {
+    position: absolute; inset: 0 auto 0 0; width: min(340px, calc(100vw - 2.5rem));
+    background: #fff; border: none; border-radius: 0 14px 14px 0;
+    box-shadow: 12px 0 32px rgba(0,0,0,0.18); padding: 1rem;
+    display: flex; flex-direction: column; min-width: 0; overflow: hidden;
+  }
+  .ai-chat-drawer:focus { outline: none; }
+  .ai-chat-drawer-top {
+    display: flex; justify-content: space-between; align-items: center; gap: 0.75rem;
+    margin-bottom: 0.85rem; flex: 0 0 auto;
+  }
+  .ai-chat-drawer .ai-chat-list { max-height: none; }
   .chat-panel { left: 1rem; right: 1rem; width: auto; }
 }
 @media (max-width: 430px) {
@@ -891,6 +956,28 @@ function acknowledgeChatNotice(userId) {
   }
 }
 
+function chatSidebarStorageKey(userId) {
+  return `cyberly.chat.sidebarCollapsed.v1.${userId}`;
+}
+
+function readChatSidebarCollapsed(userId) {
+  if (!userId || typeof window === "undefined") return false;
+  try {
+    return window.localStorage.getItem(chatSidebarStorageKey(userId)) === "true";
+  } catch {
+    return false;
+  }
+}
+
+function writeChatSidebarCollapsed(userId, collapsed) {
+  if (!userId || typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(chatSidebarStorageKey(userId), collapsed ? "true" : "false");
+  } catch {
+    // Sidebar preference is local UI state only.
+  }
+}
+
 function normalizeConversationTitle(title) {
   return title.trim().replace(/\s+/g, " ");
 }
@@ -917,6 +1004,31 @@ function mapServerMessage(message) {
     replyToMessageId: message.replyToMessageId ? Number(message.replyToMessageId) : null,
     createdAt: message.createdAt,
   };
+}
+
+function ChatMarkdown({ children }) {
+  return (
+    <ReactMarkdown
+      remarkPlugins={[remarkGfm]}
+      components={{
+        a({ href, children: linkChildren, ...props }) {
+          return (
+            <a href={href || "#"} target="_blank" rel="noopener noreferrer" {...props}>
+              {linkChildren}
+            </a>
+          );
+        },
+        img({ alt, src }) {
+          return <span>{alt || src || ""}</span>;
+        },
+        table({ children: tableChildren }) {
+          return <div className="chat-table-wrap"><table>{tableChildren}</table></div>;
+        },
+      }}
+    >
+      {String(children || "")}
+    </ReactMarkdown>
+  );
 }
 
 function mergeMessageById(messages, nextMessage) {
@@ -1263,7 +1375,11 @@ function ChatProvider({ user, children }) {
       return created;
     }
 
-    const result = await createChatUserMessage(activeConversationId, { role: "user", content: clean });
+    const result = await createChatUserMessage(activeConversationId, {
+      role: "user",
+      content: clean,
+      locale: normalizeLocale(i18n.language),
+    });
     setSending(false);
     if (!userIdRef.current) return { ok: false };
     if (!result.ok) {
@@ -3793,12 +3909,16 @@ function ChatMessageList({ className = "chat-messages", emptyCompact = false }) 
         </div>
       ) : (
         <>
-          {messages.map(message => {
+          {messages.filter(message => message.role !== "system").map(message => {
             const generation = message.role === "user" ? generationByMessageId[message.id] : null;
             return (
               <Fragment key={message.id}>
-                <div className={`chat-bubble ${message.role === "system" ? "ai" : message.role}`} style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
-                  {message.text}
+                <div className={`chat-bubble ${message.role}`} style={message.role === "ai" ? { overflowWrap: "anywhere" } : { whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+                  {message.role === "ai" ? (
+                    <div className="chat-markdown">
+                      <ChatMarkdown>{message.text}</ChatMarkdown>
+                    </div>
+                  ) : message.text}
                 </div>
                 {generation?.status === "generating" && (
                   <div className="chat-status-notice generating" role="status" aria-live="polite">
@@ -6533,10 +6653,62 @@ function AIChatPage() {
   const [openMenu, setOpenMenu] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteError, setDeleteError] = useState("");
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => readChatSidebarCollapsed(user?.id));
+  const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false);
   const deleteReturnFocusRef = useRef(null);
   const newChatButtonRef = useRef(null);
+  const historyDrawerTriggerRef = useRef(null);
+  const historyDrawerRef = useRef(null);
+  const historyListId = "ai-chat-history-panel";
+  const historyDrawerId = "ai-chat-history-drawer";
+
+  useEffect(() => {
+    setSidebarCollapsed(readChatSidebarCollapsed(user?.id));
+  }, [user?.id]);
+
+  useEffect(() => {
+    writeChatSidebarCollapsed(user?.id, sidebarCollapsed);
+  }, [sidebarCollapsed, user?.id]);
+
+  useEffect(() => {
+    if (!historyDrawerOpen) return undefined;
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        setHistoryDrawerOpen(false);
+        window.setTimeout(() => historyDrawerTriggerRef.current?.focus(), 0);
+      }
+    }
+    document.addEventListener("keydown", handleKeyDown);
+    window.setTimeout(() => historyDrawerRef.current?.focus(), 0);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [historyDrawerOpen]);
 
   if (!user) { go("login"); return null; }
+
+  function toggleSidebarCollapsed() {
+    setSidebarCollapsed(current => !current);
+    setOpenMenu(null);
+  }
+
+  function openHistoryDrawer() {
+    setHistoryDrawerOpen(true);
+    setOpenMenu(null);
+  }
+
+  function closeHistoryDrawer() {
+    setHistoryDrawerOpen(false);
+    window.setTimeout(() => historyDrawerTriggerRef.current?.focus(), 0);
+  }
+
+  function handleSelectConversation(id) {
+    selectConversation(id);
+    setHistoryDrawerOpen(false);
+  }
+
+  function handleCreateConversation() {
+    createConversation();
+    setHistoryDrawerOpen(false);
+  }
 
   function requestDeleteConversation(conversation, returnFocusElement) {
     deleteReturnFocusRef.current = returnFocusElement;
@@ -6566,6 +6738,104 @@ function AIChatPage() {
     }, 0);
   }
 
+  function renderHistoryContent({ compact = false, drawer = false } = {}) {
+    if (compact) {
+      return (
+        <div className="ai-chat-sidebar-rail-actions">
+          <button
+            type="button"
+            className="ai-chat-icon-button"
+            onClick={toggleSidebarCollapsed}
+            aria-label={t("chat.accessibility.expandHistory")}
+            aria-expanded={!sidebarCollapsed}
+            aria-controls={historyListId}
+            title={t("chat.actions.expandHistory")}
+          >
+            ›
+          </button>
+          <button
+            type="button"
+            className="ai-chat-icon-button"
+            onClick={handleCreateConversation}
+            aria-label={t("chat.accessibility.newChat")}
+            title={t("chat.actions.newChat")}
+          >
+            +
+          </button>
+        </div>
+      );
+    }
+
+    return (
+      <>
+        {!drawer && <PageBackButton style={{ marginBottom: "1rem" }} />}
+        <div className="ai-chat-sidebar-header">
+          <div className="ai-chat-sidebar-title-block">
+            <div style={{ fontWeight: 800 }}>{t("chat.history.title")}</div>
+            <div style={{ fontSize: "0.76rem", color: "#77827d" }}>{t("chat.history.description")}</div>
+          </div>
+          <div className="ai-chat-sidebar-actions">
+            {!drawer && (
+              <button
+                type="button"
+                className="ai-chat-icon-button"
+                onClick={toggleSidebarCollapsed}
+                aria-label={t("chat.accessibility.collapseHistory")}
+                aria-expanded={!sidebarCollapsed}
+                aria-controls={historyListId}
+                title={t("chat.actions.collapseHistory")}
+              >
+                ‹
+              </button>
+            )}
+            <button className="btn-ghost" style={{ padding: "0.45rem 0.65rem" }} ref={newChatButtonRef} onClick={handleCreateConversation} aria-label={t("chat.accessibility.newChat")}>
+              +
+            </button>
+          </div>
+        </div>
+        {legacyNoticeVisible && (
+          <PageState
+            type="empty"
+            title={t("chat.migrationNotice.title")}
+            message={t("chat.migrationNotice.description")}
+            actionLabel={t("chat.migrationNotice.acknowledge")}
+            onAction={dismissLegacyNotice}
+          />
+        )}
+        {error ? (
+          <PageState
+            type="error"
+            title={t("chat.errors.syncFailed")}
+            message={error}
+            actionLabel={t("common.retry")}
+            onAction={retry}
+          />
+        ) : initialLoading ? (
+          <PageState type="loading" title={t("chat.loading.conversations")} message={t("chat.loading.pleaseWait")} />
+        ) : conversations.length === 0 ? (
+          <PageState type="empty" title={t("chat.history.emptyTitle")} message={t("chat.history.emptyDescription")} />
+        ) : (
+          <div className="ai-chat-list" role="list">
+            {conversations.map(conversation => (
+              <ConversationHistoryItem
+                key={conversation.id}
+                conversation={conversation}
+                active={conversation.id === activeConversationId}
+                onSelect={handleSelectConversation}
+                onRename={renameConversation}
+                onDelete={requestDeleteConversation}
+                mutating={mutatingConversationId === conversation.id}
+                openMenu={openMenu}
+                setOpenMenu={setOpenMenu}
+              />
+            ))}
+          </div>
+        )}
+        {mutationError && <div className="field-error" role="alert" style={{ marginTop: "0.75rem" }}>{mutationError}</div>}
+      </>
+    );
+  }
+
   return (
     <div>
       <div style={{ background: "linear-gradient(135deg, #1a2e1a 0%, #2d4a2d 100%)", padding: "2.5rem 1.5rem", color: "#fff" }}>
@@ -6582,63 +6852,28 @@ function AIChatPage() {
         </div>
       </div>
 
-      <div className="ai-chat-shell">
-        <aside className="ai-chat-sidebar" aria-label={t("chat.history.ariaLabel")}>
-          <PageBackButton style={{ marginBottom: "1rem" }} />
-          <div className="ai-chat-sidebar-header">
-            <div>
-              <div style={{ fontWeight: 800 }}>{t("chat.history.title")}</div>
-              <div style={{ fontSize: "0.76rem", color: "#77827d" }}>{t("chat.history.description")}</div>
-            </div>
-            <button className="btn-ghost" style={{ padding: "0.45rem 0.65rem" }} ref={newChatButtonRef} onClick={createConversation} aria-label={t("chat.accessibility.newChat")}>
-              +
-            </button>
-          </div>
-          {legacyNoticeVisible && (
-            <PageState
-              type="empty"
-              title={t("chat.migrationNotice.title")}
-              message={t("chat.migrationNotice.description")}
-              actionLabel={t("chat.migrationNotice.acknowledge")}
-              onAction={dismissLegacyNotice}
-            />
-          )}
-          {error ? (
-            <PageState
-              type="error"
-              title={t("chat.errors.syncFailed")}
-              message={error}
-              actionLabel={t("common.retry")}
-              onAction={retry}
-            />
-          ) : initialLoading ? (
-            <PageState type="loading" title={t("chat.loading.conversations")} message={t("chat.loading.pleaseWait")} />
-          ) : conversations.length === 0 ? (
-            <PageState type="empty" title={t("chat.history.emptyTitle")} message={t("chat.history.emptyDescription")} />
-          ) : (
-            <div className="ai-chat-list" role="list">
-              {conversations.map(conversation => (
-                <ConversationHistoryItem
-                  key={conversation.id}
-                  conversation={conversation}
-                  active={conversation.id === activeConversationId}
-                  onSelect={selectConversation}
-                  onRename={renameConversation}
-                  onDelete={requestDeleteConversation}
-                  mutating={mutatingConversationId === conversation.id}
-                  openMenu={openMenu}
-                  setOpenMenu={setOpenMenu}
-                />
-              ))}
-            </div>
-          )}
-          {mutationError && <div className="field-error" role="alert" style={{ marginTop: "0.75rem" }}>{mutationError}</div>}
+      <div className={`ai-chat-shell${sidebarCollapsed ? " sidebar-collapsed" : ""}`}>
+        <aside id={historyListId} className={`ai-chat-sidebar${sidebarCollapsed ? " collapsed" : ""}`} aria-label={t("chat.history.ariaLabel")}>
+          {renderHistoryContent({ compact: sidebarCollapsed })}
         </aside>
 
         <section className="ai-chat-main" aria-label={t("chat.page.chatAreaLabel")}>
           <div className="ai-chat-main-header">
             <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
-              <div style={{ minWidth: 0 }}>
+              <div className="ai-chat-mobile-actions">
+                <button
+                  type="button"
+                  className="btn-ghost"
+                  ref={historyDrawerTriggerRef}
+                  onClick={openHistoryDrawer}
+                  aria-label={t("chat.accessibility.openHistory")}
+                  aria-expanded={historyDrawerOpen}
+                  aria-controls={historyDrawerId}
+                >
+                  {t("chat.actions.openHistory")}
+                </button>
+              </div>
+              <div style={{ minWidth: 0, flex: "1 1 auto" }}>
                 <div style={{ fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
                   {activeConversation?.title || t("chat.conversation.newTitle")}
                 </div>
@@ -6646,7 +6881,7 @@ function AIChatPage() {
                   {activeConversation ? t("chat.history.lastUpdated", { time: formatChatUpdatedAt(activeConversation.updatedAt, t) }) : t("chat.history.noActive")}
                 </div>
               </div>
-              <button className="btn-ghost" onClick={createConversation} aria-label={t("chat.accessibility.newChat")}>
+              <button className="btn-ghost" onClick={handleCreateConversation} aria-label={t("chat.accessibility.newChat")}>
                 {t("chat.actions.newChat")}
               </button>
             </div>
@@ -6655,6 +6890,36 @@ function AIChatPage() {
           <ChatComposer />
         </section>
       </div>
+      {historyDrawerOpen && (
+        <div className="ai-chat-drawer-layer">
+          <button
+            type="button"
+            className="ai-chat-drawer-backdrop"
+            onClick={closeHistoryDrawer}
+            aria-label={t("chat.accessibility.closeHistory")}
+          />
+          <aside
+            id={historyDrawerId}
+            className="ai-chat-drawer"
+            ref={historyDrawerRef}
+            tabIndex={-1}
+            aria-label={t("chat.history.ariaLabel")}
+          >
+            <div className="ai-chat-drawer-top">
+              <div style={{ fontWeight: 800 }}>{t("chat.history.title")}</div>
+              <button
+                type="button"
+                className="ai-chat-icon-button"
+                onClick={closeHistoryDrawer}
+                aria-label={t("chat.accessibility.closeHistory")}
+              >
+                ×
+              </button>
+            </div>
+            {renderHistoryContent({ drawer: true })}
+          </aside>
+        </div>
+      )}
       {deleteTarget && (
         <ConfirmationDialog
           title={t("chat.delete.title")}
@@ -7463,7 +7728,7 @@ export default function App() {
           ) : (PAGES[page] ?? <HomePage />)}
         </main>
         <Footer />
-        {!checkingSession && <ChatWidget />}
+        {!checkingSession && page !== "ai-chat" && <ChatWidget />}
         {pendingNavigation && activityGuard && (
           <ConfirmationDialog
             title={activityGuard.title}

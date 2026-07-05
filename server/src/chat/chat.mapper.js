@@ -25,6 +25,7 @@ function mapMessage(row) {
     conversationId: row.conversation_id,
     role: row.role,
     content: row.content,
+    locale: row.locale || null,
     replyToMessageId: row.reply_to_message_id || null,
     createdAt: toIso(row.created_at),
   };

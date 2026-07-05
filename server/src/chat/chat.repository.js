@@ -82,7 +82,7 @@ function createChatRepository(pool) {
 
   async function listMessages(conversationId, connection) {
     const [rows] = await db(connection).query(
-      `SELECT id, conversation_id, role, content, reply_to_message_id, created_at
+      `SELECT id, conversation_id, role, content, locale, reply_to_message_id, created_at
        FROM chat_messages
        WHERE conversation_id = ?
        ORDER BY id`,
@@ -93,12 +93,12 @@ function createChatRepository(pool) {
 
   async function insertMessage(conversationId, message, connection) {
     const [result] = await db(connection).query(
-      `INSERT INTO chat_messages (conversation_id, role, content)
-       VALUES (?, ?, ?)`,
-      [conversationId, message.role, message.content]
+      `INSERT INTO chat_messages (conversation_id, role, content, locale)
+       VALUES (?, ?, ?, ?)`,
+      [conversationId, message.role, message.content, message.locale || null]
     );
     const [rows] = await db(connection).query(
-      `SELECT id, conversation_id, role, content, reply_to_message_id, created_at
+      `SELECT id, conversation_id, role, content, locale, reply_to_message_id, created_at
        FROM chat_messages
        WHERE id = ?
        LIMIT 1`,

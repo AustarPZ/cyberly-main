@@ -212,6 +212,8 @@ async function run() {
       assert.equal(result.response.status, 201);
       assert.equal(result.json.assistantMessage.role, 'assistant');
       assert.equal(result.json.assistantMessage.replyToMessageId, created.message.id);
+      assert.equal(result.json.userMessage.locale, 'ms');
+      assert.equal(result.json.assistantMessage.locale, 'ms');
       assert.equal(result.json.generation.status, 'completed');
       assert.equal(result.json.generation.provider, 'openai');
       assert.equal(result.json.generation.model, 'gpt-5.4-mini');
@@ -223,14 +225,16 @@ async function run() {
       const assistantId = result.json.assistantMessage.id;
 
       const [[assistantRow]] = await pool.query(
-        'SELECT reply_to_message_id FROM chat_messages WHERE id = ?',
+        'SELECT reply_to_message_id, locale FROM chat_messages WHERE id = ?',
         [assistantId]
       );
       assert.equal(assistantRow.reply_to_message_id, created.message.id);
+      assert.equal(assistantRow.locale, 'ms');
 
       result = await generate(baseUrl, userA.cookieHeader, created.conversation.id, created.message.id, { locale: 'ms' });
       assert.equal(result.response.status, 200);
       assert.equal(result.json.assistantMessage.id, assistantId);
+      assert.equal(result.json.assistantMessage.locale, 'ms');
       const [[assistantCount]] = await pool.query(
         "SELECT COUNT(*) AS count FROM chat_messages WHERE conversation_id = ? AND role = 'assistant'",
         [created.conversation.id]

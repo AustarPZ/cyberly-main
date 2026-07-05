@@ -165,8 +165,12 @@ async function run() {
     assert.equal(result.json.messages.length, 1);
     assert.equal(result.json.messages[0].role, 'user');
     assert.equal(result.json.messages[0].content, 'How do I spot a parcel scam?');
+    assert.equal(result.json.messages[0].locale, 'ms');
     const conversationId = result.json.conversation.id;
     const firstMessageId = result.json.messages[0].id;
+
+    const [[firstMessageLocale]] = await pool.query('SELECT locale FROM chat_messages WHERE id = ?', [firstMessageId]);
+    assert.equal(firstMessageLocale.locale, 'ms');
 
     const [[dbConversation]] = await pool.query('SELECT user_id FROM chat_conversations WHERE id = ?', [conversationId]);
     assert.equal(dbConversation.user_id, userA.json.user.id);
@@ -181,6 +185,7 @@ async function run() {
     assert.equal(result.json.conversation.locale, 'zh-CN');
     assert.equal(result.json.conversation.title.length, 80);
     assert.equal(result.json.messages[0].content, 'This message should become the generated conversation title because it is quite long and descriptive.');
+    assert.equal(result.json.messages[0].locale, 'zh-CN');
 
     result = await request('GET', '/api/chat/conversations', undefined, cookieA);
     assert.equal(result.response.status, 200);
@@ -207,6 +212,7 @@ async function run() {
     assert.equal(result.json.conversation.id, conversationId);
     assert.equal(result.json.messages.length, 1);
     assert.equal(result.json.messages[0].id, firstMessageId);
+    assert.equal(result.json.messages[0].locale, 'ms');
 
     result = await request('GET', `/api/chat/conversations/${conversationId}`, undefined, cookieB);
     assert.equal(result.response.status, 404);
@@ -231,10 +237,21 @@ async function run() {
     assert.equal(result.response.status, 400);
     assert.equal(result.json.code, 'CHAT_MESSAGE_ROLE_INVALID');
 
-    result = await request('POST', `/api/chat/conversations/${conversationId}/messages`, { content: '  Please explain the warning signs.  ' }, cookieA);
+    result = await request('POST', `/api/chat/conversations/${conversationId}/messages`, { content: '  Please explain the warning signs.  ', locale: 'ZH-cn' }, cookieA);
     assert.equal(result.response.status, 201);
     assert.equal(result.json.message.role, 'user');
     assert.equal(result.json.message.content, 'Please explain the warning signs.');
+    assert.equal(result.json.message.locale, 'zh-CN');
+
+    const [[secondMessageLocale]] = await pool.query('SELECT locale FROM chat_messages WHERE id = ?', [result.json.message.id]);
+    assert.equal(secondMessageLocale.locale, 'zh-CN');
+
+    result = await request('POST', `/api/chat/conversations/${conversationId}/messages`, {
+      content: 'Locale fallback check.',
+      locale: 'fr-FR',
+    }, cookieA);
+    assert.equal(result.response.status, 201);
+    assert.equal(result.json.message.locale, 'en');
 
     result = await request('POST', `/api/chat/conversations/${conversationId}/messages`, { content: '   ' }, cookieA);
     assert.equal(result.response.status, 400);
@@ -249,7 +266,7 @@ async function run() {
     assert.equal(result.json.code, 'CHAT_CONVERSATION_NOT_FOUND');
 
     const [[messageCountBeforeDelete]] = await pool.query('SELECT COUNT(*) AS count FROM chat_messages WHERE conversation_id = ?', [conversationId]);
-    assert.equal(messageCountBeforeDelete.count, 2);
+    assert.equal(messageCountBeforeDelete.count, 3);
     result = await request('DELETE', `/api/chat/conversations/${conversationId}`, undefined, cookieA);
     assert.equal(result.response.status, 200);
     assert.equal(result.json.ok, true);

@@ -97,7 +97,7 @@ function validateUserMessage(input = {}) {
   return {
     ok: true,
     errors: {},
-    value: { role: 'user', content },
+    value: { role: 'user', content, locale: normalizeLocale(input.locale) },
   };
 }
 
@@ -123,7 +123,10 @@ function validateCreateConversation(input = {}) {
       Object.assign(errors, message.errors);
       value.messageErrorCode = message.code;
     } else {
-      value.message = message.value;
+      value.message = {
+        ...message.value,
+        locale: value.locale,
+      };
     }
   }
 

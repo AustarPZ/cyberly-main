@@ -211,7 +211,7 @@ function createAiService(repository, provider, config) {
       let completed;
       try {
         completed = await repository.withTransaction(connection =>
-          repository.completeGeneration(userId, generation, { content: validation.content }, usage, connection)
+          repository.completeGeneration(userId, generation, { content: validation.content, locale }, usage, connection)
         );
       } catch (error) {
         await repository.markGenerationFailed(generation.id, ERROR_CODES.AI_ASSISTANT_PERSISTENCE_FAILED, durationMs);
