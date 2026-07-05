@@ -658,6 +658,16 @@
     "profileFamiliaritySummary": "{{level}} profile familiarity",
     "backToDashboard": "Back to Dashboard",
     "selectedTopics": "{{count}} selected",
+    "sectionNav": {
+      "title": "Progress sections",
+      "ariaLabel": "Progress page sections",
+      "snapshot": "Snapshot",
+      "mastery": "Mastery",
+      "assessmentTopics": "Assessment Topics",
+      "recommendation": "Recommendation",
+      "learningTopics": "Learning Topics",
+      "badges": "Badges"
+    },
     "snapshot": {
       "measuredLevel": "Measured level",
       "language": "Language",
@@ -712,6 +722,8 @@
     "signInPrompt": "Sign in to preview the CyberGuard chat interface with your session profile.",
     "signInCta": "Sign in / Sign up",
     "thinking": "Thinking...",
+    "sending": "Sending...",
+    "aiDisabledNotice": "Live CyberGuard AI responses will be enabled in a later phase. Your message is saved securely, but no assistant reply is generated yet.",
     "placeholder": "Type a question...",
     "send": "Send",
     "page": {
@@ -727,6 +739,7 @@
       "chatHistory": "Chat History",
       "rename": "Rename",
       "delete": "Delete",
+      "deleting": "Deleting...",
       "renameConversation": "Rename conversation",
       "deleteConversation": "Delete conversation"
     },
@@ -735,13 +748,30 @@
     },
     "history": {
       "title": "Conversation history",
-      "description": "Saved on this device for your account.",
+      "description": "Saved securely to your account.",
       "ariaLabel": "Conversation history",
       "emptyTitle": "No conversations yet",
-      "emptyDescription": "Start a chat and it will appear here.",
+      "emptyDescription": "Start a chat and your secure account history will appear here.",
       "lastUpdated": "Last updated {{time}}",
       "unknownTime": "Unknown time",
       "noActive": "No active conversation yet"
+    },
+    "loading": {
+      "conversations": "Loading conversations",
+      "messages": "Loading messages",
+      "pleaseWait": "Please wait a moment."
+    },
+    "errors": {
+      "syncFailed": "Chat sync failed",
+      "unableToCreate": "Unable to create this chat.",
+      "unableToSend": "Unable to send this message.",
+      "unableToRename": "Unable to rename this conversation.",
+      "unableToDelete": "Unable to delete this conversation."
+    },
+    "migrationNotice": {
+      "title": "Chat history now saves to your account",
+      "description": "New conversations are saved securely to your Cyberly account. Older device-only chat history stays on this device and will not be uploaded or deleted.",
+      "acknowledge": "Got it"
     },
     "validation": {
       "titleRequired": "Enter a conversation title.",
@@ -749,7 +779,7 @@
     },
     "delete": {
       "title": "Delete conversation?",
-      "description": "Delete “{{title}}”? This removes only this local conversation from this device."
+      "description": "Delete “{{title}}”? This removes the conversation from your account."
     },
     "empty": {
       "title": "Ask CyberGuard anything",
@@ -773,7 +803,8 @@
       "openWidget": "Open chat widget",
       "conversationMenu": "Open menu for {{title}}",
       "deleteConversation": "Delete conversation {{title}}",
-      "dashboardLauncher": "Ask CyberGuard a new question from the dashboard"
+      "dashboardLauncher": "Ask CyberGuard a new question from the dashboard",
+      "retryMessages": "Retry loading chat messages"
     }
   },
   "footer": {
@@ -829,6 +860,11 @@
       "AUTH_RATE_LIMITED": "Too many authentication attempts. Please try again later.",
       "AUTH_REGISTRATION_INVALID": "Please check your registration details.",
       "AUTH_REQUIRED": "Please sign in to continue.",
+      "CHAT_CONVERSATION_NOT_FOUND": "We could not find this chat conversation.",
+      "CHAT_INVALID_ID": "Please choose a valid chat conversation.",
+      "CHAT_INVALID_MESSAGE": "Enter a message from 1 to 4000 characters.",
+      "CHAT_INVALID_TITLE": "Enter a chat title from 1 to 80 characters.",
+      "CHAT_MESSAGE_ROLE_INVALID": "Only your messages can be sent in this phase.",
       "INTERNAL_SERVER_ERROR": "Something went wrong on our side. Please try again.",
       "NETWORK_UNAVAILABLE": "Network error. Please check your connection and try again.",
       "PROFILE_INVALID": "Please check your learner profile details.",
@@ -851,6 +887,10 @@
       "completeRecommendation": "Unable to complete recommendation.",
       "completeScenario": "Unable to complete scenario.",
       "generic": "Something went wrong. Please try again.",
+      "createChatConversation": "Unable to create chat conversation.",
+      "deleteChatConversation": "Unable to delete chat conversation.",
+      "loadChatConversations": "Unable to load chat conversations.",
+      "loadChatMessages": "Unable to load chat messages.",
       "loadAssessment": "Unable to load assessment.",
       "loadAssessmentStatus": "Unable to load assessment status.",
       "loadProgress": "Unable to load progress.",
@@ -864,10 +904,12 @@
       "network": "Network error. Please check your connection and try again.",
       "register": "Failed to register. Please try again.",
       "restoreScenario": "Unable to restore scenario.",
+      "renameChatConversation": "Unable to rename chat conversation.",
       "saveAccount": "Unable to save account information.",
       "saveAssessmentAnswer": "Unable to save answer.",
       "saveProfile": "Unable to save learner profile.",
       "saveScenarioDecision": "Unable to save decision.",
+      "sendChatMessage": "Unable to send chat message.",
       "session": "Unable to check your session.",
       "signIn": "Unable to sign in.",
       "startAssessment": "Unable to start assessment.",

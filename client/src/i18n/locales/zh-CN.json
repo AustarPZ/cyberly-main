@@ -640,6 +640,16 @@
     "profileFamiliaritySummary": "{{level}} 资料熟悉度",
     "backToDashboard": "返回仪表板",
     "selectedTopics": "已选择 {{count}} 个",
+    "sectionNav": {
+      "title": "进度分区",
+      "ariaLabel": "进度页面分区",
+      "snapshot": "概览",
+      "mastery": "掌握度",
+      "assessmentTopics": "测评主题",
+      "recommendation": "推荐",
+      "learningTopics": "学习主题",
+      "badges": "徽章"
+    },
     "snapshot": {
       "measuredLevel": "测量等级",
       "language": "语言",
@@ -694,6 +704,8 @@
     "signInPrompt": "登录后可使用你的会话资料预览 CyberGuard 聊天界面。",
     "signInCta": "登录 / 注册",
     "thinking": "正在思考...",
+    "sending": "正在发送...",
+    "aiDisabledNotice": "实时 CyberGuard AI 回复将在后续阶段启用。你的消息已安全保存，但目前还不会生成助手回复。",
     "placeholder": "输入问题...",
     "send": "发送",
     "page": {
@@ -709,6 +721,7 @@
       "chatHistory": "聊天历史",
       "rename": "重命名",
       "delete": "删除",
+      "deleting": "正在删除...",
       "renameConversation": "重命名对话",
       "deleteConversation": "删除对话"
     },
@@ -717,13 +730,30 @@
     },
     "history": {
       "title": "对话历史",
-      "description": "为你的账号保存在此设备上。",
+      "description": "已安全保存到你的账号。",
       "ariaLabel": "对话历史",
       "emptyTitle": "还没有对话",
-      "emptyDescription": "开始聊天后，对话会出现在这里。",
+      "emptyDescription": "开始聊天后，你的安全账号历史会显示在这里。",
       "lastUpdated": "最后更新 {{time}}",
       "unknownTime": "未知时间",
       "noActive": "还没有当前对话"
+    },
+    "loading": {
+      "conversations": "正在加载对话",
+      "messages": "正在加载消息",
+      "pleaseWait": "请稍等。"
+    },
+    "errors": {
+      "syncFailed": "聊天同步失败",
+      "unableToCreate": "无法创建此聊天。",
+      "unableToSend": "无法发送此消息。",
+      "unableToRename": "无法重命名此对话。",
+      "unableToDelete": "无法删除此对话。"
+    },
+    "migrationNotice": {
+      "title": "聊天历史现在会保存到你的账号",
+      "description": "新的对话会安全保存到你的 Cyberly 账号。旧的设备本地聊天历史会留在此设备上，不会被上传或删除。",
+      "acknowledge": "知道了"
     },
     "validation": {
       "titleRequired": "请输入对话标题。",
@@ -731,7 +761,7 @@
     },
     "delete": {
       "title": "删除对话？",
-      "description": "删除“{{title}}”？这只会从此设备删除这个本地对话。"
+      "description": "删除“{{title}}”？这会从你的账号中移除此对话。"
     },
     "empty": {
       "title": "向 CyberGuard 提问",
@@ -755,7 +785,8 @@
       "openWidget": "打开聊天组件",
       "conversationMenu": "打开 {{title}} 的菜单",
       "deleteConversation": "删除对话 {{title}}",
-      "dashboardLauncher": "从仪表板向 CyberGuard 提出新问题"
+      "dashboardLauncher": "从仪表板向 CyberGuard 提出新问题",
+      "retryMessages": "重试加载聊天消息"
     }
   },
   "footer": {
@@ -811,6 +842,11 @@
       "AUTH_RATE_LIMITED": "验证尝试次数太多。请稍后再试。",
       "AUTH_REGISTRATION_INVALID": "请检查你的注册资料。",
       "AUTH_REQUIRED": "请先登录以继续。",
+      "CHAT_CONVERSATION_NOT_FOUND": "找不到这个聊天对话。",
+      "CHAT_INVALID_ID": "请选择有效的聊天对话。",
+      "CHAT_INVALID_MESSAGE": "请输入 1 到 4000 个字符的消息。",
+      "CHAT_INVALID_TITLE": "请输入 1 到 80 个字符的聊天标题。",
+      "CHAT_MESSAGE_ROLE_INVALID": "此阶段只能发送你的消息。",
       "INTERNAL_SERVER_ERROR": "我们这边出了点问题。请再试一次。",
       "NETWORK_UNAVAILABLE": "网络错误。请检查连接后再试一次。",
       "PROFILE_INVALID": "请检查你的学习资料。",
@@ -833,6 +869,10 @@
       "completeRecommendation": "无法完成推荐。",
       "completeScenario": "无法完成情境。",
       "generic": "出现问题。请再试一次。",
+      "createChatConversation": "无法创建聊天对话。",
+      "deleteChatConversation": "无法删除聊天对话。",
+      "loadChatConversations": "无法加载聊天对话。",
+      "loadChatMessages": "无法加载聊天消息。",
       "loadAssessment": "无法加载评估。",
       "loadAssessmentStatus": "无法加载评估状态。",
       "loadProgress": "无法加载进度。",
@@ -846,10 +886,12 @@
       "network": "网络错误。请检查连接后再试一次。",
       "register": "注册失败。请再试一次。",
       "restoreScenario": "无法恢复情境。",
+      "renameChatConversation": "无法重命名聊天对话。",
       "saveAccount": "无法保存账号资料。",
       "saveAssessmentAnswer": "无法保存答案。",
       "saveProfile": "无法保存学习资料。",
       "saveScenarioDecision": "无法保存决定。",
+      "sendChatMessage": "无法发送聊天消息。",
       "session": "无法检查你的会话。",
       "signIn": "无法登录。",
       "startAssessment": "无法开始评估。",

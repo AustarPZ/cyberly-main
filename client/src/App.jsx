@@ -1,8 +1,17 @@
 import { useState, createContext, useContext, useRef, useEffect, useCallback } from "react";
+import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
 import profileMappings from "./profileMappings";
 import i18n, { STORAGE_KEY as UI_LANGUAGE_STORAGE_KEY, getStoredUiLanguage} from "./i18n";
 import { normalizeLocale, profileLanguageToLocale } from "./i18n/languageMappings";
+import {
+  createChatConversation,
+  createChatUserMessage,
+  deleteChatConversation,
+  getChatConversation,
+  listChatConversations,
+  renameChatConversation,
+} from "./chat/chatApi";
 
 // ─── Design tokens ────────────────────────────────────────────────
 /*const COLORS = {
@@ -413,8 +422,30 @@ body {
   box-shadow: inset 0 0 0 2px rgba(29,158,117,0.16);
 }
 .dashboard-content { min-width: 0; }
+.progress-anchor { scroll-margin-top: calc(var(--nav-h) + 1rem); }
+.progress-shell {
+  max-width: 1180px; margin: 0 auto; padding: 2rem 1.5rem 3rem;
+  display: grid; grid-template-columns: minmax(190px, 230px) minmax(0, 1fr); gap: 1.5rem;
+}
+.progress-content { min-width: 0; }
+.home-how-grid {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem;
+  max-width: 930px; margin-inline: auto;
+}
+.home-how-step { display: flex; gap: 1rem; align-items: flex-start; min-width: 0; }
+.home-how-number {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--teal); color: #fff;
+  display: flex; align-items: center; justify-content: center;
+  font-family: 'Space Grotesk', sans-serif; font-weight: 700;
+  font-size: 0.85rem; flex: 0 0 44px;
+}
+.home-how-copy { min-width: 0; text-align: left; }
+.home-how-title { font-weight: 700; font-size: 1rem; margin-bottom: 0.3rem; }
+.home-how-description { font-size: 0.85rem; color: #555; line-height: 1.65; }
 @media (max-width: 900px) {
   .dashboard-shell { display: block; padding: 1.25rem 1rem 2.5rem; }
+  .progress-shell { display: block; padding: 1.25rem 1rem 2.5rem; }
   .dashboard-section-nav {
     position: static; margin-bottom: 1rem; overflow-x: auto; padding: 0.65rem;
   }
@@ -422,6 +453,11 @@ body {
     display: flex; gap: 0.35rem; min-width: max-content;
   }
   .dashboard-section-nav-button { white-space: nowrap; }
+  .home-how-grid { grid-template-columns: 1fr; max-width: 560px; }
+}
+@media (max-width: 560px) {
+  .home-how-grid { gap: 1rem; }
+  .home-how-step { gap: 0.85rem; }
 }
 
 /* Auth switch link */
@@ -470,6 +506,11 @@ body {
 .chat-bubble.user { align-self: flex-end; background: var(--teal); color: #fff; border-bottom-right-radius: 3px; }
 .chat-bubble.ai { align-self: flex-start; background: var(--gray-lt); border-bottom-left-radius: 3px; }
 .chat-bubble.ai.loading { opacity: 0.6; font-style: italic; }
+.chat-status-notice {
+  align-self: stretch; background: var(--teal-lt); color: #14684f;
+  border: 1px solid rgba(29,158,117,0.24); border-radius: 8px;
+  padding: 0.65rem 0.8rem; font-size: 0.8rem; line-height: 1.45;
+}
 .chat-empty { margin: auto; text-align: center; color: #66736d; line-height: 1.55; padding: 1rem; }
 .chat-empty-title { font-weight: 800; color: #1a1a18; margin-bottom: 0.3rem; }
 .chat-input-row { display: flex; gap: 0.5rem; padding: 0.65rem 0.75rem; border-top: 1px solid rgba(0,0,0,0.07); align-items: flex-end; }
@@ -478,59 +519,66 @@ body {
 .chat-send { background: var(--teal); color: #fff; border: none; border-radius: 8px; padding: 0.55rem 0.85rem; cursor: pointer; font-size: 0.85rem; font-weight: 700; min-width: 44px; }
 .chat-send:hover, .chat-send:focus-visible { opacity: 0.88; outline: none; box-shadow: 0 0 0 3px rgba(29,158,117,0.18); }
 .chat-send:disabled { opacity: 0.45; cursor: not-allowed; }
+.chat-composer-wrap { border-top: 1px solid rgba(0,0,0,0.07); }
+.chat-composer-wrap .chat-input-row { border-top: none; }
+.chat-composer-error { margin: 0 0.75rem 0.65rem; }
 .chat-login-prompt { padding: 1.25rem; text-align: center; color: #666; font-size: 0.85rem; }
 .chat-login-prompt button { margin-top: 0.75rem; background: var(--teal); color: #fff; border: none; border-radius: 8px; padding: 0.5rem 1.25rem; cursor: pointer; font-size: 0.875rem; }
 .dashboard-chat-launcher { margin-bottom: 0.5rem; }
-.dashboard-chat-launcher .agent-header { justify-content: space-between; align-items: flex-start; gap: 1rem; }
-.dashboard-chat-title { display: flex; align-items: center; gap: 0.55rem; min-width: 0; }
-.dashboard-chat-badge {
-  flex: 0 0 auto; border: 1px solid rgba(255,255,255,0.35); border-radius: 999px;
-  padding: 0.24rem 0.55rem; font-size: 0.72rem; font-weight: 800; background: rgba(255,255,255,0.14);
+.dashboard-cyberguard-heading {
+  display: flex; align-items: flex-start; justify-content: space-between; flex-wrap: wrap;
+  gap: 0.75rem 1rem; margin-bottom: 0.75rem;
 }
 .dashboard-chat-welcome {
   min-height: 210px; display: grid; place-content: center; gap: 0.35rem;
   background: linear-gradient(180deg, #fff 0%, #f7fbf9 100%);
 }
 .dashboard-chat-welcome .chat-empty-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.05rem; }
-.dashboard-chat-actions {
-  display: flex; justify-content: flex-end; gap: 0.65rem; flex-wrap: wrap; padding: 0 1rem 1rem;
-}
-.dashboard-chat-actions .btn-ghost { min-height: 42px; }
 @media (max-width: 560px) {
-  .dashboard-chat-launcher .agent-header { display: grid; }
-  .dashboard-chat-badge { justify-self: start; }
-  .dashboard-chat-actions { justify-content: stretch; }
-  .dashboard-chat-actions .btn-ghost { width: 100%; }
+  .dashboard-cyberguard-heading .btn-ghost { width: 100%; }
 }
 .ai-chat-shell {
-  max-width: 1180px; margin: 0 auto; padding: 2.25rem 1.5rem 3rem;
+  max-width: 1180px; margin: 0 auto; padding: 1.25rem 1.5rem 1.5rem;
+  height: calc(100vh - var(--nav-h) - 13rem);
+  height: calc(100dvh - var(--nav-h) - 13rem);
+  min-height: 520px;
   display: grid; grid-template-columns: minmax(230px, 290px) minmax(0, 1fr); gap: 1.25rem;
+  overflow: hidden;
 }
 .ai-chat-sidebar, .ai-chat-main {
   background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 14px;
   box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  min-height: 0;
 }
-.ai-chat-sidebar { padding: 1rem; align-self: start; }
+.ai-chat-sidebar { padding: 1rem; align-self: stretch; display: flex; flex-direction: column; overflow: hidden; }
 .ai-chat-sidebar-header { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-bottom: 0.85rem; }
-.ai-chat-list { display: grid; gap: 0.45rem; max-height: 560px; overflow-y: auto; overflow-x: hidden; padding-right: 0.15rem; }
+.ai-chat-list { display: grid; align-content: start; gap: 0.45rem; min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 0.15rem; }
 .ai-chat-list-item {
-  border: 1px solid rgba(0,0,0,0.08); background: #fff; border-radius: 10px; padding: 0.7rem;
-  text-align: left; cursor: pointer; color: #333; min-width: 0;
+  position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 40px; gap: 0.35rem;
+  align-items: start; border: 1px solid rgba(0,0,0,0.08); background: #fff;
+  border-radius: 10px; padding: 0.62rem 0.58rem 0.62rem 0.7rem; color: #333; min-width: 0;
 }
-.ai-chat-list-row { position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 40px; gap: 0.35rem; align-items: stretch; }
-.ai-chat-list-item:hover, .ai-chat-list-item:focus-visible, .ai-chat-list-item.active {
+.ai-chat-list-row { min-width: 0; }
+.ai-chat-list-select {
+  min-width: 0; border: none; background: none; color: inherit; text-align: left; cursor: pointer;
+  padding: 0.08rem 0; border-radius: 8px; font-family: 'DM Sans', sans-serif;
+}
+.ai-chat-list-item:hover, .ai-chat-list-item:focus-within, .ai-chat-list-item.active {
   outline: none; background: var(--teal-lt); border-color: rgba(29,158,117,0.28);
   box-shadow: inset 0 0 0 2px rgba(29,158,117,0.13);
 }
+.ai-chat-list-select:focus-visible {
+  outline: none; box-shadow: 0 0 0 3px rgba(29,158,117,0.18);
+}
 .ai-chat-menu-button {
-  border: 1px solid rgba(0,0,0,0.08); background: #fff; border-radius: 10px; cursor: pointer;
-  padding: 0; color: #56615c; font-weight: 800; min-width: 40px; min-height: 40px;
+  justify-self: end; border: 1px solid rgba(0,0,0,0.08); background: #fff; border-radius: 10px; cursor: pointer;
+  padding: 0; color: #56615c; font-weight: 800; min-width: 40px; min-height: 40px; line-height: 1;
 }
 .ai-chat-menu-button:hover, .ai-chat-menu-button:focus-visible, .ai-chat-menu-button.open {
   background: var(--gray-lt); outline: none; box-shadow: inset 0 0 0 2px rgba(29,158,117,0.14);
 }
 .ai-chat-menu {
-  position: absolute; right: 0; top: calc(100% + 0.25rem); z-index: 20; width: min(160px, 100%);
+  position: fixed; z-index: 260; width: 168px;
   background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: 10px;
   box-shadow: 0 12px 28px rgba(0,0,0,0.14); padding: 0.35rem;
 }
@@ -541,7 +589,7 @@ body {
 .ai-chat-menu-item:hover, .ai-chat-menu-item:focus-visible { background: var(--gray-lt); outline: none; }
 .ai-chat-menu-item.danger { color: var(--coral); font-weight: 700; }
 .ai-chat-rename-row { display: block; }
-.ai-chat-rename-row .ai-chat-list-item { width: 100%; }
+.ai-chat-rename-row .ai-chat-list-item { width: 100%; display: block; }
 .ai-chat-rename-form { display: grid; gap: 0.4rem; }
 .ai-chat-rename-input {
   width: 100%; border: 1.5px solid rgba(0,0,0,0.13); border-radius: 8px;
@@ -550,20 +598,28 @@ body {
 .ai-chat-rename-input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(29,158,117,0.12); }
 .ai-chat-list-title { font-weight: 800; font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ai-chat-list-time { margin-top: 0.2rem; font-size: 0.72rem; color: #77827d; }
-.ai-chat-main { min-height: 620px; display: flex; flex-direction: column; overflow: hidden; }
-.ai-chat-main-header { padding: 1rem 1.1rem; border-bottom: 1px solid rgba(0,0,0,0.07); }
-.ai-chat-full-messages { flex: 1; min-height: 420px; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; background: #fbfcfa; }
+.ai-chat-main { min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+.ai-chat-main-header { flex: 0 0 auto; padding: 1rem 1.1rem; border-bottom: 1px solid rgba(0,0,0,0.07); }
+.ai-chat-full-messages { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; background: #fbfcfa; }
+.ai-chat-full-messages .chat-empty { margin: auto auto 1.25rem; max-width: 420px; padding: 1rem 1.1rem; }
 .ai-chat-full-messages .chat-bubble { max-width: min(680px, 88%); font-size: 0.92rem; }
+.chat-migration-notice { margin-bottom: 0.85rem; }
 .dashboard-ai-preview {
   background: #fff; border: 1px solid rgba(29,158,117,0.18); border-radius: 14px;
   padding: 1.25rem; box-shadow: 0 2px 12px rgba(0,0,0,0.05); margin-bottom: 0.5rem;
 }
 .dashboard-ai-preview-text { color: #52615b; font-size: 0.88rem; line-height: 1.6; margin: 0.65rem 0 1rem; }
 @media (max-width: 820px) {
-  .ai-chat-shell { display: block; padding: 1.25rem 1rem 2.5rem; }
-  .ai-chat-sidebar { margin-bottom: 1rem; }
-  .ai-chat-list { max-height: 180px; }
-  .ai-chat-main { min-height: 560px; }
+  .ai-chat-shell {
+    display: grid; grid-template-columns: 1fr; padding: 1rem; height: auto;
+    min-height: 0; overflow: visible;
+  }
+  .ai-chat-sidebar { max-height: 260px; margin-bottom: 0; }
+  .ai-chat-list { max-height: 150px; }
+  .ai-chat-main {
+    min-height: min(560px, calc(100vh - var(--nav-h) - 7rem));
+    min-height: min(560px, calc(100dvh - var(--nav-h) - 7rem));
+  }
   .chat-panel { left: 1rem; right: 1rem; width: auto; }
 }
 @media (max-width: 430px) {
@@ -592,6 +648,8 @@ function useChat() { return useContext(ChatCtx); }
 
 const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
 const CHAT_STORAGE_PREFIX = "cyberly.chat.v1";
+const CHAT_ACTIVE_STORAGE_PREFIX = "cyberly.chat.activeConversation.v1";
+const CHAT_NOTICE_STORAGE_PREFIX = "cyberly.chat.backendMigrationNotice.v1";
 const MAX_CONVERSATION_TITLE_LENGTH = 80;
 const PUBLIC_PAGES = new Set(["home", "resources", "about", "login"]);
 const PROTECTED_PAGES = new Set(["dashboard", "assessment", "scenarios", "progress", "profile", "ai-chat"]);
@@ -750,216 +808,364 @@ function chatStorageKey(userId) {
   return `${CHAT_STORAGE_PREFIX}.${userId}`;
 }
 
-function safeReadChatState(userId) {
+function chatActiveStorageKey(userId) {
+  return `${CHAT_ACTIVE_STORAGE_PREFIX}.${userId}`;
+}
+
+function chatNoticeStorageKey(userId) {
+  return `${CHAT_NOTICE_STORAGE_PREFIX}.${userId}`;
+}
+
+function readSavedActiveConversationId(userId) {
   if (!userId || typeof window === "undefined") return null;
   try {
-    const raw = window.localStorage.getItem(chatStorageKey(userId));
-    if (!raw) return null;
-    const parsed = JSON.parse(raw);
-    if (!parsed || !Array.isArray(parsed.conversations)) return null;
-    return {
-      activeConversationId: parsed.activeConversationId || parsed.conversations[0]?.id || null,
-      conversations: parsed.conversations
-        .filter(conversation => conversation?.id && Array.isArray(conversation.messages))
-        .map(conversation => ({
-          id: String(conversation.id),
-          title: String(conversation.title || "New chat"),
-          createdAt: conversation.createdAt || new Date().toISOString(),
-          updatedAt: conversation.updatedAt || conversation.createdAt || new Date().toISOString(),
-          messages: conversation.messages
-            .filter(message => message?.role && typeof message.text === "string")
-            .map(message => ({
-              id: String(message.id || `msg-${Date.now()}`),
-              role: message.role === "user" ? "user" : "ai",
-              text: message.text,
-              createdAt: message.createdAt || new Date().toISOString(),
-            })),
-        })),
-    };
+    const saved = window.localStorage.getItem(chatActiveStorageKey(userId));
+    const id = Number(saved);
+    return Number.isInteger(id) && id > 0 ? id : null;
   } catch {
     return null;
   }
 }
 
-function safeWriteChatState(userId, state) {
+function writeSavedActiveConversationId(userId, conversationId) {
   if (!userId || typeof window === "undefined") return;
   try {
-    window.localStorage.setItem(chatStorageKey(userId), JSON.stringify({
-      activeConversationId: state.activeConversationId,
-      conversations: state.conversations,
-    }));
+    if (conversationId) {
+      window.localStorage.setItem(chatActiveStorageKey(userId), String(conversationId));
+    } else {
+      window.localStorage.removeItem(chatActiveStorageKey(userId));
+    }
   } catch {
-    // Temporary local storage is best-effort until backend chat history exists.
+    // Lightweight UI recovery is best-effort only.
   }
 }
 
-function createChatId(prefix) {
-  return `${prefix}-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`;
+function hasLegacyChatHistory(userId) {
+  if (!userId || typeof window === "undefined") return false;
+  try {
+    return Boolean(window.localStorage.getItem(chatStorageKey(userId)));
+  } catch {
+    return false;
+  }
 }
 
-function titleFromMessage(text) {
-  const trimmed = text.trim().replace(/\s+/g, " ");
-  if (!trimmed) return "New chat";
-  return trimmed.length > 42 ? `${trimmed.slice(0, 39)}...` : trimmed;
+function hasAcknowledgedChatNotice(userId) {
+  if (!userId || typeof window === "undefined") return true;
+  try {
+    return window.localStorage.getItem(chatNoticeStorageKey(userId)) === "acknowledged";
+  } catch {
+    return true;
+  }
+}
+
+function acknowledgeChatNotice(userId) {
+  if (!userId || typeof window === "undefined") return;
+  try {
+    window.localStorage.setItem(chatNoticeStorageKey(userId), "acknowledged");
+  } catch {
+    // Non-blocking notice acknowledgement is best-effort.
+  }
 }
 
 function normalizeConversationTitle(title) {
   return title.trim().replace(/\s+/g, " ");
 }
 
+function mapServerConversation(conversation) {
+  return {
+    id: Number(conversation.id),
+    title: conversation.title,
+    createdAt: conversation.createdAt,
+    updatedAt: conversation.updatedAt,
+    lastMessageAt: conversation.lastMessageAt || conversation.updatedAt,
+    messageCount: Number(conversation.messageCount || 0),
+  };
+}
+
+function mapServerMessage(message) {
+  return {
+    id: Number(message.id),
+    conversationId: Number(message.conversationId),
+    role: message.role === "assistant" ? "ai" : message.role,
+    text: message.content,
+    content: message.content,
+    locale: message.locale,
+    createdAt: message.createdAt,
+  };
+}
+
 function ChatProvider({ user, children }) {
-  const { t } = useTranslation();
-  const [state, setState] = useState({ conversations: [], activeConversationId: null });
+  const [conversations, setConversations] = useState([]);
+  const [activeConversationId, setActiveConversationId] = useState(null);
+  const [activeMessages, setActiveMessages] = useState([]);
+  const [initialLoading, setInitialLoading] = useState(false);
+  const [conversationLoading, setConversationLoading] = useState(false);
   const [sending, setSending] = useState(false);
+  const [syncing, setSyncing] = useState(false);
+  const [mutatingConversationId, setMutatingConversationId] = useState(null);
+  const [error, setError] = useState("");
+  const [conversationError, setConversationError] = useState("");
+  const [mutationError, setMutationError] = useState("");
+  const [legacyNoticeVisible, setLegacyNoticeVisible] = useState(false);
+  const listRequestRef = useRef(0);
+  const detailRequestRef = useRef(0);
+  const userIdRef = useRef(null);
   const userId = user?.id;
 
-  useEffect(() => {
-    if (!userId) {
-      setState({ conversations: [], activeConversationId: null });
-      setSending(false);
+  const loadConversations = useCallback(async () => {
+    if (!userIdRef.current) return;
+    const requestId = listRequestRef.current + 1;
+    listRequestRef.current = requestId;
+    setInitialLoading(true);
+    setError("");
+    setConversationError("");
+
+    const result = await listChatConversations(50);
+    if (requestId !== listRequestRef.current || !userIdRef.current) return;
+
+    if (!result.ok) {
+      setConversations([]);
+      setActiveConversationId(null);
+      setActiveMessages([]);
+      setError(result.error);
+      setInitialLoading(false);
       return;
     }
 
-    setState(safeReadChatState(userId) || { conversations: [], activeConversationId: null });
-    setSending(false);
-  }, [userId]);
+    const nextConversations = (result.conversations || []).map(mapServerConversation);
+    const savedActiveId = readSavedActiveConversationId(userIdRef.current);
+    const restoredId = nextConversations.some(conversation => conversation.id === savedActiveId)
+      ? savedActiveId
+      : nextConversations[0]?.id || null;
+
+    setConversations(nextConversations);
+    setActiveConversationId(restoredId);
+    setActiveMessages([]);
+    writeSavedActiveConversationId(userIdRef.current, restoredId);
+    setLegacyNoticeVisible(
+      hasLegacyChatHistory(userIdRef.current) &&
+      !hasAcknowledgedChatNotice(userIdRef.current)
+    );
+    setInitialLoading(false);
+  }, []);
 
   useEffect(() => {
-    if (!userId) return;
-    safeWriteChatState(userId, state);
-  }, [userId, state]);
+    userIdRef.current = userId || null;
+    listRequestRef.current += 1;
+    detailRequestRef.current += 1;
 
-  const activeConversation = state.conversations.find(conversation => conversation.id === state.activeConversationId) || null;
-  const conversations = [...state.conversations].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
-
-  function createConversation(initialText = "") {
-    if (!userId) return null;
-    const now = new Date().toISOString();
-    const clean = initialText.trim();
-    const initialMessages = clean
-      ? [{ id: createChatId("msg"), role: "user", text: clean, createdAt: now }]
-      : [];
-    const conversation = {
-      id: createChatId("chat"),
-      title: clean ? titleFromMessage(clean) : t("chat.conversation.newTitle"),
-      createdAt: now,
-      updatedAt: now,
-      messages: initialMessages,
-    };
-    setState(current => ({
-      conversations: [conversation, ...current.conversations],
-      activeConversationId: conversation.id,
-    }));
-    return conversation.id;
-  }
-
-  function createConversationFromMessage(text) {
-    return createConversation(text);
-  }
-
-  function startDashboardConversation(firstMessage) {
-    return createConversation(firstMessage);
-  }
-
-  function ensureConversation() {
-    if (state.activeConversationId && state.conversations.some(conversation => conversation.id === state.activeConversationId)) {
-      return state.activeConversationId;
+    if (!userId) {
+      setConversations([]);
+      setActiveConversationId(null);
+      setActiveMessages([]);
+      setInitialLoading(false);
+      setConversationLoading(false);
+      setSending(false);
+      setSyncing(false);
+      setMutatingConversationId(null);
+      setError("");
+      setConversationError("");
+      setMutationError("");
+      setLegacyNoticeVisible(false);
+      return;
     }
-    return createConversation();
+
+    setConversations([]);
+    setActiveConversationId(null);
+    setActiveMessages([]);
+    setSending(false);
+    setSyncing(false);
+    setMutationError("");
+    loadConversations();
+  }, [userId, loadConversations]);
+
+  useEffect(() => {
+    if (!userId || !activeConversationId) {
+      setActiveMessages([]);
+      setConversationLoading(false);
+      setConversationError("");
+      return;
+    }
+
+    writeSavedActiveConversationId(userId, activeConversationId);
+    const requestId = detailRequestRef.current + 1;
+    detailRequestRef.current = requestId;
+    setConversationLoading(true);
+    setConversationError("");
+
+    getChatConversation(activeConversationId).then(result => {
+      if (requestId !== detailRequestRef.current || userIdRef.current !== userId) return;
+      if (!result.ok) {
+        if (result.code === "CHAT_CONVERSATION_NOT_FOUND") {
+          setConversations(current => {
+            const remaining = current.filter(conversation => conversation.id !== activeConversationId);
+            const nextActiveId = remaining[0]?.id || null;
+            setActiveConversationId(nextActiveId);
+            writeSavedActiveConversationId(userId, nextActiveId);
+            return remaining;
+          });
+          setActiveMessages([]);
+          setConversationError("");
+        } else {
+          setActiveMessages([]);
+          setConversationError(result.error);
+        }
+        setConversationLoading(false);
+        return;
+      }
+
+      setActiveMessages((result.messages || []).map(mapServerMessage));
+      if (result.conversation) {
+        const mapped = mapServerConversation(result.conversation);
+        setConversations(current => current.map(conversation => conversation.id === mapped.id ? mapped : conversation));
+      }
+      setConversationLoading(false);
+    });
+  }, [userId, activeConversationId]);
+
+  const activeConversation = conversations.find(conversation => conversation.id === activeConversationId) || null;
+
+  function createConversation() {
+    if (!userId) return null;
+    setActiveConversationId(null);
+    setActiveMessages([]);
+    setConversationError("");
+    setMutationError("");
+    writeSavedActiveConversationId(userId, null);
+    return null;
+  }
+
+  async function createConversationFromMessage(text) {
+    return startDashboardConversation(text);
+  }
+
+  async function startDashboardConversation(firstMessage) {
+    const clean = String(firstMessage || "").trim();
+    if (!clean || sending || syncing || !userIdRef.current) return { ok: false };
+    setSyncing(true);
+    setMutationError("");
+
+    const result = await createChatConversation({
+      message: { role: "user", content: clean },
+      locale: normalizeLocale(i18n.language),
+    });
+
+    if (!userIdRef.current) return { ok: false };
+    setSyncing(false);
+
+    if (!result.ok) {
+      setMutationError(result.error);
+      return { ok: false, error: result.error };
+    }
+
+    const conversation = mapServerConversation(result.conversation);
+    const messages = (result.messages || []).map(mapServerMessage);
+    setConversations(current => [conversation, ...current.filter(item => item.id !== conversation.id)]);
+    setActiveConversationId(conversation.id);
+    setActiveMessages(messages);
+    writeSavedActiveConversationId(userIdRef.current, conversation.id);
+    return { ok: true, conversationId: conversation.id };
   }
 
   function selectConversation(id) {
-    setState(current => current.conversations.some(conversation => conversation.id === id)
-      ? { ...current, activeConversationId: id }
-      : current);
+    const conversationId = Number(id);
+    if (!conversations.some(conversation => conversation.id === conversationId)) return;
+    setActiveConversationId(conversationId);
+    setConversationError("");
+    setMutationError("");
+    writeSavedActiveConversationId(userId, conversationId);
   }
 
-  function renameConversation(id, title) {
+  async function renameConversation(id, title) {
     const nextTitle = normalizeConversationTitle(title);
-    if (!nextTitle || nextTitle.length > MAX_CONVERSATION_TITLE_LENGTH) return false;
-    setState(current => ({
-      ...current,
-      conversations: current.conversations.map(conversation => conversation.id === id
-        ? { ...conversation, title: nextTitle, updatedAt: new Date().toISOString() }
-        : conversation),
-    }));
+    const conversationId = Number(id);
+    if (!nextTitle || nextTitle.length > MAX_CONVERSATION_TITLE_LENGTH || mutatingConversationId) return false;
+    setMutatingConversationId(conversationId);
+    setMutationError("");
+    const result = await renameChatConversation(conversationId, nextTitle);
+    setMutatingConversationId(null);
+    if (!userIdRef.current) return false;
+    if (!result.ok) {
+      setMutationError(result.error);
+      return false;
+    }
+    const mapped = mapServerConversation(result.conversation);
+    setConversations(current => current.map(conversation => conversation.id === mapped.id ? mapped : conversation));
     return true;
   }
 
-  function deleteConversation(id) {
-    setState(current => {
-      const remaining = current.conversations.filter(conversation => conversation.id !== id);
-      const nextActive = current.activeConversationId === id
-        ? [...remaining].sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt))[0]?.id || null
-        : current.activeConversationId;
-      return {
-        conversations: remaining,
-        activeConversationId: nextActive,
-      };
+  async function deleteConversation(id) {
+    const conversationId = Number(id);
+    if (!conversationId || mutatingConversationId) return false;
+    setMutatingConversationId(conversationId);
+    setMutationError("");
+    const result = await deleteChatConversation(conversationId);
+    setMutatingConversationId(null);
+    if (!userIdRef.current) return false;
+    if (!result.ok) {
+      setMutationError(result.error);
+      return false;
+    }
+    setConversations(current => {
+      const remaining = current.filter(conversation => conversation.id !== conversationId);
+      const nextActiveId = activeConversationId === conversationId ? remaining[0]?.id || null : activeConversationId;
+      setActiveConversationId(nextActiveId);
+      if (activeConversationId === conversationId) setActiveMessages([]);
+      writeSavedActiveConversationId(userIdRef.current, nextActiveId);
+      return remaining;
     });
+    return true;
   }
 
   async function sendMessage(text) {
     const clean = text.trim();
-    if (!clean || sending || !userId) return;
-    const now = new Date().toISOString();
-    const conversationId = ensureConversation();
-    if (!conversationId) return;
-    const userMessage = { id: createChatId("msg"), role: "user", text: clean, createdAt: now };
+    if (!clean || sending || syncing || !userIdRef.current) return { ok: false };
 
     setSending(true);
-    setState(current => ({
-      activeConversationId: conversationId,
-      conversations: current.conversations.map(conversation => {
-        if (conversation.id !== conversationId) return conversation;
-        const wasEmpty = conversation.messages.length === 0;
-        return {
-          ...conversation,
-          title: wasEmpty ? titleFromMessage(clean) : conversation.title,
-          updatedAt: now,
-          messages: [...conversation.messages, userMessage],
-        };
-      }),
-    }));
+    setMutationError("");
 
-    try {
-      const aiText = await askClaude([{ role: "user", content: clean }], buildSystemPrompt(user), t);
-      const aiMessage = {
-        id: createChatId("msg"),
-        role: "ai",
-        text: aiText,
-        createdAt: new Date().toISOString(),
-      };
-      setState(current => ({
-        activeConversationId: conversationId,
-        conversations: current.conversations.map(conversation => conversation.id === conversationId
-          ? { ...conversation, updatedAt: aiMessage.createdAt, messages: [...conversation.messages, aiMessage] }
-          : conversation),
-      }));
-    } catch {
-      const aiMessage = {
-        id: createChatId("msg"),
-        role: "ai",
-        text: t("common.somethingWentWrong"),
-        createdAt: new Date().toISOString(),
-      };
-      setState(current => ({
-        activeConversationId: conversationId,
-        conversations: current.conversations.map(conversation => conversation.id === conversationId
-          ? { ...conversation, updatedAt: aiMessage.createdAt, messages: [...conversation.messages, aiMessage] }
-          : conversation),
-      }));
-    } finally {
+    if (!activeConversationId) {
+      const created = await startDashboardConversation(clean);
       setSending(false);
+      return created;
     }
+
+    const result = await createChatUserMessage(activeConversationId, { role: "user", content: clean });
+    setSending(false);
+    if (!userIdRef.current) return { ok: false };
+    if (!result.ok) {
+      setMutationError(result.error);
+      return { ok: false, error: result.error };
+    }
+
+    const message = mapServerMessage(result.message);
+    const conversation = mapServerConversation(result.conversation);
+    setActiveMessages(current => [...current, message]);
+    setConversations(current => [conversation, ...current.filter(item => item.id !== conversation.id)]);
+    return { ok: true, message };
+  }
+
+  function dismissLegacyNotice() {
+    acknowledgeChatNotice(userIdRef.current);
+    setLegacyNoticeVisible(false);
   }
 
   const value = {
     conversations,
     activeConversation,
-    activeConversationId: state.activeConversationId,
-    messages: activeConversation?.messages || [],
+    activeConversationId,
+    messages: activeMessages,
+    activeMessages,
+    initialLoading,
+    conversationLoading,
     sending,
+    syncing,
+    mutatingConversationId,
+    error,
+    conversationError,
+    mutationError,
+    legacyNoticeVisible,
+    disabledAssistantNotice: activeMessages.length > 0,
     createConversation,
     createConversationFromMessage,
     startDashboardConversation,
@@ -967,6 +1173,13 @@ function ChatProvider({ user, children }) {
     renameConversation,
     deleteConversation,
     sendMessage,
+    retry: loadConversations,
+    retryConversation: () => {
+      const id = activeConversationId;
+      setActiveConversationId(null);
+      window.setTimeout(() => setActiveConversationId(id), 0);
+    },
+    dismissLegacyNotice,
   };
 
   return <ChatCtx.Provider value={value}>{children}</ChatCtx.Provider>;
@@ -1483,13 +1696,6 @@ function scenarioResultLabel(level) {
 
 function topicLabel(topicCode, fallback) {
   return PROGRESS_TOPIC_META[topicCode]?.label || fallback || "Recommended topic";
-}
-
-// ─── AI helper ────────────────────────────────────────────────────
-async function askClaude(messages, systemPrompt, t) {
-  void messages;
-  void systemPrompt;
-  return t("chat.disabledReply");
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -2648,35 +2854,6 @@ function AuthGate() {
   );
 }
 
-// ─── Build AI system prompt from user profile ─────────────────────
-function buildSystemPrompt(user) {
-  const group = getAgeGroup(user.age);
-  const topics = user.helpTopicLabels?.join(", ") || "general cybersecurity";
-  const lang   = user.language      || "English";
-  const level  = user.familiarity   || "Beginner";
-  const style  = user.learningStyle || "Short explanations";
-  const nick   = user.aiNickname    || user.name;
-  const educationLevel = user.educationLevel || "";
-
-  return `You are CyberGuard, a friendly cybersecurity AI assistant for Malaysian students on the Cyberly platform.
-
-User profile:
-- Call them: ${nick}
-- Age group: ${group.label}${educationLevel ? ` (${educationLevel})` : ""}
-- Language preference: ${lang}
-- Cybersecurity level: ${level}
-- Topics of interest: ${topics}
-- Learning style: ${style}
-
-Adapt every response to match their level, preferred language, and learning style.
-For Beginners: use simple analogies and avoid jargon.
-For Intermediate: explain concepts with some technical depth.
-For Advanced: engage with technical precision and real-world examples.
-If their language is Bahasa Melayu or 中文, respond in that language unless they write in English first.
-If Mixed, blend languages naturally.
-Keep responses concise and encouraging. Use their nickname when appropriate.`;
-}
-
 // ─── Page: Home ───────────────────────────────────────────────────
 function HomePage() {
   const { t } = useTranslation();
@@ -2850,23 +3027,15 @@ function HomePage() {
         <div style={{ maxWidth: 1100, margin: "0 auto" }}>
           <p className="section-title" style={{ textAlign: "center" }}>{t("home.how.title")}</p>
           <p className="section-sub" style={{ textAlign: "center", marginBottom: "2rem" }}>{t("home.how.description")}</p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "1.25rem" }}>
+          <div className="home-how-grid">
             {steps.map((s, i) => (
-              <div key={s.num} style={{ display: "flex", gap: "1rem", alignItems: "flex-start" }}>
-                <div style={{
-                  width: 44, height: 44, borderRadius: "50%",
-                  background: "var(--teal)", color: "#fff",
-                  display: "flex", alignItems: "center", justifyContent: "center",
-                  fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700,
-                  fontSize: "0.85rem", flexShrink: 0,
-                }}>
-                  {s.num}
-                </div>
-                <div>
-                  <div style={{ fontWeight: 700, fontSize: "1rem", marginBottom: "0.3rem" }}>
+              <div key={s.num} className="home-how-step">
+                <div className="home-how-number">{s.num}</div>
+                <div className="home-how-copy">
+                  <div className="home-how-title">
                     {s.icon} {t(s.titleKey)}
                   </div>
-                  <div style={{ fontSize: "0.85rem", color: "#555", lineHeight: 1.65 }}>{t(s.descKey)}</div>
+                  <div className="home-how-description">{t(s.descKey)}</div>
                 </div>
                 {i < steps.length - 1 && (
                   <div style={{ display: "none" }} />
@@ -2916,9 +3085,19 @@ const DASHBOARD_SECTIONS = [
   { id: "dashboard-cyberguard-ai", labelKey: "dashboard.sectionNav.cyberGuardAi" },
 ];
 
+const PROGRESS_SECTIONS = [
+  { id: "progress-snapshot", labelKey: "progress.sectionNav.snapshot" },
+  { id: "progress-mastery", labelKey: "progress.sectionNav.mastery" },
+  { id: "progress-assessment-topics", labelKey: "progress.sectionNav.assessmentTopics", optional: "assessmentTopics" },
+  { id: "progress-recommendation", labelKey: "progress.sectionNav.recommendation", optional: "recommendation" },
+  { id: "progress-learning-topics", labelKey: "progress.sectionNav.learningTopics" },
+  { id: "progress-badges", labelKey: "progress.sectionNav.badges" },
+];
+
 function DashboardPage() {
   const { t, i18n: activeI18n } = useTranslation();
   const { user, go, openRecommendedResource } = useApp();
+  const { conversations, selectConversation, initialLoading: chatHistoryLoading } = useChat();
   const assessmentLocale = normalizeLocale(activeI18n.language);
   const [tipIndex] = useState(() => Math.floor(Math.random() * 4));
   const [assessmentStatus, setAssessmentStatus] = useState({ loading: true, status: "pending" });
@@ -3042,6 +3221,17 @@ function DashboardPage() {
     } else {
       go("assessment");
     }
+  }
+
+  function viewDashboardChatHistory() {
+    const latestConversation = conversations.reduce((latest, conversation) => {
+      if (!latest) return conversation;
+      const latestTime = Date.parse(latest.updatedAt || latest.createdAt || 0);
+      const currentTime = Date.parse(conversation.updatedAt || conversation.createdAt || 0);
+      return currentTime > latestTime ? conversation : latest;
+    }, null);
+    if (latestConversation) selectConversation(latestConversation.id);
+    go("ai-chat");
   }
 
   const quickActions = [
@@ -3389,14 +3579,14 @@ function DashboardPage() {
         </div>
 
         {/* CyberGuard AI */}
-        <div id="dashboard-cyberguard-ai" className="dashboard-anchor" style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.5rem", marginBottom: "0.75rem" }}>
+        <div id="dashboard-cyberguard-ai" className="dashboard-anchor dashboard-cyberguard-heading">
           <div>
             <p className="section-title" style={{ fontSize: "1.1rem", margin: 0 }}>🛡 {t("dashboard.cyberGuard.title")}</p>
             <p className="section-sub" style={{ margin: "0.25rem 0 0" }}>{t("dashboard.cyberGuard.description")}</p>
           </div>
-          <span style={{ background: "var(--teal-lt)", color: "var(--teal)", fontSize: "0.72rem", fontWeight: 600, borderRadius: 99, padding: "0.25rem 0.75rem" }}>
-            {t("dashboard.cyberGuard.badge")}
-          </span>
+          <button className="btn-ghost" onClick={viewDashboardChatHistory} disabled={chatHistoryLoading}>
+            {t("chat.actions.chatHistory")}
+          </button>
         </div>
         <DashboardChatPreview />
       </div>
@@ -3407,15 +3597,24 @@ function DashboardPage() {
 
 function ChatMessageList({ className = "chat-messages", emptyCompact = false }) {
   const { t } = useTranslation();
-  const { messages, sending } = useChat();
+  const {
+    messages,
+    sending,
+    initialLoading,
+    conversationLoading,
+    conversationError,
+    retryConversation,
+    disabledAssistantNotice,
+  } = useChat();
   const endRef = useRef(null);
   const shouldAutoScrollRef = useRef(false);
 
   useEffect(() => {
     if (!shouldAutoScrollRef.current) return;
-    endRef.current?.scrollIntoView({
+    const container = endRef.current?.parentElement;
+    container?.scrollTo({
+      top: container.scrollHeight,
       behavior: prefersReducedMotion() ? "auto" : "smooth",
-      block: "end",
     });
   }, [messages.length, sending]);
 
@@ -3425,19 +3624,44 @@ function ChatMessageList({ className = "chat-messages", emptyCompact = false }) 
 
   return (
     <div className={className} role="log" aria-live="polite" aria-label={t("chat.accessibility.messageHistory")}>
-      {messages.length === 0 ? (
+      {initialLoading ? (
+        <div className="chat-empty" role="status">
+          <div className="chat-empty-title">{t("chat.loading.conversations")}</div>
+          <div>{t("chat.loading.pleaseWait")}</div>
+        </div>
+      ) : conversationLoading ? (
+        <div className="chat-empty" role="status">
+          <div className="chat-empty-title">{t("chat.loading.messages")}</div>
+          <div>{t("chat.loading.pleaseWait")}</div>
+        </div>
+      ) : conversationError ? (
+        <PageState
+          type="error"
+          title={t("chat.errors.syncFailed")}
+          message={conversationError}
+          actionLabel={t("common.retry")}
+          onAction={retryConversation}
+        />
+      ) : messages.length === 0 ? (
         <div className="chat-empty">
           <div className="chat-empty-title">{t("chat.empty.title")}</div>
           <div>{emptyCompact ? t("chat.empty.shortDescription") : t("chat.empty.description")}</div>
         </div>
       ) : (
-        messages.map(message => (
-          <div key={message.id} className={`chat-bubble ${message.role}`} style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
-            {message.text}
-          </div>
-        ))
+        <>
+          {messages.map(message => (
+            <div key={message.id} className={`chat-bubble ${message.role === "system" ? "ai" : message.role}`} style={{ whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+              {message.text}
+            </div>
+          ))}
+          {disabledAssistantNotice && (
+            <div className="chat-status-notice" role="status" aria-live="polite">
+              {t("chat.aiDisabledNotice")}
+            </div>
+          )}
+        </>
       )}
-      {sending && <div className="chat-bubble ai loading">{t("chat.thinking")}</div>}
+      {sending && <div className="chat-status-notice" role="status" aria-live="polite">{t("chat.sending")}</div>}
       <div ref={endRef} />
     </div>
   );
@@ -3445,36 +3669,45 @@ function ChatMessageList({ className = "chat-messages", emptyCompact = false }) 
 
 function ChatComposer({ compact = false }) {
   const { t } = useTranslation();
-  const { sendMessage, sending } = useChat();
+  const { sendMessage, sending, syncing, conversationLoading, mutationError } = useChat();
   const [input, setInput] = useState("");
+  const inputRef = useRef(null);
 
   async function send() {
     const text = input.trim();
-    if (!text || sending) return;
-    setInput("");
-    await sendMessage(text);
+    if (!text || sending || syncing || conversationLoading) return;
+    const result = await sendMessage(text);
+    if (result?.ok) {
+      setInput("");
+    } else {
+      window.setTimeout(() => inputRef.current?.focus(), 0);
+    }
   }
 
   return (
-    <div className="chat-input-row">
-      <textarea
-        className="chat-input"
-        rows={compact ? 1 : 2}
-        placeholder={t("chat.placeholder")}
-        value={input}
-        aria-label={t("chat.accessibility.composer")}
-        onChange={event => setInput(event.target.value)}
-        onKeyDown={event => {
-          if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault();
-            send();
-          }
-        }}
-        disabled={sending}
-      />
-      <button className="chat-send" onClick={send} disabled={sending || !input.trim()} aria-label={t("chat.accessibility.send")}>
-        {sending ? "…" : compact ? "↑" : t("chat.send")}
-      </button>
+    <div className="chat-composer-wrap">
+      <div className="chat-input-row">
+        <textarea
+          ref={inputRef}
+          className="chat-input"
+          rows={compact ? 1 : 2}
+          placeholder={t("chat.placeholder")}
+          value={input}
+          aria-label={t("chat.accessibility.composer")}
+          onChange={event => setInput(event.target.value)}
+          onKeyDown={event => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
+              send();
+            }
+          }}
+          disabled={sending || syncing || conversationLoading}
+        />
+        <button className="chat-send" onClick={send} disabled={sending || syncing || conversationLoading || !input.trim()} aria-label={t("chat.accessibility.send")}>
+          {sending || syncing ? (compact ? "…" : t("chat.sending")) : compact ? "↑" : t("chat.send")}
+        </button>
+      </div>
+      {mutationError && <div className="field-error chat-composer-error" role="alert">{mutationError}</div>}
     </div>
   );
 }
@@ -3482,37 +3715,29 @@ function ChatComposer({ compact = false }) {
 function DashboardChatPreview() {
   const { t } = useTranslation();
   const { go } = useApp();
-  const { conversations, startDashboardConversation, selectConversation } = useChat();
+  const { startDashboardConversation, syncing, mutationError } = useChat();
   const [input, setInput] = useState("");
   const [launching, setLaunching] = useState(false);
+  const [launcherError, setLauncherError] = useState("");
 
-  function viewHistory() {
-    if (conversations[0]) selectConversation(conversations[0].id);
-    go("ai-chat");
-  }
-
-  function submitLauncher() {
+  async function submitLauncher() {
     const clean = input.trim();
-    if (!clean || launching) return;
+    if (!clean || launching || syncing) return;
     setLaunching(true);
-    const conversationId = startDashboardConversation(clean);
-    if (!conversationId) {
+    setLauncherError("");
+    const result = await startDashboardConversation(clean);
+    if (!result?.ok) {
+      setLauncherError(result?.error || t("chat.errors.unableToCreate"));
       setLaunching(false);
       return;
     }
     setInput("");
     go("ai-chat");
+    setLaunching(false);
   }
 
   return (
     <div className="agent-panel dashboard-chat-launcher">
-      <div className="agent-header">
-        <div className="dashboard-chat-title">
-          <span aria-hidden="true">🛡</span>
-          <span>{t("dashboard.cyberGuard.title")}</span>
-        </div>
-        <span className="dashboard-chat-badge">{t("chat.dashboard.ready")}</span>
-      </div>
       <div className="chat-empty dashboard-chat-welcome">
         <div className="chat-empty-title">{t("chat.dashboard.launcherTitle")}</div>
         <div>{t("chat.dashboard.launcherDescription")}</div>
@@ -3531,16 +3756,17 @@ function DashboardChatPreview() {
               submitLauncher();
             }
           }}
+          disabled={launching || syncing}
         />
-        <button className="chat-send" onClick={submitLauncher} disabled={launching || !input.trim()} aria-label={t("chat.accessibility.send")}>
-          {t("chat.send")}
+        <button className="chat-send" onClick={submitLauncher} disabled={launching || syncing || !input.trim()} aria-label={t("chat.accessibility.send")}>
+          {launching || syncing ? t("chat.sending") : t("chat.send")}
         </button>
       </div>
-      <div className="dashboard-chat-actions">
-        <button className="btn-ghost" onClick={viewHistory}>
-          {t("chat.actions.chatHistory")}
-        </button>
-      </div>
+      {(launcherError || mutationError) && (
+        <div className="field-error chat-composer-error" role="alert">
+          {launcherError || mutationError}
+        </div>
+      )}
     </div>
   );
 }
@@ -5574,6 +5800,7 @@ function ProgressPage() {
   const [recommendationState, setRecommendationState] = useState({ loading: true, recommendation: null });
   const [recommendationCompleting, setRecommendationCompleting] = useState(false);
   const [recommendationCompleteSaved, setRecommendationCompleteSaved] = useState(false);
+  const [activeProgressSection, setActiveProgressSection] = useState("progress-snapshot");
 
   useEffect(() => {
     let active = true;
@@ -5595,6 +5822,48 @@ function ProgressPage() {
     const timeout = window.setTimeout(() => setRecommendationCompleteSaved(false), prefersReducedMotion() ? 2500 : 3500);
     return () => window.clearTimeout(timeout);
   }, [recommendationCompleteSaved]);
+
+  const hasMeasuredTopicSections = Boolean(progressState.progress?.topics?.length);
+  const hasRecommendationSection = Boolean(recommendationState.recommendation);
+  const progressSections = PROGRESS_SECTIONS.filter(section => (
+    (section.optional !== "assessmentTopics" || hasMeasuredTopicSections) &&
+    (section.optional !== "recommendation" || hasRecommendationSection)
+  ));
+
+  useEffect(() => {
+    const visibleSectionIds = PROGRESS_SECTIONS
+      .filter(section => (
+        (section.optional !== "assessmentTopics" || hasMeasuredTopicSections) &&
+        (section.optional !== "recommendation" || hasRecommendationSection)
+      ))
+      .map(section => section.id);
+
+    if (!visibleSectionIds.includes(activeProgressSection)) {
+      setActiveProgressSection(visibleSectionIds[0] || "progress-snapshot");
+    }
+
+    const sections = visibleSectionIds
+      .map(id => document.getElementById(id))
+      .filter(Boolean);
+
+    if (sections.length === 0) return undefined;
+
+    const observer = new IntersectionObserver((entries) => {
+      const visible = entries
+        .filter(entry => entry.isIntersecting)
+        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
+
+      if (visible?.target?.id) {
+        setActiveProgressSection(visible.target.id);
+      }
+    }, {
+      rootMargin: "-80px 0px -65% 0px",
+      threshold: [0.1, 0.35, 0.6],
+    });
+
+    sections.forEach(section => observer.observe(section));
+    return () => observer.disconnect();
+  }, [activeProgressSection, hasMeasuredTopicSections, hasRecommendationSection]);
 
   if (!user) { go("login"); return null; }
 
@@ -5641,6 +5910,13 @@ function ProgressPage() {
     }
   }
 
+  function scrollToProgressSection(sectionId) {
+    document.getElementById(sectionId)?.scrollIntoView({
+      behavior: prefersReducedMotion() ? "auto" : "smooth",
+      block: "start",
+    });
+  }
+
   return (
     <div>
       {/* Hero */}
@@ -5656,11 +5932,29 @@ function ProgressPage() {
         </div>
       </div>
 
-      <div className="section">
-        <PageBackButton style={{ marginBottom: "2rem" }} />
+      <div className="progress-shell">
+        <aside className="dashboard-section-nav" aria-label={t("progress.sectionNav.ariaLabel")}>
+          <div className="dashboard-section-nav-title">{t("progress.sectionNav.title")}</div>
+          <div className="dashboard-section-nav-list">
+            {progressSections.map(section => (
+              <button
+                key={section.id}
+                type="button"
+                className={`dashboard-section-nav-button${activeProgressSection === section.id ? " active" : ""}`}
+                aria-current={activeProgressSection === section.id ? "location" : undefined}
+                onClick={() => scrollToProgressSection(section.id)}
+              >
+                {t(section.labelKey)}
+              </button>
+            ))}
+          </div>
+        </aside>
+
+        <main className="progress-content">
+          <PageBackButton style={{ marginBottom: "2rem" }} />
 
         {/* Profile snapshot */}
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "1rem", marginBottom: "2.5rem" }}>
+        <div id="progress-snapshot" className="progress-anchor" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "1rem", marginBottom: "2.5rem" }}>
           {[
             { icon: "🎓", labelKey: "progress.snapshot.measuredLevel", value: progressState.loading ? t("common.loading") : measuredLevel },
             { icon: "🌐", labelKey: "progress.snapshot.language", value: lang },
@@ -5676,7 +5970,7 @@ function ProgressPage() {
         </div>
 
         {/* Skill level bar */}
-        <div style={{ marginBottom: "2.5rem" }}>
+        <div id="progress-mastery" className="progress-anchor" style={{ marginBottom: "2.5rem" }}>
           <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("progress.mastery.title")}</p>
           <p className="section-sub" style={{ marginBottom: "1rem" }}>{t("progress.mastery.description")}</p>
           <div className="card" style={{ padding: "1.5rem" }}>
@@ -5707,7 +6001,7 @@ function ProgressPage() {
         </div>
 
         {measuredTopics.length > 0 && (
-          <div style={{ marginBottom: "2.5rem" }}>
+          <div id="progress-assessment-topics" className="progress-anchor" style={{ marginBottom: "2.5rem" }}>
             <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("progress.assessmentTopics.title")}</p>
             <p className="section-sub" style={{ marginBottom: "1rem" }}>{t("progress.assessmentTopics.description")}</p>
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "1rem" }}>
@@ -5733,7 +6027,7 @@ function ProgressPage() {
         )}
 
         {recommendation && (
-          <div className="card" style={{ marginBottom: "2.5rem", background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)" }}>
+          <div id="progress-recommendation" className="card progress-anchor" style={{ marginBottom: "2.5rem", background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)" }}>
             {recommendationCompleteSaved && <SuccessFeedback message={t("progress.recommendation.completedSaved")} />}
             <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.3rem" }}>{t("progress.recommendation.title")}</div>
             <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.05rem", marginBottom: "0.4rem" }}>
@@ -5761,7 +6055,7 @@ function ProgressPage() {
         )}
 
         {/* Topics of interest */}
-        <div style={{ marginBottom: "2.5rem" }}>
+        <div id="progress-learning-topics" className="progress-anchor" style={{ marginBottom: "2.5rem" }}>
           <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("progress.learningTopics.title")}</p>
           <p className="section-sub" style={{ marginBottom: "1rem" }}>{t("progress.learningTopics.description")}</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "0.75rem" }}>
@@ -5786,7 +6080,7 @@ function ProgressPage() {
         </div>
 
         {/* Badges */}
-        <div>
+        <div id="progress-badges" className="progress-anchor">
           <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("progress.badges.title")}</p>
           <p className="section-sub" style={{ marginBottom: "1rem" }}>{t("progress.badges.description")}</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "1rem" }}>
@@ -5803,7 +6097,7 @@ function ProgressPage() {
             ))}
           </div>
         </div>
-
+        </main>
       </div>
     </div>
   );
@@ -5829,6 +6123,7 @@ function ConversationHistoryItem({
   onSelect,
   onRename,
   onDelete,
+  mutating,
   openMenu,
   setOpenMenu,
 }) {
@@ -5839,7 +6134,9 @@ function ConversationHistoryItem({
   const wrapRef = useRef(null);
   const itemButtonRef = useRef(null);
   const menuButtonRef = useRef(null);
+  const menuRef = useRef(null);
   const inputRef = useRef(null);
+  const [menuPosition, setMenuPosition] = useState(null);
   const titleErrorId = `rename-error-${conversation.id}`;
   const menuId = `conversation-menu-${conversation.id}`;
 
@@ -5855,8 +6152,34 @@ function ConversationHistoryItem({
 
   useEffect(() => {
     if (openMenu !== conversation.id) return undefined;
+    function updateMenuPosition() {
+      const trigger = menuButtonRef.current;
+      if (!trigger) return;
+      const rect = trigger.getBoundingClientRect();
+      const menuWidth = 168;
+      const menuHeight = 96;
+      const gap = 6;
+      const margin = 8;
+      const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
+      const viewportHeight = window.innerHeight || document.documentElement.clientHeight;
+      const fitsBelow = rect.bottom + gap + menuHeight <= viewportHeight - margin;
+      const top = fitsBelow
+        ? rect.bottom + gap
+        : Math.max(margin, rect.top - gap - menuHeight);
+      const left = Math.min(
+        Math.max(margin, rect.right - menuWidth),
+        Math.max(margin, viewportWidth - menuWidth - margin)
+      );
+      setMenuPosition({ top, left });
+    }
     function handlePointerDown(event) {
-      if (!wrapRef.current?.contains(event.target)) setOpenMenu(null);
+      if (
+        wrapRef.current?.contains(event.target) ||
+        menuRef.current?.contains(event.target)
+      ) {
+        return;
+      }
+      setOpenMenu(null);
     }
     function handleKeyDown(event) {
       if (event.key === "Escape") {
@@ -5864,11 +6187,16 @@ function ConversationHistoryItem({
         menuButtonRef.current?.focus();
       }
     }
+    updateMenuPosition();
     document.addEventListener("mousedown", handlePointerDown);
     document.addEventListener("keydown", handleKeyDown);
+    window.addEventListener("resize", updateMenuPosition);
+    window.addEventListener("scroll", updateMenuPosition, true);
     return () => {
       document.removeEventListener("mousedown", handlePointerDown);
       document.removeEventListener("keydown", handleKeyDown);
+      window.removeEventListener("resize", updateMenuPosition);
+      window.removeEventListener("scroll", updateMenuPosition, true);
     };
   }, [conversation.id, openMenu, setOpenMenu]);
 
@@ -5895,12 +6223,12 @@ function ConversationHistoryItem({
     return nextTitle;
   }
 
-  function saveRename() {
+  async function saveRename() {
     const nextTitle = validateTitle();
     if (!nextTitle) return;
-    const saved = onRename(conversation.id, nextTitle);
+    const saved = await onRename(conversation.id, nextTitle);
     if (!saved) {
-      setTitleError(t("chat.validation.titleRequired"));
+      setTitleError(t("chat.errors.unableToRename"));
       return;
     }
     setRenaming(false);
@@ -5935,13 +6263,14 @@ function ConversationHistoryItem({
                 if (event.key === "Enter") saveRename();
                 if (event.key === "Escape") cancelRename();
               }}
+              disabled={mutating}
             />
             {titleError && <div id={titleErrorId} className="field-error" role="alert">{titleError}</div>}
             <div style={{ display: "flex", gap: "0.4rem" }}>
-              <button type="button" className="btn-primary" style={{ padding: "0.45rem 0.65rem" }} onClick={saveRename}>
-                {t("common.save")}
+              <button type="button" className="btn-primary" style={{ padding: "0.45rem 0.65rem" }} onClick={saveRename} disabled={mutating}>
+                {mutating ? t("common.saving") : t("common.save")}
               </button>
-              <button type="button" className="btn-ghost" style={{ padding: "0.45rem 0.65rem" }} onClick={cancelRename}>
+              <button type="button" className="btn-ghost" style={{ padding: "0.45rem 0.65rem" }} onClick={cancelRename} disabled={mutating}>
                 {t("common.cancel")}
               </button>
             </div>
@@ -5953,48 +6282,63 @@ function ConversationHistoryItem({
 
   return (
     <div className="ai-chat-list-row" ref={wrapRef}>
-      <button
-        type="button"
-        ref={itemButtonRef}
-        className={`ai-chat-list-item${active ? " active" : ""}`}
-        onClick={() => onSelect(conversation.id)}
-        aria-current={active ? "true" : undefined}
-      >
-        <div className="ai-chat-list-title">{conversation.title}</div>
-        <div className="ai-chat-list-time">{formatChatUpdatedAt(conversation.updatedAt, t)}</div>
-      </button>
-      <button
-        type="button"
-        ref={menuButtonRef}
-        className={`ai-chat-menu-button${openMenu === conversation.id ? " open" : ""}`}
-        onClick={event => {
-          event.stopPropagation();
-          setOpenMenu(openMenu === conversation.id ? null : conversation.id);
-        }}
-        aria-label={t("chat.accessibility.conversationMenu", { title: conversation.title })}
-        aria-haspopup="menu"
-        aria-expanded={openMenu === conversation.id}
-        aria-controls={openMenu === conversation.id ? menuId : undefined}
-      >
-        ⋯
-      </button>
-      {openMenu === conversation.id && (
-        <div className="ai-chat-menu" id={menuId} role="menu">
-          <button type="button" className="ai-chat-menu-item" role="menuitem" onClick={event => {
+      <div className={`ai-chat-list-item${active ? " active" : ""}`}>
+        <button
+          type="button"
+          ref={itemButtonRef}
+          className="ai-chat-list-select"
+          onClick={() => {
+            setOpenMenu(null);
+            onSelect(conversation.id);
+          }}
+          aria-current={active ? "true" : undefined}
+          disabled={mutating}
+        >
+          <div className="ai-chat-list-title">{conversation.title}</div>
+          <div className="ai-chat-list-time">{formatChatUpdatedAt(conversation.updatedAt, t)}</div>
+        </button>
+        <button
+          type="button"
+          ref={menuButtonRef}
+          className={`ai-chat-menu-button${openMenu === conversation.id ? " open" : ""}`}
+          onClick={event => {
+            event.stopPropagation();
+            setOpenMenu(openMenu === conversation.id ? null : conversation.id);
+          }}
+          aria-label={t("chat.accessibility.conversationMenu", { title: conversation.title })}
+          aria-haspopup="menu"
+          aria-expanded={openMenu === conversation.id}
+          aria-controls={openMenu === conversation.id ? menuId : undefined}
+          disabled={mutating}
+        >
+          ⋯
+        </button>
+      </div>
+      {openMenu === conversation.id && menuPosition && typeof document !== "undefined" && createPortal(
+        <div
+          ref={menuRef}
+          className="ai-chat-menu"
+          id={menuId}
+          role="menu"
+          style={{ top: menuPosition.top, left: menuPosition.left }}
+          aria-label={t("chat.accessibility.conversationMenu", { title: conversation.title })}
+        >
+          <button type="button" className="ai-chat-menu-item" role="menuitem" disabled={mutating} onClick={event => {
             event.stopPropagation();
             setOpenMenu(null);
             setRenaming(true);
           }}>
             {t("chat.actions.rename")}
           </button>
-          <button type="button" className="ai-chat-menu-item danger" role="menuitem" onClick={event => {
+          <button type="button" className="ai-chat-menu-item danger" role="menuitem" disabled={mutating} onClick={event => {
             event.stopPropagation();
             setOpenMenu(null);
             onDelete(conversation, menuButtonRef.current);
           }} aria-label={t("chat.accessibility.deleteConversation", { title: conversation.title })}>
             {t("chat.actions.delete")}
           </button>
-        </div>
+        </div>,
+        document.body
       )}
     </div>
   );
@@ -6003,9 +6347,25 @@ function ConversationHistoryItem({
 function AIChatPage() {
   const { t } = useTranslation();
   const { user, go } = useApp();
-  const { conversations, activeConversation, activeConversationId, createConversation, selectConversation, renameConversation, deleteConversation } = useChat();
+  const {
+    conversations,
+    activeConversation,
+    activeConversationId,
+    createConversation,
+    selectConversation,
+    renameConversation,
+    deleteConversation,
+    initialLoading,
+    error,
+    retry,
+    mutationError,
+    mutatingConversationId,
+    legacyNoticeVisible,
+    dismissLegacyNotice,
+  } = useChat();
   const [openMenu, setOpenMenu] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
+  const [deleteError, setDeleteError] = useState("");
   const deleteReturnFocusRef = useRef(null);
   const newChatButtonRef = useRef(null);
 
@@ -6013,6 +6373,7 @@ function AIChatPage() {
 
   function requestDeleteConversation(conversation, returnFocusElement) {
     deleteReturnFocusRef.current = returnFocusElement;
+    setDeleteError("");
     setDeleteTarget(conversation);
   }
 
@@ -6021,9 +6382,13 @@ function AIChatPage() {
     window.setTimeout(() => deleteReturnFocusRef.current?.focus(), 0);
   }
 
-  function confirmDeleteConversation() {
+  async function confirmDeleteConversation() {
     const returnFocusElement = deleteReturnFocusRef.current;
-    deleteConversation(deleteTarget.id);
+    const deleted = await deleteConversation(deleteTarget.id);
+    if (!deleted) {
+      setDeleteError(t("chat.errors.unableToDelete"));
+      return;
+    }
     setDeleteTarget(null);
     window.setTimeout(() => {
       if (returnFocusElement?.isConnected) {
@@ -6062,7 +6427,26 @@ function AIChatPage() {
               +
             </button>
           </div>
-          {conversations.length === 0 ? (
+          {legacyNoticeVisible && (
+            <PageState
+              type="empty"
+              title={t("chat.migrationNotice.title")}
+              message={t("chat.migrationNotice.description")}
+              actionLabel={t("chat.migrationNotice.acknowledge")}
+              onAction={dismissLegacyNotice}
+            />
+          )}
+          {error ? (
+            <PageState
+              type="error"
+              title={t("chat.errors.syncFailed")}
+              message={error}
+              actionLabel={t("common.retry")}
+              onAction={retry}
+            />
+          ) : initialLoading ? (
+            <PageState type="loading" title={t("chat.loading.conversations")} message={t("chat.loading.pleaseWait")} />
+          ) : conversations.length === 0 ? (
             <PageState type="empty" title={t("chat.history.emptyTitle")} message={t("chat.history.emptyDescription")} />
           ) : (
             <div className="ai-chat-list" role="list">
@@ -6074,12 +6458,14 @@ function AIChatPage() {
                   onSelect={selectConversation}
                   onRename={renameConversation}
                   onDelete={requestDeleteConversation}
+                  mutating={mutatingConversationId === conversation.id}
                   openMenu={openMenu}
                   setOpenMenu={setOpenMenu}
                 />
               ))}
             </div>
           )}
+          {mutationError && <div className="field-error" role="alert" style={{ marginTop: "0.75rem" }}>{mutationError}</div>}
         </aside>
 
         <section className="ai-chat-main" aria-label={t("chat.page.chatAreaLabel")}>
@@ -6107,11 +6493,16 @@ function AIChatPage() {
           title={t("chat.delete.title")}
           description={t("chat.delete.description", { title: deleteTarget.title })}
           cancelLabel={t("common.cancel")}
-          confirmLabel={t("chat.actions.delete")}
+          confirmLabel={mutatingConversationId === deleteTarget.id ? t("chat.actions.deleting") : t("chat.actions.delete")}
           onCancel={closeDeleteDialog}
           onConfirm={confirmDeleteConversation}
           danger
         />
+      )}
+      {deleteTarget && deleteError && (
+        <div className="field-error" role="alert" style={{ position: "fixed", left: "50%", bottom: "1rem", transform: "translateX(-50%)", zIndex: 220 }}>
+          {deleteError}
+        </div>
       )}
     </div>
   );
@@ -6121,13 +6512,11 @@ function AIChatPage() {
 function ChatWidget() {
   const { t } = useTranslation();
   const { user, go } = useApp();
-  const { activeConversation, createConversation } = useChat();
   const [open,     setOpen]     = useState(false);
   const displayName = user?.displayName || user?.name;
   const group = user ? getAgeGroup(user.age) : null;
 
   function openFullPage() {
-    if (user && !activeConversation) createConversation();
     setOpen(false);
     go(user ? "ai-chat" : "login");
   }

@@ -31,6 +31,9 @@ const { createResourceRouter } = require('./src/resource/resource.routes');
 const { createAccountRepository } = require("./src/account/account.repository");
 const { createAccountService } = require("./src/account/account.service");
 const { createAccountRouter } = require("./src/account/account.routes");
+const { createChatRepository } = require('./src/chat/chat.repository');
+const { createChatService } = require('./src/chat/chat.service');
+const { createChatRouter } = require('./src/chat/chat.routes');
 const { ERROR_CODES } = require('./src/errors/errorCodes');
 
 const app = express();
@@ -52,6 +55,8 @@ const scenarioRepository = createScenarioRepository(pool);
 const scenarioService = createScenarioService(scenarioRepository, progressService);
 const resourceRepository = createResourceRepository(pool);
 const resourceService = createResourceService(resourceRepository);
+const chatRepository = createChatRepository(pool);
+const chatService = createChatService(chatRepository);
 
 app.set('trust proxy', 1);
 app.use(cors({ origin: clientOrigin, credentials: true }));
@@ -75,6 +80,7 @@ app.use(createAssessmentRouter(assessmentService));
 app.use(createProgressRouter(progressService));
 app.use(createScenarioRouter(scenarioService));
 app.use(createResourceRouter(resourceService));
+app.use('/api/chat', createChatRouter(chatService));
 
 const rateLimitBuckets = new Map();
 

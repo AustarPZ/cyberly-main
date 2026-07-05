@@ -9,6 +9,7 @@
     "test:auth": "node scripts/test-auth.js",
     "test:profile": "node scripts/test-profile.js",
     "test:assessment": "node scripts/test-assessment.js",
+    "test:chat": "node scripts/test-chat.js",
     "test:progress": "node scripts/test-progress.js",
     "test:scenario": "node scripts/test-scenario.js",
     "start": "node server.js",
