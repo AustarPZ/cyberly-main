@@ -1,5 +1,5 @@
 const { ERROR_CODES } = require('../errors/errorCodes');
-const { mapConversation, mapMessage } = require('./chat.mapper');
+const { mapConversation, mapGenerationState, mapMessage } = require('./chat.mapper');
 const {
   normalizeLimit,
   titleFromMessage,
@@ -25,7 +25,9 @@ function notFoundError() {
   return httpError(404, ERROR_CODES.CHAT_CONVERSATION_NOT_FOUND, 'Chat conversation was not found.');
 }
 
-function createChatService(repository) {
+function createChatService(repository, options = {}) {
+  const generationStaleMs = Number(options.generationStaleMs || 60000);
+
   async function listConversations(userId, query = {}) {
     const limit = normalizeLimit(query.limit);
     const rows = await repository.listConversations(userId, limit);
@@ -75,10 +77,21 @@ function createChatService(repository) {
     const conversation = await repository.findConversation(userId, conversationId);
     if (!conversation) throw notFoundError();
     const messages = await repository.listMessages(conversationId);
+    const generationRows = await repository.listGenerationStates(conversationId);
+    const generations = generationRows.map((row) => {
+      if (row.status === 'completed' && (!row.assistant_message_id || Number(row.assistant_exists || 0) !== 1)) {
+        console.warn('Chat generation completed without assistant message:', {
+          conversationId,
+          userMessageId: row.user_message_id,
+        });
+      }
+      return mapGenerationState(row, { staleMs: generationStaleMs });
+    });
 
     return {
       conversation: mapConversation(conversation),
       messages: messages.map(mapMessage),
+      generations,
     };
   }
 

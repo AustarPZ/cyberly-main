@@ -740,6 +740,8 @@ const CHAT_STORAGE_PREFIX = "cyberly.chat.v1";
 const CHAT_ACTIVE_STORAGE_PREFIX = "cyberly.chat.activeConversation.v1";
 const CHAT_NOTICE_STORAGE_PREFIX = "cyberly.chat.backendMigrationNotice.v1";
 const MAX_CONVERSATION_TITLE_LENGTH = 80;
+const CHAT_GENERATION_POLL_INTERVAL_MS = 2000;
+const CHAT_GENERATION_POLL_MAX_MS = 30000;
 const PUBLIC_PAGES = new Set(["home", "resources", "about", "login"]);
 const PROTECTED_PAGES = new Set(["dashboard", "assessment", "scenarios", "progress", "profile", "ai-chat"]);
 const VALID_PAGES = new Set([...PUBLIC_PAGES, ...PROTECTED_PAGES]);
@@ -1006,6 +1008,66 @@ function mapServerMessage(message) {
   };
 }
 
+const SAFE_AI_GENERATION_ERROR_CODES = new Set([
+  "AI_NOT_CONFIGURED",
+  "AI_PROVIDER_UNAVAILABLE",
+  "AI_TIMEOUT",
+  "AI_RATE_LIMITED",
+  "AI_UNSAFE_REQUEST",
+  "AI_INVALID_RESPONSE",
+  "AI_GENERATION_IN_PROGRESS",
+  "AI_ASSISTANT_PERSISTENCE_FAILED",
+]);
+
+function localizedGenerationError(code) {
+  if (SAFE_AI_GENERATION_ERROR_CODES.has(code)) {
+    const key = `errors.codes.${code}`;
+    const translated = i18n.t(key, { defaultValue: "" });
+    if (translated && translated !== key) return translated;
+  }
+  return i18n.t("chat.generation.failedDescription");
+}
+
+function recoveredGenerationState(generations = [], messages = []) {
+  const assistantReplyIds = new Set(
+    messages
+      .filter(message => message.role === "ai" && message.replyToMessageId)
+      .map(message => Number(message.replyToMessageId))
+  );
+  return generations.reduce((acc, generation) => {
+    const userMessageId = Number(generation.userMessageId);
+    if (!userMessageId) return acc;
+    if (generation.status === "completed" && assistantReplyIds.has(userMessageId)) return acc;
+
+    if (generation.status === "pending" || generation.status === "in_progress") {
+      acc[userMessageId] = { status: "generating", errorCode: null, error: "" };
+      return acc;
+    }
+
+    if (generation.status === "failed" || generation.status === "completed") {
+      acc[userMessageId] = {
+        status: "failed",
+        errorCode: SAFE_AI_GENERATION_ERROR_CODES.has(generation.errorCode) ? generation.errorCode : null,
+        error: localizedGenerationError(generation.errorCode),
+      };
+    }
+    return acc;
+  }, {});
+}
+
+function mergeRecoveredGenerationState(current, messages = [], recovered = {}) {
+  const userMessageIds = new Set(
+    messages
+      .filter(message => message.role === "user")
+      .map(message => Number(message.id))
+  );
+  const next = { ...current };
+  userMessageIds.forEach(id => {
+    delete next[id];
+  });
+  return { ...next, ...recovered };
+}
+
 function ChatMarkdown({ children }) {
   return (
     <ReactMarkdown
@@ -1077,6 +1139,7 @@ function ChatProvider({ user, children }) {
   const userIdRef = useRef(null);
   const activeConversationIdRef = useRef(null);
   const conversationsRef = useRef([]);
+  const generationPollTimeoutRef = useRef(null);
   const userId = user?.id;
 
   useEffect(() => {
@@ -1122,6 +1185,56 @@ function ChatProvider({ user, children }) {
       !hasAcknowledgedChatNotice(userIdRef.current)
     );
     setInitialLoading(false);
+  }, []);
+
+  const applyConversationDetailResult = useCallback((result, conversationId, requestUserId, options = {}) => {
+    if (userIdRef.current !== requestUserId) return false;
+
+    if (!result.ok) {
+      if (result.code === "CHAT_CONVERSATION_NOT_FOUND") {
+        setConversations(current => {
+          const remaining = current.filter(conversation => conversation.id !== conversationId);
+          const nextActiveId = activeConversationIdRef.current === conversationId ? remaining[0]?.id || null : activeConversationIdRef.current;
+          if (activeConversationIdRef.current === conversationId) {
+            setActiveConversationId(nextActiveId);
+            setActiveMessages([]);
+            writeSavedActiveConversationId(requestUserId, nextActiveId);
+          }
+          return remaining;
+        });
+        if (options.setErrors !== false) setConversationError("");
+        return false;
+      }
+
+      if (options.setErrors !== false) {
+        setActiveMessages([]);
+        setConversationError(result.error);
+      }
+      return false;
+    }
+
+    const loadedMessages = (result.messages || []).map(mapServerMessage);
+    const recoveredGenerations = recoveredGenerationState(result.generations || [], loadedMessages);
+
+    if (activeConversationIdRef.current === conversationId) {
+      setActiveMessages(loadedMessages);
+    }
+    setGenerationByMessageId(current =>
+      pruneGenerationForCompletedReplies(
+        loadedMessages,
+        mergeRecoveredGenerationState(current, loadedMessages, recoveredGenerations)
+      )
+    );
+    if (result.conversation) {
+      const mapped = mapServerConversation(result.conversation);
+      setConversations(current => {
+        if (current.some(conversation => conversation.id === mapped.id)) {
+          return current.map(conversation => conversation.id === mapped.id ? mapped : conversation);
+        }
+        return [mapped, ...current];
+      });
+    }
+    return true;
   }, []);
 
   useEffect(() => {
@@ -1172,38 +1285,72 @@ function ChatProvider({ user, children }) {
 
     getChatConversation(activeConversationId).then(result => {
       if (requestId !== detailRequestRef.current || userIdRef.current !== userId) return;
-      if (!result.ok) {
-        if (result.code === "CHAT_CONVERSATION_NOT_FOUND") {
-          setConversations(current => {
-            const remaining = current.filter(conversation => conversation.id !== activeConversationId);
-            const nextActiveId = remaining[0]?.id || null;
-            setActiveConversationId(nextActiveId);
-            writeSavedActiveConversationId(userId, nextActiveId);
-            return remaining;
-          });
-          setActiveMessages([]);
-          setConversationError("");
-        } else {
-          setActiveMessages([]);
-          setConversationError(result.error);
-        }
-        setConversationLoading(false);
-        return;
-      }
-
-      const loadedMessages = (result.messages || []).map(mapServerMessage);
-      setActiveMessages(loadedMessages);
-      setGenerationByMessageId(current => pruneGenerationForCompletedReplies(loadedMessages, current));
-      if (result.conversation) {
-        const mapped = mapServerConversation(result.conversation);
-        setConversations(current => current.map(conversation => conversation.id === mapped.id ? mapped : conversation));
-      }
+      applyConversationDetailResult(result, activeConversationId, userId, { setErrors: true });
       setConversationLoading(false);
     });
-  }, [userId, activeConversationId]);
+  }, [userId, activeConversationId, applyConversationDetailResult]);
 
   const activeConversation = conversations.find(conversation => conversation.id === activeConversationId) || null;
   const generationActive = Object.values(generationByMessageId).some(item => item.status === "generating");
+  const activeGeneratingMessageIds = activeMessages
+    .filter(message => message.role === "user" && generationByMessageId[message.id]?.status === "generating")
+    .map(message => Number(message.id))
+    .filter(Boolean)
+    .sort((a, b) => a - b);
+  const activeGenerationPollKey = userId && activeConversationId && activeGeneratingMessageIds.length > 0
+    ? `${userId}:${activeConversationId}:${activeGeneratingMessageIds.join(",")}`
+    : "";
+
+  useEffect(() => {
+    if (generationPollTimeoutRef.current && generationPollTimeoutRef.current.key !== activeGenerationPollKey) {
+      generationPollTimeoutRef.current = null;
+    }
+    if (!userId || !activeConversationId || !activeGenerationPollKey || conversationLoading) return undefined;
+    if (generationPollTimeoutRef.current?.key === activeGenerationPollKey) return undefined;
+
+    let stopped = false;
+    let inFlight = false;
+    let timerId = null;
+    let controller = null;
+    const startedAt = Date.now();
+    const requestUserId = userId;
+    const requestConversationId = activeConversationId;
+
+    const stop = () => {
+      stopped = true;
+      if (timerId) window.clearTimeout(timerId);
+      if (controller) controller.abort();
+    };
+
+    const scheduleNext = () => {
+      if (stopped) return;
+      if (Date.now() - startedAt >= CHAT_GENERATION_POLL_MAX_MS) {
+        generationPollTimeoutRef.current = { key: activeGenerationPollKey };
+        return;
+      }
+      timerId = window.setTimeout(runPoll, CHAT_GENERATION_POLL_INTERVAL_MS);
+    };
+
+    const runPoll = async () => {
+      if (stopped || inFlight) return;
+      if (userIdRef.current !== requestUserId || activeConversationIdRef.current !== requestConversationId) return;
+      inFlight = true;
+      controller = new AbortController();
+      const result = await getChatConversation(requestConversationId, { signal: controller.signal });
+      inFlight = false;
+      if (stopped || result.aborted) return;
+      if (userIdRef.current !== requestUserId || activeConversationIdRef.current !== requestConversationId) return;
+
+      if (result.ok || result.code === "CHAT_CONVERSATION_NOT_FOUND") {
+        applyConversationDetailResult(result, requestConversationId, requestUserId, { setErrors: false });
+      }
+      if (result.code === "AUTH_REQUIRED" || result.code === "CHAT_CONVERSATION_NOT_FOUND") return;
+      scheduleNext();
+    };
+
+    timerId = window.setTimeout(runPoll, CHAT_GENERATION_POLL_INTERVAL_MS);
+    return stop;
+  }, [userId, activeConversationId, activeGenerationPollKey, conversationLoading, applyConversationDetailResult]);
 
   function clearGenerationState(userMessageId) {
     setGenerationByMessageId(current => {

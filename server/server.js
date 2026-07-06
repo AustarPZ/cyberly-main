@@ -61,8 +61,10 @@ const scenarioService = createScenarioService(scenarioRepository, progressServic
 const resourceRepository = createResourceRepository(pool);
 const resourceService = createResourceService(resourceRepository);
 const chatRepository = createChatRepository(pool);
-const chatService = createChatService(chatRepository);
 const aiConfig = createAiConfig();
+const chatService = createChatService(chatRepository, {
+    generationStaleMs: aiConfig.generationStaleMs,
+});
 const aiRepository = createAiRepository(pool);
 const aiProvider = createAiProvider(aiConfig);
 const aiService = createAiService(aiRepository, aiProvider, aiConfig);

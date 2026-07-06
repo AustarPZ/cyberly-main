@@ -331,6 +331,30 @@ async function run() {
 
     await withServer({ OPENAI_API_KEY: 'test-key', AI_TEST_MOCK_OPENAI: 'success' }, async (baseUrl) => {
       const userA = await register(baseUrl, USER_A_EMAIL, 'Phase 8B2 A');
+      const created = await createConversation(baseUrl, userA.cookieHeader, 'Recover a stale generation safely.');
+      await pool.query(
+        `INSERT INTO chat_message_generations (conversation_id, user_message_id, status, provider, model, updated_at)
+         VALUES (?, ?, 'in_progress', 'openai', 'gpt-5.4-mini', DATE_SUB(NOW(), INTERVAL 2 MINUTE))`,
+        [created.conversation.id, created.message.id]
+      );
+
+      const result = await generate(baseUrl, userA.cookieHeader, created.conversation.id, created.message.id);
+      assert.equal(result.response.status, 201);
+      assert.equal(result.json.assistantMessage.role, 'assistant');
+      assert.equal(result.json.assistantMessage.replyToMessageId, created.message.id);
+      assert.equal(result.json.generation.status, 'completed');
+
+      const [[assistantCount]] = await pool.query(
+        "SELECT COUNT(*) AS count FROM chat_messages WHERE conversation_id = ? AND role = 'assistant'",
+        [created.conversation.id]
+      );
+      assert.equal(assistantCount.count, 1);
+    });
+
+    await cleanup(pool);
+
+    await withServer({ OPENAI_API_KEY: 'test-key', AI_TEST_MOCK_OPENAI: 'success' }, async (baseUrl) => {
+      const userA = await register(baseUrl, USER_A_EMAIL, 'Phase 8B2 A');
       const created = await createConversation(baseUrl, userA.cookieHeader, 'Rate limit base message.');
       for (let index = 0; index < 6; index += 1) {
         const message = index === 0

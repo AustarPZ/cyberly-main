@@ -242,6 +242,7 @@ async function run() {
     assert.equal(result.json.message.role, 'user');
     assert.equal(result.json.message.content, 'Please explain the warning signs.');
     assert.equal(result.json.message.locale, 'zh-CN');
+    const secondUserMessageId = result.json.message.id;
 
     const [[secondMessageLocale]] = await pool.query('SELECT locale FROM chat_messages WHERE id = ?', [result.json.message.id]);
     assert.equal(secondMessageLocale.locale, 'zh-CN');
@@ -252,6 +253,69 @@ async function run() {
     }, cookieA);
     assert.equal(result.response.status, 201);
     assert.equal(result.json.message.locale, 'en');
+    const fallbackMessageId = result.json.message.id;
+
+    result = await request('POST', `/api/chat/conversations/${conversationId}/messages`, {
+      content: 'Fresh generation recovery check.',
+      locale: 'en',
+    }, cookieA);
+    assert.equal(result.response.status, 201);
+    const freshMessageId = result.json.message.id;
+
+    const [assistantInsert] = await pool.query(
+      `INSERT INTO chat_messages (conversation_id, role, content, locale, reply_to_message_id)
+       VALUES (?, 'assistant', 'Completed assistant reply.', 'en', ?)`,
+      [conversationId, secondUserMessageId]
+    );
+    await pool.query(
+      `INSERT INTO chat_message_generations (
+          conversation_id, user_message_id, assistant_message_id, status, provider, model,
+          provider_request_id, input_tokens, output_tokens, estimated_cost_usd, duration_ms, completed_at
+       )
+       VALUES (?, ?, ?, 'completed', 'openai', 'gpt-5.4-mini', 'hidden-request-id', 10, 20, 0.0001, 123, CURRENT_TIMESTAMP)`,
+      [conversationId, secondUserMessageId, assistantInsert.insertId]
+    );
+    await pool.query(
+      `INSERT INTO chat_message_generations (conversation_id, user_message_id, status, provider, model, error_code)
+       VALUES (?, ?, 'failed', 'openai', 'gpt-5.4-mini', 'AI_PROVIDER_UNAVAILABLE')`,
+      [conversationId, firstMessageId]
+    );
+    await pool.query(
+      `INSERT INTO chat_message_generations (conversation_id, user_message_id, status, provider, model, updated_at)
+       VALUES (?, ?, 'in_progress', 'openai', 'gpt-5.4-mini', DATE_SUB(NOW(), INTERVAL 2 MINUTE))`,
+      [conversationId, fallbackMessageId]
+    );
+    await pool.query(
+      `INSERT INTO chat_message_generations (conversation_id, user_message_id, status, provider, model)
+       VALUES (?, ?, 'in_progress', 'openai', 'gpt-5.4-mini')`,
+      [conversationId, freshMessageId]
+    );
+
+    result = await request('GET', `/api/chat/conversations/${conversationId}`, undefined, cookieA);
+    assert.equal(result.response.status, 200);
+    assert.equal(Array.isArray(result.json.generations), true);
+    assert.equal(result.json.generations.length, 4);
+    const failedGeneration = result.json.generations.find(item => item.userMessageId === firstMessageId);
+    const completedGeneration = result.json.generations.find(item => item.userMessageId === secondUserMessageId);
+    const staleGeneration = result.json.generations.find(item => item.userMessageId === fallbackMessageId);
+    const inProgressGeneration = result.json.generations.find(item => item.userMessageId === freshMessageId);
+    assert.equal(failedGeneration.status, 'failed');
+    assert.equal(failedGeneration.errorCode, 'AI_PROVIDER_UNAVAILABLE');
+    assert.equal(inProgressGeneration.status, 'in_progress');
+    assert.equal(staleGeneration.status, 'failed');
+    assert.equal(staleGeneration.errorCode, 'AI_TIMEOUT');
+    assert.equal(completedGeneration.status, 'completed');
+    assert.equal(completedGeneration.assistantMessageId, assistantInsert.insertId);
+    assert.equal(result.json.messages.filter(message => message.role === 'assistant').length, 1);
+    assert.equal(Object.hasOwn(completedGeneration, 'providerRequestId'), false);
+    assert.equal(Object.hasOwn(completedGeneration, 'inputTokens'), false);
+    assert.equal(Object.hasOwn(completedGeneration, 'outputTokens'), false);
+    assert.equal(Object.hasOwn(completedGeneration, 'estimatedCostUsd'), false);
+    assert.equal(Object.hasOwn(completedGeneration, 'durationMs'), false);
+
+    result = await request('GET', `/api/chat/conversations/${conversationId}`, undefined, cookieB);
+    assert.equal(result.response.status, 404);
+    assert.equal(result.json.code, 'CHAT_CONVERSATION_NOT_FOUND');
 
     result = await request('POST', `/api/chat/conversations/${conversationId}/messages`, { content: '   ' }, cookieA);
     assert.equal(result.response.status, 400);
@@ -266,7 +330,7 @@ async function run() {
     assert.equal(result.json.code, 'CHAT_CONVERSATION_NOT_FOUND');
 
     const [[messageCountBeforeDelete]] = await pool.query('SELECT COUNT(*) AS count FROM chat_messages WHERE conversation_id = ?', [conversationId]);
-    assert.equal(messageCountBeforeDelete.count, 3);
+    assert.equal(messageCountBeforeDelete.count, 5);
     result = await request('DELETE', `/api/chat/conversations/${conversationId}`, undefined, cookieA);
     assert.equal(result.response.status, 200);
     assert.equal(result.json.ok, true);

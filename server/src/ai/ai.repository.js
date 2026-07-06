@@ -172,14 +172,16 @@ function createAiRepository(pool) {
     };
   }
 
-  async function countInProgressForUser(userId, connection) {
+  async function countInProgressForUser(userId, staleCutoff, connection) {
+    const staleFilter = staleCutoff ? ' AND g.updated_at >= ?' : '';
+    const params = staleCutoff ? [userId, staleCutoff] : [userId];
     const [rows] = await db(connection).query(
       `SELECT COUNT(*) AS count
        FROM chat_message_generations g
        JOIN chat_conversations c ON c.id = g.conversation_id
        WHERE c.user_id = ?
-         AND g.status = 'in_progress'`,
-      [userId]
+         AND g.status = 'in_progress'${staleFilter}`,
+      params
     );
     return Number(rows[0]?.count || 0);
   }

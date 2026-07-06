@@ -91,6 +91,29 @@ function createChatRepository(pool) {
     return rows;
   }
 
+  async function listGenerationStates(conversationId, connection) {
+    const [rows] = await db(connection).query(
+      `SELECT
+          g.user_message_id,
+          g.assistant_message_id,
+          g.status,
+          g.error_code,
+          g.created_at,
+          g.updated_at,
+          g.completed_at,
+          CASE WHEN assistant.id IS NULL THEN 0 ELSE 1 END AS assistant_exists
+       FROM chat_message_generations g
+       LEFT JOIN chat_messages assistant
+         ON assistant.id = g.assistant_message_id
+        AND assistant.conversation_id = g.conversation_id
+        AND assistant.role = 'assistant'
+       WHERE g.conversation_id = ?
+       ORDER BY g.created_at, g.user_message_id`,
+      [conversationId]
+    );
+    return rows;
+  }
+
   async function insertMessage(conversationId, message, connection) {
     const [result] = await db(connection).query(
       `INSERT INTO chat_messages (conversation_id, role, content, locale)
@@ -128,6 +151,7 @@ function createChatRepository(pool) {
     findConversation,
     insertMessage,
     listConversations,
+    listGenerationStates,
     listMessages,
     touchConversation,
     updateConversationTitle,

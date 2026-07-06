@@ -42,6 +42,16 @@ function configured(config) {
   return Boolean(config.openAiApiKey || config.testMockMode) && config.provider === 'openai';
 }
 
+function generationStaleCutoff(config) {
+  return new Date(Date.now() - Number(config.generationStaleMs || 60000));
+}
+
+function isStaleGeneration(generation, config) {
+  if (!generation || !['pending', 'in_progress'].includes(generation.status)) return false;
+  if (!generation.updated_at) return false;
+  return new Date(generation.updated_at).getTime() < generationStaleCutoff(config).getTime();
+}
+
 function pruneBucket(bucket, now, windowMs) {
   bucket.timestamps = bucket.timestamps.filter(value => now - value < windowMs);
 }
@@ -132,7 +142,7 @@ function createAiService(repository, provider, config) {
     if (generation.status === 'completed') {
       return completedResponse(userId, generation, target.userMessage);
     }
-    if (generation.status === 'in_progress') {
+    if (generation.status === 'in_progress' && !isStaleGeneration(generation, config)) {
       throw httpError(409, ERROR_CODES.AI_GENERATION_IN_PROGRESS, 'AI generation is already in progress.');
     }
 
@@ -147,7 +157,7 @@ function createAiService(repository, provider, config) {
     activeUsers.add(userId);
     let userLockAcquired = true;
 
-    if (await repository.countInProgressForUser(userId) > 0) {
+    if (await repository.countInProgressForUser(userId, generationStaleCutoff(config)) > 0) {
       activeUsers.delete(userId);
       userLockAcquired = false;
       throw httpError(409, ERROR_CODES.AI_GENERATION_IN_PROGRESS, 'AI generation is already in progress.');
