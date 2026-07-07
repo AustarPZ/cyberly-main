@@ -723,6 +723,15 @@
       "expandHistory": "Kembangkan sejarah",
       "openHistory": "Buka sejarah sembang",
       "closeHistory": "Tutup sejarah sembang",
+      "startResource": "Mulakan Sumber",
+      "startScenario": "Mulakan Senario",
+      "viewProgress": "Lihat Kemajuan",
+      "continueLearning": "Teruskan Pembelajaran",
+      "reviewRecommendation": "Semak Cadangan",
+      "openResources": "Buka Sumber",
+      "openScenarios": "Buka Senario",
+      "startAssessment": "Mulakan Penilaian",
+      "actionUnavailable": "Tindakan tidak tersedia",
       "rename": "Namakan semula",
       "delete": "Padam",
       "deleting": "Sedang memadam...",
@@ -760,6 +769,11 @@
       "failedTitle": "Balasan tidak dapat dijana.",
       "failedDescription": "CyberGuard tidak dapat menyediakan balasan. Cuba lagi sebentar lagi.",
       "retry": "Cuba balasan semula"
+    },
+    "actionCards": {
+      "groupLabel": "Cadangan tindakan pembelajaran",
+      "openAction": "Buka {{title}}",
+      "unavailable": "Tidak tersedia"
     },
     "migrationNotice": {
       "title": "Sejarah sembang kini disimpan ke akaun anda",

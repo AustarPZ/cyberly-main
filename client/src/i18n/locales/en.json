@@ -741,6 +741,15 @@
       "expandHistory": "Expand history",
       "openHistory": "Open chat history",
       "closeHistory": "Close chat history",
+      "startResource": "Start Resource",
+      "startScenario": "Start Scenario",
+      "viewProgress": "View Progress",
+      "continueLearning": "Continue Learning",
+      "reviewRecommendation": "Review Recommendation",
+      "openResources": "Open Resources",
+      "openScenarios": "Open Scenarios",
+      "startAssessment": "Start Assessment",
+      "actionUnavailable": "Action unavailable",
       "rename": "Rename",
       "delete": "Delete",
       "deleting": "Deleting...",
@@ -778,6 +787,11 @@
       "failedTitle": "Reply could not be generated.",
       "failedDescription": "CyberGuard could not prepare a reply. Try again shortly.",
       "retry": "Retry reply"
+    },
+    "actionCards": {
+      "groupLabel": "Suggested learning actions",
+      "openAction": "Open {{title}}",
+      "unavailable": "Unavailable"
     },
     "migrationNotice": {
       "title": "Chat history now saves to your account",

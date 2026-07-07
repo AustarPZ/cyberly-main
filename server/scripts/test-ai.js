@@ -169,12 +169,122 @@ async function createConversation(baseUrl, cookieHeader, content = 'How do I spo
   };
 }
 
+function assertSafeAction(action) {
+  assert.ok(Number.isInteger(action.id));
+  assert.ok(action.id > 0);
+  assert.ok(['resource', 'scenario', 'progress', 'assessment', 'resources', 'scenarios'].includes(action.type));
+  assert.equal(typeof action.labelKey, 'string');
+  assert.equal(action.labelKey.startsWith('chat.actions.'), true);
+  assert.ok(action.target && typeof action.target === 'object');
+  assert.ok(['resources', 'scenarios', 'progress', 'assessment'].includes(action.target.page));
+  assert.equal(Object.hasOwn(action.target, 'route'), false);
+  assert.equal(Object.hasOwn(action.target, 'url'), false);
+  assert.equal(Object.hasOwn(action.target, 'href'), false);
+  assert.equal(Object.hasOwn(action.target, 'providerRequestId'), false);
+  assert.ok(Number.isInteger(action.displayOrder));
+}
+
 async function addUserMessage(baseUrl, cookieHeader, conversationId, content) {
   const result = await request(baseUrl, 'POST', `/api/chat/conversations/${conversationId}/messages`, {
     content,
   }, cookieHeader);
   assert.equal(result.response.status, 201);
   return result.json.message;
+}
+
+async function seedLearnerContextEvidence(pool, userId) {
+  await pool.query(
+    `INSERT INTO learner_profiles (
+        user_id, ai_nickname, education_level, preferred_language, familiarity_level,
+        help_topics, learning_style, onboarding_completed, onboarding_completed_at, profile_last_confirmed_at
+     )
+     VALUES (?, 'Private Nickname', 'form_3', 'english', 'beginner', JSON_ARRAY('avoiding_scams'), 'step_by_step', TRUE, CURRENT_TIMESTAMP, CURRENT_TIMESTAMP)
+     ON DUPLICATE KEY UPDATE education_level = VALUES(education_level)`,
+    [userId]
+  );
+
+  const [[assessment]] = await pool.query(
+    "SELECT id FROM assessment_definitions WHERE slug = 'initial-cyber-wellness-v1' ORDER BY id LIMIT 1"
+  );
+  const [attempt] = await pool.query(
+    `INSERT INTO assessment_attempts (
+        user_id, assessment_id, status, total_score, maximum_score, percentage, measured_level, completed_at
+     )
+     VALUES (?, ?, 'completed', 6, 10, 60, 'developing', CURRENT_TIMESTAMP)`,
+    [userId, assessment.id]
+  );
+
+  const assessmentTopics = [
+    ['phishing_and_scams', 1, 4, 25],
+    ['password_and_account_security', 2, 4, 50],
+    ['privacy_and_personal_information', 2, 4, 50],
+    ['misinformation_and_deepfakes', 4, 4, 100],
+  ];
+  for (const topic of assessmentTopics) {
+    await pool.query(
+      `INSERT INTO assessment_topic_scores (attempt_id, topic_code, correct_count, total_count, percentage)
+       VALUES (?, ?, ?, ?, ?)`,
+      [attempt.insertId, ...topic]
+    );
+  }
+
+  const scenarioRows = [
+    ['phishing_and_scams', 20],
+    ['password_and_account_security', 50],
+    ['privacy_and_personal_information', 60],
+    ['misinformation_and_deepfakes', 100],
+  ];
+  for (const [topicCode, percentage] of scenarioRows) {
+    const [[scenario]] = await pool.query(
+      `SELECT id FROM scenario_definitions
+       WHERE topic_code = ?
+       ORDER BY id
+       LIMIT 1`,
+      [topicCode]
+    );
+    await pool.query(
+      `INSERT INTO scenario_attempts (
+          user_id, scenario_id, status, total_score, maximum_score, percentage, result_level, completed_at
+       )
+       VALUES (?, ?, 'completed', ?, 100, ?, 'developing', CURRENT_TIMESTAMP)`,
+      [userId, scenario.id, percentage, percentage]
+    );
+  }
+
+  await pool.query(
+    `INSERT INTO learner_progress_summary (
+        user_id, overall_mastery_percentage, measured_level, completed_topic_count, total_activity_count, last_progress_at
+     )
+     VALUES (?, 69, 'developing', 4, 5, CURRENT_TIMESTAMP)
+     ON DUPLICATE KEY UPDATE overall_mastery_percentage = VALUES(overall_mastery_percentage)`,
+    [userId]
+  );
+
+  for (const [topicCode, mastery] of [
+    ['phishing_and_scams', 30],
+    ['password_and_account_security', 48],
+    ['privacy_and_personal_information', 60],
+    ['misinformation_and_deepfakes', 100],
+  ]) {
+    await pool.query(
+      `INSERT INTO learner_topic_progress (
+          user_id, topic_code, current_level, mastery_percentage, source_type, source_reference_id, activity_count, last_activity_at
+       )
+       VALUES (?, ?, 'developing', ?, 'initial_assessment', ?, 1, CURRENT_TIMESTAMP)
+       ON DUPLICATE KEY UPDATE mastery_percentage = VALUES(mastery_percentage)`,
+      [userId, topicCode, mastery, attempt.insertId]
+    );
+  }
+
+  await pool.query(
+    `INSERT INTO learner_recommendations (
+        user_id, recommendation_type, topic_code, recommended_level, reason_code,
+        reason_text, source_type, source_reference_id, status
+     )
+     VALUES (?, 'review_topic', 'phishing_and_scams', 'developing', 'weak_topic',
+       'A good topic to strengthen next is phishing and scams.', 'initial_assessment', ?, 'active')`,
+    [userId, attempt.insertId]
+  );
 }
 
 async function generate(baseUrl, cookieHeader, conversationId, messageId, body = {}) {
@@ -222,7 +332,12 @@ async function run() {
       assert.equal(Number(result.json.generation.estimatedCostUsd) > 0, true);
       assert.equal(result.json.generation.durationMs >= 0, true);
       assert.equal(result.json.assistantMessage.content.includes('OPENAI_API_KEY'), false);
+      assert.equal(Array.isArray(result.json.actions), true);
+      assert.equal(result.json.actions.length > 0, true);
+      assert.equal(result.json.actions.length <= 3, true);
+      result.json.actions.forEach(assertSafeAction);
       const assistantId = result.json.assistantMessage.id;
+      const firstActionIds = result.json.actions.map(action => action.id);
 
       const [[assistantRow]] = await pool.query(
         'SELECT reply_to_message_id, locale FROM chat_messages WHERE id = ?',
@@ -235,11 +350,34 @@ async function run() {
       assert.equal(result.response.status, 200);
       assert.equal(result.json.assistantMessage.id, assistantId);
       assert.equal(result.json.assistantMessage.locale, 'ms');
+      assert.deepEqual(result.json.actions.map(action => action.id), firstActionIds);
       const [[assistantCount]] = await pool.query(
         "SELECT COUNT(*) AS count FROM chat_messages WHERE conversation_id = ? AND role = 'assistant'",
         [created.conversation.id]
       );
       assert.equal(assistantCount.count, 1);
+      const [[actionCount]] = await pool.query(
+        'SELECT COUNT(*) AS count FROM chat_message_actions WHERE message_id = ?',
+        [assistantId]
+      );
+      assert.equal(actionCount.count, firstActionIds.length);
+
+      const detail = await request(baseUrl, 'GET', `/api/chat/conversations/${created.conversation.id}`, undefined, userA.cookieHeader);
+      assert.equal(detail.response.status, 200);
+      assert.equal(Array.isArray(detail.json.actions), true);
+      const actionGroup = detail.json.actions.find(group => group.messageId === assistantId);
+      assert.ok(actionGroup);
+      assert.deepEqual(actionGroup.actions.map(action => action.id), firstActionIds);
+      actionGroup.actions.forEach(assertSafeAction);
+      await assert.rejects(
+        pool.query(
+          `INSERT INTO chat_message_actions (
+              conversation_id, message_id, action_type, label_key, target_json, display_order
+           )
+           VALUES (?, ?, 'external', 'chat.actions.bad', JSON_OBJECT('page', 'resources'), 99)`,
+          [created.conversation.id, assistantId]
+        )
+      );
 
       result = await generate(baseUrl, userB.cookieHeader, created.conversation.id, created.message.id);
       assert.equal(result.response.status, 404);
@@ -259,6 +397,7 @@ async function run() {
 
     await withServer({ OPENAI_API_KEY: 'test-key', AI_TEST_MOCK_OPENAI: 'context' }, async (baseUrl) => {
       const userA = await register(baseUrl, USER_A_EMAIL, 'Phase 8B2 A');
+      await seedLearnerContextEvidence(pool, userA.json.user.id);
       const created = await createConversation(baseUrl, userA.cookieHeader, 'Message 0', 'zh-CN');
       let lastMessage = created.message;
       for (let index = 1; index <= 15; index += 1) {
@@ -268,12 +407,92 @@ async function run() {
       const result = await generate(baseUrl, userA.cookieHeader, created.conversation.id, lastMessage.id, { locale: 'zh-CN' });
       assert.equal(result.response.status, 201);
       const content = result.json.assistantMessage.content;
+      assert.equal(Array.isArray(result.json.actions), true);
+      assert.equal(result.json.actions.length <= 3, true);
+      result.json.actions.forEach(assertSafeAction);
+      const resourceAction = result.json.actions.find(action => action.type === 'resource');
+      const scenarioAction = result.json.actions.find(action => action.type === 'scenario');
+      const progressAction = result.json.actions.find(action => action.type === 'progress');
+      assert.ok(resourceAction);
+      assert.ok(scenarioAction);
+      assert.ok(progressAction);
+      assert.equal(resourceAction.target.page, 'resources');
+      assert.equal(resourceAction.target.resourceSlug, 'phishing');
+      assert.equal(scenarioAction.target.page, 'scenarios');
+      assert.equal(typeof scenarioAction.target.scenarioSlug, 'string');
+      const [[completedPhishingScenario]] = await pool.query(
+        `SELECT sd.slug
+         FROM scenario_attempts sa
+         JOIN scenario_definitions sd ON sd.id = sa.scenario_id
+         WHERE sa.user_id = ?
+           AND sa.status = 'completed'
+           AND sd.topic_code = 'phishing_and_scams'
+         ORDER BY sd.id
+         LIMIT 1`,
+        [userA.json.user.id]
+      );
+      assert.notEqual(scenarioAction.target.scenarioSlug, completedPhishingScenario.slug);
+      assert.equal(progressAction.target.page, 'progress');
       assert.match(content, /locale=zh-CN/);
       assert.match(content, /ageBand=13-17/);
-      assert.match(content, /learnerKeys=ageBand,locale/);
+      assert.match(content, /learnerLevel=L3/);
+      assert.match(content, /confidence=Medium/);
+      assert.match(content, /schoolStage=Form 3/);
+      assert.match(content, /primaryFocus=phishing_and_scams/);
+      assert.match(content, /secondaryCount=2/);
+      assert.match(content, /recommendation=phishing_and_scams:developing:weak_topic/);
+      assert.match(content, /focusCount=3/);
+      assert.match(content, /nonJudgmental=true/);
+      assert.doesNotMatch(content, /phase8b2\.ai\.a@example\.com/);
+      assert.doesNotMatch(content, /Private Nickname/);
+      assert.doesNotMatch(content, /selectedOptionKey/);
       assert.match(content, /messageCount=12/);
       const chars = Number(content.match(/chars=(\d+)/)[1]);
       assert.equal(chars <= 8000, true);
+    });
+
+    await cleanup(pool);
+
+    await withServer({ OPENAI_API_KEY: 'test-key', AI_TEST_MOCK_OPENAI: 'context' }, async (baseUrl) => {
+      const userA = await register(baseUrl, USER_A_EMAIL, 'Phase 8B2 A');
+      await seedLearnerContextEvidence(pool, userA.json.user.id);
+      await pool.query(
+        `INSERT INTO scenario_attempts (
+            user_id, scenario_id, status, total_score, maximum_score, percentage, result_level, completed_at
+         )
+         SELECT ?, sd.id, 'completed', 80, 100, 80, 'proficient', CURRENT_TIMESTAMP
+         FROM scenario_definitions sd
+         WHERE sd.status = 'published'
+           AND sd.topic_code = 'phishing_and_scams'`,
+        [userA.json.user.id]
+      );
+
+      const created = await createConversation(baseUrl, userA.cookieHeader, 'I finished the phishing scenario. What should I do next?', 'en');
+      const result = await generate(baseUrl, userA.cookieHeader, created.conversation.id, created.message.id);
+      assert.equal(result.response.status, 201);
+      assert.equal(Array.isArray(result.json.actions), true);
+      assert.equal(result.json.actions.length <= 3, true);
+      result.json.actions.forEach(assertSafeAction);
+      assert.equal(result.json.actions.some(action => action.type === 'scenario'), false);
+      assert.equal(result.json.actions.some(action => action.type === 'scenarios'), true);
+    });
+
+    await cleanup(pool);
+
+    await withServer({ OPENAI_API_KEY: 'test-key', AI_TEST_MOCK_OPENAI: 'context' }, async (baseUrl) => {
+      const userA = await register(baseUrl, USER_A_EMAIL, 'Phase 8B2 A');
+      const created = await createConversation(baseUrl, userA.cookieHeader, 'Explain safe password habits.', 'en');
+      const result = await generate(baseUrl, userA.cookieHeader, created.conversation.id, created.message.id);
+      assert.equal(result.response.status, 201);
+      assert.equal(Array.isArray(result.json.actions), true);
+      assert.deepEqual(result.json.actions.map(action => action.type), ['assessment', 'resources', 'scenarios']);
+      result.json.actions.forEach(assertSafeAction);
+      const content = result.json.assistantMessage.content;
+      assert.match(content, /locale=en/);
+      assert.match(content, /ageBand=13-17/);
+      assert.match(content, /confidence=Low/);
+      assert.match(content, /primaryFocus=none/);
+      assert.doesNotMatch(content, /phase8b2\.ai\.a@example\.com/);
     });
 
     await cleanup(pool);
@@ -293,11 +512,18 @@ async function run() {
 
       result = await generate(baseUrl, userA.cookieHeader, created.conversation.id, created.message.id);
       assert.equal(result.response.status, 201);
+      assert.equal(Array.isArray(result.json.actions), true);
+      assert.equal(result.json.actions.length > 0, true);
       const [[assistantCount]] = await pool.query(
         "SELECT COUNT(*) AS count FROM chat_messages WHERE conversation_id = ? AND role = 'assistant'",
         [created.conversation.id]
       );
       assert.equal(assistantCount.count, 1);
+      const [[actionCount]] = await pool.query(
+        'SELECT COUNT(*) AS count FROM chat_message_actions WHERE message_id = ?',
+        [result.json.assistantMessage.id]
+      );
+      assert.equal(actionCount.count, result.json.actions.length);
     });
 
     await cleanup(pool);

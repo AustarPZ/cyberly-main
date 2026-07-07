@@ -17,6 +17,7 @@
   "dev:server": "npm --prefix server start",
   "dev:client": "npm --prefix client start",
   "build": "npm --prefix client run build",
+  "db:ensure": "npm --prefix server run db:ensure",
   "migrate": "npm --prefix server run migrate",
   "migrate:status": "npm --prefix server run migrate:status"
   },

@@ -15,6 +15,12 @@ import {
   listChatConversations,
   renameChatConversation,
 } from "./chat/chatApi";
+import {
+  attachActionGroupsToMessages,
+  getScenarioActionSlug,
+  resolveChatActionTarget,
+  withMessageActions,
+} from "./chat/chatActions";
 
 // ─── Design tokens ────────────────────────────────────────────────
 /*const COLORS = {
@@ -539,6 +545,40 @@ body {
 .chat-markdown th, .chat-markdown td { border: 1px solid rgba(0,0,0,0.12); padding: 0.4rem 0.5rem; text-align: left; }
 .chat-markdown th { background: rgba(29,158,117,0.08); }
 .chat-markdown a { color: #0d6b52; font-weight: 700; overflow-wrap: anywhere; }
+.chat-action-group {
+  align-self: flex-start; width: min(680px, 88%); display: grid; gap: 0.55rem;
+  margin: -0.25rem 0 0.35rem;
+}
+.chat-action-group.compact { width: 100%; }
+.chat-action-card {
+  background: #fff; border: 1px solid rgba(29,158,117,0.18); border-left: 3px solid var(--teal);
+  border-radius: 10px; padding: 0.7rem; display: grid; grid-template-columns: minmax(0, 1fr) auto;
+  gap: 0.65rem; align-items: center; box-shadow: 0 3px 12px rgba(0,0,0,0.045);
+}
+.chat-action-card.unavailable { opacity: 0.62; border-left-color: #aaa; }
+.chat-action-card-copy { min-width: 0; }
+.chat-action-card-kicker {
+  font-size: 0.68rem; color: var(--teal); font-weight: 800; text-transform: uppercase; margin-bottom: 0.18rem;
+}
+.chat-action-card-title {
+  font-size: 0.86rem; font-weight: 800; color: #1a1a18; line-height: 1.3; overflow-wrap: anywhere;
+}
+.chat-action-card-description {
+  margin-top: 0.22rem; color: #596861; font-size: 0.78rem; line-height: 1.45; overflow-wrap: anywhere;
+}
+.chat-action-card-button {
+  min-height: 44px; border: 1px solid rgba(29,158,117,0.28); background: var(--teal-lt); color: #0d6b52;
+  border-radius: 9px; padding: 0.5rem 0.72rem; font-size: 0.76rem; font-weight: 800; cursor: pointer;
+  white-space: nowrap;
+}
+.chat-action-card-button:hover, .chat-action-card-button:focus-visible {
+  outline: none; box-shadow: 0 0 0 3px rgba(29,158,117,0.16); background: #d4f0e6;
+}
+.chat-action-card-button:disabled { cursor: not-allowed; background: #f2f2f2; color: #777; border-color: rgba(0,0,0,0.12); }
+.chat-action-group.compact .chat-action-card {
+  grid-template-columns: 1fr; gap: 0.5rem; padding: 0.65rem;
+}
+.chat-action-group.compact .chat-action-card-button { width: 100%; white-space: normal; }
 .chat-status-notice {
   align-self: stretch; background: var(--teal-lt); color: #14684f;
   border: 1px solid rgba(29,158,117,0.24); border-radius: 8px;
@@ -591,6 +631,9 @@ body {
 .dashboard-chat-welcome .chat-empty-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.05rem; }
 @media (max-width: 560px) {
   .dashboard-cyberguard-heading .btn-ghost { width: 100%; }
+  .chat-action-group { width: 100%; }
+  .chat-action-card { grid-template-columns: 1fr; }
+  .chat-action-card-button { width: 100%; white-space: normal; }
 }
 .ai-chat-shell {
   max-width: 1440px; margin: 0 auto; padding: 1.25rem 1.5rem 1.5rem;
@@ -1008,6 +1051,10 @@ function mapServerMessage(message) {
   };
 }
 
+function mapServerMessagesWithActions(messages = [], actionGroups = []) {
+  return attachActionGroupsToMessages(messages.map(mapServerMessage), actionGroups);
+}
+
 const SAFE_AI_GENERATION_ERROR_CODES = new Set([
   "AI_NOT_CONFIGURED",
   "AI_PROVIDER_UNAVAILABLE",
@@ -1093,11 +1140,62 @@ function ChatMarkdown({ children }) {
   );
 }
 
+function translatedActionLabel(t, labelKey) {
+  const translated = t(labelKey, { defaultValue: "" });
+  if (translated && translated !== labelKey) return translated;
+  return t("chat.actions.continueLearning");
+}
+
+function ChatActionCard({ action, compact = false }) {
+  const { t } = useTranslation();
+  const { handleChatAction } = useApp();
+  const target = resolveChatActionTarget(action?.target);
+  const unavailable = !target;
+  const label = translatedActionLabel(t, action?.labelKey);
+  const title = action?.title || label;
+  const description = compact ? "" : action?.description;
+
+  return (
+    <div className={`chat-action-card${unavailable ? " unavailable" : ""}`}>
+      <div className="chat-action-card-copy">
+        <div className="chat-action-card-kicker">{label}</div>
+        <div className="chat-action-card-title">{title}</div>
+        {description && <div className="chat-action-card-description">{description}</div>}
+      </div>
+      <button
+        type="button"
+        className="chat-action-card-button"
+        onClick={() => target && handleChatAction({ ...action, target })}
+        disabled={unavailable}
+        aria-label={unavailable
+          ? t("chat.actionCards.unavailable")
+          : t("chat.actionCards.openAction", { title })}
+      >
+        {unavailable ? t("chat.actionCards.unavailable") : label}
+      </button>
+    </div>
+  );
+}
+
+function ChatActionGroup({ actions = [], compact = false }) {
+  const { t } = useTranslation();
+  const visibleActions = Array.isArray(actions) ? actions : [];
+  if (!visibleActions.length) return null;
+
+  return (
+    <div className={`chat-action-group${compact ? " compact" : ""}`} role="group" aria-label={t("chat.actionCards.groupLabel")}>
+      {visibleActions.map(action => (
+        <ChatActionCard key={action.id} action={action} compact={compact} />
+      ))}
+    </div>
+  );
+}
+
 function mergeMessageById(messages, nextMessage) {
   if (!nextMessage?.id) return messages;
   const exists = messages.some(message => message.id === nextMessage.id);
   if (exists) {
-    return messages.map(message => message.id === nextMessage.id ? nextMessage : message);
+    return messages.map(message => message.id === nextMessage.id ? { ...message, ...nextMessage } : message);
   }
   return [...messages, nextMessage];
 }
@@ -1213,7 +1311,7 @@ function ChatProvider({ user, children }) {
       return false;
     }
 
-    const loadedMessages = (result.messages || []).map(mapServerMessage);
+    const loadedMessages = mapServerMessagesWithActions(result.messages || [], result.actions || []);
     const recoveredGenerations = recoveredGenerationState(result.generations || [], loadedMessages);
 
     if (activeConversationIdRef.current === conversationId) {
@@ -1395,7 +1493,7 @@ function ChatProvider({ user, children }) {
 
     const conversation = mapServerConversation(result.conversation);
     const userMessage = mapServerMessage(result.userMessage);
-    const assistantMessage = mapServerMessage(result.assistantMessage);
+    const assistantMessage = withMessageActions(mapServerMessage(result.assistantMessage), result.actions || []);
 
     setConversations(current => {
       if (!current.some(item => item.id === conversation.id)) return current;
@@ -4067,6 +4165,9 @@ function ChatMessageList({ className = "chat-messages", emptyCompact = false }) 
                     </div>
                   ) : message.text}
                 </div>
+                {message.role === "ai" && (
+                  <ChatActionGroup actions={message.actions || []} compact={emptyCompact} />
+                )}
                 {generation?.status === "generating" && (
                   <div className="chat-status-notice generating" role="status" aria-live="polite">
                     <span className="chat-status-spinner" aria-hidden="true" />
@@ -4218,11 +4319,17 @@ const TOPIC_COLORS = {
 
 function ResourcesPage() {
   const { t, i18n: activeI18n } = useTranslation();
-  const { resourceFocusTopic, clearResourceFocus } = useApp();
+  const {
+    resourceFocusTopic,
+    clearResourceFocus,
+    pendingResourceTarget,
+    clearPendingResourceTarget,
+  } = useApp();
   const resourceLocale = normalizeLocale(activeI18n.language);
   const [resourceState, setResourceState] = useState({ loading: true, resources: [] });
   const [selected, setSelected]   = useState(null);
   const [filter,   setFilter]     = useState("All");
+  const resourceModalRef = useRef(null);
   const topic = resourceState.resources.find(resource => resource.slug === selected);
 
   const categories = ["All", ...Array.from(new Set(resourceState.resources.map(resource => resource.categoryCode)))];
@@ -4237,6 +4344,24 @@ function ResourcesPage() {
       setFilter(focusedCategory);
     }
   }, [focusedCategory, resourceState.resources]);
+
+  useEffect(() => {
+    if (!pendingResourceTarget || resourceState.loading) return;
+    const target = resourceState.resources.find(resource => (
+      (pendingResourceTarget.resourceSlug && resource.slug === pendingResourceTarget.resourceSlug) ||
+      (pendingResourceTarget.resourceId && Number(resource.id) === Number(pendingResourceTarget.resourceId))
+    ));
+    if (target) {
+      setSelected(target.slug);
+      setFilter(target.categoryCode || "All");
+    }
+    clearPendingResourceTarget();
+  }, [pendingResourceTarget, resourceState.loading, resourceState.resources, clearPendingResourceTarget]);
+
+  useEffect(() => {
+    if (!selected) return;
+    window.setTimeout(() => resourceModalRef.current?.focus?.(), 0);
+  }, [selected]);
 
   useEffect(() => {
     let active = true;
@@ -4405,7 +4530,12 @@ function ResourcesPage() {
           }}
         >
           <div
+            ref={resourceModalRef}
             onClick={e => e.stopPropagation()}
+            role="dialog"
+            aria-modal="true"
+            aria-labelledby="resource-detail-title"
+            tabIndex={-1}
             style={{
               background: "#fff", borderRadius: 18, maxWidth: 660, width: "100%",
               maxHeight: "85vh", overflowY: "auto", padding: "2.5rem",
@@ -4437,7 +4567,7 @@ function ResourcesPage() {
               );
             })()}
 
-            <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.4rem", fontWeight: 600, marginBottom: "1.25rem", color: "#1a1a18" }}>
+            <h2 id="resource-detail-title" style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.4rem", fontWeight: 600, marginBottom: "1.25rem", color: "#1a1a18" }}>
               {topic.title}
             </h2>
 
@@ -4975,7 +5105,13 @@ function AssessmentPage() {
 // ─── Page: Scenarios ──────────────────────────────────────────────
 function ScenariosPage() {
   const { t, i18n: activeI18n } = useTranslation();
-  const { user, go, registerActivityGuard } = useApp();
+  const {
+    user,
+    go,
+    registerActivityGuard,
+    pendingScenarioTarget,
+    clearPendingScenarioTarget,
+  } = useApp();
   const scenarioLocale = normalizeLocale(activeI18n.language);
   const [filters, setFilters] = useState({ topicCode: "", difficulty: "" });
   const [library, setLibrary] = useState({ loading: true, scenarios: [], recommended: [] });
@@ -4984,6 +5120,7 @@ function ScenariosPage() {
   const [decisionFeedback, setDecisionFeedback] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const scenarioIntroRef = useRef(null);
 
   useEffect(() => {
     let active = true;
@@ -5032,6 +5169,48 @@ function ScenariosPage() {
       description: t("scenarios.leaveDescription"),
     });
   }, [view.mode, view.attempt, registerActivityGuard, t]);
+
+  useEffect(() => {
+    if (!user || !pendingScenarioTarget || library.loading) return;
+    if (!pendingScenarioTarget.scenarioSlug && (filters.topicCode || filters.difficulty)) {
+      setFilters({ topicCode: "", difficulty: "" });
+      return;
+    }
+    const scenarioSlug = getScenarioActionSlug(pendingScenarioTarget, library.scenarios);
+    if (!scenarioSlug) {
+      clearPendingScenarioTarget();
+      return;
+    }
+
+    let active = true;
+    setBusy(true);
+    setError(null);
+    dbGetScenario(scenarioSlug, scenarioLocale).then(result => {
+      if (!active) return;
+      setBusy(false);
+      if (result.ok) {
+        setView({ mode: "intro", scenario: result.scenario, firstStep: result.firstStep });
+      } else {
+        setError(result.error);
+      }
+      clearPendingScenarioTarget();
+    });
+    return () => { active = false; };
+  }, [
+    user,
+    pendingScenarioTarget,
+    library.loading,
+    library.scenarios,
+    filters.topicCode,
+    filters.difficulty,
+    scenarioLocale,
+    clearPendingScenarioTarget,
+  ]);
+
+  useEffect(() => {
+    if (view.mode !== "intro") return;
+    window.setTimeout(() => scenarioIntroRef.current?.focus?.(), 0);
+  }, [view.mode, view.scenario?.slug]);
 
   if (!user) { go("login"); return null; }
 
@@ -5094,6 +5273,31 @@ function ScenariosPage() {
     await completeScenario();
   }
 
+  function syncCompletedScenarioInLibrary(result) {
+    const scenarioId = Number(result?.scenario?.id || view.scenario?.id);
+    const attempt = result?.attempt;
+    if (!scenarioId || !attempt?.id) return;
+    const latestAttempt = {
+      id: attempt.id,
+      status: attempt.status,
+      resultLevel: attempt.resultLevel,
+      percentage: attempt.percentage,
+    };
+    setLibrary(current => ({
+      ...current,
+      scenarios: current.scenarios.map(scenario => (
+        Number(scenario.id) === scenarioId
+          ? { ...scenario, latestAttempt }
+          : scenario
+      )),
+      recommended: current.recommended.map(scenario => (
+        Number(scenario.id) === scenarioId
+          ? { ...scenario, latestAttempt }
+          : scenario
+      )),
+    }));
+  }
+
   async function completeScenario() {
     if (busy) return;
     setBusy(true);
@@ -5101,6 +5305,7 @@ function ScenariosPage() {
     const result = await dbCompleteScenario(view.attempt.id, scenarioLocale);
     setBusy(false);
     if (!result.ok) return setError(result.error);
+    syncCompletedScenarioInLibrary(result.result);
     setView({ mode: "result", ...result.result });
   }
 
@@ -5180,7 +5385,7 @@ function ScenariosPage() {
   function renderIntro() {
     const scenario = view.scenario;
     return (
-      <div className="card" style={{ maxWidth: 760, margin: "0 auto" }}>
+      <div className="card" ref={scenarioIntroRef} tabIndex={-1} style={{ maxWidth: 760, margin: "0 auto" }}>
         <button className="btn-ghost" onClick={() => setView({ mode: "library" })} style={{ marginBottom: "1rem" }}>{t("common.back")}</button>
         <div style={{ color: "#2E7D32", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.35rem" }}>{t(`topics.${scenario.topicCode}`, { defaultValue: topicLabel(scenario.topicCode) })}</div>
         <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", marginBottom: "0.5rem" }}>{scenario.title}</h2>
@@ -6228,7 +6433,13 @@ function ProfilePage() {
 // ─── Page: Progress ──────────────────────────────────────────────
 function ProgressPage() {
   const { t, i18n: activeI18n } = useTranslation();
-  const { user, go, openRecommendedResource } = useApp();
+  const {
+    user,
+    go,
+    openRecommendedResource,
+    pendingProgressSection,
+    clearPendingProgressSection,
+  } = useApp();
   const progressLocale = normalizeLocale(activeI18n.language);
   const [progressState, setProgressState] = useState({ loading: true, progress: null });
   const [recommendationState, setRecommendationState] = useState({ loading: true, recommendation: null });
@@ -6298,6 +6509,34 @@ function ProgressPage() {
     sections.forEach(section => observer.observe(section));
     return () => observer.disconnect();
   }, [activeProgressSection, hasMeasuredTopicSections, hasRecommendationSection]);
+
+  useEffect(() => {
+    if (!pendingProgressSection) return;
+    const validSectionIds = progressSections.map(section => section.id);
+    if (!validSectionIds.includes(pendingProgressSection)) {
+      if (!progressState.loading && !recommendationState.loading) clearPendingProgressSection();
+      return;
+    }
+
+    window.setTimeout(() => {
+      const target = document.getElementById(pendingProgressSection);
+      if (target) {
+        target.setAttribute("tabindex", "-1");
+        target.scrollIntoView({
+          behavior: prefersReducedMotion() ? "auto" : "smooth",
+          block: "start",
+        });
+        target.focus({ preventScroll: true });
+      }
+      clearPendingProgressSection();
+    }, 0);
+  }, [
+    pendingProgressSection,
+    progressSections,
+    progressState.loading,
+    recommendationState.loading,
+    clearPendingProgressSection,
+  ]);
 
   if (!user) { go("login"); return null; }
 
@@ -7625,6 +7864,9 @@ export default function App() {
   const [user, setUser] = useState(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [resourceFocusTopic, setResourceFocusTopic] = useState(null);
+  const [pendingResourceTarget, setPendingResourceTarget] = useState(null);
+  const [pendingScenarioTarget, setPendingScenarioTarget] = useState(null);
+  const [pendingProgressSection, setPendingProgressSection] = useState(null);
   const [authMode, setAuthMode] = useState("login");
   const [activityGuard, setActivityGuard] = useState(null);
   const [pendingNavigation, setPendingNavigation] = useState(null);
@@ -7781,6 +8023,9 @@ export default function App() {
     await dbLogout();
     setUser(null);
     setResourceFocusTopic(null);
+    setPendingResourceTarget(null);
+    setPendingScenarioTarget(null);
+    setPendingProgressSection(null);
     setActivityGuard(null);
     setPendingNavigation(null);
     setPage("home");
@@ -7788,6 +8033,7 @@ export default function App() {
   }
   function openRecommendedResource(topicCode) {
     setResourceFocusTopic(topicCode);
+    setPendingResourceTarget(null);
     go("resources");
   }
   function openAuth(mode = "login") {
@@ -7796,7 +8042,12 @@ export default function App() {
     go("login");
   }
   function completeNavigation(nextPage, replace = false) {
-    if (nextPage !== "resources") setResourceFocusTopic(null);
+    if (nextPage !== "resources") {
+      setResourceFocusTopic(null);
+      setPendingResourceTarget(null);
+    }
+    if (nextPage !== "scenarios") setPendingScenarioTarget(null);
+    if (nextPage !== "progress") setPendingProgressSection(null);
     if (nextPage === "login") setAuthMode("login");
     const safePage = VALID_PAGES.has(nextPage) ? nextPage : "home";
     if (!user && PROTECTED_PAGES.has(safePage)) {
@@ -7814,6 +8065,42 @@ export default function App() {
       return;
     }
     completeNavigation(safePage, options.replace);
+  }
+  function handleChatAction(action) {
+    const target = resolveChatActionTarget(action?.target);
+    if (!target) return false;
+
+    if (target.page === "resources") {
+      setResourceFocusTopic(null);
+      setPendingResourceTarget({
+        resourceId: target.resourceId ? Number(target.resourceId) : null,
+        resourceSlug: target.resourceSlug || null,
+      });
+      go("resources");
+      return true;
+    }
+
+    if (target.page === "scenarios") {
+      setPendingScenarioTarget({
+        scenarioId: target.scenarioId ? Number(target.scenarioId) : null,
+        scenarioSlug: target.scenarioSlug || null,
+      });
+      go("scenarios");
+      return true;
+    }
+
+    if (target.page === "progress") {
+      setPendingProgressSection(target.sectionId || null);
+      go("progress");
+      return true;
+    }
+
+    if (target.page === "assessment") {
+      go("assessment");
+      return true;
+    }
+
+    return false;
   }
   const registerActivityGuard = useCallback((guard) => {
     setActivityGuard(guard);
@@ -7843,8 +8130,15 @@ export default function App() {
     updateProfile,
     updateAccount,
     resourceFocusTopic,
+    pendingResourceTarget,
+    pendingScenarioTarget,
+    pendingProgressSection,
     openRecommendedResource,
     clearResourceFocus: () => setResourceFocusTopic(null),
+    clearPendingResourceTarget: () => setPendingResourceTarget(null),
+    clearPendingScenarioTarget: () => setPendingScenarioTarget(null),
+    clearPendingProgressSection: () => setPendingProgressSection(null),
+    handleChatAction,
     registerActivityGuard,
   };
 

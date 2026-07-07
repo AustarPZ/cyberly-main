@@ -17,7 +17,7 @@
 - `server/src/progress/`: progress routes, service, repository, deterministic recommendation rules, and response mapping.
 - `server/src/scenario/`: scenario routes, service, repository, scoring, validation, and response mapping.
 - `src/` and root `public/`: legacy React frontend retained for reference only.
-- MySQL database: `cyberwell`.
+- MySQL database: `cyberly`.
 
 ## Official Frontend Decision
 
@@ -41,7 +41,7 @@ The backend currently attempts to connect to:
 
 - host: `localhost`
 - user: `root`
-- database: `cyberwell`
+- database: `cyberly`
 - password: loaded from `process.env.DB_PASSWORD`
 
 ## Current Integration Gaps
@@ -58,7 +58,7 @@ The backend currently attempts to connect to:
 
 Server startup was verified after local `server/.env` was created. Dotenv loads environment variables without exposing values, Express starts on port `5000`, and MySQL connects successfully.
 
-Read-only verification using `SELECT DATABASE()` confirmed the selected database is `cyberwell`.
+Read-only verification should use `SELECT DATABASE()` to confirm the selected database is `cyberly` for fresh local setup.
 
 ## Verified Frontend Build Status
 

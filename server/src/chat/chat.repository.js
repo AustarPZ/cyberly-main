@@ -114,6 +114,28 @@ function createChatRepository(pool) {
     return rows;
   }
 
+  async function listActionsForMessageIds(messageIds, connection) {
+    const ids = messageIds.map(Number).filter(Number.isInteger);
+    if (!ids.length) return [];
+    const [rows] = await db(connection).query(
+      `SELECT id,
+              conversation_id,
+              message_id,
+              action_type,
+              label_key,
+              title,
+              description,
+              target_json,
+              display_order,
+              created_at
+       FROM chat_message_actions
+       WHERE message_id IN (?)
+       ORDER BY message_id, display_order, id`,
+      [ids]
+    );
+    return rows;
+  }
+
   async function insertMessage(conversationId, message, connection) {
     const [result] = await db(connection).query(
       `INSERT INTO chat_messages (conversation_id, role, content, locale)
@@ -150,6 +172,7 @@ function createChatRepository(pool) {
     deleteConversation,
     findConversation,
     insertMessage,
+    listActionsForMessageIds,
     listConversations,
     listGenerationStates,
     listMessages,

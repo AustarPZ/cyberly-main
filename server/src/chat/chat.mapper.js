@@ -66,7 +66,58 @@ function mapGenerationState(row, options = {}) {
   };
 }
 
+const ALLOWED_TARGET_FIELDS = new Set([
+  'page',
+  'resourceId',
+  'resourceSlug',
+  'scenarioId',
+  'scenarioSlug',
+  'sectionId',
+]);
+
+const ALLOWED_TARGET_PAGES = new Set(['resources', 'scenarios', 'progress', 'assessment']);
+
+function parseTarget(value) {
+  if (!value) return null;
+  if (typeof value === 'object') return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return null;
+  }
+}
+
+function safeTarget(value) {
+  const parsed = parseTarget(value);
+  if (!parsed || typeof parsed !== 'object') return null;
+  if (!ALLOWED_TARGET_PAGES.has(parsed.page)) return null;
+
+  const target = {};
+  for (const [key, item] of Object.entries(parsed)) {
+    if (!ALLOWED_TARGET_FIELDS.has(key)) continue;
+    target[key] = item;
+  }
+  return target.page ? target : null;
+}
+
+function mapAction(row) {
+  if (!row) return null;
+  const target = safeTarget(row.target_json);
+  if (!target) return null;
+
+  return {
+    id: row.id,
+    type: row.action_type,
+    labelKey: row.label_key,
+    title: row.title || null,
+    description: row.description || null,
+    target,
+    displayOrder: Number(row.display_order || 0),
+  };
+}
+
 module.exports = {
+  mapAction,
   mapGenerationState,
   mapConversation,
   mapMessage,

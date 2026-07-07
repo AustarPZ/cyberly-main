@@ -9,6 +9,34 @@ const CONVERSATION_COLUMNS = `
   COUNT(m.id) AS message_count
 `;
 
+const ALLOWED_ACTION_TYPES = new Set(['resource', 'scenario', 'progress', 'assessment', 'resources', 'scenarios']);
+const ALLOWED_TARGET_FIELDS = new Set(['page', 'resourceId', 'resourceSlug', 'scenarioId', 'scenarioSlug', 'sectionId']);
+const ALLOWED_TARGET_PAGES = new Set(['resources', 'scenarios', 'progress', 'assessment']);
+
+function sanitizeAction(action) {
+  if (!action || !ALLOWED_ACTION_TYPES.has(action.type)) {
+    throw new Error('Invalid chat action type.');
+  }
+  if (!action.target || !ALLOWED_TARGET_PAGES.has(action.target.page)) {
+    throw new Error('Invalid chat action target.');
+  }
+
+  const target = {};
+  for (const [key, value] of Object.entries(action.target)) {
+    if (ALLOWED_TARGET_FIELDS.has(key)) target[key] = value;
+  }
+  if (!target.page) throw new Error('Invalid chat action target.');
+
+  return {
+    type: action.type,
+    labelKey: String(action.labelKey || '').slice(0, 120),
+    title: action.title ? String(action.title).slice(0, 255) : null,
+    description: action.description ? String(action.description) : null,
+    target,
+    displayOrder: Number(action.displayOrder || 0),
+  };
+}
+
 function createAiRepository(pool) {
   function db(connection) {
     return connection || pool;
@@ -49,6 +77,130 @@ function createAiRepository(pool) {
       [conversationId, limit]
     );
     return rows.reverse();
+  }
+
+  async function loadLearnerContextData(userId, connection) {
+    const [profiles] = await db(connection).query(
+      `SELECT education_level
+       FROM learner_profiles
+       WHERE user_id = ?
+       LIMIT 1`,
+      [userId]
+    );
+
+    const [assessments] = await db(connection).query(
+      `SELECT aa.id, aa.percentage, aa.measured_level, aa.completed_at
+       FROM assessment_attempts aa
+       JOIN assessment_definitions ad ON ad.id = aa.assessment_id
+       WHERE aa.user_id = ?
+         AND aa.status = 'completed'
+         AND ad.slug = 'initial-cyber-wellness-v1'
+       ORDER BY aa.completed_at DESC, aa.id DESC
+       LIMIT 1`,
+      [userId]
+    );
+    const assessment = assessments[0] || null;
+
+    let assessmentTopicScores = [];
+    if (assessment) {
+      [assessmentTopicScores] = await db(connection).query(
+        `SELECT topic_code, percentage
+         FROM assessment_topic_scores
+         WHERE attempt_id = ?
+         ORDER BY topic_code`,
+        [assessment.id]
+      );
+    }
+
+    const [scenarios] = await db(connection).query(
+      `SELECT sd.topic_code, sa.percentage, sa.result_level, sa.completed_at
+       FROM scenario_attempts sa
+       JOIN scenario_definitions sd ON sd.id = sa.scenario_id
+       WHERE sa.user_id = ?
+         AND sa.status = 'completed'
+         AND sa.percentage IS NOT NULL
+       ORDER BY sa.completed_at DESC, sa.id DESC
+       LIMIT 12`,
+      [userId]
+    );
+
+    const [topicProgress] = await db(connection).query(
+      `SELECT topic_code, mastery_percentage, current_level, activity_count
+       FROM learner_topic_progress
+       WHERE user_id = ?
+       ORDER BY topic_code`,
+      [userId]
+    );
+
+    const [recommendations] = await db(connection).query(
+      `SELECT topic_code, recommended_level, reason_code
+       FROM learner_recommendations
+       WHERE user_id = ?
+         AND status IN ('active', 'viewed')
+       ORDER BY generated_at DESC, id DESC
+       LIMIT 1`,
+      [userId]
+    );
+
+    return {
+      profile: profiles[0] || null,
+      assessment,
+      assessmentTopicScores,
+      scenarios,
+      topicProgress,
+      recommendation: recommendations[0] || null,
+    };
+  }
+
+  async function loadLearningActionData(userId, locale, connection) {
+    const [resources] = await db(connection).query(
+      `SELECT ra.id,
+              ra.slug,
+              ra.category_code,
+              ra.display_order,
+              COALESCE(requested.title, english.title) AS title,
+              COALESCE(requested.summary, english.summary) AS summary
+       FROM resource_articles ra
+       LEFT JOIN resource_article_translations requested
+         ON requested.resource_id = ra.id AND requested.locale = ?
+       JOIN resource_article_translations english
+         ON english.resource_id = ra.id AND english.locale = 'en'
+       WHERE ra.status = 'published'
+       ORDER BY ra.display_order, ra.id`,
+      [locale]
+    );
+
+    const [scenarios] = await db(connection).query(
+      `SELECT sd.id,
+              sd.slug,
+              sd.topic_code,
+              sd.difficulty,
+              COALESCE(completed.completed_count, 0) AS completed_count,
+              COALESCE(requested.title, english.title, sd.title) AS title,
+              COALESCE(requested.summary, english.summary, sd.summary) AS summary
+       FROM scenario_definitions sd
+       LEFT JOIN scenario_definition_translations requested
+         ON requested.scenario_id = sd.id AND requested.locale = ?
+       LEFT JOIN scenario_definition_translations english
+         ON english.scenario_id = sd.id AND english.locale = 'en'
+       LEFT JOIN (
+         SELECT scenario_id, COUNT(*) AS completed_count
+         FROM scenario_attempts
+         WHERE user_id = ?
+           AND status = 'completed'
+         GROUP BY scenario_id
+       ) completed ON completed.scenario_id = sd.id
+       WHERE sd.status = 'published'
+       ORDER BY FIELD(sd.topic_code,
+          'phishing_and_scams',
+          'password_and_account_security',
+          'privacy_and_personal_information',
+          'misinformation_and_deepfakes'
+       ), FIELD(sd.difficulty, 'beginner', 'developing', 'intermediate', 'advanced'), sd.id`,
+      [locale, userId]
+    );
+
+    return { resources, scenarios };
   }
 
   async function findGenerationByUserMessage(userMessageId, connection) {
@@ -118,6 +270,66 @@ function createAiRepository(pool) {
       [messageId]
     );
     return rows[0] || null;
+  }
+
+  async function insertMessageActions(conversationId, messageId, actions, connection) {
+    if (!actions.length) return [];
+    const safeActions = actions.map(sanitizeAction);
+    await db(connection).query(
+      `DELETE FROM chat_message_actions
+       WHERE message_id = ?`,
+      [messageId]
+    );
+
+    const values = safeActions.map(action => [
+      conversationId,
+      messageId,
+      action.type,
+      action.labelKey,
+      action.title,
+      action.description,
+      JSON.stringify(action.target),
+      action.displayOrder,
+    ]);
+
+    await db(connection).query(
+      `INSERT INTO chat_message_actions (
+          conversation_id,
+          message_id,
+          action_type,
+          label_key,
+          title,
+          description,
+          target_json,
+          display_order
+       )
+       VALUES ?`,
+      [values]
+    );
+
+    return listActionsForMessageIds([messageId], connection);
+  }
+
+  async function listActionsForMessageIds(messageIds, connection) {
+    const ids = messageIds.map(Number).filter(Number.isInteger);
+    if (!ids.length) return [];
+    const [rows] = await db(connection).query(
+      `SELECT id,
+              conversation_id,
+              message_id,
+              action_type,
+              label_key,
+              title,
+              description,
+              target_json,
+              display_order,
+              created_at
+       FROM chat_message_actions
+       WHERE message_id IN (?)
+       ORDER BY message_id, display_order, id`,
+      [ids]
+    );
+    return rows;
   }
 
   async function completeGeneration(userId, generation, assistant, usage, connection) {
@@ -218,6 +430,10 @@ function createAiRepository(pool) {
     findConversationForUser,
     findGenerationByUserMessage,
     findMessage,
+    insertMessageActions,
+    loadLearnerContextData,
+    loadLearningActionData,
+    listActionsForMessageIds,
     listLatestMessages,
     markGenerationFailed,
     markGenerationInProgress,

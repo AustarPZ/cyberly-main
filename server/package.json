@@ -13,7 +13,9 @@
     "test:ai": "node scripts/test-ai.js",
     "test:progress": "node scripts/test-progress.js",
     "test:scenario": "node scripts/test-scenario.js",
+    "test:migrations": "node scripts/test-migrations.js",
     "start": "node server.js",
+    "db:ensure": "node scripts/db-ensure.js",
     "migrate": "node scripts/migrate.js",
     "migrate:status": "node scripts/migrate.js --status"
   },

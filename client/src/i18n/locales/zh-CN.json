@@ -723,6 +723,15 @@
       "expandHistory": "展开历史",
       "openHistory": "打开聊天历史",
       "closeHistory": "关闭聊天历史",
+      "startResource": "开始资源",
+      "startScenario": "开始情境练习",
+      "viewProgress": "查看进度",
+      "continueLearning": "继续学习",
+      "reviewRecommendation": "查看推荐",
+      "openResources": "打开资源",
+      "openScenarios": "打开情境练习",
+      "startAssessment": "开始评估",
+      "actionUnavailable": "操作不可用",
       "rename": "重命名",
       "delete": "删除",
       "deleting": "正在删除...",
@@ -760,6 +769,11 @@
       "failedTitle": "无法生成回复。",
       "failedDescription": "CyberGuard 无法准备回复。请稍后再试。",
       "retry": "重试回复"
+    },
+    "actionCards": {
+      "groupLabel": "建议的学习行动",
+      "openAction": "打开 {{title}}",
+      "unavailable": "不可用"
     },
     "migrationNotice": {
       "title": "聊天历史现在会保存到你的账号",

@@ -1,13 +1,14 @@
 const { ERROR_CODES } = require('../errors/errorCodes');
 const { normalizeLocale } = require('../i18n/locale');
-const { mapConversation, mapMessage } = require('../chat/chat.mapper');
+const { mapAction, mapConversation, mapMessage } = require('../chat/chat.mapper');
 const { validatePositiveId } = require('../chat/chat.validation');
 const { estimateCostUsd } = require('./ai.config');
 const {
   buildCyberGuardSystemPrompt,
-  createLearnerContext,
   limitConversationMessages,
 } = require('./ai.prompts');
+const { buildLearnerContext } = require('./ai.learnerContext');
+const { buildLearningActions } = require('./ai.learningActions');
 const { isUnsafeUserRequest, validateProviderOutput } = require('./ai.safety');
 
 const minuteBuckets = new Map();
@@ -121,6 +122,9 @@ function createAiService(repository, provider, config) {
   async function completedResponse(userId, generation, userMessage) {
     const assistantMessage = await repository.findAssistantMessage(generation.assistant_message_id);
     const conversation = await repository.findConversationForUser(userId, generation.conversation_id);
+    const actionRows = assistantMessage
+      ? await repository.listActionsForMessageIds([assistantMessage.id])
+      : [];
     return {
       statusCode: 200,
       body: {
@@ -128,6 +132,7 @@ function createAiService(repository, provider, config) {
         userMessage: mapMessage(userMessage),
         assistantMessage: mapMessage(assistantMessage),
         generation: mapGeneration(generation),
+        actions: actionRows.map(mapAction).filter(Boolean),
       },
     };
   }
@@ -184,7 +189,11 @@ function createAiService(repository, provider, config) {
     try {
       generation = await repository.markGenerationInProgress(generation.id);
       const locale = normalizeLocale(input.locale || target.conversation.locale);
-      const learnerContext = createLearnerContext(locale);
+      const learnerContext = buildLearnerContext({
+        locale,
+        data: await repository.loadLearnerContextData(userId),
+      });
+      const actionData = await repository.loadLearningActionData(userId, locale);
       const allMessages = await repository.listLatestMessages(
         target.conversationId,
         config.contextMessageLimit
@@ -227,6 +236,25 @@ function createAiService(repository, provider, config) {
         await repository.markGenerationFailed(generation.id, ERROR_CODES.AI_ASSISTANT_PERSISTENCE_FAILED, durationMs);
         throw httpError(503, ERROR_CODES.AI_ASSISTANT_PERSISTENCE_FAILED, 'Assistant reply could not be saved.');
       }
+      const proposedActions = buildLearningActions({
+        learnerContext,
+        resources: actionData.resources,
+        scenarios: actionData.scenarios,
+      });
+      let actions = [];
+      try {
+        const actionRows = await repository.insertMessageActions(
+          completed.assistantMessage.conversation_id,
+          completed.assistantMessage.id,
+          proposedActions
+        );
+        actions = actionRows.map(mapAction).filter(Boolean);
+      } catch (error) {
+        console.warn('Chat action persistence failed:', {
+          conversationId: completed.assistantMessage.conversation_id,
+          messageId: completed.assistantMessage.id,
+        });
+      }
 
       return {
         statusCode: 201,
@@ -235,6 +263,7 @@ function createAiService(repository, provider, config) {
           userMessage: mapMessage(target.userMessage),
           assistantMessage: mapMessage(completed.assistantMessage),
           generation: mapGeneration(completed.generation),
+          actions,
         },
       };
     } catch (error) {

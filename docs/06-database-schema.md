@@ -2,7 +2,7 @@
 
 ## Current Database
 
-- Database name: `cyberwell`
+- Database name: `cyberly`
 - Database engine: MySQL 8.0 local development server
 - ORM: none
 

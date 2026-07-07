@@ -7,13 +7,14 @@ Cyberly is an AI-powered cyber wellness toolkit prototype for Malaysian teenager
 - `client/` is the official frontend and should be used for all new frontend work.
 - `server/` is the Express backend.
 - `src/` and root `public/` are a legacy React frontend and must not be extended.
-- `cyberwell` is the current local MySQL development database.
+- `cyberly` is the default local MySQL development database.
 
 ## Local Requirements
 
 - Node.js: verified locally with `v24.13.0`
 - npm: verified locally with `11.6.2`
 - MySQL Server must be running before starting the backend.
+  MySQL 8.0 is the expected development target.
 
 ## Environment Files
 
@@ -23,6 +24,51 @@ Use the templates below and create local `.env` files as needed:
 - `server/.env.example`
 
 Do not commit real `.env` files or secrets.
+
+PowerShell setup:
+
+```powershell
+Copy-Item client\.env.example client\.env
+Copy-Item server\.env.example server\.env
+```
+
+Set the values in `server\.env` for your local MySQL user. The default database name is:
+
+```env
+DB_NAME=cyberly
+```
+
+`OPENAI_API_KEY` is optional for normal setup. If it is empty, AI generation returns a safe not-configured error instead of crashing startup.
+
+## Install Dependencies
+
+```powershell
+npm install
+npm --prefix client install
+npm --prefix server install
+```
+
+## Database Setup
+
+Preferred setup creates the configured database if it does not exist, then applies migrations:
+
+```powershell
+npm --prefix server run db:ensure
+npm --prefix server run migrate
+```
+
+Equivalent root scripts:
+
+```powershell
+npm run db:ensure
+npm run migrate
+```
+
+Manual database creation is also safe:
+
+```sql
+CREATE DATABASE cyberly CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+```
 
 ## Start The Frontend
 
@@ -40,7 +86,7 @@ cd server
 npm start
 ```
 
-The backend expects MySQL to be available and the `cyberwell` database to exist.
+The backend expects MySQL to be available and the configured `cyberly` database to exist. Run `npm --prefix server run db:ensure` first on a fresh machine.
 
 ## Authentication Foundation
 
@@ -88,6 +134,25 @@ npm run migrate
 
 Migrations are stored in `server/migrations/` and tracked in the `schema_migrations` table. Rollback is not implemented yet; take a database backup before production changes.
 
+Fresh-clone migration smoke test:
+
+```powershell
+npm --prefix server run test:migrations
+```
+
+This creates a temporary `cyberly_migration_test_*` database, runs the full migration chain, checks key tables and seed rows, and drops only that temporary database.
+
+## Troubleshooting
+
+- Database does not exist: run `npm --prefix server run db:ensure`, or manually run `CREATE DATABASE cyberly CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`.
+- Access denied: check `DB_HOST`, `DB_PORT`, `DB_USER`, and `DB_PASSWORD` in `server\.env`. Do not assume the MySQL root password is empty.
+- Migration already applied: this is normal; applied files are tracked in `schema_migrations` and skipped.
+- Table already exists: check whether the database was partially created outside migrations. For local development, use a fresh database name or back up and repair manually.
+- Port already in use: set `PORT` in `server\.env` or stop the process using the current backend port.
+- Missing AI API key: leave `OPENAI_API_KEY` empty for non-AI work; the server can still start, and generation returns `AI_NOT_CONFIGURED`.
+
+To reset a local development database safely, first confirm the database name is not shared or production data, then use a new database name in `server\.env` or manually back up before dropping anything.
+
 ## Baseline Notes
 
 - The official frontend is `client/`.
@@ -96,7 +161,7 @@ Migrations are stored in `server/migrations/` and tracked in the `schema_migrati
 - The generated root `node_modules/` folder was removed to prevent Create React App from resolving duplicate ESLint plugins across root and `client/`.
 - `client/` production build has been verified successfully.
 - `server/.env` loads locally without committing or printing secrets.
-- The backend has been verified connecting to the local `cyberwell` MySQL database.
+- The backend uses `cyberly` as the default MySQL database name.
 - The `users`, `sessions`, `learner_profiles`, and assessment tables are now under migration management while preserving legacy `username` and `password` columns temporarily.
 - Progress and recommendation tables are under migration management through `007_create_progress_and_recommendations.sql`.
 - Scenario definitions, steps, attempts, decisions, and scenario progress events are under migration management through `008_create_scenario_engine.sql`.
@@ -114,7 +179,9 @@ Migrations are stored in `server/migrations/` and tracked in the `schema_migrati
 ```bash
 cd server
 npm run migrate:status
+npm run db:ensure
 npm run migrate
+npm run test:migrations
 npm run test:auth
 npm run test:profile
 npm run test:assessment

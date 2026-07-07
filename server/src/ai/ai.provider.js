@@ -60,10 +60,30 @@ async function mockGenerate(config, request) {
   }
   if (mode === 'context') {
     const chars = request.messages.reduce((sum, message) => sum + String(message.content || '').length, 0);
-    const learnerKeys = Object.keys(request.learnerContext).sort().join(',');
+    const context = request.learnerContext || {};
+    const secondaryCount = Array.isArray(context.secondaryFocus) ? context.secondaryFocus.length : 0;
+    const focusCount = (context.primaryFocus ? 1 : 0) + secondaryCount;
+    const recommendation = context.currentRecommendation
+      ? `${context.currentRecommendation.topicCode}:${context.currentRecommendation.level}:${context.currentRecommendation.reasonCode}`
+      : 'none';
+    const nonJudgmental = /non-judgmental/.test(request.systemPrompt) &&
+      /Do not describe the learner as bad, weak, failing, or behind/.test(request.systemPrompt);
     return {
       providerRequestId: 'mock-context',
-      content: `locale=${request.learnerContext.locale} ageBand=${request.learnerContext.ageBand} learnerKeys=${learnerKeys} messageCount=${request.messages.length} chars=${chars}`,
+      content: [
+        `locale=${context.locale}`,
+        `ageBand=${context.ageBand}`,
+        `learnerLevel=${context.learnerLevel?.code || 'unknown'}`,
+        `confidence=${context.learnerLevel?.confidence || 'Low'}`,
+        `schoolStage=${context.schoolStage || 'none'}`,
+        `primaryFocus=${context.primaryFocus?.topicCode || 'none'}`,
+        `secondaryCount=${secondaryCount}`,
+        `focusCount=${focusCount}`,
+        `recommendation=${recommendation}`,
+        `nonJudgmental=${nonJudgmental}`,
+        `messageCount=${request.messages.length}`,
+        `chars=${chars}`,
+      ].join(' '),
       inputTokens: 100,
       outputTokens: 25,
     };
