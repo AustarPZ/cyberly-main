@@ -775,6 +775,18 @@
       "openAction": "Buka {{title}}",
       "unavailable": "Tidak tersedia"
     },
+    "sources": {
+      "heading": "Sumber",
+      "groupLabel": "Sumber yang disemak untuk balasan ini",
+      "summaryOne": "Berdasarkan {{count}} sumber yang disemak",
+      "summaryMany": "Berdasarkan {{count}} sumber yang disemak",
+      "show": "Tunjuk sumber",
+      "hide": "Sembunyikan sumber",
+      "openResource": "Buka sumber",
+      "openExternal": "Buka sumber luar untuk {{title}}",
+      "externalLabel": "Sumber luar",
+      "sourceUnavailable": "Sumber tidak tersedia"
+    },
     "migrationNotice": {
       "title": "Sejarah sembang kini disimpan ke akaun anda",
       "description": "Perbualan baharu disimpan dengan selamat ke akaun Cyberly anda. Sejarah sembang lama yang hanya berada pada peranti kekal pada peranti ini dan tidak akan dimuat naik atau dipadam.",

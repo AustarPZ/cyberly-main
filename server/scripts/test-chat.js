@@ -82,6 +82,24 @@ async function stopServer(child) {
   await Promise.race([new Promise(resolve => child.once('exit', resolve)), delay(3000)]);
 }
 
+function assertSafeSource(source) {
+  assert.ok(Number.isInteger(source.id));
+  assert.ok(source.id > 0);
+  assert.equal(typeof source.title, 'string');
+  assert.equal(typeof source.snippet, 'string');
+  assert.equal(typeof source.locale, 'string');
+  assert.equal(Number.isInteger(source.citationOrder), true);
+  assert.equal(Object.hasOwn(source, 'chunkId'), false);
+  assert.equal(Object.hasOwn(source, 'documentId'), false);
+  assert.equal(Object.hasOwn(source, 'providerRequestId'), false);
+  assert.equal(Object.hasOwn(source, 'estimatedCostUsd'), false);
+  if (source.internalTarget) {
+    assert.equal(source.internalTarget.page, 'resources');
+    assert.equal(Object.hasOwn(source.internalTarget, 'route'), false);
+    assert.equal(Object.hasOwn(source.internalTarget, 'url'), false);
+  }
+}
+
 async function tableExists(pool, tableName) {
   const [rows] = await pool.query(
     `SELECT COUNT(*) AS count
@@ -276,6 +294,17 @@ async function run() {
       [conversationId, secondUserMessageId, assistantInsert.insertId]
     );
     await pool.query(
+      `INSERT INTO chat_message_sources (
+          conversation_id, message_id, document_id, chunk_id, citation_order,
+          source_title, source_label, source_organisation, source_url, source_locale,
+          snippet, internal_target_json
+       )
+       VALUES (?, ?, NULL, NULL, 1, 'Snapshot source', 'Cyberly Resource', 'Cyberly',
+         'https://example.test/source', 'en', 'Snapshot snippet for chat detail.',
+         JSON_OBJECT('page', 'resources', 'resourceSlug', 'phishing'))`,
+      [conversationId, assistantInsert.insertId]
+    );
+    await pool.query(
       `INSERT INTO chat_message_generations (conversation_id, user_message_id, status, provider, model, error_code)
        VALUES (?, ?, 'failed', 'openai', 'gpt-5.4-mini', 'AI_PROVIDER_UNAVAILABLE')`,
       [conversationId, firstMessageId]
@@ -307,6 +336,12 @@ async function run() {
     assert.equal(completedGeneration.status, 'completed');
     assert.equal(completedGeneration.assistantMessageId, assistantInsert.insertId);
     assert.equal(result.json.messages.filter(message => message.role === 'assistant').length, 1);
+    assert.equal(Array.isArray(result.json.sources), true);
+    const sourceGroup = result.json.sources.find(group => group.messageId === assistantInsert.insertId);
+    assert.ok(sourceGroup);
+    assert.equal(sourceGroup.sources.length, 1);
+    assertSafeSource(sourceGroup.sources[0]);
+    assert.equal(sourceGroup.sources[0].title, 'Snapshot source');
     assert.equal(Object.hasOwn(completedGeneration, 'providerRequestId'), false);
     assert.equal(Object.hasOwn(completedGeneration, 'inputTokens'), false);
     assert.equal(Object.hasOwn(completedGeneration, 'outputTokens'), false);

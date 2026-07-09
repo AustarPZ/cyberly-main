@@ -793,6 +793,18 @@
       "openAction": "Open {{title}}",
       "unavailable": "Unavailable"
     },
+    "sources": {
+      "heading": "Sources",
+      "groupLabel": "Reviewed sources for this reply",
+      "summaryOne": "Based on {{count}} reviewed source",
+      "summaryMany": "Based on {{count}} reviewed sources",
+      "show": "Show sources",
+      "hide": "Hide sources",
+      "openResource": "Open resource",
+      "openExternal": "Open external source for {{title}}",
+      "externalLabel": "External source",
+      "sourceUnavailable": "Source unavailable"
+    },
     "migrationNotice": {
       "title": "Chat history now saves to your account",
       "description": "New conversations are saved securely to your Cyberly account. Older device-only chat history stays on this device and will not be uploaded or deleted.",

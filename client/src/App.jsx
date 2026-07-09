@@ -17,9 +17,12 @@ import {
 } from "./chat/chatApi";
 import {
   attachActionGroupsToMessages,
+  attachSourceGroupsToMessages,
   getScenarioActionSlug,
   resolveChatActionTarget,
+  resolveChatSourceTarget,
   withMessageActions,
+  withMessageSources,
 } from "./chat/chatActions";
 
 // ─── Design tokens ────────────────────────────────────────────────
@@ -545,6 +548,54 @@ body {
 .chat-markdown th, .chat-markdown td { border: 1px solid rgba(0,0,0,0.12); padding: 0.4rem 0.5rem; text-align: left; }
 .chat-markdown th { background: rgba(29,158,117,0.08); }
 .chat-markdown a { color: #0d6b52; font-weight: 700; overflow-wrap: anywhere; }
+.chat-source-group {
+  align-self: flex-start; width: min(680px, 88%); display: grid; gap: 0.42rem;
+  margin: -0.28rem 0 0.3rem; padding: 0.46rem 0.58rem;
+  border: 1px solid rgba(29,158,117,0.12); border-radius: 9px;
+  background: rgba(247,251,249,0.74);
+}
+.chat-source-group.compact { width: 100%; padding: 0.42rem 0.5rem; }
+.chat-source-summary {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.5rem; min-width: 0;
+}
+.chat-source-summary-text {
+  min-width: 0; color: #53635d; font-size: 0.76rem; font-weight: 750; line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+.chat-source-toggle {
+  min-height: 32px; flex: 0 0 auto; border: 1px solid rgba(29,158,117,0.16); background: #fff;
+  color: #0d6b52; border-radius: 999px; padding: 0.25rem 0.58rem; font-size: 0.72rem;
+  font-weight: 800; cursor: pointer;
+}
+.chat-source-toggle:hover, .chat-source-toggle:focus-visible {
+  outline: none; box-shadow: 0 0 0 3px rgba(29,158,117,0.12);
+}
+.chat-source-list {
+  display: grid; gap: 0.36rem; padding-top: 0.18rem; border-top: 1px solid rgba(29,158,117,0.1);
+}
+.chat-source-item {
+  min-width: 0; display: grid; gap: 0.28rem;
+}
+.chat-source-title { font-size: 0.82rem; font-weight: 800; color: #1a1a18; overflow-wrap: anywhere; line-height: 1.3; }
+.chat-source-meta { font-size: 0.72rem; color: #65736d; overflow-wrap: anywhere; }
+.chat-source-snippet { font-size: 0.76rem; color: #405049; line-height: 1.45; overflow-wrap: anywhere; }
+.chat-source-actions { display: flex; flex-wrap: wrap; gap: 0.4rem; align-items: center; }
+.chat-source-button, .chat-source-link {
+  min-height: 34px; display: inline-flex; align-items: center; justify-content: center;
+  border-radius: 8px; padding: 0.34rem 0.56rem; font-size: 0.72rem; font-weight: 800;
+  text-decoration: none; cursor: pointer;
+}
+.chat-source-button {
+  border: 1px solid rgba(29,158,117,0.18); background: #fff; color: #0d6b52;
+}
+.chat-source-link {
+  border: 1px solid rgba(0,0,0,0.1); background: #fff; color: #46524e;
+}
+.chat-source-button:hover, .chat-source-button:focus-visible,
+.chat-source-link:hover, .chat-source-link:focus-visible {
+  outline: none; box-shadow: 0 0 0 3px rgba(29,158,117,0.14);
+}
+.chat-source-group.compact .chat-source-summary { justify-content: flex-start; }
 .chat-action-group {
   align-self: flex-start; width: min(680px, 88%); display: grid; gap: 0.55rem;
   margin: -0.25rem 0 0.35rem;
@@ -631,15 +682,19 @@ body {
 .dashboard-chat-welcome .chat-empty-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.05rem; }
 @media (max-width: 560px) {
   .dashboard-cyberguard-heading .btn-ghost { width: 100%; }
+  .chat-source-group { width: 100%; }
+  .chat-source-summary { align-items: flex-start; flex-direction: column; }
+  .chat-source-actions { display: grid; grid-template-columns: 1fr; }
+  .chat-source-button, .chat-source-link { width: 100%; }
   .chat-action-group { width: 100%; }
   .chat-action-card { grid-template-columns: 1fr; }
   .chat-action-card-button { width: 100%; white-space: normal; }
 }
 .ai-chat-shell {
   max-width: 1440px; margin: 0 auto; padding: 1.25rem 1.5rem 1.5rem;
-  height: calc(100vh - var(--nav-h) - 13rem);
-  height: calc(100dvh - var(--nav-h) - 13rem);
-  min-height: 520px;
+  height: calc(100vh - var(--nav-h) - 3rem);
+  height: calc(100dvh - var(--nav-h) - 3rem);
+  min-height: 600px;
   display: grid; grid-template-columns: minmax(260px, 300px) minmax(0, 1fr); gap: 1.25rem;
   overflow: hidden;
 }
@@ -732,8 +787,8 @@ body {
   .ai-chat-mobile-actions { display: block; flex: 0 0 auto; width: 100%; }
   .ai-chat-mobile-actions .btn-ghost { width: 100%; justify-content: center; }
   .ai-chat-main {
-    height: min(560px, calc(100vh - var(--nav-h) - 7rem));
-    height: min(560px, calc(100dvh - var(--nav-h) - 7rem));
+    height: min(620px, calc(100vh - var(--nav-h) - 5rem));
+    height: min(620px, calc(100dvh - var(--nav-h) - 5rem));
     min-height: 420px;
   }
   .ai-chat-drawer-layer { display: block; position: fixed; inset: 0; z-index: 250; }
@@ -1051,8 +1106,11 @@ function mapServerMessage(message) {
   };
 }
 
-function mapServerMessagesWithActions(messages = [], actionGroups = []) {
-  return attachActionGroupsToMessages(messages.map(mapServerMessage), actionGroups);
+function mapServerMessagesWithActions(messages = [], actionGroups = [], sourceGroups = []) {
+  return attachSourceGroupsToMessages(
+    attachActionGroupsToMessages(messages.map(mapServerMessage), actionGroups),
+    sourceGroups
+  );
 }
 
 const SAFE_AI_GENERATION_ERROR_CODES = new Set([
@@ -1191,6 +1249,95 @@ function ChatActionGroup({ actions = [], compact = false }) {
   );
 }
 
+function truncateSourceSnippet(snippet = "", maxLength = 150) {
+  const normalized = String(snippet || "").trim().replace(/\s+/g, " ");
+  if (normalized.length <= maxLength) return normalized;
+  return `${normalized.slice(0, maxLength - 1).trim()}...`;
+}
+
+function sourceSummaryText(t, count) {
+  return count === 1
+    ? t("chat.sources.summaryOne", { count })
+    : t("chat.sources.summaryMany", { count });
+}
+
+function ChatSourceItem({ source }) {
+  const { t } = useTranslation();
+  const { handleChatAction } = useApp();
+  const target = resolveChatSourceTarget(source?.internalTarget);
+  const sourceMeta = source?.sourceLabel || source?.sourceOrganisation || "";
+  const title = source?.title || t("chat.sources.sourceUnavailable");
+  const snippet = truncateSourceSnippet(source?.snippet);
+
+  return (
+    <div className="chat-source-item">
+      <div className="chat-source-title">{title}</div>
+      {sourceMeta && <div className="chat-source-meta">{sourceMeta}</div>}
+      {snippet && <div className="chat-source-snippet">{snippet}</div>}
+      <div className="chat-source-actions">
+        {target && (
+          <button
+            type="button"
+            className="chat-source-button"
+            onClick={() => handleChatAction({ target })}
+            aria-label={t("chat.sources.openResource", { title })}
+          >
+            {t("chat.sources.openResource", { title })}
+          </button>
+        )}
+        {source?.sourceUrl && (
+          <a
+            className="chat-source-link"
+            href={source.sourceUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            aria-label={t("chat.sources.openExternal", { title })}
+          >
+            {t("chat.sources.externalLabel")}
+          </a>
+        )}
+      </div>
+    </div>
+  );
+}
+
+function ChatSourceGroup({ sources = [], compact = false }) {
+  const { t } = useTranslation();
+  const [expanded, setExpanded] = useState(false);
+  const visibleSources = Array.isArray(sources) ? sources : [];
+  if (!visibleSources.length) return null;
+  const count = visibleSources.length;
+  const groupId = `chat-sources-${visibleSources.map(source => source.id).join("-")}`;
+
+  return (
+    <section className={`chat-source-group${compact ? " compact" : ""}`} aria-label={t("chat.sources.groupLabel")}>
+      <div className="chat-source-summary">
+        <div className="chat-source-summary-text">
+          {compact ? sourceSummaryText(t, count) : `${t("chat.sources.heading")} · ${count}`}
+        </div>
+        {!compact && (
+          <button
+            type="button"
+            className="chat-source-toggle"
+            aria-expanded={expanded}
+            aria-controls={groupId}
+            onClick={() => setExpanded(current => !current)}
+          >
+            {expanded ? t("chat.sources.hide") : t("chat.sources.show")}
+          </button>
+        )}
+      </div>
+      {!compact && expanded && (
+        <div id={groupId} className="chat-source-list">
+          {visibleSources.map(source => (
+            <ChatSourceItem key={source.id} source={source} />
+          ))}
+        </div>
+      )}
+    </section>
+  );
+}
+
 function mergeMessageById(messages, nextMessage) {
   if (!nextMessage?.id) return messages;
   const exists = messages.some(message => message.id === nextMessage.id);
@@ -1311,7 +1458,7 @@ function ChatProvider({ user, children }) {
       return false;
     }
 
-    const loadedMessages = mapServerMessagesWithActions(result.messages || [], result.actions || []);
+    const loadedMessages = mapServerMessagesWithActions(result.messages || [], result.actions || [], result.sources || []);
     const recoveredGenerations = recoveredGenerationState(result.generations || [], loadedMessages);
 
     if (activeConversationIdRef.current === conversationId) {
@@ -1493,7 +1640,10 @@ function ChatProvider({ user, children }) {
 
     const conversation = mapServerConversation(result.conversation);
     const userMessage = mapServerMessage(result.userMessage);
-    const assistantMessage = withMessageActions(mapServerMessage(result.assistantMessage), result.actions || []);
+    const assistantMessage = withMessageSources(
+      withMessageActions(mapServerMessage(result.assistantMessage), result.actions || []),
+      result.sources || []
+    );
 
     setConversations(current => {
       if (!current.some(item => item.id === conversation.id)) return current;
@@ -4117,11 +4267,28 @@ function ChatMessageList({ className = "chat-messages", emptyCompact = false }) 
   useEffect(() => {
     if (!shouldAutoScrollRef.current) return;
     const container = endRef.current?.parentElement;
-    container?.scrollTo({
+    if (!container) return;
+    const visibleMessages = messages.filter(message => message.role !== "system");
+    const lastMessage = visibleMessages[visibleMessages.length - 1];
+    const behavior = prefersReducedMotion() ? "auto" : "smooth";
+    if (lastMessage?.role === "ai") {
+      const target = container.querySelector(`[data-chat-message-id="${lastMessage.id}"]`);
+      if (!target) {
+        container.scrollTo({ top: container.scrollHeight, behavior });
+        return;
+      }
+      const shortAssistantReply = target && target.offsetHeight < container.clientHeight * 0.38;
+      container.scrollTo({
+        top: shortAssistantReply ? container.scrollHeight : Math.max(0, target.offsetTop - 12),
+        behavior,
+      });
+      return;
+    }
+    container.scrollTo({
       top: container.scrollHeight,
-      behavior: prefersReducedMotion() ? "auto" : "smooth",
+      behavior,
     });
-  }, [messages.length, sending, generating, generationByMessageId]);
+  }, [messages, messages.length, sending, generating, generationByMessageId]);
 
   useEffect(() => {
     shouldAutoScrollRef.current = true;
@@ -4158,7 +4325,11 @@ function ChatMessageList({ className = "chat-messages", emptyCompact = false }) 
             const generation = message.role === "user" ? generationByMessageId[message.id] : null;
             return (
               <Fragment key={message.id}>
-                <div className={`chat-bubble ${message.role}`} style={message.role === "ai" ? { overflowWrap: "anywhere" } : { whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}>
+                <div
+                  className={`chat-bubble ${message.role}`}
+                  data-chat-message-id={message.id}
+                  style={message.role === "ai" ? { overflowWrap: "anywhere" } : { whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
+                >
                   {message.role === "ai" ? (
                     <div className="chat-markdown">
                       <ChatMarkdown>{message.text}</ChatMarkdown>
@@ -4166,7 +4337,10 @@ function ChatMessageList({ className = "chat-messages", emptyCompact = false }) 
                   ) : message.text}
                 </div>
                 {message.role === "ai" && (
-                  <ChatActionGroup actions={message.actions || []} compact={emptyCompact} />
+                  <>
+                    <ChatSourceGroup sources={message.sources || []} compact={emptyCompact} />
+                    <ChatActionGroup actions={message.actions || []} compact={emptyCompact} />
+                  </>
                 )}
                 {generation?.status === "generating" && (
                   <div className="chat-status-notice generating" role="status" aria-live="polite">

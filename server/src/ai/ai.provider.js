@@ -14,8 +14,12 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function buildResponsesInstructions(systemPrompt, learnerContext) {
-  return `${systemPrompt}\n\nLearner context: ${JSON.stringify(learnerContext)}`;
+function buildResponsesInstructions(systemPrompt, learnerContext, ragContext) {
+  return [
+    systemPrompt,
+    `Learner context: ${JSON.stringify(learnerContext)}`,
+    ragContext || null,
+  ].filter(Boolean).join('\n\n');
 }
 
 function buildResponsesInput(messages) {
@@ -61,6 +65,8 @@ async function mockGenerate(config, request) {
   if (mode === 'context') {
     const chars = request.messages.reduce((sum, message) => sum + String(message.content || '').length, 0);
     const context = request.learnerContext || {};
+    const ragContext = String(request.ragContext || '');
+    const sourceCount = (ragContext.match(/\[\d+\] Title:/g) || []).length;
     const secondaryCount = Array.isArray(context.secondaryFocus) ? context.secondaryFocus.length : 0;
     const focusCount = (context.primaryFocus ? 1 : 0) + secondaryCount;
     const recommendation = context.currentRecommendation
@@ -82,6 +88,9 @@ async function mockGenerate(config, request) {
         `recommendation=${recommendation}`,
         `nonJudgmental=${nonJudgmental}`,
         `messageCount=${request.messages.length}`,
+        `sourceCount=${sourceCount}`,
+        `hasReviewedSources=${/Reviewed Cyberly Sources:/.test(ragContext)}`,
+        `hasChunkId=${/chunkId=/i.test(ragContext)}`,
         `chars=${chars}`,
       ].join(' '),
       inputTokens: 100,
@@ -111,7 +120,7 @@ function createAiProvider(config) {
     try {
       const response = await client.responses.create({
         model: config.model,
-        instructions: buildResponsesInstructions(request.systemPrompt, request.learnerContext),
+        instructions: buildResponsesInstructions(request.systemPrompt, request.learnerContext, request.ragContext),
         input: buildResponsesInput(request.messages),
         max_output_tokens: config.maxOutputTokens,
         store: false,

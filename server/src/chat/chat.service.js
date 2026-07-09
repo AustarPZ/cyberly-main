@@ -1,5 +1,5 @@
 const { ERROR_CODES } = require('../errors/errorCodes');
-const { mapAction, mapConversation, mapGenerationState, mapMessage } = require('./chat.mapper');
+const { mapAction, mapConversation, mapGenerationState, mapMessage, mapSource } = require('./chat.mapper');
 const {
   normalizeLimit,
   titleFromMessage,
@@ -81,6 +81,7 @@ function createChatService(repository, options = {}) {
       .filter(message => message.role === 'assistant')
       .map(message => message.id);
     const actionRows = await repository.listActionsForMessageIds(assistantMessageIds);
+    const sourceRows = await repository.listSourcesForMessageIds(assistantMessageIds);
     const generationRows = await repository.listGenerationStates(conversationId);
     const generations = generationRows.map((row) => {
       if (row.status === 'completed' && (!row.assistant_message_id || Number(row.assistant_exists || 0) !== 1)) {
@@ -103,6 +104,13 @@ function createChatService(repository, options = {}) {
           .map(mapAction)
           .filter(Boolean),
       })).filter(group => group.actions.length),
+      sources: assistantMessageIds.map((messageId) => ({
+        messageId,
+        sources: sourceRows
+          .filter(row => Number(row.message_id) === Number(messageId))
+          .map(mapSource)
+          .filter(Boolean),
+      })).filter(group => group.sources.length),
     };
   }
 

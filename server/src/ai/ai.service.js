@@ -1,9 +1,10 @@
 const { ERROR_CODES } = require('../errors/errorCodes');
 const { normalizeLocale } = require('../i18n/locale');
-const { mapAction, mapConversation, mapMessage } = require('../chat/chat.mapper');
+const { mapAction, mapConversation, mapMessage, mapSource } = require('../chat/chat.mapper');
 const { validatePositiveId } = require('../chat/chat.validation');
 const { estimateCostUsd } = require('./ai.config');
 const {
+  buildRagContext,
   buildCyberGuardSystemPrompt,
   limitConversationMessages,
 } = require('./ai.prompts');
@@ -105,7 +106,8 @@ function normalizeProviderFailure(error) {
   return httpError(503, ERROR_CODES.AI_PROVIDER_UNAVAILABLE, 'AI provider is unavailable.');
 }
 
-function createAiService(repository, provider, config) {
+function createAiService(repository, provider, config, options = {}) {
+  const ragService = options.ragService || null;
   async function loadOwnedTarget(userId, conversationIdInput, messageIdInput) {
     const conversationId = validatePositiveId(conversationIdInput);
     const messageId = validatePositiveId(messageIdInput);
@@ -125,6 +127,9 @@ function createAiService(repository, provider, config) {
     const actionRows = assistantMessage
       ? await repository.listActionsForMessageIds([assistantMessage.id])
       : [];
+    const sourceRows = assistantMessage
+      ? await repository.listSourcesForMessageIds([assistantMessage.id])
+      : [];
     return {
       statusCode: 200,
       body: {
@@ -133,8 +138,26 @@ function createAiService(repository, provider, config) {
         assistantMessage: mapMessage(assistantMessage),
         generation: mapGeneration(generation),
         actions: actionRows.map(mapAction).filter(Boolean),
+        sources: sourceRows.map(mapSource).filter(Boolean),
       },
     };
+  }
+
+  async function retrieveRagSources(userMessage, locale) {
+    if (!ragService) return [];
+    try {
+      return await ragService.retrieveReviewedChunks({
+        query: userMessage.content,
+        locale,
+        limit: 4,
+      });
+    } catch (error) {
+      console.warn('RAG retrieval failed:', {
+        conversationId: userMessage.conversation_id,
+        messageId: userMessage.id,
+      });
+      return [];
+    }
   }
 
   async function generateReply(userId, conversationIdInput, messageIdInput, input = {}) {
@@ -193,6 +216,8 @@ function createAiService(repository, provider, config) {
         locale,
         data: await repository.loadLearnerContextData(userId),
       });
+      const ragSources = await retrieveRagSources(target.userMessage, locale);
+      const ragContext = buildRagContext(ragSources);
       const actionData = await repository.loadLearningActionData(userId, locale);
       const allMessages = await repository.listLatestMessages(
         target.conversationId,
@@ -207,6 +232,7 @@ function createAiService(repository, provider, config) {
       const providerResult = await provider.generateReply({
         systemPrompt: buildCyberGuardSystemPrompt(),
         learnerContext,
+        ragContext,
         messages,
       });
       const validation = validateProviderOutput(providerResult.content);
@@ -240,6 +266,8 @@ function createAiService(repository, provider, config) {
         learnerContext,
         resources: actionData.resources,
         scenarios: actionData.scenarios,
+        query: target.userMessage.content,
+        ragSources,
       });
       let actions = [];
       try {
@@ -255,6 +283,20 @@ function createAiService(repository, provider, config) {
           messageId: completed.assistantMessage.id,
         });
       }
+      let sources = [];
+      try {
+        const sourceRows = await repository.insertMessageSources(
+          completed.assistantMessage.conversation_id,
+          completed.assistantMessage.id,
+          ragSources
+        );
+        sources = sourceRows.map(mapSource).filter(Boolean);
+      } catch (error) {
+        console.warn('Chat source persistence failed:', {
+          conversationId: completed.assistantMessage.conversation_id,
+          messageId: completed.assistantMessage.id,
+        });
+      }
 
       return {
         statusCode: 201,
@@ -264,6 +306,7 @@ function createAiService(repository, provider, config) {
           assistantMessage: mapMessage(completed.assistantMessage),
           generation: mapGeneration(completed.generation),
           actions,
+          sources,
         },
       };
     } catch (error) {

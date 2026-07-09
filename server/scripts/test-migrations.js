@@ -88,6 +88,9 @@ async function assertFreshSchema(dbName) {
       'chat_messages',
       'chat_message_generations',
       'chat_message_actions',
+      'rag_documents',
+      'rag_chunks',
+      'chat_message_sources',
       'schema_migrations',
     ];
 

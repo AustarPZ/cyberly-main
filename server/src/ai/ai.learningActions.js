@@ -16,6 +16,13 @@ const LABEL_KEYS = {
   scenarios: 'chat.actions.openScenarios',
 };
 
+const CATEGORY_TOPIC_CODES = Object.entries(TOPIC_RESOURCE_CATEGORIES).reduce((acc, [topicCode, categories]) => {
+  categories.forEach(category => {
+    acc[category] = topicCode;
+  });
+  return acc;
+}, {});
+
 function firstDefined(...values) {
   return values.find(value => value !== undefined && value !== null && value !== '');
 }
@@ -25,6 +32,66 @@ function candidateTopic(learnerContext = {}) {
     learnerContext.currentRecommendation?.topicCode,
     learnerContext.primaryFocus?.topicCode
   ) || null;
+}
+
+function normalizeText(value = '') {
+  return String(value || '').trim().toLowerCase();
+}
+
+function classifyQueryIntent(query = '') {
+  const text = normalizeText(query);
+  if (!text) return 'general';
+  if (
+    /\b(completed|finished|done)\b.{0,40}\b(next|now|after|do)\b/i.test(text) ||
+    /完成.{0,12}(然后|下一|接下来|之后)/.test(text) ||
+    /(sudah|telah).{0,30}(selesai|habis).{0,30}(selepas|seterus|apa)/i.test(text)
+  ) {
+    return 'after_completion';
+  }
+  if (
+    /\b(what should i|what do i|what can i).{0,30}\b(learn|study|do).{0,20}\b(next|now)\b/i.test(text) ||
+    /应该.{0,12}(学|学习|做).{0,12}(什么|哪)/.test(text) ||
+    /(patut|perlu).{0,30}(belajar|buat).{0,20}(dahulu|selepas|seterus|apa)/i.test(text)
+  ) {
+    return 'next_step';
+  }
+  if (
+    /\b(what is|what are|explain|define|tell me about)\b/i.test(text) ||
+    /什么是|解釋|解释/.test(text) ||
+    /\b(apakah|apa itu|terangkan|jelaskan)\b/i.test(text)
+  ) {
+    return 'explanation';
+  }
+  return 'general';
+}
+
+function inferTopicFromText(value = '') {
+  const text = normalizeText(value);
+  if (/phishing|scam|penipuan|pancingan|网络钓鱼|網絡釣魚|诈骗|詐騙/.test(text)) return 'phishing_and_scams';
+  if (/password|kata laluan|密码|密碼|otp|2fa|mfa|two[- ]factor|dua faktor/.test(text)) return 'password_and_account_security';
+  if (/privacy|personal data|privasi|data peribadi|隐私|私隐|个人资料|個人資料/.test(text)) return 'privacy_and_personal_information';
+  if (/misinformation|fake news|deepfake|maklumat palsu|berita palsu|虚假|假新闻|深度伪造/.test(text)) return 'misinformation_and_deepfakes';
+  return null;
+}
+
+function topicFromRagSources(ragSources = [], resources = []) {
+  for (const source of ragSources || []) {
+    const target = source?.internalTarget || {};
+    const match = resources.find(resource => (
+      (target.resourceSlug && resource.slug === target.resourceSlug) ||
+      (target.resourceId && Number(resource.id) === Number(target.resourceId))
+    ));
+    if (match?.category_code && CATEGORY_TOPIC_CODES[match.category_code]) {
+      return CATEGORY_TOPIC_CODES[match.category_code];
+    }
+    const inferred = inferTopicFromText(`${source?.title || ''} ${source?.snippet || ''}`);
+    if (inferred) return inferred;
+  }
+  return null;
+}
+
+function queryTopic(query, ragSources, resources) {
+  return topicFromRagSources(ragSources, resources) || inferTopicFromText(query);
 }
 
 function pickResource(resources, topicCode) {
@@ -142,9 +209,19 @@ function hasEvidence(learnerContext = {}) {
   );
 }
 
-function buildLearningActions({ learnerContext = {}, resources = [], scenarios = [] } = {}) {
-  const topicCode = candidateTopic(learnerContext);
+function buildLearningActions({ learnerContext = {}, resources = [], scenarios = [], query = '', ragSources = [] } = {}) {
+  const intent = classifyQueryIntent(query);
+  const topicOverride = intent === 'explanation' ? queryTopic(query, ragSources, resources) : null;
+  const topicCode = topicOverride || candidateTopic(learnerContext);
   const hasRecommendation = Boolean(learnerContext.currentRecommendation);
+
+  if (intent === 'explanation' && topicCode) {
+    return dedupeAndCap([
+      createScenarioAction(pickScenario(scenarios, topicCode)),
+      createProgressAction(hasRecommendation),
+      createResourceAction(null),
+    ]);
+  }
 
   if (topicCode) {
     return dedupeAndCap([
@@ -164,4 +241,5 @@ function buildLearningActions({ learnerContext = {}, resources = [], scenarios =
 module.exports = {
   TOPIC_RESOURCE_CATEGORIES,
   buildLearningActions,
+  classifyQueryIntent,
 };

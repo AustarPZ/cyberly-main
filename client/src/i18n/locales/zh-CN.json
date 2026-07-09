@@ -775,6 +775,18 @@
       "openAction": "打开 {{title}}",
       "unavailable": "不可用"
     },
+    "sources": {
+      "heading": "来源",
+      "groupLabel": "此回复的已审核来源",
+      "summaryOne": "基于 {{count}} 个已审核来源",
+      "summaryMany": "基于 {{count}} 个已审核来源",
+      "show": "显示来源",
+      "hide": "隐藏来源",
+      "openResource": "打开资源",
+      "openExternal": "打开 {{title}} 的外部来源",
+      "externalLabel": "外部来源",
+      "sourceUnavailable": "来源不可用"
+    },
     "migrationNotice": {
       "title": "聊天历史现在会保存到你的账号",
       "description": "新的对话会安全保存到你的 Cyberly 账号。旧的设备本地聊天历史会留在此设备上，不会被上传或删除。",

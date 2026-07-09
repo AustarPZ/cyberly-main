@@ -12,6 +12,7 @@ const CONVERSATION_COLUMNS = `
 const ALLOWED_ACTION_TYPES = new Set(['resource', 'scenario', 'progress', 'assessment', 'resources', 'scenarios']);
 const ALLOWED_TARGET_FIELDS = new Set(['page', 'resourceId', 'resourceSlug', 'scenarioId', 'scenarioSlug', 'sectionId']);
 const ALLOWED_TARGET_PAGES = new Set(['resources', 'scenarios', 'progress', 'assessment']);
+const ALLOWED_SOURCE_TARGET_PAGES = new Set(['resources']);
 
 function sanitizeAction(action) {
   if (!action || !ALLOWED_ACTION_TYPES.has(action.type)) {
@@ -34,6 +35,34 @@ function sanitizeAction(action) {
     description: action.description ? String(action.description) : null,
     target,
     displayOrder: Number(action.displayOrder || 0),
+  };
+}
+
+function sanitizeSource(source, index) {
+  if (!source || !source.title || !source.snippet) {
+    throw new Error('Invalid chat message source.');
+  }
+  const target = {};
+  if (source.internalTarget && ALLOWED_SOURCE_TARGET_PAGES.has(source.internalTarget.page)) {
+    target.page = source.internalTarget.page;
+    if (source.internalTarget.resourceSlug) target.resourceSlug = String(source.internalTarget.resourceSlug);
+    if (source.internalTarget.resourceId !== undefined && source.internalTarget.resourceId !== null) {
+      const resourceId = Number(source.internalTarget.resourceId);
+      if (Number.isInteger(resourceId) && resourceId > 0) target.resourceId = resourceId;
+    }
+  }
+
+  return {
+    documentId: Number.isInteger(Number(source.documentId)) ? Number(source.documentId) : null,
+    chunkId: Number.isInteger(Number(source.chunkId)) ? Number(source.chunkId) : null,
+    citationOrder: Number(source.citationOrder || index + 1),
+    title: String(source.title).slice(0, 255),
+    sourceLabel: source.sourceLabel ? String(source.sourceLabel).slice(0, 255) : null,
+    sourceOrganisation: source.sourceOrganisation ? String(source.sourceOrganisation).slice(0, 255) : null,
+    sourceUrl: source.sourceUrl ? String(source.sourceUrl) : null,
+    locale: source.locale ? String(source.locale).slice(0, 10) : null,
+    snippet: String(source.snippet).slice(0, 800),
+    internalTarget: target.page ? target : null,
   };
 }
 
@@ -332,6 +361,76 @@ function createAiRepository(pool) {
     return rows;
   }
 
+  async function insertMessageSources(conversationId, messageId, sources, connection) {
+    await db(connection).query(
+      `DELETE FROM chat_message_sources
+       WHERE message_id = ?`,
+      [messageId]
+    );
+    if (!sources.length) return [];
+
+    const safeSources = sources.map(sanitizeSource);
+    const values = safeSources.map(source => [
+      conversationId,
+      messageId,
+      source.documentId,
+      source.chunkId,
+      source.citationOrder,
+      source.title,
+      source.sourceLabel,
+      source.sourceOrganisation,
+      source.sourceUrl,
+      source.locale,
+      source.snippet,
+      source.internalTarget ? JSON.stringify(source.internalTarget) : null,
+    ]);
+
+    await db(connection).query(
+      `INSERT INTO chat_message_sources (
+          conversation_id,
+          message_id,
+          document_id,
+          chunk_id,
+          citation_order,
+          source_title,
+          source_label,
+          source_organisation,
+          source_url,
+          source_locale,
+          snippet,
+          internal_target_json
+       )
+       VALUES ?`,
+      [values]
+    );
+
+    return listSourcesForMessageIds([messageId], connection);
+  }
+
+  async function listSourcesForMessageIds(messageIds, connection) {
+    const ids = messageIds.map(Number).filter(Number.isInteger);
+    if (!ids.length) return [];
+    const [rows] = await db(connection).query(
+      `SELECT id,
+              conversation_id,
+              message_id,
+              source_title,
+              source_label,
+              source_organisation,
+              source_url,
+              source_locale,
+              snippet,
+              internal_target_json,
+              citation_order,
+              created_at
+       FROM chat_message_sources
+       WHERE message_id IN (?)
+       ORDER BY message_id, citation_order, id`,
+      [ids]
+    );
+    return rows;
+  }
+
   async function completeGeneration(userId, generation, assistant, usage, connection) {
     const [messageResult] = await db(connection).query(
       `INSERT INTO chat_messages (conversation_id, role, content, locale, reply_to_message_id)
@@ -431,10 +530,12 @@ function createAiRepository(pool) {
     findGenerationByUserMessage,
     findMessage,
     insertMessageActions,
+    insertMessageSources,
     loadLearnerContextData,
     loadLearningActionData,
     listActionsForMessageIds,
     listLatestMessages,
+    listSourcesForMessageIds,
     markGenerationFailed,
     markGenerationInProgress,
     sumEstimatedCostToday,
