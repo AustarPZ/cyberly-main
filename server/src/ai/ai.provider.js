@@ -14,11 +14,12 @@ function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
 }
 
-function buildResponsesInstructions(systemPrompt, learnerContext, ragContext) {
+function buildResponsesInstructions(systemPrompt, learnerContext, ragContext, routeContext) {
   return [
     systemPrompt,
     `Learner context: ${JSON.stringify(learnerContext)}`,
     ragContext || null,
+    routeContext || null,
   ].filter(Boolean).join('\n\n');
 }
 
@@ -66,7 +67,11 @@ async function mockGenerate(config, request) {
     const chars = request.messages.reduce((sum, message) => sum + String(message.content || '').length, 0);
     const context = request.learnerContext || {};
     const ragContext = String(request.ragContext || '');
+    const routeContext = String(request.routeContext || '');
     const sourceCount = (ragContext.match(/\[\d+\] Title:/g) || []).length;
+    const routeStepCount = (routeContext.match(/^\d+\. /gm) || []).length;
+    const routeTimeBudget = routeContext.match(/Time budget: (\d+) minutes/)?.[1] || 'none';
+    const routeTopic = routeContext.match(/Topic: ([^\n]+)/)?.[1] || 'none';
     const secondaryCount = Array.isArray(context.secondaryFocus) ? context.secondaryFocus.length : 0;
     const focusCount = (context.primaryFocus ? 1 : 0) + secondaryCount;
     const recommendation = context.currentRecommendation
@@ -91,6 +96,10 @@ async function mockGenerate(config, request) {
         `sourceCount=${sourceCount}`,
         `hasReviewedSources=${/Reviewed Cyberly Sources:/.test(ragContext)}`,
         `hasChunkId=${/chunkId=/i.test(ragContext)}`,
+        `hasLearningRoute=${/Suggested Cyberly Learning Route:/.test(routeContext)}`,
+        `routeStepCount=${routeStepCount}`,
+        `routeTimeBudget=${routeTimeBudget}`,
+        `routeTopic=${routeTopic}`,
         `chars=${chars}`,
       ].join(' '),
       inputTokens: 100,
@@ -120,7 +129,7 @@ function createAiProvider(config) {
     try {
       const response = await client.responses.create({
         model: config.model,
-        instructions: buildResponsesInstructions(request.systemPrompt, request.learnerContext, request.ragContext),
+        instructions: buildResponsesInstructions(request.systemPrompt, request.learnerContext, request.ragContext, request.routeContext),
         input: buildResponsesInput(request.messages),
         max_output_tokens: config.maxOutputTokens,
         store: false,

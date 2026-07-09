@@ -41,6 +41,7 @@ const { createAiService } = require('./src/ai/ai.service');
 const { createAiRouter } = require('./src/ai/ai.routes');
 const { createRagRepository } = require('./src/rag/rag.repository');
 const { createRagService } = require('./src/rag/rag.service');
+const { createAgentService } = require('./src/agent/agent.service');
 const { ERROR_CODES } = require('./src/errors/errorCodes');
 
 const app = express();
@@ -70,8 +71,9 @@ const chatService = createChatService(chatRepository, {
 const aiRepository = createAiRepository(pool);
 const ragRepository = createRagRepository(pool);
 const ragService = createRagService(ragRepository);
+const agentService = createAgentService({ pool, ragService });
 const aiProvider = createAiProvider(aiConfig);
-const aiService = createAiService(aiRepository, aiProvider, aiConfig, { ragService });
+const aiService = createAiService(aiRepository, aiProvider, aiConfig, { ragService, agentService });
 
 app.set('trust proxy', 1);
 app.use(cors({ origin: clientOrigin, credentials: true }));

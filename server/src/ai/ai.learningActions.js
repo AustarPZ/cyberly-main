@@ -187,6 +187,47 @@ function createAssessmentAction() {
   };
 }
 
+function createActionFromRouteStep(step) {
+  if (!step?.internalTarget?.page) return null;
+  if (step.type === 'resource' && step.internalTarget.page === 'resources') {
+    return {
+      type: 'resource',
+      labelKey: LABEL_KEYS.resource,
+      title: sanitizeTitle(step.title),
+      description: step.reason || 'Open this reviewed Cyberly lesson.',
+      target: step.internalTarget,
+    };
+  }
+  if (step.type === 'scenario' && step.internalTarget.page === 'scenarios') {
+    return {
+      type: 'scenario',
+      labelKey: LABEL_KEYS.scenario,
+      title: sanitizeTitle(step.title),
+      description: step.reason || 'Practise with this safe Cyberly scenario.',
+      target: step.internalTarget,
+    };
+  }
+  if (step.type === 'progress' && step.internalTarget.page === 'progress') {
+    return {
+      type: 'progress',
+      labelKey: LABEL_KEYS.progress,
+      title: sanitizeTitle(step.title),
+      description: step.reason || 'Review your progress.',
+      target: step.internalTarget,
+    };
+  }
+  if (step.type === 'assessment' && step.internalTarget.page === 'assessment') {
+    return {
+      type: 'assessment',
+      labelKey: LABEL_KEYS.assessment,
+      title: sanitizeTitle(step.title),
+      description: step.reason || 'Complete the assessment.',
+      target: step.internalTarget,
+    };
+  }
+  return null;
+}
+
 function dedupeAndCap(actions) {
   const seen = new Set();
   const result = [];
@@ -209,7 +250,14 @@ function hasEvidence(learnerContext = {}) {
   );
 }
 
-function buildLearningActions({ learnerContext = {}, resources = [], scenarios = [], query = '', ragSources = [] } = {}) {
+function buildLearningActions({ learnerContext = {}, resources = [], scenarios = [], query = '', ragSources = [], learningRoute = null } = {}) {
+  if (learningRoute?.steps?.length) {
+    const routeActions = learningRoute.steps
+      .map(createActionFromRouteStep)
+      .filter(Boolean);
+    if (routeActions.length) return dedupeAndCap(routeActions);
+  }
+
   const intent = classifyQueryIntent(query);
   const topicOverride = intent === 'explanation' ? queryTopic(query, ragSources, resources) : null;
   const topicCode = topicOverride || candidateTopic(learnerContext);
@@ -242,4 +290,5 @@ module.exports = {
   TOPIC_RESOURCE_CATEGORIES,
   buildLearningActions,
   classifyQueryIntent,
+  createActionFromRouteStep,
 };

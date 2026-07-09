@@ -59,6 +59,26 @@ function buildRagContext(sources = []) {
   ].join('\n\n');
 }
 
+function buildLearningRouteContext(route = null) {
+  if (!route || !Array.isArray(route.steps) || route.steps.length === 0) return null;
+  const steps = route.steps.slice(0, 4).map((step, index) => [
+    `${index + 1}. ${clampText(step.type, 40)}: ${clampText(step.title, 160)}`,
+    step.reason ? `Reason: ${clampText(step.reason, 220)}` : null,
+    step.internalTarget?.page ? `Internal target: ${clampText(step.internalTarget.page, 40)}` : null,
+  ].filter(Boolean).join('\n'));
+
+  return [
+    'Suggested Cyberly Learning Route:',
+    `Title: ${clampText(route.title, 160)}`,
+    `Summary: ${clampText(route.summary, 260)}`,
+    route.topicCode ? `Topic: ${clampText(route.topicCode, 80)}` : null,
+    `Time budget: ${route.timeBudgetMinutes || 15} minutes`,
+    'The learner stays in control. Do not say activities have started, completed, or been scheduled.',
+    'Do not invent extra links or routes. Use this route only as a suggested plan.',
+    ...steps,
+  ].filter(Boolean).join('\n\n');
+}
+
 function limitConversationMessages(messages, messageLimit, characterLimit) {
   const latest = messages.slice(-messageLimit);
   const selected = [];
@@ -81,6 +101,7 @@ function limitConversationMessages(messages, messageLimit, characterLimit) {
 }
 
 module.exports = {
+  buildLearningRouteContext,
   buildRagContext,
   buildCyberGuardSystemPrompt,
   createLearnerContext,

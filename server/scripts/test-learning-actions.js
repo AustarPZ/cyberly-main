@@ -33,6 +33,41 @@ function run() {
     learnerContext,
     resources,
     scenarios,
+    query: 'Give me a 15-minute phishing practice plan.',
+    learningRoute: {
+      steps: [
+        {
+          type: 'resource',
+          title: 'Phishing',
+          reason: 'Start with a reviewed lesson.',
+          internalTarget: { page: 'resources', resourceSlug: 'phishing', resourceId: 1 },
+        },
+        {
+          type: 'scenario',
+          title: 'Spot a Phishing Message',
+          reason: 'Practise safely.',
+          completed: false,
+          internalTarget: { page: 'scenarios', scenarioSlug: 'phishing-check', scenarioId: 10 },
+        },
+        {
+          type: 'progress',
+          title: 'Review Progress',
+          reason: 'Check progress.',
+          internalTarget: { page: 'progress', sectionId: 'progress-recommendation' },
+        },
+      ],
+    },
+  });
+  assert.deepEqual(actionTypes(actions), ['resource', 'scenario', 'progress']);
+  assert.equal(actions.length, 3);
+  assert.equal(actions[0].target.resourceSlug, 'phishing');
+  assert.equal(actions[1].target.scenarioSlug, 'phishing-check');
+  assert.equal(actions[2].target.page, 'progress');
+
+  actions = buildLearningActions({
+    learnerContext,
+    resources,
+    scenarios,
     query: 'What is phishing?',
     ragSources: [
       {

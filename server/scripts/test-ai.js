@@ -445,6 +445,46 @@ async function run() {
     await withServer({ OPENAI_API_KEY: 'test-key', AI_TEST_MOCK_OPENAI: 'context' }, async (baseUrl) => {
       const userA = await register(baseUrl, USER_A_EMAIL, 'Phase 8B2 A');
       await seedLearnerContextEvidence(pool, userA.json.user.id);
+      const beforeCounts = {
+        attempts: (await pool.query('SELECT COUNT(*) AS count FROM scenario_attempts'))[0][0].count,
+        decisions: (await pool.query('SELECT COUNT(*) AS count FROM scenario_decisions'))[0][0].count,
+        progress: (await pool.query('SELECT COUNT(*) AS count FROM learner_topic_progress'))[0][0].count,
+        recommendations: (await pool.query('SELECT COUNT(*) AS count FROM learner_recommendations'))[0][0].count,
+      };
+
+      const created = await createConversation(baseUrl, userA.cookieHeader, 'Give me a 15-minute phishing practice plan.', 'en');
+      const result = await generate(baseUrl, userA.cookieHeader, created.conversation.id, created.message.id, { locale: 'en' });
+      assert.equal(result.response.status, 201);
+      const content = result.json.assistantMessage.content;
+      assert.match(content, /hasLearningRoute=true/);
+      assert.match(content, /routeStepCount=3/);
+      assert.match(content, /routeTimeBudget=15/);
+      assert.match(content, /routeTopic=phishing_and_scams/);
+      assert.doesNotMatch(content, /Private Nickname/);
+      assert.doesNotMatch(content, /phase8b2\.ai\.a@example\.com/);
+      assert.doesNotMatch(content, /selectedOptionKey/);
+      assert.doesNotMatch(content, /execute_sql/i);
+      assert.equal(result.json.actions.length <= 3, true);
+      result.json.actions.forEach(assertSafeAction);
+      assert.deepEqual(result.json.actions.map(action => action.type), ['resource', 'scenario', 'progress']);
+      assert.equal(result.json.actions[0].target.page, 'resources');
+      assert.equal(result.json.actions[1].target.page, 'scenarios');
+      assert.equal(result.json.actions[2].target.page, 'progress');
+
+      const afterCounts = {
+        attempts: (await pool.query('SELECT COUNT(*) AS count FROM scenario_attempts'))[0][0].count,
+        decisions: (await pool.query('SELECT COUNT(*) AS count FROM scenario_decisions'))[0][0].count,
+        progress: (await pool.query('SELECT COUNT(*) AS count FROM learner_topic_progress'))[0][0].count,
+        recommendations: (await pool.query('SELECT COUNT(*) AS count FROM learner_recommendations'))[0][0].count,
+      };
+      assert.deepEqual(afterCounts, beforeCounts);
+    });
+
+    await cleanup(pool);
+
+    await withServer({ OPENAI_API_KEY: 'test-key', AI_TEST_MOCK_OPENAI: 'context' }, async (baseUrl) => {
+      const userA = await register(baseUrl, USER_A_EMAIL, 'Phase 8B2 A');
+      await seedLearnerContextEvidence(pool, userA.json.user.id);
       const created = await createConversation(baseUrl, userA.cookieHeader, 'Message 0', 'zh-CN');
       let lastMessage = created.message;
       for (let index = 1; index <= 15; index += 1) {

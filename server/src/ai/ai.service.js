@@ -4,6 +4,7 @@ const { mapAction, mapConversation, mapMessage, mapSource } = require('../chat/c
 const { validatePositiveId } = require('../chat/chat.validation');
 const { estimateCostUsd } = require('./ai.config');
 const {
+  buildLearningRouteContext,
   buildRagContext,
   buildCyberGuardSystemPrompt,
   limitConversationMessages,
@@ -11,6 +12,7 @@ const {
 const { buildLearnerContext } = require('./ai.learnerContext');
 const { buildLearningActions } = require('./ai.learningActions');
 const { isUnsafeUserRequest, validateProviderOutput } = require('./ai.safety');
+const { detectRoutePlanningIntent, extractRoutePlanningInput } = require('../agent/agent.planning');
 
 const minuteBuckets = new Map();
 const dayBuckets = new Map();
@@ -108,6 +110,7 @@ function normalizeProviderFailure(error) {
 
 function createAiService(repository, provider, config, options = {}) {
   const ragService = options.ragService || null;
+  const agentService = options.agentService || null;
   async function loadOwnedTarget(userId, conversationIdInput, messageIdInput) {
     const conversationId = validatePositiveId(conversationIdInput);
     const messageId = validatePositiveId(messageIdInput);
@@ -157,6 +160,26 @@ function createAiService(repository, provider, config, options = {}) {
         messageId: userMessage.id,
       });
       return [];
+    }
+  }
+
+  async function buildRouteIfRequested(userId, userMessage, locale) {
+    if (!agentService || !detectRoutePlanningIntent(userMessage.content)) return null;
+    try {
+      const planning = extractRoutePlanningInput(userMessage.content);
+      return await agentService.buildAgentLearningRoute({
+        userId,
+        goal: planning.goal,
+        locale,
+        topicCode: planning.topicCode,
+        timeBudgetMinutes: planning.timeBudgetMinutes,
+      });
+    } catch (error) {
+      console.warn('Agent route planning failed:', {
+        conversationId: userMessage.conversation_id,
+        messageId: userMessage.id,
+      });
+      return null;
     }
   }
 
@@ -218,6 +241,8 @@ function createAiService(repository, provider, config, options = {}) {
       });
       const ragSources = await retrieveRagSources(target.userMessage, locale);
       const ragContext = buildRagContext(ragSources);
+      const learningRoute = await buildRouteIfRequested(userId, target.userMessage, locale);
+      const routeContext = buildLearningRouteContext(learningRoute);
       const actionData = await repository.loadLearningActionData(userId, locale);
       const allMessages = await repository.listLatestMessages(
         target.conversationId,
@@ -233,6 +258,7 @@ function createAiService(repository, provider, config, options = {}) {
         systemPrompt: buildCyberGuardSystemPrompt(),
         learnerContext,
         ragContext,
+        routeContext,
         messages,
       });
       const validation = validateProviderOutput(providerResult.content);
@@ -268,6 +294,7 @@ function createAiService(repository, provider, config, options = {}) {
         scenarios: actionData.scenarios,
         query: target.userMessage.content,
         ragSources,
+        learningRoute,
       });
       let actions = [];
       try {
