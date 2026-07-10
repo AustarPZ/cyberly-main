@@ -8,6 +8,8 @@
 
 No real credentials are documented in this repository.
 
+`cyberly` is the standard database name for current development and fresh-clone setup. The older local `cyberwell` name is deprecated and should not be used.
+
 ## Migration Approach
 
 The project uses versioned SQL migration files in `server/migrations/` and a Node.js runner at `server/scripts/migrate.js`.

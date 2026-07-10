@@ -19,6 +19,8 @@
 - `src/` and root `public/`: legacy React frontend retained for reference only.
 - MySQL database: `cyberly`.
 
+`cyberly` is the standard project database name. The older local `cyberwell` name is deprecated and should not be used for setup, migrations, tests, or future documentation.
+
 ## Official Frontend Decision
 
 `client/` is the official frontend for all new work.
@@ -43,6 +45,8 @@ The backend currently attempts to connect to:
 - user: `root`
 - database: `cyberly`
 - password: loaded from `process.env.DB_PASSWORD`
+
+Fresh local setup should use `server/.env.example` with `DB_NAME=cyberly`, then run `npm --prefix server run db:ensure` and `npm --prefix server run migrate`.
 
 ## Current Integration Gaps
 

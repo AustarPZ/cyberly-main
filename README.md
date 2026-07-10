@@ -7,7 +7,7 @@ Cyberly is an AI-powered cyber wellness toolkit prototype for Malaysian teenager
 - `client/` is the official frontend and should be used for all new frontend work.
 - `server/` is the Express backend.
 - `src/` and root `public/` are a legacy React frontend and must not be extended.
-- `cyberly` is the default local MySQL development database.
+- `cyberly` is the default local MySQL development database. The old `cyberwell` name is deprecated and should not be used for new setup, migrations, or tests.
 
 ## Local Requirements
 
@@ -38,6 +38,8 @@ Set the values in `server\.env` for your local MySQL user. The default database 
 DB_NAME=cyberly
 ```
 
+Do not use `DB_NAME=cyberwell`; that was an older local database name and is no longer the project standard.
+
 `OPENAI_API_KEY` is optional for normal setup. If it is empty, AI generation returns a safe not-configured error instead of crashing startup.
 
 ## Install Dependencies
@@ -55,6 +57,12 @@ Preferred setup creates the configured database if it does not exist, then appli
 ```powershell
 npm --prefix server run db:ensure
 npm --prefix server run migrate
+```
+
+For the CyberGuard RAG demo, ingest reviewed Resource content after migrations:
+
+```powershell
+npm --prefix server run rag:ingest
 ```
 
 Equivalent root scripts:
@@ -145,6 +153,7 @@ This creates a temporary `cyberly_migration_test_*` database, runs the full migr
 ## Troubleshooting
 
 - Database does not exist: run `npm --prefix server run db:ensure`, or manually run `CREATE DATABASE cyberly CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;`.
+- Wrong database name: ensure `server\.env` uses `DB_NAME=cyberly`. Do not use the deprecated `cyberwell` database for current project work.
 - Access denied: check `DB_HOST`, `DB_PORT`, `DB_USER`, and `DB_PASSWORD` in `server\.env`. Do not assume the MySQL root password is empty.
 - Migration already applied: this is normal; applied files are tracked in `schema_migrations` and skipped.
 - Table already exists: check whether the database was partially created outside migrations. For local development, use a fresh database name or back up and repair manually.
