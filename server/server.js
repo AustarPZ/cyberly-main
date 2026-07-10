@@ -42,6 +42,7 @@ const { createAiRouter } = require('./src/ai/ai.routes');
 const { createRagRepository } = require('./src/rag/rag.repository');
 const { createRagService } = require('./src/rag/rag.service');
 const { createAgentService } = require('./src/agent/agent.service');
+const { createAdminRouter } = require('./src/admin/admin.routes');
 const { ERROR_CODES } = require('./src/errors/errorCodes');
 
 const app = express();
@@ -99,6 +100,7 @@ app.use(createScenarioRouter(scenarioService));
 app.use(createResourceRouter(resourceService));
 app.use('/api/chat', createChatRouter(chatService));
 app.use('/api/chat', createAiRouter(aiService));
+app.use('/api/admin', createAdminRouter(pool));
 
 const rateLimitBuckets = new Map();
 

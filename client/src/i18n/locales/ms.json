@@ -6,6 +6,7 @@
     "scenarios": "Senario",
     "resources": "Sumber",
     "aiChat": "Chatbot AI",
+    "admin": "Admin",
     "about": "Tentang",
     "profile": "Profil",
     "settings": "Tetapan",
@@ -25,6 +26,7 @@
       "userFallback": "Pengguna",
       "personalProgress": "Kemajuan Peribadi",
       "profileSettings": "Profil & Tetapan",
+      "adminConsole": "Konsol Admin",
       "logOut": "Log keluar"
     },
     "logoutModal": {
@@ -175,6 +177,7 @@
     "beginner": "Pemula",
     "levelDisplay": "Tahap {{level}}",
     "learningProfile": "Profil pembelajaran anda",
+    "learningProfileDescription": "Penerangan Profil Pembelajaran",
     "profileSavedDescription": "Pilihan pembelajaran disimpan dalam profil anda dan dipulihkan selepas halaman dimuat semula atau anda log masuk.",
     "editProfile": "Edit profil",
     "stats": {
@@ -558,13 +561,13 @@
     },
     "categories": {
       "All": "Semua",
-      "Scams": "Penipuan",
-      "Misinformation": "Maklumat palsu",
-      "AI & Technology": "AI & Teknologi",
-      "Privacy": "Privasi",
-      "Safety": "Keselamatan",
-      "Passwords": "Kata Laluan",
-      "Beginner": "Pemula"
+      "Scams": "Penipuan & Kejuruteraan Sosial",
+      "Misinformation": "Maklumat Palsu & Literasi Media",
+      "AI & Technology": "Keselamatan AI & Teknologi",
+      "Privacy": "Privasi & Perlindungan Data Peribadi",
+      "Safety": "Keselamatan Dalam Talian & Kesejahteraan Digital",
+      "Passwords": "Kata Laluan & Keselamatan Akaun",
+      "Beginner": "Asas Digital"
     }
   },
   "about": {
@@ -839,6 +842,89 @@
     "loadingTitle": "Memuatkan Cyberly...",
     "checkingSession": "Sedang menyemak sesi anda."
   },
+  "admin": {
+    "badge": "Asas admin",
+    "title": "Konsol Admin",
+    "description": "Asas tadbir urus kandungan, tadbir urus RAG, dan pengurusan keselamatan AI.",
+    "accessDenied": {
+      "badge": "Terhad",
+      "title": "Akses admin diperlukan",
+      "description": "Ruang ini hanya tersedia untuk pentadbir Cyberly."
+    },
+    "status": {
+      "title": "Status akses",
+      "loading": "Menyemak akses admin...",
+      "verified": "Akses admin disahkan",
+      "role": "Peranan",
+      "modules": "Modul dirancang",
+      "error": "Tidak dapat mengesahkan akses admin."
+    },
+    "resourceReview": {
+      "badge": "Semakan baca sahaja",
+      "title": "Metadata Semakan Sumber",
+      "description": "Ringkasan tadbir urus kecil untuk sumber diterbitkan, kualiti sumber, dan kesediaan RAG masa depan.",
+      "readOnly": "Baca sahaja",
+      "loading": "Memuatkan ringkasan semakan sumber...",
+      "error": "Tidak dapat memuatkan ringkasan semakan sumber.",
+      "metrics": {
+        "totalResources": "Jumlah sumber",
+        "needsReview": "Perlu semakan",
+        "ragReady": "Sedia RAG",
+        "replacementSourceNeeded": "Perlu sumber gantian",
+        "malaysiaGuidance": "Panduan Malaysia ditanda"
+      },
+      "fields": {
+        "source": "Sumber",
+        "sourceType": "Jenis sumber",
+        "translationCount": "Terjemahan",
+        "flags": "Penanda"
+      },
+      "flags": {
+        "ragReady": "Sedia RAG",
+        "notRagReady": "Belum sedia RAG",
+        "malaysiaGuidance": "Panduan Malaysia",
+        "sensitiveTopic": "Topik sensitif",
+        "replacementNeeded": "Perlu sumber gantian"
+      }
+    },
+    "moduleStatus": {
+      "planned": "Dirancang"
+    },
+    "moduleApiNames": {
+      "dashboard": "Papan Pemuka",
+      "resources": "Sumber",
+      "rag": "RAG",
+      "aiSafety": "Keselamatan AI",
+      "contentRelationships": "Hubungan Kandungan",
+      "malaysiaGuidance": "Panduan Malaysia"
+    },
+    "modules": {
+      "resourceReview": {
+        "title": "Semakan Sumber",
+        "description": "Semak sumber pembelajaran, metadata sumber, dan kesediaan RAG pada masa depan."
+      },
+      "ragKnowledge": {
+        "title": "Pengetahuan RAG",
+        "description": "Panel masa depan untuk pengetahuan diluluskan, semakan carian, dan keterlihatan ingest."
+      },
+      "contentRelationships": {
+        "title": "Hubungan Kandungan",
+        "description": "Pengurusan masa depan untuk pautan prasyarat, langkah seterusnya, latihan, pemulihan, dan topik berkaitan."
+      },
+      "malaysiaGuidance": {
+        "title": "Panduan Malaysia",
+        "description": "Ruang semakan masa depan untuk panduan keselamatan dan pelaporan tempatan yang disokong sumber rasmi."
+      },
+      "aiSafety": {
+        "title": "Penilaian Keselamatan AI",
+        "description": "Semakan masa depan untuk prompt selamat, penolakan, pembumian sumber, dan kualiti respons model."
+      },
+      "roleManagement": {
+        "title": "Pengurusan Peranan",
+        "description": "Kawalan akses berkeistimewaan minimum masa depan untuk admin dan penyemak."
+      }
+    }
+  },
   "common": {
     "loading": "Memuatkan",
     "save": "Simpan",
@@ -965,9 +1051,9 @@
     "strong": "Kukuh"
   },
   "topics": {
-    "phishing_and_scams": "Pancingan data dan penipuan",
-    "password_and_account_security": "Kata laluan dan keselamatan akaun",
-    "privacy_and_personal_information": "Privasi dan maklumat peribadi",
-    "misinformation_and_deepfakes": "Maklumat palsu dan deepfake"
+    "phishing_and_scams": "Penipuan & Kejuruteraan Sosial",
+    "password_and_account_security": "Kata Laluan & Keselamatan Akaun",
+    "privacy_and_personal_information": "Privasi & Perlindungan Data Peribadi",
+    "misinformation_and_deepfakes": "Maklumat Palsu, Media & Keselamatan AI"
   }
 }

@@ -6,6 +6,7 @@
     "scenarios": "Scenarios",
     "resources": "Resources",
     "aiChat": "AI Chatbot",
+    "admin": "Admin",
     "about": "About",
     "profile": "Profile",
     "settings": "Settings",
@@ -25,6 +26,7 @@
       "userFallback": "User",
       "personalProgress": "Personal Progress",
       "profileSettings": "Profile & Settings",
+      "adminConsole": "Admin Console",
       "logOut": "Log out"
     },
     "logoutModal": {
@@ -175,6 +177,7 @@
     "beginner": "Beginner",
     "levelDisplay": "{{level}} level",
     "learningProfile": "Your learning profile",
+    "learningProfileDescription": "Learning Profile Description",
     "profileSavedDescription": "Learner preferences are saved to your profile and restored after refresh or login.",
     "editProfile": "Edit profile",
     "stats": {
@@ -576,13 +579,13 @@
     },
     "categories": {
       "All": "All",
-      "Scams": "Scams",
-      "Misinformation": "Misinformation",
-      "AI & Technology": "AI & Technology",
-      "Privacy": "Privacy",
-      "Safety": "Safety",
-      "Passwords": "Passwords",
-      "Beginner": "Beginner"
+      "Scams": "Scams & Social Engineering",
+      "Misinformation": "Misinformation & Media Literacy",
+      "AI & Technology": "AI & Technology Safety",
+      "Privacy": "Privacy & Personal Data Protection",
+      "Safety": "Online Safety & Digital Wellbeing",
+      "Passwords": "Passwords & Account Security",
+      "Beginner": "Beginner / Digital Foundations"
     }
   },
   "about": {
@@ -857,6 +860,89 @@
     "loadingTitle": "Loading Cyberly...",
     "checkingSession": "Checking your session."
   },
+  "admin": {
+    "badge": "Admin foundation",
+    "title": "Admin Console",
+    "description": "Content governance, RAG governance, and AI safety management foundation.",
+    "accessDenied": {
+      "badge": "Restricted",
+      "title": "Admin access required",
+      "description": "This area is only available to Cyberly administrators."
+    },
+    "status": {
+      "title": "Access status",
+      "loading": "Checking admin access...",
+      "verified": "Admin access verified",
+      "role": "Role",
+      "modules": "Planned modules",
+      "error": "Unable to verify admin access."
+    },
+    "resourceReview": {
+      "badge": "Read-only review",
+      "title": "Resource Review Metadata",
+      "description": "A small governance snapshot for published resources, source quality, and future RAG readiness.",
+      "readOnly": "Read-only",
+      "loading": "Loading resource review summary...",
+      "error": "Unable to load resource review summary.",
+      "metrics": {
+        "totalResources": "Total resources",
+        "needsReview": "Needs review",
+        "ragReady": "RAG-ready",
+        "replacementSourceNeeded": "Source replacement needed",
+        "malaysiaGuidance": "Malaysia guidance flagged"
+      },
+      "fields": {
+        "source": "Source",
+        "sourceType": "Source type",
+        "translationCount": "Translations",
+        "flags": "Flags"
+      },
+      "flags": {
+        "ragReady": "RAG-ready",
+        "notRagReady": "Not RAG-ready",
+        "malaysiaGuidance": "Malaysia guidance",
+        "sensitiveTopic": "Sensitive topic",
+        "replacementNeeded": "Replacement source needed"
+      }
+    },
+    "moduleStatus": {
+      "planned": "Planned"
+    },
+    "moduleApiNames": {
+      "dashboard": "Dashboard",
+      "resources": "Resources",
+      "rag": "RAG",
+      "aiSafety": "AI Safety",
+      "contentRelationships": "Content Relationships",
+      "malaysiaGuidance": "Malaysia Guidance"
+    },
+    "modules": {
+      "resourceReview": {
+        "title": "Resource Review",
+        "description": "Review learning resources, source metadata, and future RAG readiness."
+      },
+      "ragKnowledge": {
+        "title": "RAG Knowledge",
+        "description": "Future panel for approved knowledge, retrieval checks, and ingestion visibility."
+      },
+      "contentRelationships": {
+        "title": "Content Relationships",
+        "description": "Future management for prerequisite, next-step, practice, remedial, and related-topic links."
+      },
+      "malaysiaGuidance": {
+        "title": "Malaysia Guidance",
+        "description": "Future review area for official source-backed local reporting and safety guidance."
+      },
+      "aiSafety": {
+        "title": "AI Safety Evaluation",
+        "description": "Future checks for safe prompts, refusals, grounding, and model response quality."
+      },
+      "roleManagement": {
+        "title": "Role Management",
+        "description": "Future least-privilege access controls for admins and reviewers."
+      }
+    }
+  },
   "common": {
     "loading": "Loading",
     "save": "Save",
@@ -983,9 +1069,9 @@
     "strong": "Strong"
   },
   "topics": {
-    "phishing_and_scams": "Phishing and scams",
-    "password_and_account_security": "Password and account security",
-    "privacy_and_personal_information": "Privacy and personal information",
-    "misinformation_and_deepfakes": "Misinformation and deepfakes"
+    "phishing_and_scams": "Scams & Social Engineering",
+    "password_and_account_security": "Passwords & Account Security",
+    "privacy_and_personal_information": "Privacy & Personal Data Protection",
+    "misinformation_and_deepfakes": "Misinformation, Media & AI Safety"
   }
 }

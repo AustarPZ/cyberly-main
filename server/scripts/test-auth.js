@@ -210,6 +210,67 @@ async function run() {
     result = await request('GET', '/api/admin/ping', undefined, cookieHeader);
     assert.equal(result.response.status, 403);
 
+    result = await request('GET', '/api/admin/status');
+    assert.equal(result.response.status, 401);
+
+    result = await request('GET', '/api/admin/resources/review');
+    assert.equal(result.response.status, 401);
+
+    result = await request('GET', '/api/admin/status?role=admin', undefined, cookieHeader);
+    assert.equal(result.response.status, 403);
+
+    result = await request('GET', '/api/admin/resources/review?role=admin', undefined, cookieHeader);
+    assert.equal(result.response.status, 403);
+
+    await pool.query('UPDATE users SET role = ? WHERE email = ?', ['admin', TEST_EMAIL]);
+
+    result = await request('GET', '/api/auth/me', undefined, cookieHeader);
+    assert.equal(result.response.status, 200);
+    assert.equal(result.json.user.role, 'admin');
+    cookieHeader = result.cookieHeader || cookieHeader;
+
+    result = await request('GET', '/api/admin/status?role=user', undefined, cookieHeader);
+    assert.equal(result.response.status, 200);
+    assert.deepEqual(result.json, {
+      ok: true,
+      role: 'admin',
+      modules: [
+        'dashboard',
+        'resources',
+        'rag',
+        'aiSafety',
+        'contentRelationships',
+        'malaysiaGuidance',
+      ],
+      message: 'Admin access verified',
+    });
+    assert.equal(Object.prototype.hasOwnProperty.call(result.json, 'email'), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(result.json, 'password_hash'), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(result.json, 'passwordHash'), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(result.json, 'session'), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(result.json, 'apiKey'), false);
+
+    result = await request('GET', '/api/admin/resources/review?role=user', undefined, cookieHeader);
+    assert.equal(result.response.status, 200);
+    assert.ok(Array.isArray(result.json.resources));
+    assert.ok(result.json.summary.totalResources >= result.json.resources.length);
+    assert.ok(result.json.summary.totalResources > 0);
+    assert.equal(Object.prototype.hasOwnProperty.call(result.json, 'email'), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(result.json, 'password_hash'), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(result.json, 'passwordHash'), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(result.json, 'session'), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(result.json, 'apiKey'), false);
+    assert.equal(Object.prototype.hasOwnProperty.call(result.json, 'prompt'), false);
+
+    const phishingReview = result.json.resources.find(resource => resource.slug === 'phishing');
+    assert.ok(phishingReview, 'admin review endpoint should include seeded resource summaries');
+    assert.equal(phishingReview.categoryCode, 'Scams');
+    assert.equal(phishingReview.displayCategory, 'Scams & Social Engineering');
+    assert.equal(phishingReview.reviewStatus, 'approved');
+    assert.equal(phishingReview.ragReady, true);
+    assert.equal(typeof phishingReview.translationCount, 'number');
+    assert.equal(Object.prototype.hasOwnProperty.call(phishingReview, 'password_hash'), false);
+
     result = await request('POST', '/api/auth/register', {
       email: TEST_EMAIL,
       displayName: TEST_DISPLAY_NAME,

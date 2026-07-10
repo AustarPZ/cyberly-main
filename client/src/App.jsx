@@ -841,7 +841,7 @@ const MAX_CONVERSATION_TITLE_LENGTH = 80;
 const CHAT_GENERATION_POLL_INTERVAL_MS = 2000;
 const CHAT_GENERATION_POLL_MAX_MS = 30000;
 const PUBLIC_PAGES = new Set(["home", "resources", "about", "login"]);
-const PROTECTED_PAGES = new Set(["dashboard", "assessment", "scenarios", "progress", "profile", "ai-chat"]);
+const PROTECTED_PAGES = new Set(["dashboard", "assessment", "scenarios", "progress", "profile", "ai-chat", "admin"]);
 const VALID_PAGES = new Set([...PUBLIC_PAGES, ...PROTECTED_PAGES]);
 
 const {
@@ -1974,6 +1974,38 @@ async function dbMe() {
   }
 }
 
+async function dbAdminStatus() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/status`, {
+      method: "GET",
+      credentials: "include",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return apiFailure(data, "errors.fallback.generic");
+    return { ok: true, status: data };
+  } catch {
+    return networkFailure("errors.fallback.network");
+  }
+}
+
+async function dbAdminResourceReview() {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/resources/review`, {
+      method: "GET",
+      credentials: "include",
+    });
+    const data = await response.json().catch(() => ({}));
+    if (!response.ok) return apiFailure(data, "errors.fallback.generic");
+    return {
+      ok: true,
+      summary: data.summary || {},
+      resources: Array.isArray(data.resources) ? data.resources : [],
+    };
+  } catch {
+    return networkFailure("errors.fallback.network");
+  }
+}
+
 async function dbSaveProfile(profile) {
   try {
     const response = await fetch(`${API_BASE_URL}/api/profile`, {
@@ -2319,10 +2351,10 @@ function getAgeGroup(age) {
 }
 
 const PROGRESS_TOPIC_META = {
-  phishing_and_scams: { label: "Phishing and scams", category: "Scams", icon: "🎣" },
-  password_and_account_security: { label: "Password and account security", category: "Passwords", icon: "🔐" },
-  privacy_and_personal_information: { label: "Privacy and personal information", category: "Privacy", icon: "🕵️" },
-  misinformation_and_deepfakes: { label: "Misinformation and deepfakes", category: "Misinformation", icon: "🧠" },
+  phishing_and_scams: { label: "Scams & Social Engineering", category: "Scams", icon: "🎣" },
+  password_and_account_security: { label: "Passwords & Account Security", category: "Passwords", icon: "🔐" },
+  privacy_and_personal_information: { label: "Privacy & Personal Data Protection", category: "Privacy", icon: "🕵️" },
+  misinformation_and_deepfakes: { label: "Misinformation, Media & AI Safety", category: "Misinformation", icon: "🧠" },
 };
 
 const LEVEL_LABELS = {
@@ -7191,6 +7223,201 @@ function ConversationHistoryItem({
   );
 }
 
+function AdminPage() {
+  const { t } = useTranslation();
+  const { user, go } = useApp();
+  const [status, setStatus] = useState(null);
+  const [loading, setLoading] = useState(Boolean(user?.role === "admin"));
+  const [error, setError] = useState("");
+  const [resourceReview, setResourceReview] = useState({ summary: {}, resources: [] });
+  const [resourceLoading, setResourceLoading] = useState(Boolean(user?.role === "admin"));
+  const [resourceError, setResourceError] = useState("");
+  const modules = [
+    { key: "resourceReview", status: "planned" },
+    { key: "ragKnowledge", status: "planned" },
+    { key: "contentRelationships", status: "planned" },
+    { key: "malaysiaGuidance", status: "planned" },
+    { key: "aiSafety", status: "planned" },
+    { key: "roleManagement", status: "planned" },
+  ];
+
+  useEffect(() => {
+    let active = true;
+    if (user?.role !== "admin") {
+      setLoading(false);
+      setStatus(null);
+      setResourceLoading(false);
+      setResourceReview({ summary: {}, resources: [] });
+      return () => { active = false; };
+    }
+
+    setLoading(true);
+    setError("");
+    dbAdminStatus().then(result => {
+      if (!active) return;
+      if (result.ok) {
+        setStatus(result.status);
+      } else {
+        setError(result.error || t("admin.status.error"));
+      }
+      setLoading(false);
+    });
+
+    setResourceLoading(true);
+    setResourceError("");
+    dbAdminResourceReview().then(result => {
+      if (!active) return;
+      if (result.ok) {
+        setResourceReview({ summary: result.summary, resources: result.resources });
+      } else {
+        setResourceError(result.error || t("admin.resourceReview.error"));
+      }
+      setResourceLoading(false);
+    });
+
+    return () => { active = false; };
+  }, [t, user?.role]);
+
+  if (!user) {
+    go("login");
+    return null;
+  }
+
+  if (user.role !== "admin") {
+    return (
+      <section className="section">
+        <div className="card">
+          <p className="res-tag">{t("admin.accessDenied.badge")}</p>
+          <h1 className="section-title">{t("admin.accessDenied.title")}</h1>
+          <p className="section-sub">{t("admin.accessDenied.description")}</p>
+          <button className="btn-primary" type="button" onClick={() => go("dashboard")}>
+            {t("common.backToDashboard")}
+          </button>
+        </div>
+      </section>
+    );
+  }
+
+  return (
+    <section className="section">
+      <div style={{ display: "grid", gap: "1.2rem" }}>
+        <div>
+          <p className="res-tag">{t("admin.badge")}</p>
+          <h1 className="section-title">{t("admin.title")}</h1>
+          <p className="section-sub">{t("admin.description")}</p>
+        </div>
+
+        <div className="card" role="status" aria-live="polite">
+          <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.15rem", marginBottom: "0.45rem" }}>
+            {t("admin.status.title")}
+          </h2>
+          {loading ? (
+            <p style={{ color: "#666", lineHeight: 1.6 }}>{t("admin.status.loading")}</p>
+          ) : error ? (
+            <p className="field-error" role="alert">{error}</p>
+          ) : (
+            <div style={{ display: "grid", gap: "0.45rem", color: "#445047", fontSize: "0.92rem" }}>
+              <p>{status?.message || t("admin.status.verified")}</p>
+              <p><strong>{t("admin.status.role")}:</strong> {status?.role || "admin"}</p>
+              <p><strong>{t("admin.status.modules")}:</strong> {(status?.modules || []).map(module => t(`admin.moduleApiNames.${module}`, { defaultValue: module })).join(", ")}</p>
+            </div>
+          )}
+        </div>
+
+        <div className="card" aria-labelledby="admin-resource-review-title">
+          <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "flex-start", flexWrap: "wrap" }}>
+            <div>
+              <p className="res-tag">{t("admin.resourceReview.badge")}</p>
+              <h2 id="admin-resource-review-title" style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.15rem", marginBottom: "0.35rem" }}>
+                {t("admin.resourceReview.title")}
+              </h2>
+              <p style={{ color: "#666", lineHeight: 1.55, maxWidth: "64ch", fontSize: "0.92rem" }}>
+                {t("admin.resourceReview.description")}
+              </p>
+            </div>
+            <span className="res-tag">{t("admin.resourceReview.readOnly")}</span>
+          </div>
+
+          {resourceLoading ? (
+            <p style={{ color: "#666", lineHeight: 1.6, marginTop: "1rem" }}>{t("admin.resourceReview.loading")}</p>
+          ) : resourceError ? (
+            <p className="field-error" role="alert" style={{ marginTop: "1rem" }}>{resourceError}</p>
+          ) : (
+            <div style={{ display: "grid", gap: "1rem", marginTop: "1rem" }}>
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "0.7rem" }}>
+                {[
+                  ["totalResources", "totalResources"],
+                  ["needsReviewCount", "needsReview"],
+                  ["ragReadyCount", "ragReady"],
+                  ["replacementSourceNeededCount", "replacementSourceNeeded"],
+                  ["malaysiaGuidanceFlaggedCount", "malaysiaGuidance"],
+                ].map(([field, label]) => (
+                  <div key={field} style={{ border: "1px solid #dfe8e3", borderRadius: 8, padding: "0.8rem", background: "#f8fbf8" }}>
+                    <p>{t(`admin.resourceReview.metrics.${label}`)}</p>
+                    <strong>{resourceReview.summary?.[field] ?? 0}</strong>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ display: "grid", gap: "0.65rem" }}>
+                {(resourceReview.resources || []).map(resource => (
+                  <div
+                    key={resource.id || resource.slug}
+                    style={{
+                      border: "1px solid #dfe8e3",
+                      borderRadius: 8,
+                      padding: "0.85rem",
+                      display: "grid",
+                      gap: "0.45rem",
+                      background: "#fff",
+                    }}
+                  >
+                    <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap" }}>
+                      <div>
+                        <strong style={{ display: "block", color: "#1f3328" }}>{resource.slug}</strong>
+                        <span style={{ color: "#5c6a61", fontSize: "0.88rem" }}>{resource.displayCategory || resource.categoryCode}</span>
+                      </div>
+                      <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
+                        <span className="res-tag">{resource.reviewStatus || t("common.notSet")}</span>
+                        <span className="res-tag">{resource.ragReady ? t("admin.resourceReview.flags.ragReady") : t("admin.resourceReview.flags.notRagReady")}</span>
+                      </div>
+                    </div>
+                    <div style={{ display: "grid", gap: "0.25rem", color: "#5c6a61", fontSize: "0.88rem", lineHeight: 1.45 }}>
+                      <span><strong>{t("admin.resourceReview.fields.source")}:</strong> {resource.sourceLabel || resource.sourceOrganisation || t("common.notSet")}</span>
+                      <span><strong>{t("admin.resourceReview.fields.sourceType")}:</strong> {resource.sourceType || t("common.notSet")} · {resource.sourceCountry || t("common.notSet")} · {resource.sourceAuthorityLevel || t("common.notSet")}</span>
+                      <span><strong>{t("admin.resourceReview.fields.translationCount")}:</strong> {resource.translationCount ?? 0}</span>
+                      {(resource.malaysiaGuidanceFlag || resource.sensitiveTopicFlag || resource.replacementSourceNeeded) && (
+                        <span>
+                          <strong>{t("admin.resourceReview.fields.flags")}:</strong>{" "}
+                          {[
+                            resource.malaysiaGuidanceFlag ? t("admin.resourceReview.flags.malaysiaGuidance") : null,
+                            resource.sensitiveTopicFlag ? t("admin.resourceReview.flags.sensitiveTopic") : null,
+                            resource.replacementSourceNeeded ? t("admin.resourceReview.flags.replacementNeeded") : null,
+                          ].filter(Boolean).join(", ")}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+
+        <div className="card-grid">
+          {modules.map(module => (
+            <div className="card" key={module.key} style={{ display: "grid", gap: "0.5rem" }}>
+              <p className="res-tag">{t(`admin.moduleStatus.${module.status}`)}</p>
+              <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.05rem" }}>{t(`admin.modules.${module.key}.title`)}</h2>
+              <p style={{ color: "#666", lineHeight: 1.55, fontSize: "0.9rem" }}>{t(`admin.modules.${module.key}.description`)}</p>
+            </div>
+          ))}
+        </div>
+      </div>
+    </section>
+  );
+}
+
 function AIChatPage() {
   const { t } = useTranslation();
   const { user, go } = useApp();
@@ -7613,12 +7840,18 @@ const NAV_ITEMS = [
   { id: "scenarios", labelKey: "nav.scenarios" },
   { id: "resources", labelKey: "nav.resources" },
   { id: "ai-chat", labelKey: "nav.aiChat" },
+  { id: "admin", labelKey: "nav.admin", adminOnly: true },
   { id: "about", labelKey: "nav.about" },
 ];
 
 const LOGGED_OUT_NAV_ITEMS = NAV_ITEMS.filter(item =>
   ["home", "resources", "about"].includes(item.id)
 );
+
+function navigationItemsForUser(user) {
+  if (!user) return LOGGED_OUT_NAV_ITEMS;
+  return NAV_ITEMS.filter(item => !item.adminOnly || user.role === "admin");
+}
 
 function useMediaQuery(query) {
   const [matches, setMatches] = useState(() => {
@@ -7862,13 +8095,25 @@ function AccountMenu({ user, onNavigate, onRequestLogout }) {
           >
             {t("nav.accountMenu.profileSettings")}
           </button>
+          {user?.role === "admin" && (
+            <button
+              type="button"
+              className="account-menu-item"
+              role="menuitem"
+              ref={element => { itemRefs.current[3] = element; }}
+              onKeyDown={event => handleMenuKeyDown(event, 3)}
+              onClick={() => navigate("admin")}
+            >
+              {t("nav.accountMenu.adminConsole")}
+            </button>
+          )}
           <div className="account-menu-divider" role="separator" />
           <button
             type="button"
             className="account-menu-item danger"
             role="menuitem"
-            ref={element => { itemRefs.current[3] = element; }}
-            onKeyDown={event => handleMenuKeyDown(event, 3)}
+            ref={element => { itemRefs.current[4] = element; }}
+            onKeyDown={event => handleMenuKeyDown(event, 4)}
             onClick={requestLogout}
           >
             {t("nav.accountMenu.logOut")}
@@ -7941,7 +8186,7 @@ function Navbar({ page }) {
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const isMobileNav = useMediaQuery("(max-width: 1050px)");
   const logoutReturnFocusRef = useRef(null);
-  const navItems = user ? NAV_ITEMS : LOGGED_OUT_NAV_ITEMS;
+  const navItems = navigationItemsForUser(user);
 
   async function confirmLogout() {
     setLogoutModalOpen(false);
@@ -8326,6 +8571,7 @@ export default function App() {
     about:     <AboutPage />,
     progress:  <ProgressPage />,
     profile:   <ProfilePage />,
+    admin:     <AdminPage />,
     login:     <AuthGate />,
   };
 

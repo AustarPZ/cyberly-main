@@ -9,6 +9,15 @@ import {
   resolveChatSourceTarget,
   resolveSafeSourceUrl,
 } from "./chatActions";
+import enLocale from "../i18n/locales/en.json";
+
+test("resource and scenario taxonomy labels use aligned display names", () => {
+  expect(enLocale.resources.categories.Safety).toBe("Online Safety & Digital Wellbeing");
+  expect(enLocale.resources.categories.Beginner).toBe("Beginner / Digital Foundations");
+  expect(enLocale.topics.misinformation_and_deepfakes).toBe("Misinformation, Media & AI Safety");
+  expect(enLocale.resources.categories.UnknownResourceCategory || "UnknownResourceCategory").toBe("UnknownResourceCategory");
+  expect(enLocale.topics.unknown_scenario_topic || "unknown_scenario_topic").toBe("unknown_scenario_topic");
+});
 
 test("attaches action groups only to matching assistant messages", () => {
   const messages = [

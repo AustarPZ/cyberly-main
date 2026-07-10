@@ -6,6 +6,7 @@
     "scenarios": "情境练习",
     "resources": "资源",
     "aiChat": "AI 聊天助手",
+    "admin": "Admin",
     "about": "关于",
     "profile": "个人资料",
     "settings": "设置",
@@ -25,6 +26,7 @@
       "userFallback": "用户",
       "personalProgress": "个人进度",
       "profileSettings": "个人资料与设置",
+      "adminConsole": "Admin 控制台",
       "logOut": "退出登录"
     },
     "logoutModal": {
@@ -175,6 +177,7 @@
     "beginner": "初学者",
     "levelDisplay": "{{level}}级",
     "learningProfile": "你的学习资料",
+    "learningProfileDescription": "学习概况描述",
     "profileSavedDescription": "学习偏好已保存到你的资料中，并会在刷新页面或重新登录后恢复。",
     "editProfile": "编辑资料",
     "stats": {
@@ -558,13 +561,13 @@
     },
     "categories": {
       "All": "全部",
-      "Scams": "诈骗",
-      "Misinformation": "虚假信息",
-      "AI & Technology": "AI 与科技",
-      "Privacy": "隐私",
-      "Safety": "安全",
-      "Passwords": "密码",
-      "Beginner": "初学者"
+      "Scams": "诈骗与社会工程",
+      "Misinformation": "错误信息与媒体素养",
+      "AI & Technology": "AI 与科技安全",
+      "Privacy": "隐私与个人数据保护",
+      "Safety": "网络安全与数字健康",
+      "Passwords": "密码与账户安全",
+      "Beginner": "入门 / 数字基础"
     }
   },
   "about": {
@@ -839,6 +842,89 @@
     "loadingTitle": "正在加载 Cyberly...",
     "checkingSession": "正在检查你的会话。"
   },
+  "admin": {
+    "badge": "Admin 基础",
+    "title": "Admin 控制台",
+    "description": "内容治理、RAG 治理和 AI 安全管理基础。",
+    "accessDenied": {
+      "badge": "受限",
+      "title": "需要 Admin 权限",
+      "description": "此区域仅供 Cyberly 管理员使用。"
+    },
+    "status": {
+      "title": "访问状态",
+      "loading": "正在检查 Admin 访问权限...",
+      "verified": "Admin 访问已验证",
+      "role": "角色",
+      "modules": "规划模块",
+      "error": "无法验证 Admin 访问权限。"
+    },
+    "resourceReview": {
+      "badge": "只读审核",
+      "title": "资源审核元数据",
+      "description": "用于查看已发布资源、来源质量和未来 RAG 就绪状态的小型治理概览。",
+      "readOnly": "只读",
+      "loading": "正在加载资源审核摘要...",
+      "error": "无法加载资源审核摘要。",
+      "metrics": {
+        "totalResources": "资源总数",
+        "needsReview": "需要审核",
+        "ragReady": "RAG 就绪",
+        "replacementSourceNeeded": "需要替换来源",
+        "malaysiaGuidance": "马来西亚指导标记"
+      },
+      "fields": {
+        "source": "来源",
+        "sourceType": "来源类型",
+        "translationCount": "翻译",
+        "flags": "标记"
+      },
+      "flags": {
+        "ragReady": "RAG 就绪",
+        "notRagReady": "未就绪 RAG",
+        "malaysiaGuidance": "马来西亚指导",
+        "sensitiveTopic": "敏感主题",
+        "replacementNeeded": "需要替换来源"
+      }
+    },
+    "moduleStatus": {
+      "planned": "规划中"
+    },
+    "moduleApiNames": {
+      "dashboard": "仪表板",
+      "resources": "资源",
+      "rag": "RAG",
+      "aiSafety": "AI 安全",
+      "contentRelationships": "内容关系",
+      "malaysiaGuidance": "马来西亚指导"
+    },
+    "modules": {
+      "resourceReview": {
+        "title": "资源审核",
+        "description": "审核学习资源、来源元数据，以及未来的 RAG 就绪状态。"
+      },
+      "ragKnowledge": {
+        "title": "RAG 知识",
+        "description": "未来用于查看已批准知识、检索检查和 ingest 状态的面板。"
+      },
+      "contentRelationships": {
+        "title": "内容关系",
+        "description": "未来管理前置、下一步、练习、补救和相关主题链接。"
+      },
+      "malaysiaGuidance": {
+        "title": "马来西亚指导",
+        "description": "未来审核由官方来源支持的本地报告与安全指导。"
+      },
+      "aiSafety": {
+        "title": "AI 安全评估",
+        "description": "未来检查安全提示词、拒答、来源 grounding 和模型回复质量。"
+      },
+      "roleManagement": {
+        "title": "角色管理",
+        "description": "未来为管理员和审核者提供最小权限访问控制。"
+      }
+    }
+  },
   "common": {
     "loading": "正在加载",
     "save": "保存",
@@ -965,9 +1051,9 @@
     "strong": "表现优秀"
   },
   "topics": {
-    "phishing_and_scams": "网络钓鱼与诈骗",
-    "password_and_account_security": "密码与账号安全",
-    "privacy_and_personal_information": "隐私与个人资料",
-    "misinformation_and_deepfakes": "虚假信息与深度伪造"
+    "phishing_and_scams": "诈骗与社会工程",
+    "password_and_account_security": "密码与账户安全",
+    "privacy_and_personal_information": "隐私与个人数据保护",
+    "misinformation_and_deepfakes": "错误信息、媒体与 AI 安全"
   }
 }
