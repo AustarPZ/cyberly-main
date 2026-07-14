@@ -24,6 +24,17 @@ import {
   withMessageActions,
   withMessageSources,
 } from "./chat/chatActions";
+import AdminResourcePage from "./admin/AdminResourcePage";
+import AdminResourceEditorPage from "./admin/AdminResourceEditorPage";
+import AdminWorkspace from "./admin/AdminWorkspace";
+import { ADMIN_SECTIONS, getAdminResourceEditorIdFromHash, getAdminSectionFromHash } from "./admin/adminSections";
+import {
+  createPendingAction,
+  createPendingRouteTransition,
+  normalizeHashRoute,
+  shouldGuardAction,
+  shouldBlockRouteTransition,
+} from "./navigation/navigationGuardState";
 
 // ─── Design tokens ────────────────────────────────────────────────
 /*const COLORS = {
@@ -40,8 +51,8 @@ const globalStyle = `
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 body {
   font-family: 'DM Sans', sans-serif;
-  background: #f7f8f5;
-  color: #1a1a18;
+  background: var(--surface-page);
+  color: var(--text-primary);
   min-height: 100vh;
   overflow-x: hidden;
 }
@@ -55,14 +66,44 @@ body {
   --gray:     #888780;
   --gray-lt:  #F1EFE8;
   --nav-h:    60px;
+  --color-brand-primary: #1D9E75;
+  --color-brand-primary-hover: #15795c;
+  --color-brand-soft: #E1F5EE;
+  --color-brand-border: #8fd7c2;
+  --surface-page: #f2f6f1;
+  --surface-raised: #ffffff;
+  --surface-muted: #f7faf7;
+  --surface-subtle: #eef6f1;
+  --surface-interactive: #e7f7f0;
+  --surface-overlay: rgba(18, 30, 24, 0.46);
+  --border-subtle: #e3ebe5;
+  --border-default: #cfded6;
+  --border-strong: #aebfb6;
+  --border-focus: #1D9E75;
+  --text-primary: #1d2a22;
+  --text-secondary: #46554c;
+  --text-muted: #647169;
+  --text-on-brand: #ffffff;
+  --status-success-surface: #e4f7ef;
+  --status-success-border: #9bdac5;
+  --status-warning-surface: #fff3df;
+  --status-warning-border: #efc783;
+  --status-danger-surface: #faece7;
+  --status-danger-border: #e4a18a;
+  --status-neutral-surface: #f1f4f1;
+  --status-neutral-border: #d6dfd8;
+  --shadow-card: 0 4px 14px rgba(24, 45, 35, 0.07);
+  --shadow-raised: 0 10px 26px rgba(24, 45, 35, 0.1);
+  --shadow-dialog: 0 22px 60px rgba(18, 30, 24, 0.25);
 }
 
 /* ── Navbar ── */
 .navbar {
   position: fixed; top: 0; left: 0; right: 0; z-index: 100;
   height: var(--nav-h);
-  background: #fff;
-  border-bottom: 1px solid rgba(0,0,0,0.08);
+  background: rgba(255, 255, 255, 0.96);
+  border-bottom: 1px solid var(--border-default);
+  box-shadow: 0 2px 12px rgba(24, 45, 35, 0.06);
   display: flex; align-items: center; gap: 1.25rem;
   padding: 0 1.5rem;
 }
@@ -80,9 +121,9 @@ body {
 .desktop-auth-actions { display: flex; gap: 0.5rem; align-items: center; }
 .mobile-menu-wrap { display: none; position: relative; }
 .mobile-menu-button {
-  width: 40px; height: 40px; border: 1px solid rgba(0,0,0,0.12); border-radius: 10px;
-  background: #fff; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
-  color: #333; font-size: 1.15rem;
+  width: 40px; height: 40px; border: 1px solid var(--border-default); border-radius: 10px;
+  background: var(--surface-raised); cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
+  color: var(--text-primary); font-size: 1.15rem;
 }
 .mobile-menu-button:hover,
 .mobile-menu-button:focus-visible,
@@ -92,8 +133,8 @@ body {
 .mobile-menu-button:focus-visible { box-shadow: 0 0 0 3px rgba(29,158,117,0.25); }
 .mobile-menu-panel {
   position: fixed; top: calc(var(--nav-h) + 0.5rem); left: 1rem; right: 1rem; z-index: 150;
-  background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: 12px;
-  box-shadow: 0 18px 45px rgba(0,0,0,0.18); padding: 0.55rem;
+  background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 12px;
+  box-shadow: var(--shadow-raised); padding: 0.55rem;
 }
 .mobile-menu-panel[hidden] { display: none; }
 .mobile-nav-item {
@@ -111,11 +152,11 @@ body {
 .nav-link {
   background: none; border: none; cursor: pointer;
   font-family: 'DM Sans', sans-serif; font-size: 0.875rem;
-  color: #555; padding: 0.4rem 0.75rem; border-radius: 8px;
+  color: var(--text-secondary); padding: 0.4rem 0.75rem; border-radius: 8px;
   white-space: nowrap;
 }
-.nav-link:hover, .nav-link:focus-visible { background: var(--gray-lt); outline: none; box-shadow: inset 0 0 0 2px rgba(29,158,117,0.2); }
-.nav-link.active { color: var(--teal); font-weight: 600; background: var(--teal-lt); }
+.nav-link:hover, .nav-link:focus-visible { background: var(--surface-subtle); outline: none; box-shadow: inset 0 0 0 2px rgba(29,158,117,0.2); }
+.nav-link.active { color: var(--color-brand-primary); font-weight: 600; background: var(--surface-interactive); box-shadow: inset 0 -2px 0 var(--color-brand-primary); }
 .nav-cta {
   background: var(--teal); color: #fff; border: none; cursor: pointer;
   font-family: 'DM Sans', sans-serif; font-size: 0.875rem; font-weight: 500;
@@ -128,7 +169,7 @@ body {
   display: flex; align-items: center; gap: 0.45rem; color: #555;
 }
 .nav-language select {
-  border: 1px solid rgba(0,0,0,0.14); background: #fff; border-radius: 8px;
+  border: 1px solid var(--border-default); background: var(--surface-raised); border-radius: 8px;
   padding: 0.35rem 0.55rem; font-family: 'DM Sans', sans-serif; font-size: 0.82rem;
 }
 .nav-language select:hover { border-color: rgba(29,158,117,0.35); }
@@ -141,17 +182,17 @@ body {
 }
 .account-menu-wrap { position: relative; }
 .account-trigger {
-  border: 1px solid rgba(0,0,0,0.1); background: #fff; border-radius: 999px; cursor: pointer;
+  border: 1px solid var(--border-default); background: var(--surface-raised); border-radius: 999px; cursor: pointer;
   display: flex; align-items: center; gap: 0.5rem; padding: 0.25rem 0.45rem 0.25rem 0.25rem;
   font-family: 'DM Sans', sans-serif; color: #333;
 }
-.account-trigger:hover, .account-trigger:focus-visible, .account-trigger.open { background: var(--gray-lt); outline: none; box-shadow: 0 0 0 3px rgba(29,158,117,0.18); }
+.account-trigger:hover, .account-trigger:focus-visible, .account-trigger.open { background: var(--surface-subtle); outline: none; box-shadow: 0 0 0 3px rgba(29,158,117,0.18); }
 .account-name { max-width: 150px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 0.85rem; font-weight: 600; }
 .account-chevron { font-size: 0.75rem; color: #777; }
 .account-dropdown {
   position: absolute; top: calc(100% + 0.6rem); right: 0; width: min(240px, calc(100vw - 2rem)); z-index: 160;
-  background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: 10px;
-  box-shadow: 0 14px 35px rgba(0,0,0,0.14); padding: 0.5rem;
+  background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 10px;
+  box-shadow: var(--shadow-raised); padding: 0.5rem;
 }
 .account-menu-header { padding: 0.65rem 0.7rem 0.75rem; border-bottom: 1px solid rgba(0,0,0,0.07); margin-bottom: 0.35rem; }
 .account-menu-divider { height: 1px; background: rgba(0,0,0,0.08); margin: 0.35rem 0; }
@@ -166,15 +207,15 @@ body {
 .account-menu-item.danger { color: var(--coral); font-weight: 600; }
 .account-menu-icon { width: 16px; height: 16px; flex: 0 0 16px; color: var(--teal); }
 .logout-modal-backdrop {
-  position: fixed; inset: 0; z-index: 200; background: rgba(0,0,0,0.36);
+  position: fixed; inset: 0; z-index: 200; background: var(--surface-overlay);
   display: flex; align-items: center; justify-content: center; padding: 1.5rem;
 }
 .logout-modal {
-  width: min(420px, 100%); background: #fff; border-radius: 12px; padding: 1.4rem;
-  box-shadow: 0 22px 60px rgba(0,0,0,0.24);
+  width: min(420px, 100%); background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 12px; padding: 1.4rem;
+  box-shadow: var(--shadow-dialog);
 }
 .logout-modal h2 { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; margin-bottom: 0.45rem; }
-.logout-modal p { color: #666; font-size: 0.92rem; line-height: 1.6; margin-bottom: 1.2rem; }
+.logout-modal p { color: var(--text-secondary); font-size: 0.92rem; line-height: 1.6; margin-bottom: 1.2rem; }
 .logout-modal-actions { display: flex; justify-content: flex-end; gap: 0.65rem; }
 .modal-cancel, .modal-confirm {
   border: none; border-radius: 9px; padding: 0.6rem 1rem; cursor: pointer;
@@ -213,14 +254,295 @@ body {
   font-family: 'Space Grotesk', sans-serif; font-size: 1.75rem; font-weight: 600;
   margin-bottom: 0.5rem;
 }
-.section-sub { color: #666; font-size: 1rem; margin-bottom: 2rem; }
+.section-sub { color: var(--text-secondary); font-size: 1rem; margin-bottom: 2rem; }
 
 /* ── Cards ── */
 .card {
-  background: #fff; border-radius: 14px; border: 1px solid rgba(0,0,0,0.07);
-  padding: 1.5rem; box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  background: var(--surface-raised); border-radius: 14px; border: 1px solid var(--border-default);
+  padding: 1.5rem; box-shadow: var(--shadow-card);
 }
 .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+.admin-workspace {
+  width: min(1760px, 96vw); margin: 0 auto; padding: 1.25rem 0 2rem;
+  display: grid; grid-template-columns: minmax(220px, 248px) minmax(0, 1fr); gap: 1rem;
+}
+.admin-workspace-sidebar {
+  position: sticky; top: calc(var(--nav-h) + 1rem); align-self: start;
+  background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 14px;
+  padding: 1rem; box-shadow: var(--shadow-card);
+}
+.admin-workspace-sidebar-heading { display: grid; gap: 0.35rem; margin-bottom: 1rem; }
+.admin-workspace-sidebar-heading h2 {
+  font-family: 'Space Grotesk', sans-serif; font-size: 1.08rem; color: var(--text-primary);
+}
+.admin-workspace-sidebar-heading p:last-child { color: var(--text-muted); font-size: 0.84rem; line-height: 1.45; }
+.admin-section-nav { display: grid; gap: 0.35rem; }
+.admin-section-nav-item {
+  width: 100%; min-height: 44px; border: 1px solid transparent; border-radius: 10px;
+  background: transparent; color: var(--text-secondary); cursor: pointer; text-align: left;
+  padding: 0.65rem 0.7rem; font-family: 'DM Sans', sans-serif; font-weight: 800;
+  display: grid; gap: 0.15rem; white-space: normal;
+}
+.admin-section-nav-item:hover, .admin-section-nav-item:focus-visible {
+  background: var(--surface-interactive); border-color: var(--color-brand-border); outline: none;
+  box-shadow: 0 0 0 3px rgba(29,158,117,0.13);
+}
+.admin-section-nav-item.active {
+  background: var(--surface-interactive); border-color: var(--color-brand-border);
+  box-shadow: inset 4px 0 0 var(--color-brand-primary); color: #14684f;
+}
+.admin-section-nav-item.disabled {
+  cursor: not-allowed; opacity: 0.78; background: var(--surface-muted); color: var(--text-muted);
+}
+.admin-section-nav-item small { font-size: 0.72rem; color: #77827d; font-weight: 700; }
+.admin-workspace-main { min-width: 0; display: grid; gap: 1rem; align-content: start; }
+.admin-workspace-main-header {
+  background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 14px; padding: 1.15rem 1.25rem;
+  box-shadow: var(--shadow-card); display: flex; align-items: flex-start;
+  justify-content: space-between; gap: 1rem; min-width: 0;
+}
+.admin-workspace-main-header h1 {
+  font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.35rem, 2vw, 1.85rem); margin-bottom: 0.35rem;
+}
+.admin-workspace-main-header p:last-child { color: var(--text-muted); line-height: 1.55; max-width: 76ch; }
+.admin-workspace-status {
+  flex: 0 0 auto; min-width: 160px; border: 1px solid var(--border-default); border-radius: 10px;
+  padding: 0.65rem 0.75rem; background: var(--surface-muted); display: grid; gap: 0.15rem;
+}
+.admin-workspace-status strong { color: #14684f; text-transform: capitalize; }
+.admin-workspace-status span { color: #5c6a61; font-size: 0.82rem; line-height: 1.35; }
+.admin-workspace-content {
+  min-width: 0; background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 14px;
+  padding: 1.15rem; box-shadow: var(--shadow-card);
+}
+.admin-resource-governance { display: grid; gap: 1rem; min-width: 0; }
+.admin-resource-header h2 {
+  font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem; margin-bottom: 0.35rem;
+}
+.admin-resource-header p:last-child { color: var(--text-secondary); line-height: 1.55; max-width: 70ch; font-size: 0.92rem; }
+.admin-resource-summary { display: grid; grid-template-columns: repeat(auto-fit, minmax(140px, 1fr)); gap: 0.7rem; }
+.admin-resource-metric {
+  border: 1px solid var(--border-default); border-radius: 8px; padding: 0.8rem; background: var(--surface-muted);
+}
+.admin-resource-metric p { color: #5c6a61; font-size: 0.82rem; line-height: 1.25; margin-bottom: 0.3rem; }
+.admin-resource-metric strong { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; color: #1f3328; }
+.admin-resource-filters {
+  display: grid; grid-template-columns: minmax(190px, 1.5fr) repeat(3, minmax(140px, 1fr)) auto;
+  gap: 0.7rem; align-items: end;
+}
+.admin-resource-filters label, .admin-resource-form label {
+  display: grid; gap: 0.3rem; font-size: 0.8rem; font-weight: 700; color: var(--text-secondary);
+}
+.admin-resource-filters input, .admin-resource-filters select,
+.admin-resource-form input, .admin-resource-form select, .admin-resource-form textarea {
+  width: 100%; border: 1.5px solid var(--border-default); border-radius: 10px;
+  padding: 0.62rem 0.75rem; font: inherit; background: var(--surface-raised); color: var(--text-primary);
+}
+.admin-resource-filters input:focus, .admin-resource-filters select:focus,
+.admin-resource-form input:focus, .admin-resource-form select:focus, .admin-resource-form textarea:focus {
+  border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(29,158,117,0.14); outline: none;
+}
+.admin-resource-table-wrap {
+  overflow-x: auto; border: 1px solid var(--border-default); border-radius: 10px;
+  max-width: 100%; scrollbar-gutter: stable;
+}
+.admin-resource-table-wrap:focus-within { box-shadow: 0 0 0 3px rgba(29,158,117,0.12); }
+.admin-resource-table { width: 100%; min-width: 980px; border-collapse: collapse; font-size: 0.88rem; table-layout: auto; }
+.admin-resource-table th, .admin-resource-table td { padding: 0.75rem; border-bottom: 1px solid var(--border-subtle); text-align: left; vertical-align: top; }
+.admin-resource-table th { background: var(--surface-muted); color: var(--text-secondary); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
+.admin-resource-table tbody tr:hover { background: var(--surface-muted); }
+.admin-resource-table th:nth-child(3), .admin-resource-table th:nth-child(4), .admin-resource-table th:nth-child(5),
+.admin-resource-table td:nth-child(3), .admin-resource-table td:nth-child(4), .admin-resource-table td:nth-child(5) {
+  width: 136px; white-space: nowrap;
+}
+.admin-resource-table th:nth-child(6), .admin-resource-table td:nth-child(6) { width: 118px; white-space: nowrap; }
+.admin-resource-table th:nth-child(7), .admin-resource-table td:nth-child(7) { width: 112px; white-space: nowrap; }
+.admin-resource-table td strong { display: block; color: #1f3328; }
+.admin-resource-table td span { display: block; color: #66726b; font-size: 0.8rem; margin-top: 0.15rem; }
+.admin-resource-table .btn-secondary { white-space: nowrap; }
+.admin-status-badge {
+  display: inline-flex; align-items: center; min-height: 26px; border-radius: 999px;
+  padding: 0.2rem 0.55rem; background: var(--status-neutral-surface); border: 1px solid var(--status-neutral-border); color: #4c5852; font-size: 0.76rem; font-weight: 800;
+  white-space: nowrap; word-break: keep-all;
+}
+.admin-status-badge.good { background: var(--status-success-surface); border-color: var(--status-success-border); color: #14684f; }
+.admin-status-badge.warn { background: var(--status-warning-surface); border-color: var(--status-warning-border); color: #7a4a14; }
+.admin-resource-state, .admin-resource-pagination { color: #5c6a61; font-size: 0.9rem; line-height: 1.5; }
+.admin-resource-summary-note { color: #66726b; font-size: 0.82rem; line-height: 1.45; margin-top: -0.35rem; }
+.admin-resource-drawer-backdrop {
+  position: fixed; inset: 0; z-index: 220; background: rgba(18, 30, 24, 0.35);
+  display: flex; justify-content: flex-end;
+}
+.admin-resource-drawer {
+  width: min(520px, 100vw); height: 100%; overflow-y: auto; background: var(--surface-raised);
+  box-shadow: -12px 0 30px rgba(0,0,0,0.16); padding: 1.25rem;
+}
+.admin-resource-drawer-head {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;
+  border-bottom: 1px solid #e4ece7; padding-bottom: 1rem; margin-bottom: 1rem;
+}
+.admin-resource-drawer-head h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; line-height: 1.2; }
+.admin-resource-drawer-body { display: grid; gap: 1.05rem; }
+.admin-resource-drawer-body section {
+  border: 1.5px solid var(--border-default); border-radius: 10px; padding: 0.95rem;
+  display: grid; gap: 0.5rem; background: var(--surface-muted);
+}
+.admin-resource-drawer-body h4 {
+  font-family: 'Space Grotesk', sans-serif; font-size: 1rem; color: #1f3328;
+  padding-bottom: 0.35rem; border-bottom: 1px solid #dfe8e3;
+}
+.admin-resource-drawer-body p, .admin-resource-drawer-body li {
+  color: #5c6a61; font-size: 0.88rem; line-height: 1.5;
+}
+.admin-resource-drawer-body ul { padding-left: 1.1rem; }
+.admin-resource-form { background: var(--surface-subtle) !important; border-color: var(--color-brand-border) !important; }
+.admin-resource-checkbox { grid-template-columns: auto 1fr; align-items: center; justify-content: start; }
+.admin-resource-checkbox input { width: auto; min-width: 18px; min-height: 18px; }
+.admin-resource-success {
+  color: #14684f; background: var(--teal-lt); border: 1px solid rgba(29,158,117,0.24);
+  border-radius: 9px; padding: 0.65rem 0.75rem; font-size: 0.86rem; font-weight: 700;
+}
+.admin-resource-drawer-actions { display: flex; justify-content: flex-end; gap: 0.7rem; padding-bottom: 1rem; }
+.admin-resource-rag-doc { font-size: 0.8rem !important; background: var(--surface-muted); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.45rem 0.55rem; }
+.admin-resource-editor { display: grid; gap: 1rem; min-width: 0; }
+.admin-resource-editor-toolbar {
+  display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;
+}
+.admin-resource-editor-dirty {
+  color: #8a3e25; background: var(--status-danger-surface); border: 1px solid var(--status-danger-border); border-radius: 999px;
+  padding: 0.28rem 0.65rem; font-size: 0.78rem; font-weight: 800;
+}
+.admin-resource-editor-identity {
+  border: 1px solid var(--border-default); border-radius: 12px; padding: 1rem;
+  background: var(--surface-muted); display: flex; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+}
+.admin-resource-editor-identity h2 {
+  font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; margin-bottom: 0.3rem;
+}
+.admin-resource-editor-identity p:last-child { color: #66726b; font-size: 0.9rem; line-height: 1.5; max-width: 72ch; }
+.admin-resource-editor-badges { display: flex; gap: 0.4rem; flex-wrap: wrap; align-content: flex-start; }
+.admin-resource-language-tabs {
+  display: flex; gap: 0.55rem; overflow-x: auto; padding-bottom: 0.1rem;
+}
+.admin-resource-language-tab {
+  min-width: 150px; min-height: 48px; border: 1.5px solid var(--border-default); border-radius: 10px;
+  background: var(--surface-raised); color: var(--text-secondary); cursor: pointer; padding: 0.55rem 0.7rem;
+  display: grid; gap: 0.12rem; text-align: left; font-family: 'DM Sans', sans-serif;
+}
+.admin-resource-language-tab span { font-weight: 800; }
+.admin-resource-language-tab small { color: #66726b; font-weight: 700; font-size: 0.72rem; }
+.admin-resource-language-tab:hover, .admin-resource-language-tab:focus-visible {
+  border-color: rgba(29,158,117,0.35); outline: none; box-shadow: 0 0 0 3px rgba(29,158,117,0.12);
+}
+.admin-resource-language-tab.active {
+  background: var(--surface-interactive); border-color: var(--color-brand-border); color: #14684f;
+  box-shadow: inset 0 -3px 0 var(--color-brand-primary);
+}
+.admin-resource-language-tab.dirty { border-color: rgba(231,111,81,0.45); }
+.admin-resource-editor-grid {
+  display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.75fr);
+  gap: 1rem; align-items: start; min-width: 0;
+}
+.admin-resource-content-form, .admin-resource-preview {
+  border: 1px solid var(--border-default); border-radius: 12px; padding: 1rem; background: var(--surface-raised);
+}
+.admin-resource-content-form { display: grid; gap: 0.85rem; }
+.admin-resource-content-form label {
+  display: grid; gap: 0.3rem; font-size: 0.82rem; font-weight: 800; color: #445047;
+}
+.admin-resource-content-form input, .admin-resource-content-form textarea {
+  width: 100%; border: 1.5px solid var(--border-default); border-radius: 10px;
+  padding: 0.68rem 0.75rem; font: inherit; color: var(--text-primary); background: var(--surface-raised);
+}
+.admin-resource-content-form input:focus, .admin-resource-content-form textarea:focus {
+  border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(29,158,117,0.14); outline: none;
+}
+.admin-resource-content-form [aria-invalid="true"] {
+  border-color: var(--coral); box-shadow: 0 0 0 3px rgba(231,111,81,0.12);
+}
+.admin-resource-content-form small { color: #66726b; font-weight: 600; line-height: 1.35; }
+.admin-resource-body-textarea { min-height: 320px; line-height: 1.55; resize: vertical; }
+.admin-resource-editor-actions {
+  display: flex; justify-content: flex-end; gap: 0.7rem; flex-wrap: wrap;
+}
+.admin-resource-preview {
+  position: sticky; top: calc(var(--nav-h) + 1rem); display: grid; gap: 0.85rem;
+  background: var(--surface-muted);
+  max-height: calc(100vh - var(--nav-h) - 2rem); overflow-y: auto;
+}
+.admin-resource-preview-head {
+  display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+}
+.admin-resource-preview-head span { color: #66726b; font-size: 0.8rem; font-weight: 800; }
+.admin-resource-preview-category {
+  justify-self: start; border-radius: 999px; padding: 0.24rem 0.65rem;
+  background: var(--surface-interactive); border: 1px solid var(--color-brand-border); color: var(--teal); font-size: 0.74rem; font-weight: 800;
+}
+.admin-resource-preview h2 {
+  font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; line-height: 1.25; color: #1f3328;
+}
+.admin-resource-preview-summary { color: #5c6a61; font-weight: 700; line-height: 1.55; }
+.admin-resource-preview-body { display: grid; gap: 0.85rem; }
+.admin-resource-preview-body p {
+  color: #374237; font-size: 0.9rem; line-height: 1.75; overflow-wrap: anywhere;
+  background: rgba(255,255,255,0.58); border: 1px solid var(--border-subtle); border-radius: 8px;
+  padding: 0.55rem 0.65rem;
+}
+.admin-resource-preview-empty { color: #88928c !important; font-style: italic; }
+.admin-resource-editor-empty { display: grid; gap: 1rem; justify-items: start; }
+.admin-confirm-backdrop {
+  position: fixed; inset: 0; z-index: 260; background: var(--surface-overlay);
+  display: grid; place-items: center; padding: 1rem;
+}
+.admin-confirm-dialog {
+  width: min(460px, 100%); background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 12px;
+  box-shadow: var(--shadow-dialog); padding: 1.1rem; display: grid; gap: 0.7rem;
+}
+.admin-confirm-dialog h3 {
+  font-family: 'Space Grotesk', sans-serif; font-size: 1.12rem; line-height: 1.25; color: #1f3328;
+}
+.admin-confirm-dialog p { color: #5c6a61; font-size: 0.9rem; line-height: 1.55; }
+.admin-confirm-resource {
+  background: #f8fbf8; border: 1px solid #dfe8e3; border-radius: 9px; padding: 0.6rem 0.7rem;
+  color: #1f3328 !important; font-weight: 700; overflow-wrap: anywhere;
+}
+.admin-confirm-actions { display: flex; justify-content: flex-end; gap: 0.7rem; margin-top: 0.2rem; }
+@media (max-width: 860px) {
+  .admin-workspace {
+    width: min(100% - 1.5rem, 1180px); padding: 1rem 0 1.5rem;
+    grid-template-columns: 1fr;
+  }
+  .admin-workspace-sidebar {
+    position: static; padding: 0.85rem; overflow: hidden;
+  }
+  .admin-workspace-sidebar-heading { margin-bottom: 0.75rem; }
+  .admin-section-nav {
+    display: flex; overflow-x: auto; gap: 0.45rem; padding-bottom: 0.1rem;
+  }
+  .admin-section-nav-item {
+    flex: 0 0 auto; width: auto; min-width: 150px; white-space: nowrap;
+  }
+  .admin-workspace-main-header { flex-direction: column; }
+  .admin-workspace-status { width: 100%; }
+  .admin-resource-filters { grid-template-columns: 1fr 1fr; }
+  .admin-resource-editor-grid { grid-template-columns: 1fr; }
+  .admin-resource-preview { position: static; max-height: none; }
+}
+@media (max-width: 560px) {
+  .admin-workspace { width: min(100% - 1rem, 100%); }
+  .admin-workspace-content, .admin-workspace-main-header { padding: 0.9rem; border-radius: 12px; }
+  .admin-section-nav-item { min-width: 136px; }
+  .admin-resource-filters, .admin-resource-summary { grid-template-columns: 1fr; }
+  .admin-resource-table { min-width: 900px; }
+  .admin-resource-drawer { width: 100vw; padding: 1rem; }
+  .admin-resource-drawer-head { flex-direction: column; }
+  .admin-resource-drawer-actions { flex-direction: column-reverse; }
+  .admin-resource-editor-actions { flex-direction: column-reverse; }
+  .admin-resource-editor-actions .btn-primary, .admin-resource-editor-actions .btn-secondary,
+  .admin-resource-drawer-actions .btn-primary, .admin-resource-drawer-actions .btn-secondary { width: 100%; }
+  .admin-resource-language-tab { min-width: 132px; }
+  .admin-confirm-actions { flex-direction: column-reverse; }
+}
 
 /* ── Hero ── */
 .hero {
@@ -242,33 +564,33 @@ body {
 /* ── Stat chips ── */
 .stat-row { display: flex; gap: 1.5rem; justify-content: center; flex-wrap: wrap; margin-top: 2rem; }
 .stat-chip {
-  background: #fff; border-radius: 50px; padding: 0.6rem 1.4rem;
-  font-size: 0.875rem; color: #444; box-shadow: 0 2px 8px rgba(0,0,0,0.07);
+  background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 50px; padding: 0.6rem 1.4rem;
+  font-size: 0.875rem; color: var(--text-secondary); box-shadow: var(--shadow-card);
   display: flex; align-items: center; gap: 0.4rem;
 }
 
 /* ── Dashboard ── */
 .dash-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(220px, 1fr)); gap: 1rem; }
 .dash-card {
-  background: #fff; border-radius: 14px; border: 1px solid rgba(0,0,0,0.07);
+  background: var(--surface-raised); border-radius: 14px; border: 1px solid var(--border-default);
   padding: 1.5rem; cursor: pointer; transition: box-shadow .2s, transform .2s;
 }
-.dash-card:hover { box-shadow: 0 6px 20px rgba(0,0,0,0.1); transform: translateY(-2px); }
+.dash-card:hover { box-shadow: var(--shadow-raised); transform: translateY(-2px); border-color: var(--border-strong); }
 .dash-icon { font-size: 1.8rem; margin-bottom: 0.75rem; }
 .dash-label { font-family: 'Space Grotesk', sans-serif; font-weight: 600; margin-bottom: 0.3rem; }
 .dash-desc { color: #777; font-size: 0.875rem; line-height: 1.5; }
 
 /* ── Agent panel ── */
 .agent-wrap { max-width: 760px; margin: 0 auto; padding: 2rem 1.5rem; }
-.agent-panel { background: #fff; border-radius: 16px; border: 1px solid rgba(0,0,0,0.08); overflow: hidden; box-shadow: 0 4px 20px rgba(0,0,0,0.07); }
+.agent-panel { background: var(--surface-raised); border-radius: 16px; border: 1px solid var(--border-default); overflow: hidden; box-shadow: var(--shadow-card); }
 .agent-header { background: var(--teal); color: #fff; padding: 1rem 1.25rem; display: flex; align-items: center; gap: 0.6rem; font-weight: 600; }
 .agent-messages { height: 380px; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: 0.75rem; }
 .agent-bubble { max-width: 80%; padding: 0.65rem 1rem; border-radius: 14px; font-size: 0.875rem; line-height: 1.55; }
 .agent-bubble.user { align-self: flex-end; background: var(--teal); color: #fff; border-bottom-right-radius: 4px; }
 .agent-bubble.ai { align-self: flex-start; background: var(--gray-lt); color: #1a1a18; border-bottom-left-radius: 4px; }
 .agent-bubble.ai.loading { opacity: 0.6; font-style: italic; }
-.agent-input-row { display: flex; gap: 0.5rem; padding: 0.75rem 1rem; border-top: 1px solid rgba(0,0,0,0.07); }
-.agent-input { flex: 1; border: 1px solid rgba(0,0,0,0.12); border-radius: 10px; padding: 0.55rem 0.85rem; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; outline: none; }
+.agent-input-row { display: flex; gap: 0.5rem; padding: 0.75rem 1rem; border-top: 1px solid var(--border-subtle); }
+.agent-input { flex: 1; border: 1px solid var(--border-default); border-radius: 10px; padding: 0.55rem 0.85rem; font-family: 'DM Sans', sans-serif; font-size: 0.875rem; outline: none; }
 .agent-input:focus { border-color: var(--teal); }
 .agent-send { background: var(--teal); color: #fff; border: none; border-radius: 8px; padding: 0.5rem 0.85rem; cursor: pointer; font-size: 0.85rem; font-weight: 500; }
 .agent-send:hover { opacity: 0.88; }
@@ -371,6 +693,16 @@ body {
 }
 .btn-primary:hover { opacity: 0.88; }
 .btn-primary:disabled { opacity: 0.45; cursor: not-allowed; }
+.btn-secondary {
+  background: #fff; border: 1.5px solid rgba(0,0,0,0.13); border-radius: 10px;
+  padding: 0.65rem 0.9rem; font-family: 'DM Sans', sans-serif; font-size: 0.86rem;
+  font-weight: 700; color: #405247; cursor: pointer;
+}
+.btn-secondary:hover, .btn-secondary:focus-visible {
+  background: var(--teal-lt); color: var(--teal); outline: none;
+  box-shadow: 0 0 0 3px rgba(29,158,117,0.16);
+}
+.btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
 .btn-ghost {
   flex: 0 0 auto; background: none; border: 1.5px solid rgba(0,0,0,0.13);
   border-radius: 10px; padding: 0.75rem 1.1rem;
@@ -414,8 +746,8 @@ body {
 }
 .dashboard-section-nav {
   position: sticky; top: calc(var(--nav-h) + 1rem); align-self: start;
-  background: #fff; border: 1px solid rgba(0,0,0,0.07); border-radius: 14px;
-  padding: 0.85rem; box-shadow: 0 2px 12px rgba(0,0,0,0.04);
+  background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 14px;
+  padding: 0.85rem; box-shadow: var(--shadow-card);
 }
 .dashboard-section-nav-title {
   font-size: 0.76rem; font-weight: 800; color: #77827d; letter-spacing: 0.07em;
@@ -423,7 +755,7 @@ body {
 }
 .dashboard-section-nav-list { display: grid; gap: 0.2rem; }
 .dashboard-section-nav-button {
-  border: none; background: none; cursor: pointer; text-align: left; border-radius: 9px;
+  border: 1px solid transparent; background: none; cursor: pointer; text-align: left; border-radius: 9px;
   padding: 0.55rem 0.65rem; font-family: 'DM Sans', sans-serif; font-size: 0.84rem;
   color: #56615c;
 }
@@ -431,7 +763,7 @@ body {
 .dashboard-section-nav-button:focus-visible,
 .dashboard-section-nav-button.active {
   background: var(--teal-lt); color: var(--teal); outline: none;
-  box-shadow: inset 0 0 0 2px rgba(29,158,117,0.16);
+  border-color: var(--color-brand-border); box-shadow: inset 3px 0 0 var(--color-brand-primary);
 }
 .dashboard-content { min-width: 0; }
 .progress-anchor { scroll-margin-top: calc(var(--nav-h) + 1rem); }
@@ -481,7 +813,7 @@ body {
 
 /* ── Team card ── */
 .team-grid { display: flex; gap: 1rem; flex-wrap: wrap; }
-.team-card { background: #fff; border-radius: 14px; border: 1px solid rgba(0,0,0,0.07); padding: 1.5rem; text-align: center; flex: 1; min-width: 160px; }
+.team-card { background: var(--surface-raised); border-radius: 14px; border: 1px solid var(--border-default); padding: 1.5rem; text-align: center; flex: 1; min-width: 160px; box-shadow: var(--shadow-card); }
 .team-card .avatar { margin-bottom: 0.75rem; }
 
 /* ── Chat Widget ── */
@@ -495,8 +827,8 @@ body {
 .chat-fab:hover { opacity: 0.88; }
 .chat-panel {
   position: fixed; bottom: 4.5rem; right: 1.5rem; z-index: 199;
-  width: 340px; background: #fff; border-radius: 16px;
-  border: 1px solid rgba(0,0,0,0.1); box-shadow: 0 8px 32px rgba(0,0,0,0.14);
+  width: 340px; background: var(--surface-raised); border-radius: 16px;
+  border: 1px solid var(--border-default); box-shadow: var(--shadow-raised);
   display: flex; flex-direction: column; overflow: hidden;
   max-height: min(560px, calc(100vh - 6rem));
 }
@@ -563,7 +895,7 @@ body {
   overflow-wrap: anywhere;
 }
 .chat-source-toggle {
-  min-height: 32px; flex: 0 0 auto; border: 1px solid rgba(29,158,117,0.16); background: #fff;
+  min-height: 32px; flex: 0 0 auto; border: 1px solid rgba(29,158,117,0.2); background: var(--surface-raised);
   color: #0d6b52; border-radius: 999px; padding: 0.25rem 0.58rem; font-size: 0.72rem;
   font-weight: 800; cursor: pointer;
 }
@@ -586,10 +918,10 @@ body {
   text-decoration: none; cursor: pointer;
 }
 .chat-source-button {
-  border: 1px solid rgba(29,158,117,0.18); background: #fff; color: #0d6b52;
+  border: 1px solid rgba(29,158,117,0.22); background: var(--surface-raised); color: #0d6b52;
 }
 .chat-source-link {
-  border: 1px solid rgba(0,0,0,0.1); background: #fff; color: #46524e;
+  border: 1px solid var(--border-default); background: var(--surface-raised); color: #46524e;
 }
 .chat-source-button:hover, .chat-source-button:focus-visible,
 .chat-source-link:hover, .chat-source-link:focus-visible {
@@ -602,7 +934,7 @@ body {
 }
 .chat-action-group.compact { width: 100%; }
 .chat-action-card {
-  background: #fff; border: 1px solid rgba(29,158,117,0.18); border-left: 3px solid var(--teal);
+  background: var(--surface-raised); border: 1px solid rgba(29,158,117,0.22); border-left: 3px solid var(--teal);
   border-radius: 10px; padding: 0.7rem; display: grid; grid-template-columns: minmax(0, 1fr) auto;
   gap: 0.65rem; align-items: center; box-shadow: 0 3px 12px rgba(0,0,0,0.045);
 }
@@ -659,8 +991,8 @@ body {
 }
 .chat-empty { margin: auto; text-align: center; color: #66736d; line-height: 1.55; padding: 1rem; }
 .chat-empty-title { font-weight: 800; color: #1a1a18; margin-bottom: 0.3rem; }
-.chat-input-row { display: flex; gap: 0.5rem; padding: 0.65rem 0.75rem; border-top: 1px solid rgba(0,0,0,0.07); align-items: flex-end; }
-.chat-input { flex: 1; border: 1px solid rgba(0,0,0,0.12); border-radius: 8px; padding: 0.52rem 0.7rem; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; outline: none; resize: none; min-height: 38px; max-height: 110px; }
+.chat-input-row { display: flex; gap: 0.5rem; padding: 0.65rem 0.75rem; border-top: 1px solid var(--border-subtle); align-items: flex-end; }
+.chat-input { flex: 1; border: 1px solid var(--border-default); border-radius: 8px; padding: 0.52rem 0.7rem; font-family: 'DM Sans', sans-serif; font-size: 0.82rem; outline: none; resize: none; min-height: 38px; max-height: 110px; }
 .chat-input:focus { border-color: var(--teal); }
 .chat-send { background: var(--teal); color: #fff; border: none; border-radius: 8px; padding: 0.55rem 0.85rem; cursor: pointer; font-size: 0.85rem; font-weight: 700; min-width: 44px; }
 .chat-send:hover, .chat-send:focus-visible { opacity: 0.88; outline: none; box-shadow: 0 0 0 3px rgba(29,158,117,0.18); }
@@ -677,7 +1009,7 @@ body {
 }
 .dashboard-chat-welcome {
   min-height: 210px; display: grid; place-content: center; gap: 0.35rem;
-  background: linear-gradient(180deg, #fff 0%, #f7fbf9 100%);
+  background: linear-gradient(180deg, var(--surface-raised) 0%, var(--surface-muted) 100%);
 }
 .dashboard-chat-welcome .chat-empty-title { font-family: 'Space Grotesk', sans-serif; font-size: 1.05rem; }
 @media (max-width: 560px) {
@@ -700,8 +1032,8 @@ body {
 }
 .ai-chat-shell.sidebar-collapsed { grid-template-columns: 68px minmax(0, 1fr); }
 .ai-chat-sidebar, .ai-chat-main {
-  background: #fff; border: 1px solid rgba(0,0,0,0.08); border-radius: 14px;
-  box-shadow: 0 2px 12px rgba(0,0,0,0.05);
+  background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 14px;
+  box-shadow: var(--shadow-card);
   min-height: 0;
 }
 .ai-chat-sidebar { padding: 1rem; align-self: stretch; display: flex; flex-direction: column; overflow: hidden; }
@@ -711,7 +1043,7 @@ body {
 .ai-chat-sidebar-actions { display: flex; align-items: center; gap: 0.45rem; flex: 0 0 auto; }
 .ai-chat-sidebar-rail-actions { display: grid; gap: 0.65rem; justify-items: center; width: 100%; }
 .ai-chat-icon-button {
-  width: 40px; height: 40px; border: 1px solid rgba(0,0,0,0.1); background: #fff;
+  width: 40px; height: 40px; border: 1px solid var(--border-default); background: var(--surface-raised);
   border-radius: 10px; cursor: pointer; display: inline-flex; align-items: center; justify-content: center;
   color: #3f4a45; font-size: 1.15rem; font-weight: 900; line-height: 1;
 }
@@ -722,7 +1054,7 @@ body {
 .ai-chat-list { display: grid; align-content: start; gap: 0.45rem; min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 0.15rem; }
 .ai-chat-list-item {
   position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 40px; gap: 0.35rem;
-  align-items: start; border: 1px solid rgba(0,0,0,0.08); background: #fff;
+  align-items: start; border: 1px solid var(--border-default); background: var(--surface-raised);
   border-radius: 10px; padding: 0.62rem 0.58rem 0.62rem 0.7rem; color: #333; min-width: 0;
 }
 .ai-chat-list-row { min-width: 0; }
@@ -738,7 +1070,7 @@ body {
   outline: none; box-shadow: 0 0 0 3px rgba(29,158,117,0.18);
 }
 .ai-chat-menu-button {
-  justify-self: end; border: 1px solid rgba(0,0,0,0.08); background: #fff; border-radius: 10px; cursor: pointer;
+  justify-self: end; border: 1px solid var(--border-default); background: var(--surface-raised); border-radius: 10px; cursor: pointer;
   padding: 0; color: #56615c; font-weight: 800; min-width: 40px; min-height: 40px; line-height: 1;
 }
 .ai-chat-menu-button:hover, .ai-chat-menu-button:focus-visible, .ai-chat-menu-button.open {
@@ -746,8 +1078,8 @@ body {
 }
 .ai-chat-menu {
   position: fixed; z-index: 260; width: 168px;
-  background: #fff; border: 1px solid rgba(0,0,0,0.1); border-radius: 10px;
-  box-shadow: 0 12px 28px rgba(0,0,0,0.14); padding: 0.35rem;
+  background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 10px;
+  box-shadow: var(--shadow-raised); padding: 0.35rem;
 }
 .ai-chat-menu-item {
   width: 100%; border: none; background: none; text-align: left; cursor: pointer;
@@ -759,22 +1091,22 @@ body {
 .ai-chat-rename-row .ai-chat-list-item { width: 100%; display: block; }
 .ai-chat-rename-form { display: grid; gap: 0.4rem; }
 .ai-chat-rename-input {
-  width: 100%; border: 1.5px solid rgba(0,0,0,0.13); border-radius: 8px;
+  width: 100%; border: 1.5px solid var(--border-default); border-radius: 8px;
   padding: 0.55rem 0.65rem; font-family: 'DM Sans', sans-serif; font-size: 0.86rem;
 }
 .ai-chat-rename-input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(29,158,117,0.12); }
 .ai-chat-list-title { font-weight: 800; font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ai-chat-list-time { margin-top: 0.2rem; font-size: 0.72rem; color: #77827d; }
 .ai-chat-main { min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
-.ai-chat-main-header { flex: 0 0 auto; padding: 1rem 1.1rem; border-bottom: 1px solid rgba(0,0,0,0.07); }
-.ai-chat-full-messages { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; background: #fbfcfa; }
+.ai-chat-main-header { flex: 0 0 auto; padding: 1rem 1.1rem; border-bottom: 1px solid var(--border-subtle); }
+.ai-chat-full-messages { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; background: var(--surface-muted); }
 .ai-chat-full-messages .chat-empty { margin: auto auto 1.25rem; max-width: 420px; padding: 1rem 1.1rem; }
 .ai-chat-full-messages .chat-bubble { max-width: min(680px, 88%); font-size: 0.92rem; }
 .ai-chat-drawer-layer { display: none; }
 .chat-migration-notice { margin-bottom: 0.85rem; }
 .dashboard-ai-preview {
-  background: #fff; border: 1px solid rgba(29,158,117,0.18); border-radius: 14px;
-  padding: 1.25rem; box-shadow: 0 2px 12px rgba(0,0,0,0.05); margin-bottom: 0.5rem;
+  background: var(--surface-raised); border: 1px solid rgba(29,158,117,0.22); border-radius: 14px;
+  padding: 1.25rem; box-shadow: var(--shadow-card); margin-bottom: 0.5rem;
 }
 .dashboard-ai-preview-text { color: #52615b; font-size: 0.88rem; line-height: 1.6; margin: 0.65rem 0 1rem; }
 @media (max-width: 820px) {
@@ -797,7 +1129,7 @@ body {
   }
   .ai-chat-drawer {
     position: absolute; inset: 0 auto 0 0; width: min(340px, calc(100vw - 2.5rem));
-    background: #fff; border: none; border-radius: 0 14px 14px 0;
+    background: var(--surface-raised); border: none; border-radius: 0 14px 14px 0;
     box-shadow: 12px 0 32px rgba(0,0,0,0.18); padding: 1rem;
     display: flex; flex-direction: column; min-width: 0; overflow: hidden;
   }
@@ -817,7 +1149,59 @@ body {
 
 /* ── Resources ── */
 .res-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 1rem; }
-.res-card { background: #fff; border-radius: 14px; border: 1px solid rgba(0,0,0,0.07); padding: 1.25rem; }
+.res-card { background: var(--surface-raised); border-radius: 14px; border: 1px solid var(--border-default); padding: 1.25rem; box-shadow: var(--shadow-card); }
+.res-card:hover { border-color: var(--border-strong); }
+.scenario-library-card {
+  position: relative;
+  overflow: hidden;
+  border: 1px solid var(--border-default);
+  background: var(--surface-raised);
+  box-shadow: var(--shadow-card);
+  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease, background 0.18s ease;
+}
+.scenario-library-card:hover,
+.scenario-library-card:focus-within {
+  border-color: var(--border-strong);
+  box-shadow: var(--shadow-raised);
+  transform: translateY(-1px);
+}
+.scenario-library-card.recommended {
+  border: 2px solid var(--color-brand-border);
+  box-shadow: 0 10px 24px rgba(29,158,117,0.16);
+  background: linear-gradient(180deg, #f3fbf7 0%, var(--surface-raised) 62%);
+}
+.scenario-library-card.recommended::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  background: linear-gradient(90deg, var(--teal), #6fcf97);
+}
+.scenario-library-card.recommended:hover,
+.scenario-library-card.recommended:focus-within {
+  border-color: var(--teal);
+  box-shadow: 0 12px 28px rgba(29,158,117,0.22);
+}
+.scenario-recommended-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.28rem;
+  max-width: 100%;
+  background: #dff5e7;
+  color: #145c42;
+  border: 1px solid rgba(29,158,117,0.32);
+  border-radius: 999px;
+  padding: 0.22rem 0.58rem;
+  font-size: 0.7rem;
+  font-weight: 850;
+  line-height: 1.2;
+  white-space: normal;
+}
+.scenario-recommended-badge svg {
+  width: 0.78rem;
+  height: 0.78rem;
+  flex: 0 0 auto;
+}
 .res-tag { display: inline-block; font-size: 0.72rem; font-weight: 600; border-radius: 99px; padding: 0.2rem 0.65rem; margin-bottom: 0.6rem; background: var(--teal-lt); color: var(--teal); }
 .res-title { font-weight: 600; margin-bottom: 0.35rem; font-size: 0.95rem; }
 .res-desc { color: #666; font-size: 0.82rem; line-height: 1.5; }
@@ -854,21 +1238,9 @@ const {
   labelsFor,
 } = profileMappings;
 
-function parseHashPage() {
-  if (typeof window === "undefined") return "home";
-  const raw = window.location.hash.replace(/^#\/?/, "").split(/[/?#]/)[0];
+function parseHashPage(hashValue = typeof window === "undefined" ? "#/home" : window.location.hash) {
+  const raw = normalizeHashRoute(hashValue).replace(/^#\/?/, "").split(/[/?#]/)[0];
   return VALID_PAGES.has(raw) ? raw : "home";
-}
-
-function writeHashPage(page, replace = false) {
-  if (typeof window === "undefined") return;
-  const nextHash = `#/${VALID_PAGES.has(page) ? page : "home"}`;
-  if (window.location.hash === nextHash) return;
-  if (replace) {
-    window.history.replaceState(null, "", nextHash);
-  } else {
-    window.location.hash = nextHash;
-  }
 }
 
 function PageBackButton({ className = "", style }) {
@@ -929,6 +1301,7 @@ function ConfirmationDialog({
   const confirmRef = useRef(null);
 
   useEffect(() => {
+    const previousFocus = document.activeElement;
     cancelRef.current?.focus();
 
     function handleKeyDown(event) {
@@ -950,7 +1323,12 @@ function ConfirmationDialog({
     }
 
     document.addEventListener("keydown", handleKeyDown);
-    return () => document.removeEventListener("keydown", handleKeyDown);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown);
+      if (previousFocus && typeof previousFocus.focus === "function") {
+        window.setTimeout(() => previousFocus.focus(), 0);
+      }
+    };
   }, [onCancel]);
 
   return (
@@ -1983,24 +2361,6 @@ async function dbAdminStatus() {
     const data = await response.json().catch(() => ({}));
     if (!response.ok) return apiFailure(data, "errors.fallback.generic");
     return { ok: true, status: data };
-  } catch {
-    return networkFailure("errors.fallback.network");
-  }
-}
-
-async function dbAdminResourceReview() {
-  try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/resources/review`, {
-      method: "GET",
-      credentials: "include",
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.generic");
-    return {
-      ok: true,
-      summary: data.summary || {},
-      resources: Array.isArray(data.resources) ? data.resources : [],
-    };
   } catch {
     return networkFailure("errors.fallback.network");
   }
@@ -3684,11 +4044,11 @@ function HomePage() {
               onClick={() => go("resources")}
               style={{
                 display: "inline-flex", alignItems: "center", gap: "0.5rem",
-                background: "#fff", border: "1px solid rgba(0,0,0,0.08)",
+                background: "var(--surface-raised)", border: "1px solid var(--border-default)",
                 borderRadius: 99, padding: "0.55rem 1.1rem",
                 fontSize: "0.875rem", fontWeight: 600, cursor: "pointer",
-                color: "#333", transition: "all 0.15s",
-                boxShadow: "0 1px 4px rgba(0,0,0,0.06)",
+                color: "var(--text-primary)", transition: "all 0.15s",
+                boxShadow: "var(--shadow-card)",
               }}
               onMouseEnter={e => {
                 e.currentTarget.style.background = "var(--teal-lt)";
@@ -3696,9 +4056,9 @@ function HomePage() {
                 e.currentTarget.style.color = "var(--teal)";
               }}
               onMouseLeave={e => {
-                e.currentTarget.style.background = "#fff";
-                e.currentTarget.style.borderColor = "rgba(0,0,0,0.08)";
-                e.currentTarget.style.color = "#333";
+                e.currentTarget.style.background = "var(--surface-raised)";
+                e.currentTarget.style.borderColor = "var(--border-default)";
+                e.currentTarget.style.color = "var(--text-primary)";
               }}
             >
               <span>{topic.emoji}</span> {t(topic.labelKey)}
@@ -4672,10 +5032,10 @@ function ResourcesPage() {
                 key={resource.id}
                 onClick={() => setSelected(resource.slug)}
                 style={{
-                  background: "#fff", border: "1px solid rgba(0,0,0,0.07)",
+                  background: "var(--surface-raised)", border: "1px solid var(--border-default)",
                   borderRadius: 14, padding: "1.25rem", textAlign: "left",
                   cursor: "pointer", transition: "box-shadow .2s, transform .2s, border-color .2s",
-                  boxShadow: "0 2px 12px rgba(0,0,0,0.05)",
+                  boxShadow: "var(--shadow-card)",
                   display: "flex", flexDirection: "column", gap: "0.6rem",
                 }}
                 onMouseEnter={e => {
@@ -4684,9 +5044,9 @@ function ResourcesPage() {
                   e.currentTarget.style.borderColor = "var(--teal)";
                 }}
                 onMouseLeave={e => {
-                  e.currentTarget.style.boxShadow = "0 2px 12px rgba(0,0,0,0.05)";
+                  e.currentTarget.style.boxShadow = "var(--shadow-card)";
                   e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.borderColor = "rgba(0,0,0,0.07)";
+                  e.currentTarget.style.borderColor = "var(--border-default)";
                 }}
               >
                 <span style={{
@@ -5559,10 +5919,20 @@ function ScenariosPage() {
               const latest = scenario.latestAttempt;
               const isRecommended = recommendedIds.has(scenario.id);
               return (
-                <div key={scenario.id} className="card" style={{ border: isRecommended ? "1px solid rgba(46,125,50,0.35)" : "1px solid rgba(0,0,0,0.07)" }}>
+                <div
+                  key={scenario.id}
+                  className={`card scenario-library-card${isRecommended ? " recommended" : ""}`}
+                >
                   <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.65rem" }}>
                     <span style={{ color: "#2E7D32", fontWeight: 700, fontSize: "0.78rem" }}>{t(`topics.${scenario.topicCode}`, { defaultValue: topicLabel(scenario.topicCode) })}</span>
-                    {isRecommended && <span style={{ background: "#E8F5E9", color: "#2E7D32", borderRadius: 99, padding: "0.18rem 0.55rem", fontSize: "0.7rem", fontWeight: 700 }}>{t("scenarios.library.recommended")}</span>}
+                    {isRecommended && (
+                      <span className="scenario-recommended-badge">
+                        <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
+                          <path d="M12 3.6l2.35 4.76 5.25.76-3.8 3.7.9 5.23L12 15.58l-4.7 2.47.9-5.23-3.8-3.7 5.25-.76L12 3.6z" />
+                        </svg>
+                        <span>{t("scenarios.library.recommended")}</span>
+                      </span>
+                    )}
                   </div>
                   <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.05rem", marginBottom: "0.4rem" }}>{scenario.title}</div>
                   <div style={{ color: "#666", fontSize: "0.84rem", lineHeight: 1.55, marginBottom: "0.8rem" }}>{scenario.summary}</div>
@@ -7223,31 +7593,29 @@ function ConversationHistoryItem({
   );
 }
 
-function AdminPage() {
+function AdminPage({ acceptedHash }) {
   const { t } = useTranslation();
-  const { user, go } = useApp();
+  const { user, go, registerActivityGuard, requestGuardedAction, requestHashNavigation } = useApp();
   const [status, setStatus] = useState(null);
+  const [activeSection, setActiveSection] = useState(() => getAdminSectionFromHash(acceptedHash));
+  const [editorResourceId, setEditorResourceId] = useState(() => getAdminResourceEditorIdFromHash(acceptedHash));
   const [loading, setLoading] = useState(Boolean(user?.role === "admin"));
   const [error, setError] = useState("");
-  const [resourceReview, setResourceReview] = useState({ summary: {}, resources: [] });
-  const [resourceLoading, setResourceLoading] = useState(Boolean(user?.role === "admin"));
-  const [resourceError, setResourceError] = useState("");
-  const modules = [
-    { key: "resourceReview", status: "planned" },
-    { key: "ragKnowledge", status: "planned" },
-    { key: "contentRelationships", status: "planned" },
-    { key: "malaysiaGuidance", status: "planned" },
-    { key: "aiSafety", status: "planned" },
-    { key: "roleManagement", status: "planned" },
-  ];
+
+  useEffect(() => {
+    setActiveSection(getAdminSectionFromHash(acceptedHash));
+    setEditorResourceId(getAdminResourceEditorIdFromHash(acceptedHash));
+  }, [acceptedHash]);
+
+  const handleSectionNavigate = useCallback((section) => {
+    return requestHashNavigation(section.path);
+  }, [requestHashNavigation]);
 
   useEffect(() => {
     let active = true;
     if (user?.role !== "admin") {
       setLoading(false);
       setStatus(null);
-      setResourceLoading(false);
-      setResourceReview({ summary: {}, resources: [] });
       return () => { active = false; };
     }
 
@@ -7261,18 +7629,6 @@ function AdminPage() {
         setError(result.error || t("admin.status.error"));
       }
       setLoading(false);
-    });
-
-    setResourceLoading(true);
-    setResourceError("");
-    dbAdminResourceReview().then(result => {
-      if (!active) return;
-      if (result.ok) {
-        setResourceReview({ summary: result.summary, resources: result.resources });
-      } else {
-        setResourceError(result.error || t("admin.resourceReview.error"));
-      }
-      setResourceLoading(false);
     });
 
     return () => { active = false; };
@@ -7299,122 +7655,26 @@ function AdminPage() {
   }
 
   return (
-    <section className="section">
-      <div style={{ display: "grid", gap: "1.2rem" }}>
-        <div>
-          <p className="res-tag">{t("admin.badge")}</p>
-          <h1 className="section-title">{t("admin.title")}</h1>
-          <p className="section-sub">{t("admin.description")}</p>
-        </div>
-
+    <AdminWorkspace sections={ADMIN_SECTIONS} activeSection={activeSection} status={status} onSectionNavigate={handleSectionNavigate}>
+      {loading ? (
         <div className="card" role="status" aria-live="polite">
-          <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.15rem", marginBottom: "0.45rem" }}>
-            {t("admin.status.title")}
-          </h2>
-          {loading ? (
-            <p style={{ color: "#666", lineHeight: 1.6 }}>{t("admin.status.loading")}</p>
-          ) : error ? (
-            <p className="field-error" role="alert">{error}</p>
-          ) : (
-            <div style={{ display: "grid", gap: "0.45rem", color: "#445047", fontSize: "0.92rem" }}>
-              <p>{status?.message || t("admin.status.verified")}</p>
-              <p><strong>{t("admin.status.role")}:</strong> {status?.role || "admin"}</p>
-              <p><strong>{t("admin.status.modules")}:</strong> {(status?.modules || []).map(module => t(`admin.moduleApiNames.${module}`, { defaultValue: module })).join(", ")}</p>
-            </div>
-          )}
+          <p style={{ color: "#666", lineHeight: 1.6 }}>{t("admin.status.loading")}</p>
         </div>
-
-        <div className="card" aria-labelledby="admin-resource-review-title">
-          <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "flex-start", flexWrap: "wrap" }}>
-            <div>
-              <p className="res-tag">{t("admin.resourceReview.badge")}</p>
-              <h2 id="admin-resource-review-title" style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.15rem", marginBottom: "0.35rem" }}>
-                {t("admin.resourceReview.title")}
-              </h2>
-              <p style={{ color: "#666", lineHeight: 1.55, maxWidth: "64ch", fontSize: "0.92rem" }}>
-                {t("admin.resourceReview.description")}
-              </p>
-            </div>
-            <span className="res-tag">{t("admin.resourceReview.readOnly")}</span>
-          </div>
-
-          {resourceLoading ? (
-            <p style={{ color: "#666", lineHeight: 1.6, marginTop: "1rem" }}>{t("admin.resourceReview.loading")}</p>
-          ) : resourceError ? (
-            <p className="field-error" role="alert" style={{ marginTop: "1rem" }}>{resourceError}</p>
-          ) : (
-            <div style={{ display: "grid", gap: "1rem", marginTop: "1rem" }}>
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "0.7rem" }}>
-                {[
-                  ["totalResources", "totalResources"],
-                  ["needsReviewCount", "needsReview"],
-                  ["ragReadyCount", "ragReady"],
-                  ["replacementSourceNeededCount", "replacementSourceNeeded"],
-                  ["malaysiaGuidanceFlaggedCount", "malaysiaGuidance"],
-                ].map(([field, label]) => (
-                  <div key={field} style={{ border: "1px solid #dfe8e3", borderRadius: 8, padding: "0.8rem", background: "#f8fbf8" }}>
-                    <p>{t(`admin.resourceReview.metrics.${label}`)}</p>
-                    <strong>{resourceReview.summary?.[field] ?? 0}</strong>
-                  </div>
-                ))}
-              </div>
-
-              <div style={{ display: "grid", gap: "0.65rem" }}>
-                {(resourceReview.resources || []).map(resource => (
-                  <div
-                    key={resource.id || resource.slug}
-                    style={{
-                      border: "1px solid #dfe8e3",
-                      borderRadius: 8,
-                      padding: "0.85rem",
-                      display: "grid",
-                      gap: "0.45rem",
-                      background: "#fff",
-                    }}
-                  >
-                    <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem", flexWrap: "wrap" }}>
-                      <div>
-                        <strong style={{ display: "block", color: "#1f3328" }}>{resource.slug}</strong>
-                        <span style={{ color: "#5c6a61", fontSize: "0.88rem" }}>{resource.displayCategory || resource.categoryCode}</span>
-                      </div>
-                      <div style={{ display: "flex", gap: "0.4rem", flexWrap: "wrap" }}>
-                        <span className="res-tag">{resource.reviewStatus || t("common.notSet")}</span>
-                        <span className="res-tag">{resource.ragReady ? t("admin.resourceReview.flags.ragReady") : t("admin.resourceReview.flags.notRagReady")}</span>
-                      </div>
-                    </div>
-                    <div style={{ display: "grid", gap: "0.25rem", color: "#5c6a61", fontSize: "0.88rem", lineHeight: 1.45 }}>
-                      <span><strong>{t("admin.resourceReview.fields.source")}:</strong> {resource.sourceLabel || resource.sourceOrganisation || t("common.notSet")}</span>
-                      <span><strong>{t("admin.resourceReview.fields.sourceType")}:</strong> {resource.sourceType || t("common.notSet")} · {resource.sourceCountry || t("common.notSet")} · {resource.sourceAuthorityLevel || t("common.notSet")}</span>
-                      <span><strong>{t("admin.resourceReview.fields.translationCount")}:</strong> {resource.translationCount ?? 0}</span>
-                      {(resource.malaysiaGuidanceFlag || resource.sensitiveTopicFlag || resource.replacementSourceNeeded) && (
-                        <span>
-                          <strong>{t("admin.resourceReview.fields.flags")}:</strong>{" "}
-                          {[
-                            resource.malaysiaGuidanceFlag ? t("admin.resourceReview.flags.malaysiaGuidance") : null,
-                            resource.sensitiveTopicFlag ? t("admin.resourceReview.flags.sensitiveTopic") : null,
-                            resource.replacementSourceNeeded ? t("admin.resourceReview.flags.replacementNeeded") : null,
-                          ].filter(Boolean).join(", ")}
-                        </span>
-                      )}
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+      ) : error ? (
+        <div className="card">
+          <p className="field-error" role="alert">{error}</p>
         </div>
-
-        <div className="card-grid">
-          {modules.map(module => (
-            <div className="card" key={module.key} style={{ display: "grid", gap: "0.5rem" }}>
-              <p className="res-tag">{t(`admin.moduleStatus.${module.status}`)}</p>
-              <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.05rem" }}>{t(`admin.modules.${module.key}.title`)}</h2>
-              <p style={{ color: "#666", lineHeight: 1.55, fontSize: "0.9rem" }}>{t(`admin.modules.${module.key}.description`)}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-    </section>
+      ) : editorResourceId ? (
+        <AdminResourceEditorPage
+          resourceId={editorResourceId}
+          registerActivityGuard={registerActivityGuard}
+          requestGuardedAction={requestGuardedAction}
+          requestHashNavigation={requestHashNavigation}
+        />
+      ) : (
+        <AdminResourcePage requestHashNavigation={requestHashNavigation} />
+      )}
+    </AdminWorkspace>
   );
 }
 
@@ -7803,8 +8063,10 @@ const LANGUAGE_OPTIONS = [
 ];
 
 function LanguageSelector() {
+  const { requestGuardedAction, activityGuard } = useApp();
   const { t } = useTranslation();
   const [locale, setLocale] = useState(normalizeLocale(i18n.language));
+  const selectRef = useRef(null);
 
   useEffect(() => {
     function sync(nextLocale) {
@@ -7814,17 +8076,64 @@ function LanguageSelector() {
     return () => i18n.off("languageChanged", sync);
   }, []);
 
-  async function changeLocale(event) {
-    const nextLocale = normalizeLocale(event.target.value);
+  async function applyLocale(nextLocale) {
     localStorage.setItem(UI_LANGUAGE_STORAGE_KEY, nextLocale);
     document.documentElement.lang = nextLocale;
     await i18n.changeLanguage(nextLocale);
   }
 
+  function changeLocale(event) {
+    const nextLocale = normalizeLocale(event.target.value);
+    const currentInterfaceLocale = normalizeLocale(i18n.language);
+    if (nextLocale === currentInterfaceLocale) return;
+
+    const execute = async () => {
+      try {
+        await applyLocale(nextLocale);
+      } catch (error) {
+        console.error("Unable to change interface language", error);
+        setLocale(normalizeLocale(i18n.language));
+      }
+    };
+
+    const blocker = activityGuard?.source === "resource-editor"
+      ? {
+          ...activityGuard,
+          title: t("admin.resourceEditor.discardTitle"),
+          description: t("admin.resourceEditor.discardInterfaceLocaleMessage", {
+            locale: t(`admin.resourceEditor.locales.${activityGuard.locale}`, {
+              defaultValue: activityGuard.locale || "",
+            }),
+          }),
+          cancelLabel: t("admin.resourceEditor.continueEditing"),
+          confirmLabel: t("admin.resourceEditor.discardAndChangeLanguage"),
+        }
+      : activityGuard;
+
+    const appliedImmediately = requestGuardedAction?.(execute, {
+      actionType: "interface-locale-change",
+      guard: blocker,
+      meta: {
+        currentInterfaceLocale,
+        nextLocale,
+        editorTranslationLocale: activityGuard?.source === "resource-editor" ? activityGuard.locale : null,
+      },
+      onCancel: () => {
+        setLocale(currentInterfaceLocale);
+        window.setTimeout(() => selectRef.current?.focus(), 0);
+      },
+    });
+
+    if (!appliedImmediately) {
+      setLocale(currentInterfaceLocale);
+      return;
+    }
+  }
+
   return (
     <label className="nav-language" title={t("nav.languageControlTitle")}>
       <span aria-hidden="true">🌐</span>
-      <select value={locale} onChange={changeLocale} aria-label={t("nav.languageAriaLabel")}>
+      <select ref={selectRef} value={locale} onChange={changeLocale} aria-label={t("nav.languageAriaLabel")}>
         {LANGUAGE_OPTIONS.map(option => (
           <option key={option.locale} value={option.locale}>{option.label}</option>
         ))}
@@ -8181,7 +8490,7 @@ function LogoutConfirmModal({ onCancel, onConfirm }) {
 }
 
 function Navbar({ page }) {
-  const { go, user, logout, openAuth } = useApp();
+  const { go, user, logout, openAuth, requestLogoutWithGuard } = useApp();
   const { t } = useTranslation();
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const isMobileNav = useMediaQuery("(max-width: 1050px)");
@@ -8194,6 +8503,7 @@ function Navbar({ page }) {
   }
 
   function requestLogout(focusTarget) {
+    if (requestLogoutWithGuard?.()) return;
     logoutReturnFocusRef.current = focusTarget || null;
     setLogoutModalOpen(true);
   }
@@ -8279,7 +8589,8 @@ function Footer() {
 // ─── Root App ─────────────────────────────────────────────────────
 export default function App() {
   const { t } = useTranslation();
-  const [page, setPage] = useState(() => parseHashPage());
+  const [acceptedHash, setAcceptedHash] = useState(() => normalizeHashRoute(typeof window === "undefined" ? "#/home" : window.location.hash));
+  const [page, setPage] = useState(() => parseHashPage(acceptedHash));
   const [user, setUser] = useState(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [resourceFocusTopic, setResourceFocusTopic] = useState(null);
@@ -8289,12 +8600,69 @@ export default function App() {
   const [authMode, setAuthMode] = useState("login");
   const [activityGuard, setActivityGuard] = useState(null);
   const [pendingNavigation, setPendingNavigation] = useState(null);
-  const suppressHashGuardRef = useRef(false);
+  const suppressHashGuardRef = useRef(null);
+  const acceptedHashRef = useRef(acceptedHash);
+  const activityGuardRef = useRef(null);
+  const historyIndexRef = useRef(
+    typeof window === "undefined" || !Number.isInteger(window.history.state?.cyberlyHistoryIndex)
+      ? 0
+      : window.history.state.cyberlyHistoryIndex
+  );
   const userId = user?.id;
   const userProfilePreferredLanguage =
     user?.profile?.preferredLanguage;
   const userPreferredLanguage =
     user?.preferredLanguage;
+
+  const acceptHashRoute = useCallback((hashValue, historyIndex = historyIndexRef.current) => {
+    const nextHash = normalizeHashRoute(hashValue);
+    acceptedHashRef.current = nextHash;
+    historyIndexRef.current = Number.isInteger(historyIndex) ? historyIndex : historyIndexRef.current;
+    setAcceptedHash(nextHash);
+    setPage(parseHashPage(nextHash));
+  }, []);
+
+  const commitHashRoute = useCallback((hashValue, options = {}) => {
+    if (typeof window === "undefined") return;
+    const nextHash = normalizeHashRoute(hashValue);
+    const currentHash = normalizeHashRoute(window.location.hash);
+    const replace = Boolean(options.replace);
+    const nextIndex = replace ? historyIndexRef.current : historyIndexRef.current + 1;
+    const state = {
+      ...(window.history.state || {}),
+      cyberlyHistoryIndex: nextIndex,
+      route: nextHash,
+    };
+
+    if (currentHash !== nextHash || replace) {
+      window.history[replace ? "replaceState" : "pushState"](state, "", nextHash);
+    } else {
+      window.history.replaceState(state, "", nextHash);
+    }
+
+    acceptHashRoute(nextHash, nextIndex);
+  }, [acceptHashRoute]);
+
+  useEffect(() => {
+    activityGuardRef.current = activityGuard;
+  }, [activityGuard]);
+
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const currentHash = normalizeHashRoute(window.location.hash);
+    const existingIndex = window.history.state?.cyberlyHistoryIndex;
+    if (Number.isInteger(existingIndex)) {
+      historyIndexRef.current = existingIndex;
+      acceptHashRoute(currentHash, existingIndex);
+      return;
+    }
+    window.history.replaceState({
+      ...(window.history.state || {}),
+      cyberlyHistoryIndex: historyIndexRef.current,
+      route: currentHash,
+    }, "", currentHash);
+    acceptHashRoute(currentHash, historyIndexRef.current);
+  }, [acceptHashRoute]);
 
   useEffect(() => {
     let active = true;
@@ -8305,56 +8673,76 @@ export default function App() {
         const restoredPage = parseHashPage();
         setUser(restoredUser);
         if (PROTECTED_PAGES.has(restoredPage)) {
-          setPage(restoredUser.onboardingCompleted ? restoredPage : "profile");
-          writeHashPage(restoredUser.onboardingCompleted ? restoredPage : "profile", true);
+          commitHashRoute(`/${restoredUser.onboardingCompleted ? restoredPage : "profile"}`, { replace: true });
         } else if (restoredPage === "login") {
-          setPage(restoredUser.onboardingCompleted ? "dashboard" : "profile");
-          writeHashPage(restoredUser.onboardingCompleted ? "dashboard" : "profile", true);
+          commitHashRoute(`/${restoredUser.onboardingCompleted ? "dashboard" : "profile"}`, { replace: true });
         } else {
-          setPage(restoredPage);
-          writeHashPage(restoredPage, true);
+          commitHashRoute(`/${restoredPage}`, { replace: true });
         }
       } else {
         const restoredPage = parseHashPage();
         if (PROTECTED_PAGES.has(restoredPage)) {
-          setPage("home");
-          writeHashPage("home", true);
+          commitHashRoute("/home", { replace: true });
         } else {
-          setPage(restoredPage);
-          writeHashPage(restoredPage, true);
+          commitHashRoute(`/${restoredPage}`, { replace: true });
         }
       }
       setCheckingSession(false);
     });
     return () => { active = false; };
-  }, []);
+  }, [commitHashRoute]);
 
   useEffect(() => {
     function handleHashChange() {
-      const nextPage = parseHashPage();
+      const nextHash = normalizeHashRoute(window.location.hash);
       if (suppressHashGuardRef.current) {
+        const suppress = suppressHashGuardRef.current;
         suppressHashGuardRef.current = false;
-        setPage(nextPage);
+        const nextIndex = Number.isInteger(window.history.state?.cyberlyHistoryIndex)
+          ? window.history.state.cyberlyHistoryIndex
+          : historyIndexRef.current;
+        if (suppress.accept) {
+          acceptHashRoute(nextHash, nextIndex);
+        }
         return;
       }
-      if (activityGuard && nextPage !== page) {
-        setPendingNavigation({ page: nextPage });
-        suppressHashGuardRef.current = true;
-        writeHashPage(page, true);
-        suppressHashGuardRef.current = false;
+
+      const blocker = activityGuardRef.current;
+      const requestedIndex = window.history.state?.cyberlyHistoryIndex;
+      const acceptedIndex = historyIndexRef.current;
+      if (shouldBlockRouteTransition({ blocker, acceptedHash: acceptedHashRef.current, requestedHash: nextHash })) {
+        const pending = createPendingRouteTransition({
+          acceptedHash: acceptedHashRef.current,
+          requestedHash: nextHash,
+          acceptedIndex,
+          requestedIndex,
+        });
+        setPendingNavigation({ ...pending, guard: blocker });
+        if (Number.isInteger(pending.historyDelta) && pending.historyDelta !== 0) {
+          suppressHashGuardRef.current = { accept: false };
+          window.history.go(-pending.historyDelta);
+        } else {
+          window.history.replaceState({
+            ...(window.history.state || {}),
+            cyberlyHistoryIndex: acceptedIndex,
+            route: acceptedHashRef.current,
+          }, "", acceptedHashRef.current);
+        }
         return;
       }
+
+      const nextPage = parseHashPage(nextHash);
       if (!user && PROTECTED_PAGES.has(nextPage)) {
-        setPage("home");
-        writeHashPage("home", true);
+        commitHashRoute("/home", { replace: true });
         return;
       }
-      setPage(nextPage);
+      const nextIndex = Number.isInteger(requestedIndex) ? requestedIndex : acceptedIndex;
+      acceptHashRoute(nextHash, nextIndex);
     }
 
     window.addEventListener("hashchange", handleHashChange);
     return () => window.removeEventListener("hashchange", handleHashChange);
-  }, [activityGuard, page, user]);
+  }, [acceptHashRoute, commitHashRoute, user]);
 
   useEffect(() => {
     if (!activityGuard) return undefined;
@@ -8407,7 +8795,7 @@ export default function App() {
   function login(userData, profileData, preferredPage) {
     const nextUser = normalizeSessionUser(userData, profileData);
     setUser(nextUser);
-    setPage(preferredPage || (nextUser.onboardingCompleted ? "dashboard" : "profile"));
+    commitHashRoute(`/${preferredPage || (nextUser.onboardingCompleted ? "dashboard" : "profile")}`, { replace: true });
   }
   function updateProfile(profileData) {
     setUser(current => current ? normalizeSessionUser(current, profileData) : current);
@@ -8447,8 +8835,7 @@ export default function App() {
     setPendingProgressSection(null);
     setActivityGuard(null);
     setPendingNavigation(null);
-    setPage("home");
-    writeHashPage("home", true);
+    commitHashRoute("/home", { replace: true });
   }
   function openRecommendedResource(topicCode) {
     setResourceFocusTopic(topicCode);
@@ -8470,20 +8857,58 @@ export default function App() {
     if (nextPage === "login") setAuthMode("login");
     const safePage = VALID_PAGES.has(nextPage) ? nextPage : "home";
     if (!user && PROTECTED_PAGES.has(safePage)) {
-      setPage("home");
-      writeHashPage("home", true);
+      commitHashRoute("/home", { replace: true });
       return;
     }
-    setPage(safePage);
-    writeHashPage(safePage, replace);
+    commitHashRoute(`/${safePage}`, { replace });
   }
   function go(nextPage, options = {}) {
     const safePage = VALID_PAGES.has(nextPage) ? nextPage : "home";
-    if (activityGuard && safePage !== page && !options.bypassGuard) {
-      setPendingNavigation({ page: safePage });
+    const targetHash = `#/${safePage}`;
+    const blocker = options.guard || activityGuardRef.current;
+    if (shouldBlockRouteTransition({ blocker, acceptedHash: acceptedHashRef.current, requestedHash: targetHash }) && !options.bypassGuard) {
+      setPendingNavigation({ type: "hash", hash: targetHash, guard: blocker });
       return;
     }
     completeNavigation(safePage, options.replace);
+  }
+  function requestHashNavigation(hashValue, options = {}) {
+    const nextHash = normalizeHashRoute(hashValue);
+    const blocker = options.guard || activityGuardRef.current;
+    if (shouldBlockRouteTransition({ blocker, acceptedHash: acceptedHashRef.current, requestedHash: nextHash }) && !options.bypassGuard) {
+      setPendingNavigation({ type: "hash", hash: nextHash, guard: blocker });
+      return false;
+    }
+    commitHashRoute(nextHash, { replace: options.replace });
+    return true;
+  }
+  function requestGuardedAction(action, options = {}) {
+    if (typeof action !== "function") return false;
+    const blocker = options.guard || activityGuardRef.current;
+    if (shouldGuardAction({ blocker, bypassGuard: options.bypassGuard })) {
+      setPendingNavigation(createPendingAction({
+        actionType: options.actionType || "generic",
+        execute: action,
+        guard: blocker,
+        meta: options.meta || null,
+        onCancel: options.onCancel || null,
+      }));
+      return false;
+    }
+    action();
+    return true;
+  }
+  function requestLogoutWithGuard() {
+    const blocker = activityGuardRef.current;
+    if (!blocker) return false;
+    setPendingNavigation({
+      type: "logout",
+      guard: {
+        ...blocker,
+        description: blocker.logoutDescription || blocker.description,
+      },
+    });
+    return true;
   }
   function handleChatAction(action) {
     const target = resolveChatActionTarget(action?.target);
@@ -8522,19 +8947,47 @@ export default function App() {
     return false;
   }
   const registerActivityGuard = useCallback((guard) => {
-    setActivityGuard(guard);
+    const nextGuard = {
+      ...guard,
+      key: guard?.key || `${guard?.source || "activity"}:${guard?.resourceId || "unknown"}:${guard?.locale || "default"}`,
+    };
+    activityGuardRef.current = nextGuard;
+    setActivityGuard(nextGuard);
     return () => {
-      setActivityGuard(current => current === guard ? null : current);
+      setActivityGuard(current => {
+        if (current?.key !== nextGuard.key) return current;
+        if (activityGuardRef.current?.key === nextGuard.key) activityGuardRef.current = null;
+        return null;
+      });
     };
   }, []);
   function cancelPendingNavigation() {
+    pendingNavigation?.onCancel?.();
     setPendingNavigation(null);
   }
-  function confirmPendingNavigation() {
-    const target = pendingNavigation?.page || "dashboard";
+  async function confirmPendingNavigation() {
+    const target = pendingNavigation || { type: "page", page: "dashboard" };
     setPendingNavigation(null);
+    activityGuardRef.current = null;
     setActivityGuard(null);
-    completeNavigation(target);
+    if (target.type === "hash") {
+      if (Number.isInteger(target.historyDelta) && target.historyDelta !== 0) {
+        suppressHashGuardRef.current = { accept: true };
+        window.history.go(target.historyDelta);
+      } else {
+        commitHashRoute(target.hash);
+      }
+      return;
+    }
+    if (target.type === "action") {
+      await target.execute?.();
+      return;
+    }
+    if (target.type === "logout") {
+      await logout();
+      return;
+    }
+    completeNavigation(target.page || "dashboard");
   }
 
   const ctx = {
@@ -8559,6 +9012,11 @@ export default function App() {
     clearPendingProgressSection: () => setPendingProgressSection(null),
     handleChatAction,
     registerActivityGuard,
+    requestHashNavigation,
+    requestGuardedAction,
+    requestLogoutWithGuard,
+    activityGuard,
+    hasActivityGuard: Boolean(activityGuard),
   };
 
   const PAGES = {
@@ -8571,7 +9029,7 @@ export default function App() {
     about:     <AboutPage />,
     progress:  <ProgressPage />,
     profile:   <ProfilePage />,
-    admin:     <AdminPage />,
+    admin:     <AdminPage acceptedHash={acceptedHash} />,
     login:     <AuthGate />,
   };
 
@@ -8590,12 +9048,12 @@ export default function App() {
         </main>
         <Footer />
         {!checkingSession && page !== "ai-chat" && <ChatWidget />}
-        {pendingNavigation && activityGuard && (
+        {pendingNavigation && (pendingNavigation.guard || activityGuard) && (
           <ConfirmationDialog
-            title={activityGuard.title}
-            description={activityGuard.description}
-            cancelLabel={t("common.continueActivity")}
-            confirmLabel={t("common.leavePage")}
+            title={(pendingNavigation.guard || activityGuard).title}
+            description={(pendingNavigation.guard || activityGuard).description}
+            cancelLabel={(pendingNavigation.guard || activityGuard).cancelLabel || t("common.continueActivity")}
+            confirmLabel={(pendingNavigation.guard || activityGuard).confirmLabel || t("common.leavePage")}
             onCancel={cancelPendingNavigation}
             onConfirm={confirmPendingNavigation}
             danger

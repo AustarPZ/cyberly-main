@@ -12,7 +12,7 @@ const {
     validateRegistration,
 } = require('./src/auth/validation');
 const MySqlSessionStore = require('./src/auth/mysql-session-store');
-const { requireAuth, requireRole } = require('./src/auth/middleware');
+const { requireAuth } = require('./src/auth/middleware');
 const { createProfileRepository } = require('./src/profile/profile.repository');
 const { createProfileService } = require('./src/profile/profile.service');
 const { createProfileRouter } = require('./src/profile/profile.routes');
@@ -43,6 +43,7 @@ const { createRagRepository } = require('./src/rag/rag.repository');
 const { createRagService } = require('./src/rag/rag.service');
 const { createAgentService } = require('./src/agent/agent.service');
 const { createAdminRouter } = require('./src/admin/admin.routes');
+const { createRequireAdmin } = require('./src/admin/admin.middleware');
 const { ERROR_CODES } = require('./src/errors/errorCodes');
 
 const app = express();
@@ -325,7 +326,7 @@ app.post('/api/auth/logout', async (req, res, next) => {
     }
 });
 
-app.get('/api/admin/ping', requireRole('admin'), (_req, res) => {
+app.get('/api/admin/ping', createRequireAdmin(pool), (_req, res) => {
     res.json({ ok: true });
 });
 

@@ -12,6 +12,8 @@
     "test:chat": "node scripts/test-chat.js",
     "test:ai": "node scripts/test-ai.js",
     "test:agent": "node scripts/test-agent.js",
+    "test:admin-resource-content": "node scripts/test-admin-resource-content.js",
+    "test:admin-resource-governance": "node scripts/test-admin-resource-governance.js",
     "test:learning-actions": "node scripts/test-learning-actions.js",
     "test:rag": "node scripts/test-rag.js",
     "test:progress": "node scripts/test-progress.js",

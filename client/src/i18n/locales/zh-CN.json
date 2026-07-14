@@ -846,6 +846,25 @@
     "badge": "Admin 基础",
     "title": "Admin 控制台",
     "description": "内容治理、RAG 治理和 AI 安全管理基础。",
+    "workspace": {
+      "badge": "Admin 工作区",
+      "title": "Admin 控制台",
+      "description": "用于内容、RAG 和 AI 安全的治理工具。"
+    },
+    "navigation": {
+      "label": "Admin 分区",
+      "resources": "资源",
+      "resourcesDescription": "审核学习资源的发布、批准和 CyberGuard 检索。",
+      "scenarios": "场景",
+      "scenariosDescription": "场景治理稍后推出。",
+      "assessments": "评估",
+      "assessmentsDescription": "评估治理稍后推出。",
+      "faqGuidance": "FAQ 与指导",
+      "faqGuidanceDescription": "FAQ 与指导治理稍后推出。",
+      "aiAgentic": "AI 与 Agentic",
+      "aiAgenticDescription": "AI 安全与 Agentic 治理稍后推出。",
+      "comingLater": "稍后推出"
+    },
     "accessDenied": {
       "badge": "受限",
       "title": "需要 Admin 权限",
@@ -885,6 +904,170 @@
         "malaysiaGuidance": "马来西亚指导",
         "sensitiveTopic": "敏感主题",
         "replacementNeeded": "需要替换来源"
+      }
+    },
+    "resourceGovernance": {
+      "badge": "资源治理",
+      "title": "资源发布与 RAG 控制",
+      "description": "搜索资源、审核治理状态，并控制 CyberGuard 是否可以检索这些资源。",
+      "summaryLabel": "资源治理摘要",
+      "summaryScope": "摘要卡显示全部资源。下方表格会根据当前筛选条件变化。",
+      "loading": "正在加载资源...",
+      "loadingDetail": "正在加载资源详情...",
+      "empty": "没有符合这些筛选条件的资源。",
+      "reviewAction": "审核治理",
+      "drawerLabel": "资源治理详情",
+      "drawerBadge": "治理详情",
+      "unsaved": "有未保存的更改",
+      "saved": "资源治理已保存。",
+      "savedWithRagDisabled": "资源已保存。由于资源未发布并获批，RAG 就绪已自动关闭。",
+      "confirmation": {
+        "badge": "确认更改",
+        "confirm": "确认",
+        "saveConfirm": "保存更改",
+        "discardTitle": "放弃未保存的更改？",
+        "discardMessage": "你在此资源面板中的编辑尚未保存。",
+        "discardConfirm": "放弃更改",
+        "publicationTitle": "更改学习者可见性",
+        "publicationMessage": "取消发布或归档此资源后，学习者资源页面在刷新后将不再显示它。",
+        "aiUseTitle": "更改 CyberGuard 检索",
+        "aiUseMessage": "关闭 AI 使用后，CyberGuard 将不会在新的回复中检索此资源。已保存的旧回复不会改变。",
+        "publicationAndAiUseMessage": "此更改会影响学习者可见性，并阻止 CyberGuard 在新的回复中检索此资源。已保存的旧回复不会改变。"
+      },
+      "metrics": {
+        "total": "总数",
+        "published": "已发布",
+        "needsReview": "需要审核",
+        "approved": "已批准",
+        "ragReady": "RAG 就绪",
+        "effectivelyEligible": "实际可用"
+      },
+      "filters": {
+        "search": "搜索",
+        "searchPlaceholder": "标题或 slug",
+        "publicationStatus": "发布状态",
+        "reviewStatus": "审核状态",
+        "ragReady": "RAG 就绪",
+        "all": "全部",
+        "clear": "清除筛选"
+      },
+      "publicationStatus": {
+        "published": "已发布",
+        "draft": "草稿",
+        "archived": "已归档"
+      },
+      "reviewStatus": {
+        "approved": "已批准",
+        "needs_review": "需要审核",
+        "draft": "草稿",
+        "rejected": "已拒绝"
+      },
+      "ragDocumentReviewStatus": {
+        "approved": "已批准",
+        "pending": "等待审核",
+        "rejected": "已拒绝"
+      },
+      "flags": {
+        "ragReady": "RAG 就绪",
+        "notRagReady": "未就绪 RAG",
+        "effective": "CyberGuard 可用",
+        "notEffective": "不可用"
+      },
+      "eligibilityReasons": {
+        "resource_not_published": "资源尚未发布。",
+        "resource_not_approved": "资源尚未批准。",
+        "resource_rag_disabled": "RAG 就绪已关闭。"
+      },
+      "table": {
+        "resource": "资源",
+        "category": "类别",
+        "publication": "发布",
+        "review": "审核",
+        "rag": "RAG",
+        "updated": "更新",
+        "action": "操作",
+        "scrollLabel": "资源治理表格。可横向滚动查看所有列。"
+      },
+      "pagination": "第 {{page}} 页，共 {{totalPages}} 页 · {{totalItems}} 个资源",
+      "detail": {
+        "overview": "学习者预览",
+        "source": "来源元数据",
+        "rag": "CyberGuard 检索",
+        "controls": "可编辑治理控制",
+        "translations": "有 {{count}} 个翻译",
+        "flags": "马来西亚指导：{{malaysia}} · 敏感主题：{{sensitive}}",
+        "retrievableChunks": "{{count}} 个可检索片段",
+        "chunks": "{{count}} 个片段"
+      },
+      "fields": {
+        "ragReady": "在已发布并获批时允许 CyberGuard 检索",
+        "nextReviewAt": "下次审核日期",
+        "reviewNotes": "审核备注"
+      },
+      "errors": {
+        "list": "无法加载资源。",
+        "detail": "无法加载资源详情。",
+        "save": "无法保存资源治理。"
+      }
+    },
+    "resourceEditor": {
+      "title": "编辑资源内容",
+      "description": "更新此现有资源面向学习者的翻译内容。",
+      "editContent": "编辑内容",
+      "backToResources": "返回资源",
+      "loading": "正在加载资源内容...",
+      "languageTabs": "资源翻译语言",
+      "unsavedChanges": "有未保存的更改",
+      "governanceStatus": "资源治理状态",
+      "previewLabel": "学习者预览",
+      "previewOnly": "仅预览",
+      "previewUntitled": "未命名资源",
+      "previewEmpty": "输入时，主要内容会显示在这里。",
+      "saved": "内容已成功保存。",
+      "savedRagSynced": "内容已保存，并已刷新 CyberGuard 检索。",
+      "savedRagFailed": "内容已保存，但 CyberGuard 刷新失败。请稍后再刷新 RAG。",
+      "reloadLatest": "重新加载最新版本",
+      "discardTitle": "放弃未保存的内容更改？",
+      "discardLocaleMessage": "你的 {{locale}} 编辑尚未保存。",
+      "discardBackMessage": "你的 {{locale}} 编辑尚未保存。要返回资源吗？",
+      "discardInterfaceLocaleMessage": "你在 {{locale}} 资源翻译中有未保存的更改。切换 Cyberly 界面语言会放弃这些更改。",
+      "discardSectionMessage": "你的资源内容编辑尚未保存。",
+      "logoutMessage": "退出登录会放弃你尚未保存的资源内容编辑。",
+      "navigationCancelled": "导航已取消。你的编辑仍然保留。",
+      "discardChanges": "放弃更改",
+      "discardAndChangeLanguage": "放弃并切换语言",
+      "continueEditing": "继续编辑",
+      "reset": "重置",
+      "save": "保存更改",
+      "bodyHint": "{{count}}/{{max}} 个字符。段落之间请留一个空行。",
+      "locales": {
+        "en": "English",
+        "ms": "Bahasa Melayu",
+        "zh-CN": "简体中文"
+      },
+      "status": {
+        "exists": "已有翻译",
+        "missing": "缺少翻译",
+        "unsaved": "未保存"
+      },
+      "fields": {
+        "title": "标题",
+        "summary": "摘要",
+        "body": "主要内容"
+      },
+      "validation": {
+        "titleRequired": "标题为必填。",
+        "titleTooLong": "标题不能超过 {{max}} 个字符。",
+        "summaryRequired": "摘要为必填。",
+        "summaryTooLong": "摘要不能超过 {{max}} 个字符。",
+        "bodyRequired": "主要内容为必填。",
+        "bodyTooLong": "主要内容不能超过 {{max}} 个字符。"
+      },
+      "errors": {
+        "load": "无法加载资源内容。",
+        "save": "无法保存资源内容。",
+        "stale": "此翻译已在其他地方更改。保存前请重新加载最新版本。",
+        "notFound": "未找到资源内容。"
       }
     },
     "moduleStatus": {

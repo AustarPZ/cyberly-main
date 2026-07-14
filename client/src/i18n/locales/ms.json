@@ -846,6 +846,25 @@
     "badge": "Asas admin",
     "title": "Konsol Admin",
     "description": "Asas tadbir urus kandungan, tadbir urus RAG, dan pengurusan keselamatan AI.",
+    "workspace": {
+      "badge": "Ruang kerja admin",
+      "title": "Konsol Admin",
+      "description": "Alat tadbir urus untuk kandungan, RAG dan keselamatan AI."
+    },
+    "navigation": {
+      "label": "Bahagian admin",
+      "resources": "Sumber",
+      "resourcesDescription": "Semak penerbitan, kelulusan dan carian CyberGuard untuk Sumber pembelajaran.",
+      "scenarios": "Senario",
+      "scenariosDescription": "Tadbir urus senario akan ditambah kemudian.",
+      "assessments": "Penilaian",
+      "assessmentsDescription": "Tadbir urus penilaian akan ditambah kemudian.",
+      "faqGuidance": "FAQ & Panduan",
+      "faqGuidanceDescription": "Tadbir urus FAQ dan panduan akan ditambah kemudian.",
+      "aiAgentic": "AI & Agentic",
+      "aiAgenticDescription": "Tadbir urus keselamatan AI dan Agentic akan ditambah kemudian.",
+      "comingLater": "Akan datang"
+    },
     "accessDenied": {
       "badge": "Terhad",
       "title": "Akses admin diperlukan",
@@ -885,6 +904,170 @@
         "malaysiaGuidance": "Panduan Malaysia",
         "sensitiveTopic": "Topik sensitif",
         "replacementNeeded": "Perlu sumber gantian"
+      }
+    },
+    "resourceGovernance": {
+      "badge": "Tadbir urus sumber",
+      "title": "Kawalan Penerbitan Sumber dan RAG",
+      "description": "Cari sumber, semak status tadbir urus, dan kawal sama ada CyberGuard boleh mendapatkannya.",
+      "summaryLabel": "Ringkasan tadbir urus sumber",
+      "summaryScope": "Kad ringkasan menunjukkan semua Sumber. Jadual di bawah mengikut penapis aktif.",
+      "loading": "Memuatkan sumber...",
+      "loadingDetail": "Memuatkan butiran sumber...",
+      "empty": "Tiada sumber sepadan dengan penapis ini.",
+      "reviewAction": "Semak tadbir urus",
+      "drawerLabel": "Butiran tadbir urus sumber",
+      "drawerBadge": "Butiran tadbir urus",
+      "unsaved": "Perubahan belum disimpan",
+      "saved": "Tadbir urus sumber disimpan.",
+      "savedWithRagDisabled": "Sumber disimpan. Kesediaan RAG dimatikan secara automatik kerana sumber belum diterbitkan dan diluluskan.",
+      "confirmation": {
+        "badge": "Sahkan perubahan",
+        "confirm": "Sahkan",
+        "saveConfirm": "Simpan perubahan",
+        "discardTitle": "Buang perubahan belum disimpan?",
+        "discardMessage": "Edit anda dalam panel Sumber ini belum disimpan.",
+        "discardConfirm": "Buang perubahan",
+        "publicationTitle": "Tukar keterlihatan pelajar",
+        "publicationMessage": "Menyahterbit atau mengarkibkan Sumber ini akan membuangnya daripada halaman Sumber pelajar selepas muat semula.",
+        "aiUseTitle": "Tukar carian CyberGuard",
+        "aiUseMessage": "Mematikan penggunaan AI akan menghalang CyberGuard daripada mendapatkan Sumber ini dalam respons baharu. Respons tersimpan sedia ada tidak berubah.",
+        "publicationAndAiUseMessage": "Perubahan ini akan menjejaskan keterlihatan pelajar dan menghalang CyberGuard daripada mendapatkan Sumber ini dalam respons baharu. Respons tersimpan sedia ada tidak berubah."
+      },
+      "metrics": {
+        "total": "Jumlah",
+        "published": "Diterbitkan",
+        "needsReview": "Perlu semakan",
+        "approved": "Diluluskan",
+        "ragReady": "Sedia RAG",
+        "effectivelyEligible": "Layak digunakan"
+      },
+      "filters": {
+        "search": "Cari",
+        "searchPlaceholder": "Tajuk atau slug",
+        "publicationStatus": "Penerbitan",
+        "reviewStatus": "Status semakan",
+        "ragReady": "Kesediaan RAG",
+        "all": "Semua",
+        "clear": "Kosongkan penapis"
+      },
+      "publicationStatus": {
+        "published": "Diterbitkan",
+        "draft": "Draf",
+        "archived": "Diarkibkan"
+      },
+      "reviewStatus": {
+        "approved": "Diluluskan",
+        "needs_review": "Perlu semakan",
+        "draft": "Draf",
+        "rejected": "Ditolak"
+      },
+      "ragDocumentReviewStatus": {
+        "approved": "Diluluskan",
+        "pending": "Menunggu semakan",
+        "rejected": "Ditolak"
+      },
+      "flags": {
+        "ragReady": "Sedia RAG",
+        "notRagReady": "Belum sedia RAG",
+        "effective": "Layak untuk CyberGuard",
+        "notEffective": "Tidak layak"
+      },
+      "eligibilityReasons": {
+        "resource_not_published": "Sumber belum diterbitkan.",
+        "resource_not_approved": "Sumber belum diluluskan.",
+        "resource_rag_disabled": "Kesediaan RAG dimatikan."
+      },
+      "table": {
+        "resource": "Sumber",
+        "category": "Kategori",
+        "publication": "Penerbitan",
+        "review": "Semakan",
+        "rag": "RAG",
+        "updated": "Dikemas kini",
+        "action": "Tindakan",
+        "scrollLabel": "Jadual tadbir urus Sumber. Gunakan tatalan mendatar untuk melihat semua lajur."
+      },
+      "pagination": "Halaman {{page}} daripada {{totalPages}} · {{totalItems}} sumber",
+      "detail": {
+        "overview": "Pratonton pelajar",
+        "source": "Metadata sumber",
+        "rag": "Carian CyberGuard",
+        "controls": "Kawalan tadbir urus boleh edit",
+        "translations": "{{count}} terjemahan tersedia",
+        "flags": "Panduan Malaysia: {{malaysia}} · Topik sensitif: {{sensitive}}",
+        "retrievableChunks": "{{count}} chunk boleh dicari",
+        "chunks": "{{count}} chunk"
+      },
+      "fields": {
+        "ragReady": "Benarkan carian CyberGuard apabila diterbitkan dan diluluskan",
+        "nextReviewAt": "Tarikh semakan seterusnya",
+        "reviewNotes": "Nota semakan"
+      },
+      "errors": {
+        "list": "Tidak dapat memuatkan sumber.",
+        "detail": "Tidak dapat memuatkan butiran sumber.",
+        "save": "Tidak dapat menyimpan tadbir urus sumber."
+      }
+    },
+    "resourceEditor": {
+      "title": "Edit kandungan Sumber",
+      "description": "Kemas kini kandungan terjemahan yang dilihat pelajar untuk Sumber sedia ada ini.",
+      "editContent": "Edit kandungan",
+      "backToResources": "Kembali ke Sumber",
+      "loading": "Memuatkan kandungan Sumber...",
+      "languageTabs": "Bahasa terjemahan Sumber",
+      "unsavedChanges": "Perubahan belum disimpan",
+      "governanceStatus": "Status tadbir urus Sumber",
+      "previewLabel": "Pratonton pelajar",
+      "previewOnly": "Pratonton sahaja",
+      "previewUntitled": "Sumber tanpa tajuk",
+      "previewEmpty": "Kandungan utama akan dipaparkan di sini semasa anda menaip.",
+      "saved": "Kandungan berjaya disimpan.",
+      "savedRagSynced": "Kandungan disimpan dan carian CyberGuard telah dikemas kini.",
+      "savedRagFailed": "Kandungan disimpan, tetapi kemas kini CyberGuard gagal. Cuba segarkan RAG kemudian.",
+      "reloadLatest": "Muat semula versi terkini",
+      "discardTitle": "Buang perubahan kandungan belum disimpan?",
+      "discardLocaleMessage": "Edit {{locale}} anda belum disimpan.",
+      "discardBackMessage": "Edit {{locale}} anda belum disimpan. Kembali ke Sumber?",
+      "discardInterfaceLocaleMessage": "Anda mempunyai perubahan belum disimpan dalam terjemahan Sumber {{locale}}. Menukar bahasa antara muka Cyberly akan membuang perubahan tersebut.",
+      "discardSectionMessage": "Edit kandungan Sumber anda belum disimpan.",
+      "logoutMessage": "Log keluar akan membuang edit kandungan Sumber yang belum disimpan.",
+      "navigationCancelled": "Navigasi dibatalkan. Edit anda masih ada.",
+      "discardChanges": "Buang perubahan",
+      "discardAndChangeLanguage": "Buang dan tukar bahasa",
+      "continueEditing": "Teruskan mengedit",
+      "reset": "Tetapkan semula",
+      "save": "Simpan perubahan",
+      "bodyHint": "{{count}}/{{max}} aksara. Pisahkan perenggan dengan satu baris kosong.",
+      "locales": {
+        "en": "English",
+        "ms": "Bahasa Melayu",
+        "zh-CN": "Cina Ringkas"
+      },
+      "status": {
+        "exists": "Terjemahan wujud",
+        "missing": "Terjemahan tiada",
+        "unsaved": "Belum disimpan"
+      },
+      "fields": {
+        "title": "Tajuk",
+        "summary": "Ringkasan",
+        "body": "Kandungan utama"
+      },
+      "validation": {
+        "titleRequired": "Tajuk diperlukan.",
+        "titleTooLong": "Tajuk mesti {{max}} aksara atau kurang.",
+        "summaryRequired": "Ringkasan diperlukan.",
+        "summaryTooLong": "Ringkasan mesti {{max}} aksara atau kurang.",
+        "bodyRequired": "Kandungan utama diperlukan.",
+        "bodyTooLong": "Kandungan utama mesti {{max}} aksara atau kurang."
+      },
+      "errors": {
+        "load": "Tidak dapat memuatkan kandungan Sumber.",
+        "save": "Tidak dapat menyimpan kandungan Sumber.",
+        "stale": "Terjemahan telah berubah di tempat lain. Muat semula versi terkini sebelum menyimpan.",
+        "notFound": "Kandungan Sumber tidak ditemui."
       }
     },
     "moduleStatus": {

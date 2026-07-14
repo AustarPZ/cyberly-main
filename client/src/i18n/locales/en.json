@@ -864,6 +864,25 @@
     "badge": "Admin foundation",
     "title": "Admin Console",
     "description": "Content governance, RAG governance, and AI safety management foundation.",
+    "workspace": {
+      "badge": "Admin workspace",
+      "title": "Admin Console",
+      "description": "Governance tools for content, RAG, and AI safety."
+    },
+    "navigation": {
+      "label": "Admin sections",
+      "resources": "Resources",
+      "resourcesDescription": "Review publication, approval, and CyberGuard retrieval for learning Resources.",
+      "scenarios": "Scenarios",
+      "scenariosDescription": "Scenario governance will be added later.",
+      "assessments": "Assessments",
+      "assessmentsDescription": "Assessment governance will be added later.",
+      "faqGuidance": "FAQ & Guidance",
+      "faqGuidanceDescription": "FAQ and guidance governance will be added later.",
+      "aiAgentic": "AI & Agentic",
+      "aiAgenticDescription": "AI safety and Agentic governance will be added later.",
+      "comingLater": "Coming later"
+    },
     "accessDenied": {
       "badge": "Restricted",
       "title": "Admin access required",
@@ -903,6 +922,170 @@
         "malaysiaGuidance": "Malaysia guidance",
         "sensitiveTopic": "Sensitive topic",
         "replacementNeeded": "Replacement source needed"
+      }
+    },
+    "resourceGovernance": {
+      "badge": "Resource governance",
+      "title": "Resource Publishing and RAG Control",
+      "description": "Search resources, review their governance state, and control whether CyberGuard can retrieve them.",
+      "summaryLabel": "Resource governance summary",
+      "summaryScope": "Summary cards show all Resources. The table below follows the active filters.",
+      "loading": "Loading resources...",
+      "loadingDetail": "Loading resource detail...",
+      "empty": "No resources match these filters.",
+        "reviewAction": "Review governance",
+      "drawerLabel": "Resource governance detail",
+      "drawerBadge": "Governance detail",
+      "unsaved": "Unsaved changes",
+      "saved": "Resource governance saved.",
+      "savedWithRagDisabled": "Resource saved. RAG readiness was automatically disabled because the resource is not published and approved.",
+      "confirmation": {
+        "badge": "Confirm change",
+        "confirm": "Confirm",
+        "saveConfirm": "Save change",
+        "discardTitle": "Discard unsaved changes?",
+        "discardMessage": "Your edits in this Resource drawer have not been saved.",
+        "discardConfirm": "Discard changes",
+        "publicationTitle": "Change learner visibility",
+        "publicationMessage": "Unpublishing or archiving this Resource will remove it from the learner Resource page after refresh.",
+        "aiUseTitle": "Change CyberGuard retrieval",
+        "aiUseMessage": "Disabling AI use will prevent CyberGuard from retrieving this Resource in new responses. Existing saved responses will not be changed.",
+        "publicationAndAiUseMessage": "This change will affect learner visibility and prevent CyberGuard from retrieving this Resource in new responses. Existing saved responses will not be changed."
+      },
+      "metrics": {
+        "total": "Total",
+        "published": "Published",
+        "needsReview": "Needs review",
+        "approved": "Approved",
+        "ragReady": "RAG-ready",
+        "effectivelyEligible": "Effectively eligible"
+      },
+      "filters": {
+        "search": "Search",
+        "searchPlaceholder": "Title or slug",
+        "publicationStatus": "Publication",
+        "reviewStatus": "Review status",
+        "ragReady": "RAG readiness",
+        "all": "All",
+        "clear": "Clear filters"
+      },
+      "publicationStatus": {
+        "published": "Published",
+        "draft": "Draft",
+        "archived": "Archived"
+      },
+      "reviewStatus": {
+        "approved": "Approved",
+        "needs_review": "Needs review",
+        "draft": "Draft",
+        "rejected": "Rejected"
+      },
+      "ragDocumentReviewStatus": {
+        "approved": "Approved",
+        "pending": "Pending review",
+        "rejected": "Rejected"
+      },
+      "flags": {
+        "ragReady": "RAG-ready",
+        "notRagReady": "Not RAG-ready",
+        "effective": "CyberGuard eligible",
+        "notEffective": "Not eligible"
+      },
+      "eligibilityReasons": {
+        "resource_not_published": "Resource is not published.",
+        "resource_not_approved": "Resource is not approved.",
+        "resource_rag_disabled": "RAG readiness is disabled."
+      },
+        "table": {
+          "resource": "Resource",
+          "category": "Category",
+          "publication": "Publication",
+          "review": "Review",
+          "rag": "RAG",
+          "updated": "Updated",
+          "action": "Action",
+          "scrollLabel": "Resource governance table. Use horizontal scrolling to view all columns."
+        },
+      "pagination": "Page {{page}} of {{totalPages}} · {{totalItems}} resources",
+      "detail": {
+        "overview": "Learner preview",
+        "source": "Source metadata",
+        "rag": "CyberGuard retrieval",
+        "controls": "Editable governance controls",
+        "translations": "{{count}} translations available",
+        "flags": "Malaysia guidance: {{malaysia}} · Sensitive topic: {{sensitive}}",
+        "retrievableChunks": "{{count}} retrievable chunks",
+        "chunks": "{{count}} chunks"
+      },
+      "fields": {
+        "ragReady": "Allow CyberGuard retrieval when published and approved",
+        "nextReviewAt": "Next review date",
+        "reviewNotes": "Review notes"
+      },
+      "errors": {
+        "list": "Unable to load resources.",
+        "detail": "Unable to load resource detail.",
+        "save": "Unable to save resource governance."
+      }
+    },
+    "resourceEditor": {
+      "title": "Edit Resource content",
+      "description": "Update the learner-facing translation content for this existing Resource.",
+      "editContent": "Edit content",
+      "backToResources": "Back to Resources",
+      "loading": "Loading Resource content...",
+      "languageTabs": "Resource translation languages",
+      "unsavedChanges": "Unsaved changes",
+      "governanceStatus": "Resource governance status",
+      "previewLabel": "Learner preview",
+      "previewOnly": "Preview only",
+      "previewUntitled": "Untitled Resource",
+      "previewEmpty": "Main content will appear here as you type.",
+      "saved": "Content saved successfully.",
+      "savedRagSynced": "Content saved and CyberGuard retrieval was refreshed.",
+      "savedRagFailed": "Content saved, but CyberGuard refresh failed. Try refreshing RAG later.",
+      "reloadLatest": "Reload latest version",
+      "discardTitle": "Discard unsaved content changes?",
+      "discardLocaleMessage": "Your {{locale}} edits have not been saved.",
+      "discardBackMessage": "Your {{locale}} edits have not been saved. Back to Resources?",
+      "discardInterfaceLocaleMessage": "You have unsaved changes in the {{locale}} Resource translation. Changing the Cyberly interface language will discard them.",
+      "discardSectionMessage": "Your Resource content edits have not been saved.",
+      "logoutMessage": "Logging out will discard your unsaved Resource content edits.",
+      "navigationCancelled": "Navigation cancelled. Your edits are still here.",
+      "discardChanges": "Discard changes",
+      "discardAndChangeLanguage": "Discard and change language",
+      "continueEditing": "Continue editing",
+      "reset": "Reset",
+      "save": "Save changes",
+      "bodyHint": "{{count}}/{{max}} characters. Separate paragraphs with a blank line.",
+      "locales": {
+        "en": "English",
+        "ms": "Bahasa Melayu",
+        "zh-CN": "Simplified Chinese"
+      },
+      "status": {
+        "exists": "Translation exists",
+        "missing": "Missing translation",
+        "unsaved": "Unsaved"
+      },
+      "fields": {
+        "title": "Title",
+        "summary": "Summary",
+        "body": "Main content"
+      },
+      "validation": {
+        "titleRequired": "Title is required.",
+        "titleTooLong": "Title must be {{max}} characters or fewer.",
+        "summaryRequired": "Summary is required.",
+        "summaryTooLong": "Summary must be {{max}} characters or fewer.",
+        "bodyRequired": "Main content is required.",
+        "bodyTooLong": "Main content must be {{max}} characters or fewer."
+      },
+      "errors": {
+        "load": "Unable to load Resource content.",
+        "save": "Unable to save Resource content.",
+        "stale": "Translation changed elsewhere. Reload the latest version before saving.",
+        "notFound": "Resource content was not found."
       }
     },
     "moduleStatus": {
