@@ -1,4 +1,4 @@
-import { Fragment, useState, createContext, useContext, useRef, useEffect, useCallback } from "react";
+import { Fragment, useState, createContext, useContext, useRef, useEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
 import { useTranslation } from "react-i18next";
@@ -26,12 +26,29 @@ import {
 } from "./chat/chatActions";
 import AdminResourcePage from "./admin/AdminResourcePage";
 import AdminResourceEditorPage from "./admin/AdminResourceEditorPage";
+import AdminResourceCreatePage from "./admin/AdminResourceCreatePage";
+import AdminResourceMetadataPage from "./admin/AdminResourceMetadataPage";
+import AdminScenarioEditorPage from "./admin/AdminScenarioEditorPage";
+import AdminScenarioPage from "./admin/AdminScenarioPage";
+import AdminAiProvidersPage from "./admin/AdminAiProvidersPage";
 import AdminWorkspace from "./admin/AdminWorkspace";
-import { ADMIN_SECTIONS, getAdminResourceEditorIdFromHash, getAdminSectionFromHash } from "./admin/adminSections";
+import { buildAdminHash, parseAdminRoute } from "./admin/adminRouteState";
+import {
+  ADMIN_SECTIONS,
+  getAdminResourceEditorIdFromHash,
+  getAdminResourceGovernanceIdFromHash,
+  getAdminResourceMetadataIdFromHash,
+  getAdminScenarioEditorIdFromHash,
+  getAdminSectionFromHash,
+  isAdminScenarioCreateRoute,
+  isAdminResourceCreateRoute,
+} from "./admin/adminSections";
 import {
   createPendingAction,
   createPendingRouteTransition,
   normalizeHashRoute,
+  resolveSessionRestoreHash,
+  routeIdentityFromHash,
   shouldGuardAction,
   shouldBlockRouteTransition,
 } from "./navigation/navigationGuardState";
@@ -224,6 +241,28 @@ body {
 .modal-cancel { background: var(--gray-lt); color: #333; }
 .modal-confirm { background: var(--coral); color: #fff; }
 .modal-cancel:hover, .modal-cancel:focus-visible, .modal-confirm:hover, .modal-confirm:focus-visible { opacity: 0.9; outline: none; box-shadow: 0 0 0 3px rgba(29,158,117,0.2); }
+.logout-modal.admin-dialog {
+  border-color: var(--admin-border-default);
+  box-shadow: var(--admin-shadow-dialog);
+}
+.logout-modal.admin-dialog h2 { color: var(--admin-text-primary); }
+.logout-modal.admin-dialog p { color: var(--admin-text-secondary); }
+.logout-modal.admin-dialog .modal-cancel {
+  background: var(--admin-surface-muted);
+  color: var(--admin-text-primary);
+  border: 1px solid var(--admin-border-default);
+}
+.logout-modal.admin-dialog .modal-confirm {
+  background: var(--admin-brand-primary);
+  color: var(--admin-text-on-brand);
+}
+.logout-modal.admin-dialog .modal-cancel:hover,
+.logout-modal.admin-dialog .modal-cancel:focus-visible,
+.logout-modal.admin-dialog .modal-confirm:hover,
+.logout-modal.admin-dialog .modal-confirm:focus-visible {
+  opacity: 1;
+  box-shadow: 0 0 0 3px rgba(86,101,122,0.2);
+}
 
 @media (max-width: 1050px) {
   .navbar { gap: 0.65rem; padding: 0 0.85rem; }
@@ -262,14 +301,59 @@ body {
   padding: 1.5rem; box-shadow: var(--shadow-card);
 }
 .card-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 1rem; }
+.admin-theme {
+  --admin-brand-primary: #56657A;
+  --admin-brand-primary-hover: #445267;
+  --admin-brand-primary-active: #39475A;
+  --admin-brand-soft: #E8EDF2;
+  --admin-brand-subtle: #F0F3F6;
+  --admin-brand-border: #A9B4C0;
+  --admin-surface-page: #E8EDF3;
+  --admin-workspace-canvas: #EDF1F5;
+  --admin-surface-raised: #FFFFFF;
+  --admin-surface-muted: #F4F6F8;
+  --admin-surface-subtle: #F7F8FA;
+  --admin-surface-interactive: #E8EDF2;
+  --admin-border-subtle: #D9E0E7;
+  --admin-border-default: #B9C4CF;
+  --admin-border-strong: #98A6B5;
+  --admin-border-focus: #56657A;
+  --admin-text-primary: #202A35;
+  --admin-text-secondary: #66727F;
+  --admin-text-muted: #7C8793;
+  --admin-text-on-brand: #FFFFFF;
+  --admin-shadow-card: 0 6px 20px rgba(32, 42, 53, 0.07);
+  --admin-shadow-raised: 0 10px 30px rgba(32, 42, 53, 0.10);
+  --admin-shadow-dialog: 0 18px 48px rgba(32, 42, 53, 0.18);
+  --surface-raised: var(--admin-surface-raised);
+  --surface-muted: var(--admin-surface-muted);
+  --surface-subtle: var(--admin-surface-subtle);
+  --surface-interactive: var(--admin-surface-interactive);
+  --border-default: var(--admin-border-default);
+  --color-brand-border: var(--admin-brand-border);
+  --color-brand-primary: var(--admin-brand-primary);
+  --text-primary: var(--admin-text-primary);
+  --text-secondary: var(--admin-text-secondary);
+  --text-muted: var(--admin-text-muted);
+  --shadow-card: var(--admin-shadow-card);
+}
 .admin-workspace {
   width: min(1760px, 96vw); margin: 0 auto; padding: 1.25rem 0 2rem;
   display: grid; grid-template-columns: minmax(220px, 248px) minmax(0, 1fr); gap: 1rem;
+}
+.admin-theme.admin-workspace {
+  background: var(--admin-workspace-canvas);
+  border-radius: 18px;
+  padding: 1.25rem;
 }
 .admin-workspace-sidebar {
   position: sticky; top: calc(var(--nav-h) + 1rem); align-self: start;
   background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 14px;
   padding: 1rem; box-shadow: var(--shadow-card);
+}
+.admin-theme .admin-workspace-sidebar {
+  background: linear-gradient(180deg, var(--admin-brand-subtle), var(--admin-surface-raised));
+  border-color: var(--admin-border-default);
 }
 .admin-workspace-sidebar-heading { display: grid; gap: 0.35rem; margin-bottom: 1rem; }
 .admin-workspace-sidebar-heading h2 {
@@ -287,9 +371,17 @@ body {
   background: var(--surface-interactive); border-color: var(--color-brand-border); outline: none;
   box-shadow: 0 0 0 3px rgba(29,158,117,0.13);
 }
+.admin-theme .admin-section-nav-item:hover,
+.admin-theme .admin-section-nav-item:focus-visible {
+  box-shadow: 0 0 0 3px rgba(86,101,122,0.16);
+}
 .admin-section-nav-item.active {
   background: var(--surface-interactive); border-color: var(--color-brand-border);
   box-shadow: inset 4px 0 0 var(--color-brand-primary); color: #14684f;
+}
+.admin-theme .admin-section-nav-item.active {
+  color: var(--admin-brand-primary-active);
+  box-shadow: inset 4px 0 0 var(--admin-brand-primary);
 }
 .admin-section-nav-item.disabled {
   cursor: not-allowed; opacity: 0.78; background: var(--surface-muted); color: var(--text-muted);
@@ -311,11 +403,42 @@ body {
 }
 .admin-workspace-status strong { color: #14684f; text-transform: capitalize; }
 .admin-workspace-status span { color: #5c6a61; font-size: 0.82rem; line-height: 1.35; }
+.admin-theme .admin-workspace-status strong { color: var(--admin-brand-primary-active); }
+.admin-theme .admin-workspace-status span { color: var(--admin-text-secondary); }
 .admin-workspace-content {
   min-width: 0; background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 14px;
   padding: 1.15rem; box-shadow: var(--shadow-card);
 }
+.admin-theme .admin-workspace-content {
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  padding: 0;
+}
 .admin-resource-governance { display: grid; gap: 1rem; min-width: 0; }
+.admin-theme .admin-workspace-main-header,
+.admin-theme .admin-resource-header,
+.admin-theme .admin-resource-summary,
+.admin-theme .admin-resource-filters,
+.admin-theme .admin-resource-table-wrap,
+.admin-theme .admin-resource-editor-toolbar,
+.admin-theme .admin-resource-action-header,
+.admin-theme .admin-resource-create-preview,
+.admin-theme .admin-resource-content-form,
+.admin-theme .admin-resource-next-steps,
+.admin-theme .admin-resource-editor-identity {
+  background: var(--admin-surface-raised);
+  border-color: var(--admin-border-default);
+  box-shadow: var(--admin-shadow-card);
+}
+.admin-theme .admin-resource-header,
+.admin-theme .admin-resource-summary,
+.admin-theme .admin-resource-filters,
+.admin-theme .admin-resource-editor-toolbar {
+  border: 1px solid var(--admin-border-default);
+  border-radius: 12px;
+  padding: 1rem;
+}
 .admin-resource-header h2 {
   font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem; margin-bottom: 0.35rem;
 }
@@ -342,24 +465,46 @@ body {
 .admin-resource-form input:focus, .admin-resource-form select:focus, .admin-resource-form textarea:focus {
   border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(29,158,117,0.14); outline: none;
 }
+.admin-resource-form input[aria-invalid="true"],
+.admin-resource-form select[aria-invalid="true"],
+.admin-resource-form textarea[aria-invalid="true"] {
+  border-color: var(--status-danger-border);
+  box-shadow: 0 0 0 3px rgba(218,82,70,0.12);
+}
+.admin-theme .admin-resource-filters input:focus,
+.admin-theme .admin-resource-filters select:focus,
+.admin-theme .admin-resource-form input:focus,
+.admin-theme .admin-resource-form select:focus,
+.admin-theme .admin-resource-form textarea:focus {
+  border-color: var(--admin-border-focus);
+  box-shadow: 0 0 0 3px rgba(86,101,122,0.16);
+}
 .admin-resource-table-wrap {
   overflow-x: auto; border: 1px solid var(--border-default); border-radius: 10px;
   max-width: 100%; scrollbar-gutter: stable;
 }
 .admin-resource-table-wrap:focus-within { box-shadow: 0 0 0 3px rgba(29,158,117,0.12); }
+.admin-theme .admin-resource-table-wrap:focus-within { box-shadow: 0 0 0 3px rgba(86,101,122,0.14); }
 .admin-resource-table { width: 100%; min-width: 980px; border-collapse: collapse; font-size: 0.88rem; table-layout: auto; }
 .admin-resource-table th, .admin-resource-table td { padding: 0.75rem; border-bottom: 1px solid var(--border-subtle); text-align: left; vertical-align: top; }
 .admin-resource-table th { background: var(--surface-muted); color: var(--text-secondary); font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.04em; }
 .admin-resource-table tbody tr:hover { background: var(--surface-muted); }
+.admin-theme .admin-resource-table tbody tr:hover { background: var(--admin-brand-subtle); }
 .admin-resource-table th:nth-child(3), .admin-resource-table th:nth-child(4), .admin-resource-table th:nth-child(5),
 .admin-resource-table td:nth-child(3), .admin-resource-table td:nth-child(4), .admin-resource-table td:nth-child(5) {
   width: 136px; white-space: nowrap;
 }
-.admin-resource-table th:nth-child(6), .admin-resource-table td:nth-child(6) { width: 118px; white-space: nowrap; }
+.admin-resource-table th:nth-child(6), .admin-resource-table td:nth-child(6) { width: 168px; white-space: nowrap; }
 .admin-resource-table th:nth-child(7), .admin-resource-table td:nth-child(7) { width: 112px; white-space: nowrap; }
 .admin-resource-table td strong { display: block; color: #1f3328; }
 .admin-resource-table td span { display: block; color: #66726b; font-size: 0.8rem; margin-top: 0.15rem; }
+.admin-theme .admin-resource-table td strong { color: var(--admin-text-primary); }
+.admin-theme .admin-resource-table td span,
+.admin-theme .admin-resource-state,
+.admin-theme .admin-resource-pagination,
+.admin-theme .admin-resource-summary-note { color: var(--admin-text-secondary); }
 .admin-resource-table .btn-secondary { white-space: nowrap; }
+.admin-resource-row-actions { display: flex; gap: 0.45rem; flex-wrap: wrap; align-items: center; }
 .admin-status-badge {
   display: inline-flex; align-items: center; min-height: 26px; border-radius: 999px;
   padding: 0.2rem 0.55rem; background: var(--status-neutral-surface); border: 1px solid var(--status-neutral-border); color: #4c5852; font-size: 0.76rem; font-weight: 800;
@@ -367,15 +512,153 @@ body {
 }
 .admin-status-badge.good { background: var(--status-success-surface); border-color: var(--status-success-border); color: #14684f; }
 .admin-status-badge.warn { background: var(--status-warning-surface); border-color: var(--status-warning-border); color: #7a4a14; }
+.admin-status-badge.danger { background: var(--status-danger-surface); border-color: var(--status-danger-border); color: #8a3e25; }
+.admin-status-badge.publication-published { background: #e7f0ff; border-color: #8fb4ef; color: #17437a; }
+.admin-status-badge.publication-draft { background: #edf2f7; border-color: #9aa9ba; color: #263545; }
+.admin-status-badge.publication-archived { background: #c8c8c8; border-color: #aaa0bd; color: #3d344d; }
+.admin-status-badge.review-draft { background: #fff6df; border-color: #e7b85e; color: #6c4109; }
+.admin-status-badge.review-needs_review { background: #fff0d8; border-color: #ef9d38; color: #7b3d00; }
+.admin-status-badge.review-approved { background: #e4f7ef; border-color: #73c7a9; color: #0d5d44; }
+.admin-status-badge.review-rejected { background: #fae8e6; border-color: #d98c83; color: #7a2f2a; }
+.admin-status-badge.cyberguard-enabled { background: #ddf7f1; border-color: #64c6b3; color: #075c52; }
+.admin-status-badge.cyberguard-disabled { background: #eef1f4; border-color: #aab3bd; color: #2e3946; }
 .admin-resource-state, .admin-resource-pagination { color: #5c6a61; font-size: 0.9rem; line-height: 1.5; }
 .admin-resource-summary-note { color: #66726b; font-size: 0.82rem; line-height: 1.45; margin-top: -0.35rem; }
+.admin-ai-page { display: grid; gap: 1rem; }
+.admin-ai-hero,
+.admin-ai-cost-note,
+.admin-ai-panel,
+.admin-ai-provider-card {
+  background: var(--surface-card);
+  border: 1px solid var(--border-subtle);
+  border-radius: 14px;
+  box-shadow: var(--shadow-sm);
+}
+.admin-theme .admin-ai-hero,
+.admin-theme .admin-ai-cost-note,
+.admin-theme .admin-ai-panel,
+.admin-theme .admin-ai-provider-card {
+  background: var(--admin-surface-panel);
+  border-color: var(--admin-border-subtle);
+}
+.admin-ai-hero {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 1rem;
+  padding: 1.1rem;
+}
+.admin-ai-hero h2,
+.admin-ai-panel h3,
+.admin-ai-provider-card h3 { color: var(--admin-text-primary); }
+.admin-ai-hero p:last-child,
+.admin-ai-panel,
+.admin-ai-provider-card,
+.admin-ai-cost-note { color: var(--admin-text-secondary); line-height: 1.5; }
+.admin-ai-cost-note {
+  display: flex;
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.8rem 1rem;
+  background: #f4f7fb;
+}
+.admin-ai-cost-note strong { color: var(--admin-text-primary); }
+.admin-ai-provider-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(245px, 1fr));
+  gap: 0.9rem;
+}
+.admin-ai-provider-card {
+  display: grid;
+  gap: 0.8rem;
+  padding: 1rem;
+  align-content: start;
+}
+.admin-ai-provider-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.8rem;
+}
+.admin-ai-provider-meta {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+}
+.admin-ai-provider-meta div,
+.admin-ai-purpose-list div {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  border-top: 1px solid var(--admin-border-subtle);
+  padding-top: 0.55rem;
+}
+.admin-ai-provider-meta dt,
+.admin-ai-purpose-list dt { color: var(--admin-text-secondary); font-size: 0.82rem; }
+.admin-ai-provider-meta dd,
+.admin-ai-purpose-list dd { color: var(--admin-text-primary); font-weight: 700; text-align: right; }
+.admin-ai-capability-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+.admin-ai-capability-list span {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.35rem;
+  border: 1px solid var(--admin-border-subtle);
+  border-radius: 999px;
+  padding: 0.28rem 0.55rem;
+  font-size: 0.78rem;
+  background: #f7f9fb;
+  color: var(--admin-text-secondary);
+}
+.admin-ai-capability-list span.implemented strong { color: #17437a; }
+.admin-ai-capability-list span.not-implemented { opacity: 0.72; }
+.admin-ai-purpose-note { color: var(--admin-text-secondary); font-size: 0.84rem; line-height: 1.4; }
+.admin-ai-test-result {
+  display: grid;
+  gap: 0.25rem;
+  border-radius: 10px;
+  border: 1px solid var(--border-subtle);
+  padding: 0.7rem;
+  font-size: 0.84rem;
+}
+.admin-ai-test-result.success { background: #eef8f3; border-color: #9fd5bd; }
+.admin-ai-test-result.failed { background: #fff3ed; border-color: #e1a181; }
+.admin-ai-test-result strong { color: var(--admin-text-primary); }
+.admin-ai-test-result small {
+  color: var(--admin-text-secondary);
+  overflow-wrap: anywhere;
+}
+.admin-ai-panel {
+  padding: 1rem;
+  display: grid;
+  gap: 0.7rem;
+}
+.admin-ai-purpose-list {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0;
+}
+.admin-ai-safety-list {
+  display: grid;
+  gap: 0.45rem;
+  padding-left: 1.2rem;
+  color: var(--admin-text-secondary);
+}
 .admin-resource-drawer-backdrop {
   position: fixed; inset: 0; z-index: 220; background: rgba(18, 30, 24, 0.35);
   display: flex; justify-content: flex-end;
 }
+.admin-theme .admin-resource-drawer-backdrop { background: rgba(32, 42, 53, 0.34); }
 .admin-resource-drawer {
   width: min(520px, 100vw); height: 100%; overflow-y: auto; background: var(--surface-raised);
   box-shadow: -12px 0 30px rgba(0,0,0,0.16); padding: 1.25rem;
+}
+.admin-theme .admin-resource-drawer {
+  border-left: 1px solid var(--admin-border-default);
+  box-shadow: -12px 0 32px rgba(32,42,53,0.16);
 }
 .admin-resource-drawer-head {
   display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;
@@ -383,6 +666,9 @@ body {
 }
 .admin-resource-drawer-head h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1.25rem; line-height: 1.2; }
 .admin-resource-drawer-body { display: grid; gap: 1.05rem; }
+.admin-resource-drawer-top-actions {
+  display: flex; justify-content: flex-end; align-items: center; gap: 0.6rem; flex-wrap: wrap;
+}
 .admin-resource-drawer-body section {
   border: 1.5px solid var(--border-default); border-radius: 10px; padding: 0.95rem;
   display: grid; gap: 0.5rem; background: var(--surface-muted);
@@ -396,18 +682,417 @@ body {
 }
 .admin-resource-drawer-body ul { padding-left: 1.1rem; }
 .admin-resource-form { background: var(--surface-subtle) !important; border-color: var(--color-brand-border) !important; }
+.admin-theme .admin-resource-form,
+.admin-theme .admin-resource-drawer-body section {
+  background: var(--admin-surface-muted) !important;
+  border-color: var(--admin-border-default) !important;
+}
 .admin-resource-checkbox { grid-template-columns: auto 1fr; align-items: center; justify-content: start; }
 .admin-resource-checkbox input { width: auto; min-width: 18px; min-height: 18px; }
+.admin-resource-create,
+.admin-resource-metadata {
+  display: grid; gap: 1rem; min-width: 0;
+}
+.admin-resource-create-grid {
+  display: grid; grid-template-columns: minmax(0, 1.35fr) minmax(300px, 0.65fr); gap: 1rem; align-items: start;
+}
+.admin-resource-create-form,
+.admin-resource-create-preview {
+  display: grid; gap: 1rem; min-width: 0;
+}
+.admin-resource-form section { display: grid; gap: 0.75rem; }
+.admin-resource-form h3,
+.admin-resource-create-preview h3 {
+  font-family: 'Space Grotesk', sans-serif; font-size: 1rem; color: #1f3328;
+}
+.admin-theme .admin-resource-form h3,
+.admin-theme .admin-resource-create-preview h3,
+.admin-theme .admin-resource-drawer-head h3,
+.admin-theme .admin-resource-drawer-body h4 { color: var(--admin-text-primary); }
+.admin-resource-form-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 0.75rem;
+}
+.admin-resource-form-grid.three { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+.admin-resource-form-grid input, .admin-resource-form-grid select { min-width: 0; }
+.admin-resource-form-action { align-self: end; display: grid; gap: 0.3rem; }
+.admin-resource-form-action small,
+.admin-resource-form label small {
+  color: var(--text-muted); font-size: 0.76rem; line-height: 1.35;
+}
+.admin-resource-source-form { display: grid; gap: 1rem; }
+.admin-resource-source-actions { display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap; }
+.admin-resource-source-missing { color: var(--text-muted); font-size: 0.84rem; font-weight: 700; }
+.admin-resource-warning {
+  color: #7a4a14; background: var(--status-warning-surface); border: 1px solid var(--status-warning-border);
+  border-radius: 9px; padding: 0.65rem 0.75rem; font-size: 0.84rem; line-height: 1.45;
+}
+.admin-resource-checkbox-stack { display: grid; gap: 0.55rem; align-content: center; }
+.admin-resource-create-actions,
+.admin-resource-toolbar-actions {
+  display: flex; gap: 0.65rem; flex-wrap: wrap; align-items: center; justify-content: flex-end;
+}
+.admin-resource-next-steps {
+  border: 1px solid var(--border-default); border-radius: 12px; padding: 1rem; background: var(--surface-muted);
+}
+.admin-resource-next-steps ul { margin: 0.55rem 0 0; padding-left: 1.1rem; color: var(--text-secondary); line-height: 1.6; }
 .admin-resource-success {
   color: #14684f; background: var(--teal-lt); border: 1px solid rgba(29,158,117,0.24);
   border-radius: 9px; padding: 0.65rem 0.75rem; font-size: 0.86rem; font-weight: 700;
 }
 .admin-resource-drawer-actions { display: flex; justify-content: flex-end; gap: 0.7rem; padding-bottom: 1rem; }
+.admin-quick-review-actions {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 42px;
+  gap: 0.65rem;
+  align-items: stretch;
+}
+.admin-quick-review-edit {
+  width: 100%;
+  min-height: 42px;
+}
+.admin-lifecycle-trigger.admin-quick-review-lifecycle {
+  margin-left: 0;
+  width: 42px;
+  min-width: 42px;
+}
 .admin-resource-rag-doc { font-size: 0.8rem !important; background: var(--surface-muted); border: 1px solid var(--border-subtle); border-radius: 8px; padding: 0.45rem 0.55rem; }
 .admin-resource-editor { display: grid; gap: 1rem; min-width: 0; }
 .admin-resource-editor-toolbar {
   display: flex; align-items: center; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;
 }
+.admin-scenario-editor-header {
+  border: 1px solid var(--admin-border-default); border-radius: 12px; padding: 0.9rem 1rem;
+  background: var(--admin-surface-raised); box-shadow: var(--admin-shadow-card);
+  display: flex; align-items: center; justify-content: space-between; gap: 1rem; flex-wrap: wrap;
+}
+.admin-scenario-editor-header-main,
+.admin-scenario-editor-header-actions {
+  display: flex; align-items: center; gap: 0.65rem; flex-wrap: wrap; min-width: 0;
+}
+.admin-scenario-editor-header-main h2 {
+  font-family: 'Space Grotesk', sans-serif; font-size: 1.08rem; color: var(--admin-text-primary);
+}
+.admin-scenario-back-button { min-height: 40px; }
+.admin-scenario-editor-tabs {
+  display: inline-flex; flex-wrap: wrap; gap: 0.4rem;
+}
+.admin-scenario-editor-tabs button {
+  min-height: 40px; border: 1px solid var(--admin-border-default); border-radius: 10px;
+  background: var(--admin-surface-muted); color: var(--admin-text-secondary); cursor: pointer;
+  padding: 0.5rem 0.75rem; font: inherit; font-weight: 800;
+}
+.admin-scenario-editor-tabs button:hover,
+.admin-scenario-editor-tabs button:focus-visible {
+  border-color: var(--admin-brand-border); background: var(--admin-brand-subtle); outline: none;
+  box-shadow: 0 0 0 3px rgba(86,101,122,0.16);
+}
+.admin-scenario-editor-tabs button.active,
+.admin-scenario-editor-tabs button[aria-selected="true"] {
+  background: var(--admin-brand-soft); color: var(--admin-brand-primary-active); border-color: var(--admin-brand-border);
+  box-shadow: inset 0 -3px 0 var(--admin-brand-primary);
+}
+.admin-scenario-lifecycle-actions {
+  display: flex; align-items: center; justify-content: flex-end; gap: 0.5rem; flex-wrap: wrap;
+}
+.admin-scenario-create-grid.creating {
+  grid-template-columns: minmax(0, 1fr);
+}
+.admin-scenario-create-grid.preview-only {
+  grid-template-columns: minmax(0, 1fr);
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
+.admin-scenario-create-grid.preview-only .admin-scenario-create-form {
+  display: none;
+}
+.admin-scenario-create-grid.preview-only .admin-scenario-create-preview {
+  width: min(100%, 900px);
+}
+.admin-scenario-create-grid.creating .admin-scenario-create-preview {
+  width: 100%;
+}
+.admin-scenario-create-form .admin-resource-form {
+  display: grid;
+  gap: 0.9rem;
+}
+.admin-scenario-section-heading {
+  margin-top: 0.35rem;
+  padding-top: 0.75rem;
+  border-top: 1px solid var(--admin-border-subtle);
+}
+.admin-scenario-create-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 0.7rem;
+  padding-top: 0.3rem;
+}
+.admin-scenario-completeness {
+  border: 1px solid var(--admin-border-subtle);
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  background: var(--admin-surface-muted);
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.75rem;
+  align-items: center;
+  color: var(--admin-text-secondary);
+  font-size: 0.86rem;
+}
+.admin-scenario-completeness strong {
+  color: var(--admin-text-primary);
+}
+.admin-scenario-structure-badge {
+  display: inline-flex !important;
+  width: fit-content;
+  margin-top: 0.35rem !important;
+  border-radius: 999px;
+  padding: 0.18rem 0.5rem;
+  font-size: 0.72rem !important;
+  font-weight: 800;
+  border: 1px solid var(--admin-border-subtle);
+}
+.admin-scenario-structure-badge.ready {
+  color: #14684f !important;
+  background: var(--teal-lt);
+  border-color: rgba(29,158,117,0.22);
+}
+.admin-scenario-structure-badge.needs-work {
+  color: #7a4a14 !important;
+  background: var(--status-warning-surface);
+  border-color: var(--status-warning-border);
+}
+.admin-scenario-preview-metadata {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+  margin-top: 0.7rem;
+}
+.admin-scenario-preview-metadata span {
+  border: 1px solid var(--admin-border-subtle);
+  border-radius: 999px;
+  background: var(--admin-surface-muted);
+  color: var(--admin-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 800;
+  padding: 0.24rem 0.55rem;
+}
+.admin-scenario-preview-progress {
+  display: grid;
+  gap: 0.35rem;
+  color: var(--admin-text-secondary);
+  font-size: 0.84rem;
+  font-weight: 800;
+}
+.admin-scenario-preview-progress progress {
+  width: 100%;
+  height: 10px;
+  accent-color: var(--admin-brand-primary);
+}
+.admin-scenario-learner-preview-card {
+  display: grid;
+  gap: 0.75rem;
+  border: 1px solid var(--admin-border-default);
+  border-radius: 12px;
+  padding: 1rem;
+  background: var(--admin-surface-raised);
+}
+.admin-scenario-learner-preview-card h4 {
+  font-family: 'Space Grotesk', sans-serif;
+  color: var(--admin-text-primary);
+  font-size: 1.05rem;
+}
+.admin-scenario-learner-preview-card p {
+  color: var(--admin-text-secondary);
+  line-height: 1.55;
+}
+.admin-scenario-preview-choices {
+  display: grid;
+  gap: 0.55rem;
+}
+.admin-scenario-preview-choices button {
+  width: 100%;
+  min-height: 44px;
+  border: 1px solid var(--admin-border-default);
+  border-radius: 10px;
+  background: var(--admin-surface-muted);
+  color: var(--admin-text-primary);
+  display: flex;
+  align-items: center;
+  gap: 0.55rem;
+  padding: 0.6rem 0.75rem;
+  text-align: left;
+  font: inherit;
+  opacity: 1;
+}
+.admin-scenario-preview-choices button strong {
+  flex: 0 0 auto;
+  width: 28px;
+  height: 28px;
+  border-radius: 999px;
+  display: grid;
+  place-items: center;
+  background: var(--admin-brand-soft);
+  color: var(--admin-brand-primary-active);
+}
+.admin-scenario-preview-feedback {
+  border: 1px dashed var(--admin-border-default);
+  border-radius: 10px;
+  padding: 0.65rem 0.75rem;
+  color: var(--admin-text-secondary);
+  background: var(--admin-surface-muted);
+  font-size: 0.88rem;
+}
+.admin-scenario-preview-nav {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.65rem;
+  flex-wrap: wrap;
+}
+.admin-resource-action-header {
+  border: 1px solid var(--border-default); border-radius: 12px; padding: 1rem;
+  display: grid; gap: 0.85rem; min-width: 0;
+}
+.admin-resource-action-header.compact { padding: 0.9rem 1rem; }
+.admin-resource-action-main {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem; flex-wrap: wrap;
+}
+.admin-resource-action-main h2 {
+  font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.2rem, 2vw, 1.55rem); line-height: 1.2; color: var(--admin-text-primary);
+  overflow-wrap: anywhere;
+}
+.admin-resource-action-row {
+  display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; flex-wrap: wrap;
+  border-top: 1px solid var(--admin-border-subtle); padding-top: 0.85rem;
+}
+.admin-resource-action-row.compact { justify-content: flex-start; }
+.admin-resource-back-button { min-height: 40px; }
+.admin-resource-action-tabs {
+  display: inline-flex; flex-wrap: wrap; gap: 0.4rem;
+}
+.admin-resource-action-tabs button {
+  min-height: 40px; border: 1px solid var(--admin-border-default); border-radius: 10px;
+  background: var(--admin-surface-muted); color: var(--admin-text-secondary); cursor: pointer;
+  padding: 0.5rem 0.75rem; font: inherit; font-weight: 800;
+}
+.admin-resource-action-tabs button:hover,
+.admin-resource-action-tabs button:focus-visible {
+  border-color: var(--admin-brand-border); background: var(--admin-brand-subtle); outline: none;
+  box-shadow: 0 0 0 3px rgba(86,101,122,0.16);
+}
+.admin-resource-action-tabs button.active,
+.admin-resource-action-tabs button[aria-selected="true"] {
+  background: var(--admin-brand-soft); color: var(--admin-brand-primary-active); border-color: var(--admin-brand-border);
+  box-shadow: inset 0 -3px 0 var(--admin-brand-primary);
+}
+.admin-resource-lifecycle-actions {
+  display: flex; gap: 0.5rem; align-items: center; flex-wrap: wrap;
+}
+.admin-lifecycle-trigger {
+  min-height: 42px; border-radius: 12px; border: 1px solid #d98c83;
+  background: #fae8e6; color: #7a2f2a; cursor: pointer; font: inherit; font-weight: 900;
+  display: inline-flex; align-items: center; justify-content: center; gap: 0.45rem; margin-left: auto;
+  padding: 0.48rem 0.75rem;
+}
+.admin-lifecycle-trigger.compact {
+  width: 42px; padding: 0.48rem;
+}
+.admin-lifecycle-trigger svg {
+  width: 20px; height: 20px; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+}
+.admin-lifecycle-trigger:hover,
+.admin-lifecycle-trigger:focus-visible {
+  background: #f6d9d5; outline: none; box-shadow: 0 0 0 3px rgba(217,140,131,0.28);
+}
+.btn-danger-muted {
+  border: 1px solid var(--status-danger-border); border-radius: 9px; padding: 0.55rem 0.85rem;
+  background: var(--status-danger-surface); color: #8a3e25; font-family: 'DM Sans', sans-serif;
+  font-size: 0.84rem; font-weight: 800; cursor: pointer;
+}
+.btn-danger-muted:hover,
+.btn-danger-muted:focus-visible {
+  background: #f6ded7; outline: none; box-shadow: 0 0 0 3px rgba(216,90,48,0.16);
+}
+.btn-danger-muted:disabled { cursor: not-allowed; opacity: 0.55; }
+.admin-lifecycle-dialog { max-height: min(90vh, 680px); overflow-y: auto; }
+.admin-lifecycle-operation-grid { display: grid; gap: 0.75rem; margin-top: 0.75rem; }
+.admin-lifecycle-operation {
+  border: 1px solid var(--admin-border-default); border-radius: 10px; padding: 0.8rem;
+  background: var(--admin-surface-muted); display: grid; gap: 0.55rem;
+}
+.admin-lifecycle-operation h4 {
+  font-family: 'Space Grotesk', sans-serif; font-size: 1rem; color: var(--admin-text-primary);
+  display: flex; align-items: center; gap: 0.45rem;
+}
+.admin-lifecycle-operation h4 svg {
+  width: 20px; height: 20px; flex: 0 0 auto; fill: none; stroke: currentColor; stroke-width: 1.8; stroke-linecap: round; stroke-linejoin: round;
+}
+.admin-lifecycle-operation p { color: var(--admin-text-secondary); line-height: 1.5; font-size: 0.88rem; }
+.admin-lifecycle-operation.danger { border-color: #d98c83; background: #fff7f6; }
+.admin-lifecycle-error { display: grid; gap: 0.7rem; align-items: start; }
+.admin-lifecycle-reasons { padding-left: 1.1rem; color: var(--admin-text-secondary); line-height: 1.55; font-size: 0.88rem; }
+.admin-lifecycle-confirm-field {
+  display: grid; gap: 0.35rem; color: var(--admin-text-secondary); font-size: 0.84rem; font-weight: 800;
+}
+.admin-lifecycle-confirm-field input {
+  width: 100%; border: 1.5px solid var(--admin-border-default); border-radius: 10px;
+  padding: 0.62rem 0.75rem; font: inherit; color: var(--admin-text-primary);
+}
+.admin-lifecycle-confirm-field input:focus {
+  border-color: var(--admin-border-focus); box-shadow: 0 0 0 3px rgba(86,101,122,0.16); outline: none;
+}
+.admin-resource-breadcrumb {
+  display: flex; align-items: center; gap: 0.45rem; flex-wrap: wrap;
+  color: var(--admin-text-secondary); font-size: 0.9rem; min-width: 0;
+}
+.admin-resource-breadcrumb button {
+  border: 0; background: transparent; color: var(--admin-brand-primary);
+  font: inherit; font-weight: 800; padding: 0.2rem 0; cursor: pointer;
+}
+.admin-resource-breadcrumb button:focus-visible,
+.admin-more-actions-button:focus-visible,
+.admin-more-actions-menu button:focus-visible {
+  outline: 3px solid rgba(86,101,122,0.28); outline-offset: 2px;
+}
+.admin-resource-breadcrumb strong, .admin-resource-breadcrumb span { overflow-wrap: anywhere; }
+.admin-resource-lifecycle-actions { position: relative; justify-content: flex-end; }
+.admin-more-actions-button::after { content: "▾"; margin-left: 0.35rem; font-size: 0.75rem; }
+.admin-more-actions-menu {
+  position: absolute; right: 0; top: calc(100% + 0.35rem); z-index: 20;
+  min-width: 220px; padding: 0.35rem; border: 1px solid var(--admin-border-default);
+  border-radius: 10px; background: var(--admin-surface-raised); box-shadow: var(--admin-shadow-card);
+  display: grid; gap: 0.2rem;
+}
+.admin-more-actions-menu button {
+  min-height: 40px; border: 0; border-radius: 8px; padding: 0.55rem 0.65rem;
+  text-align: left; background: transparent; color: var(--admin-text-primary); cursor: pointer; font-weight: 800;
+}
+.admin-more-actions-menu button:hover { background: var(--admin-surface-muted); }
+.admin-more-actions-menu button.danger { color: #8a3e25; }
+.admin-lifecycle-slug {
+  display: inline-block; max-width: 100%; overflow-wrap: anywhere;
+  background: var(--admin-surface-muted); border: 1px solid var(--admin-border-default);
+  border-radius: 8px; padding: 0.3rem 0.45rem; color: var(--admin-text-primary);
+}
+.admin-lifecycle-reason-heading,
+.admin-lifecycle-helper { color: var(--admin-text-secondary); font-size: 0.88rem; margin: 0.25rem 0; }
+.admin-lifecycle-counts {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(130px, 1fr)); gap: 0.45rem; margin: 0.65rem 0 0;
+}
+.admin-lifecycle-counts div {
+  border: 1px solid var(--admin-border-subtle); border-radius: 8px; padding: 0.45rem 0.55rem;
+  background: var(--admin-surface-muted);
+}
+.admin-lifecycle-counts dt { font-size: 0.72rem; color: var(--admin-text-secondary); font-weight: 800; }
+.admin-lifecycle-counts dd { margin: 0.15rem 0 0; color: var(--admin-text-primary); font-weight: 900; }
+.admin-governance-grid {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(260px, 1fr)); gap: 1rem;
+}
+.admin-governance-card {
+  border: 1px solid var(--admin-border-default); border-radius: 12px; padding: 1rem;
+  background: var(--admin-surface-raised); box-shadow: var(--admin-shadow-card); min-width: 0;
+}
+.admin-governance-card h3 { font-family: 'Space Grotesk', sans-serif; font-size: 1rem; margin-bottom: 0.55rem; }
 .admin-resource-editor-dirty {
   color: #8a3e25; background: var(--status-danger-surface); border: 1px solid var(--status-danger-border); border-radius: 999px;
   padding: 0.28rem 0.65rem; font-size: 0.78rem; font-weight: 800;
@@ -421,24 +1106,79 @@ body {
 }
 .admin-resource-editor-identity p:last-child { color: #66726b; font-size: 0.9rem; line-height: 1.5; max-width: 72ch; }
 .admin-resource-editor-badges { display: flex; gap: 0.4rem; flex-wrap: wrap; align-content: flex-start; }
-.admin-resource-language-tabs {
+.admin-resource-language-tabs,
+.admin-translation-tabs {
   display: flex; gap: 0.55rem; overflow-x: auto; padding-bottom: 0.1rem;
 }
-.admin-resource-language-tab {
+.admin-resource-language-tab,
+.admin-translation-tab {
   min-width: 150px; min-height: 48px; border: 1.5px solid var(--border-default); border-radius: 10px;
   background: var(--surface-raised); color: var(--text-secondary); cursor: pointer; padding: 0.55rem 0.7rem;
   display: grid; gap: 0.12rem; text-align: left; font-family: 'DM Sans', sans-serif;
 }
-.admin-resource-language-tab span { font-weight: 800; }
-.admin-resource-language-tab small { color: #66726b; font-weight: 700; font-size: 0.72rem; }
-.admin-resource-language-tab:hover, .admin-resource-language-tab:focus-visible {
+.admin-resource-language-tab span,
+.admin-translation-tab-language { font-weight: 800; }
+.admin-resource-language-tab small,
+.admin-translation-tab-meta { color: #66726b; font-weight: 700; font-size: 0.72rem; display: inline-flex; gap: 0.28rem; align-items: center; flex-wrap: wrap; }
+.admin-translation-tab-meta strong { color: inherit; }
+.admin-resource-language-tab:hover, .admin-resource-language-tab:focus-visible,
+.admin-translation-tab:hover, .admin-translation-tab:focus-visible {
   border-color: rgba(29,158,117,0.35); outline: none; box-shadow: 0 0 0 3px rgba(29,158,117,0.12);
 }
-.admin-resource-language-tab.active {
+.admin-theme .admin-resource-language-tab:hover,
+.admin-theme .admin-resource-language-tab:focus-visible,
+.admin-theme .admin-translation-tab:hover,
+.admin-theme .admin-translation-tab:focus-visible {
+  border-color: var(--admin-brand-border);
+  box-shadow: 0 0 0 3px rgba(86,101,122,0.16);
+}
+.admin-resource-language-tab.active,
+.admin-translation-tab.active {
   background: var(--surface-interactive); border-color: var(--color-brand-border); color: #14684f;
   box-shadow: inset 0 -3px 0 var(--color-brand-primary);
 }
-.admin-resource-language-tab.dirty { border-color: rgba(231,111,81,0.45); }
+.admin-theme .admin-resource-language-tab.active,
+.admin-theme .admin-translation-tab.active {
+  color: var(--admin-brand-primary-active);
+  box-shadow: inset 0 -3px 0 var(--admin-brand-primary);
+}
+.admin-resource-language-tab.dirty,
+.admin-translation-tab.dirty { border-color: rgba(231,111,81,0.45); }
+.admin-translation-tab.complete { border-color: rgba(29,158,117,0.28); }
+.admin-translation-tab.missing, .admin-translation-tab.incomplete { border-color: rgba(190,132,44,0.32); }
+.admin-editor-status-grid {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(280px, 0.85fr); gap: 0.85rem; align-items: stretch;
+}
+.admin-translation-coverage,
+.admin-publication-control {
+  border: 1px solid var(--border-default); border-radius: 12px; background: var(--surface-raised); padding: 0.9rem;
+  display: grid; gap: 0.65rem; min-width: 0;
+}
+.admin-translation-coverage-head,
+.admin-publication-control-head {
+  display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; flex-wrap: wrap;
+}
+.admin-translation-coverage-head h3,
+.admin-publication-control-head h3 {
+  font-size: 1rem; line-height: 1.25; color: var(--admin-text-primary, #1f3328);
+}
+.admin-translation-coverage-list,
+.admin-lifecycle-counts.admin-translation-coverage-list {
+  display: grid; gap: 0.42rem; margin: 0;
+}
+.admin-translation-coverage-list div {
+  display: flex; justify-content: space-between; gap: 0.75rem; border-top: 1px solid var(--admin-border-subtle, #e2e8e3); padding-top: 0.42rem;
+}
+.admin-translation-coverage-list dt { font-weight: 800; color: var(--admin-text-primary, #1f3328); }
+.admin-translation-coverage-list dd { display: inline-flex; gap: 0.45rem; margin: 0; color: #66726b; flex-wrap: wrap; justify-content: flex-end; }
+.admin-publication-reasons {
+  background: #fff8eb; border: 1px solid #f1d8a8; color: #6b4f16; border-radius: 10px; padding: 0.65rem 0.75rem;
+}
+.admin-publication-reasons ul { margin: 0.35rem 0 0; padding-left: 1.1rem; }
+.admin-publication-warning {
+  background: #f9faf7; border: 1px solid var(--admin-border-subtle, #e2e8e3); border-radius: 10px; color: #66726b; padding: 0.55rem 0.65rem; font-size: 0.86rem; line-height: 1.45;
+}
+.admin-publication-actions { display: flex; flex-wrap: wrap; gap: 0.55rem; align-items: center; }
 .admin-resource-editor-grid {
   display: grid; grid-template-columns: minmax(0, 1.05fr) minmax(300px, 0.75fr);
   gap: 1rem; align-items: start; min-width: 0;
@@ -456,6 +1196,11 @@ body {
 }
 .admin-resource-content-form input:focus, .admin-resource-content-form textarea:focus {
   border-color: var(--border-focus); box-shadow: 0 0 0 3px rgba(29,158,117,0.14); outline: none;
+}
+.admin-theme .admin-resource-content-form input:focus,
+.admin-theme .admin-resource-content-form textarea:focus {
+  border-color: var(--admin-border-focus);
+  box-shadow: 0 0 0 3px rgba(86,101,122,0.16);
 }
 .admin-resource-content-form [aria-invalid="true"] {
   border-color: var(--coral); box-shadow: 0 0 0 3px rgba(231,111,81,0.12);
@@ -489,6 +1234,43 @@ body {
   padding: 0.55rem 0.65rem;
 }
 .admin-resource-preview-empty { color: #88928c !important; font-style: italic; }
+.admin-theme .admin-resource-preview .res-tag {
+  color: #14684f;
+  background: var(--teal-lt);
+}
+.admin-scenario-step-card,
+.admin-scenario-option-card {
+  display: grid;
+  gap: 0.7rem;
+  border: 1px solid var(--border-subtle);
+  border-radius: 10px;
+  padding: 0.85rem;
+  background: rgba(255,255,255,0.68);
+}
+.admin-theme .admin-scenario-step-card,
+.admin-theme .admin-scenario-option-card {
+  border-color: var(--admin-border);
+  background: rgba(248,250,252,0.92);
+}
+.admin-scenario-step-card h4,
+.admin-scenario-option-card strong {
+  color: var(--admin-text-primary);
+}
+.admin-scenario-preview-list {
+  display: grid;
+  gap: 0.55rem;
+  margin: 0.7rem 0;
+  padding-left: 1.15rem;
+}
+.admin-scenario-preview-list li {
+  color: var(--admin-text-primary);
+  line-height: 1.45;
+}
+.admin-scenario-preview-list span {
+  display: block;
+  color: var(--admin-text-secondary);
+  font-size: 0.8rem;
+}
 .admin-resource-editor-empty { display: grid; gap: 1rem; justify-items: start; }
 .admin-confirm-backdrop {
   position: fixed; inset: 0; z-index: 260; background: var(--surface-overlay);
@@ -526,6 +1308,8 @@ body {
   .admin-workspace-status { width: 100%; }
   .admin-resource-filters { grid-template-columns: 1fr 1fr; }
   .admin-resource-editor-grid { grid-template-columns: 1fr; }
+  .admin-editor-status-grid { grid-template-columns: 1fr; }
+  .admin-resource-create-grid { grid-template-columns: 1fr; }
   .admin-resource-preview { position: static; max-height: none; }
 }
 @media (max-width: 560px) {
@@ -533,14 +1317,36 @@ body {
   .admin-workspace-content, .admin-workspace-main-header { padding: 0.9rem; border-radius: 12px; }
   .admin-section-nav-item { min-width: 136px; }
   .admin-resource-filters, .admin-resource-summary { grid-template-columns: 1fr; }
+  .admin-ai-hero,
+  .admin-ai-cost-note,
+  .admin-ai-provider-head,
+  .admin-ai-provider-meta div,
+  .admin-ai-purpose-list div {
+    flex-direction: column;
+    align-items: stretch;
+  }
+  .admin-ai-provider-grid { grid-template-columns: 1fr; }
+  .admin-ai-provider-meta dd,
+  .admin-ai-purpose-list dd { text-align: left; }
+  .admin-resource-form-grid,
+  .admin-resource-form-grid.three { grid-template-columns: 1fr; }
   .admin-resource-table { min-width: 900px; }
   .admin-resource-drawer { width: 100vw; padding: 1rem; }
   .admin-resource-drawer-head { flex-direction: column; }
   .admin-resource-drawer-actions { flex-direction: column-reverse; }
+  .admin-resource-action-row { align-items: stretch; }
+  .admin-resource-action-tabs, .admin-resource-lifecycle-actions { width: 100%; }
+  .admin-resource-action-tabs button { flex: 1 1 130px; }
+  .admin-resource-lifecycle-actions > button { width: 100%; }
+  .admin-more-actions-menu { position: static; margin-top: 0.35rem; width: 100%; }
   .admin-resource-editor-actions { flex-direction: column-reverse; }
+  .admin-resource-create-actions, .admin-resource-toolbar-actions { justify-content: flex-start; }
   .admin-resource-editor-actions .btn-primary, .admin-resource-editor-actions .btn-secondary,
   .admin-resource-drawer-actions .btn-primary, .admin-resource-drawer-actions .btn-secondary { width: 100%; }
-  .admin-resource-language-tab { min-width: 132px; }
+  .admin-resource-language-tab, .admin-translation-tab { min-width: 132px; }
+  .admin-translation-coverage-list div { display: grid; gap: 0.2rem; }
+  .admin-translation-coverage-list dd { justify-content: flex-start; }
+  .admin-publication-actions .btn-primary, .admin-publication-actions .btn-secondary { width: 100%; }
   .admin-confirm-actions { flex-direction: column-reverse; }
 }
 
@@ -703,6 +1509,34 @@ body {
   box-shadow: 0 0 0 3px rgba(29,158,117,0.16);
 }
 .btn-secondary:disabled { opacity: 0.5; cursor: not-allowed; }
+.admin-theme .btn-primary {
+  background: var(--admin-brand-primary);
+  color: var(--admin-text-on-brand);
+  border: 1px solid var(--admin-brand-primary);
+}
+.admin-theme .btn-primary:hover {
+  background: var(--admin-brand-primary-hover);
+  opacity: 1;
+}
+.admin-theme .btn-primary:active {
+  background: var(--admin-brand-primary-active);
+}
+.admin-theme .btn-primary:focus-visible {
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(86,101,122,0.24);
+}
+.admin-theme .btn-secondary {
+  background: var(--admin-surface-raised);
+  border-color: var(--admin-border-default);
+  color: var(--admin-text-primary);
+}
+.admin-theme .btn-secondary:hover,
+.admin-theme .btn-secondary:focus-visible {
+  background: var(--admin-brand-soft);
+  border-color: var(--admin-brand-border);
+  color: var(--admin-brand-primary-active);
+  box-shadow: 0 0 0 3px rgba(86,101,122,0.16);
+}
 .btn-ghost {
   flex: 0 0 auto; background: none; border: 1.5px solid rgba(0,0,0,0.13);
   border-radius: 10px; padding: 0.75rem 1.1rem;
@@ -1139,6 +1973,8 @@ body {
     margin-bottom: 0.85rem; flex: 0 0 auto;
   }
   .ai-chat-drawer .ai-chat-list { max-height: none; }
+  .scenario-detail-layout { grid-template-columns: 1fr; }
+  .scenario-detail-back-rail { justify-content: flex-start; }
   .chat-panel { left: 1rem; right: 1rem; width: auto; }
 }
 @media (max-width: 430px) {
@@ -1182,6 +2018,14 @@ body {
   border-color: var(--teal);
   box-shadow: 0 12px 28px rgba(29,158,117,0.22);
 }
+.scenario-detail-layout {
+  display: grid;
+  grid-template-columns: minmax(120px, 1fr) minmax(0, 900px) minmax(120px, 1fr);
+  gap: 1rem;
+  align-items: start;
+}
+.scenario-detail-back-rail { display: flex; justify-content: flex-end; }
+.scenario-detail-main { min-width: 0; }
 .scenario-recommended-badge {
   display: inline-flex;
   align-items: center;
@@ -1201,6 +2045,17 @@ body {
   width: 0.78rem;
   height: 0.78rem;
   flex: 0 0 auto;
+}
+.scenario-locale-fallback {
+  max-width: 820px;
+  margin: 0 auto 1rem;
+  padding: 0.75rem 0.9rem;
+  border: 1px solid rgba(29, 158, 117, 0.22);
+  border-radius: 12px;
+  background: rgba(232, 245, 233, 0.72);
+  color: #31584a;
+  font-size: 0.84rem;
+  line-height: 1.5;
 }
 .res-tag { display: inline-block; font-size: 0.72rem; font-weight: 600; border-radius: 99px; padding: 0.2rem 0.65rem; margin-bottom: 0.6rem; background: var(--teal-lt); color: var(--teal); }
 .res-title { font-weight: 600; margin-bottom: 0.35rem; font-size: 0.95rem; }
@@ -1296,6 +2151,7 @@ function ConfirmationDialog({
   onCancel,
   onConfirm,
   danger = false,
+  adminTheme = false,
 }) {
   const cancelRef = useRef(null);
   const confirmRef = useRef(null);
@@ -1336,7 +2192,7 @@ function ConfirmationDialog({
       if (event.target === event.currentTarget) onCancel();
     }}>
       <div
-        className="logout-modal"
+        className={`logout-modal${adminTheme ? " admin-theme admin-dialog" : ""}`}
         role="dialog"
         aria-modal="true"
         aria-labelledby="confirmation-dialog-title"
@@ -5674,6 +6530,7 @@ function ScenariosPage() {
   const {
     user,
     go,
+    requestGuardedAction,
     registerActivityGuard,
     pendingScenarioTarget,
     clearPendingScenarioTarget,
@@ -5713,7 +6570,7 @@ function ScenariosPage() {
     async function reloadScenarioContent() {
       if (view.mode === "intro" && view.scenario?.slug) {
         const result = await dbGetScenario(view.scenario.slug, scenarioLocale);
-        if (active && result.ok) setView(current => ({ ...current, scenario: result.scenario, firstStep: result.firstStep }));
+        if (active && result.ok) setView(current => ({ ...current, scenario: result.scenario, firstStep: result.firstStep, locale: result.locale }));
       } else if (view.mode === "attempt" && view.attempt?.id && !decisionFeedback) {
         const result = await dbGetScenarioAttempt(view.attempt.id, scenarioLocale);
         if (active && result.ok) setView(current => ({ ...current, ...result }));
@@ -5731,8 +6588,16 @@ function ScenariosPage() {
     if (view.mode !== "attempt" || !view.attempt || view.attempt.status === "completed") return undefined;
     return registerActivityGuard({
       type: "scenario",
+      source: "scenario",
       title: t("scenarios.leaveTitle"),
       description: t("scenarios.leaveDescription"),
+      cancelLabel: t("scenarios.continueScenario"),
+      confirmLabel: t("scenarios.leaveScenario"),
+      onLeave: () => {
+        setSelectedChoice("");
+        setDecisionFeedback(null);
+        setView({ mode: "library" });
+      },
     });
   }, [view.mode, view.attempt, registerActivityGuard, t]);
 
@@ -5755,7 +6620,7 @@ function ScenariosPage() {
       if (!active) return;
       setBusy(false);
       if (result.ok) {
-        setView({ mode: "intro", scenario: result.scenario, firstStep: result.firstStep });
+        setView({ mode: "intro", scenario: result.scenario, firstStep: result.firstStep, locale: result.locale });
       } else {
         setError(result.error);
       }
@@ -5788,7 +6653,7 @@ function ScenariosPage() {
     const result = await dbGetScenario(slug, scenarioLocale);
     setBusy(false);
     if (!result.ok) return setError(result.error);
-    setView({ mode: "intro", scenario: result.scenario, firstStep: result.firstStep });
+    setView({ mode: "intro", scenario: result.scenario, firstStep: result.firstStep, locale: result.locale });
   }
 
   async function startScenario(slug) {
@@ -5884,6 +6749,38 @@ function ScenariosPage() {
     setView({ mode: "result", ...result.result });
   }
 
+  function exitActiveScenario() {
+    const leave = () => {
+      setSelectedChoice("");
+      setDecisionFeedback(null);
+      setView({ mode: "library" });
+    };
+    requestGuardedAction?.(leave, {
+      actionType: "scenario-exit",
+      guard: {
+        source: "scenario",
+        key: `scenario:${view.attempt?.id || "active"}`,
+        title: t("scenarios.leaveTitle"),
+        description: t("scenarios.leaveDescription"),
+        cancelLabel: t("scenarios.continueScenario"),
+        confirmLabel: t("scenarios.leaveScenario"),
+        onLeave: leave,
+      },
+    });
+  }
+
+  function renderLocaleFallbackNotice(localeInfo) {
+    if (!localeInfo?.fallbackUsed) return null;
+    return (
+      <div className="scenario-locale-fallback" role="status">
+        {t("scenarios.localeFallback", {
+          requested: t(`admin.scenarioEditor.locales.${localeInfo.requestedLocale}`, { defaultValue: localeInfo.requestedLocale }),
+          displayed: t(`admin.scenarioEditor.locales.${localeInfo.resolvedLocale}`, { defaultValue: localeInfo.resolvedLocale }),
+        })}
+      </div>
+    );
+  }
+
   const filterBar = (
     <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
       <select aria-label={t("scenarios.filters.topic")} value={filters.topicCode} onChange={event => setFilters(current => ({ ...current, topicCode: event.target.value }))} style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 10, padding: "0.55rem 0.75rem" }}>
@@ -5962,7 +6859,6 @@ function ScenariosPage() {
     const scenario = view.scenario;
     return (
       <div className="card" ref={scenarioIntroRef} tabIndex={-1} style={{ maxWidth: 760, margin: "0 auto" }}>
-        <button className="btn-ghost" onClick={() => setView({ mode: "library" })} style={{ marginBottom: "1rem" }}>{t("common.back")}</button>
         <div style={{ color: "#2E7D32", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.35rem" }}>{t(`topics.${scenario.topicCode}`, { defaultValue: topicLabel(scenario.topicCode) })}</div>
         <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", marginBottom: "0.5rem" }}>{scenario.title}</h2>
         <p style={{ color: "#555", lineHeight: 1.65 }}>{scenario.summary}</p>
@@ -5974,6 +6870,7 @@ function ScenariosPage() {
         <div style={{ background: "#fff8e1", border: "1px solid #ffe082", borderRadius: 12, padding: "0.9rem", fontSize: "0.84rem", color: "#5f4a1d", lineHeight: 1.6, marginBottom: "1rem" }}>
           {t("scenarios.intro.choiceNotice")}
         </div>
+        {renderLocaleFallbackNotice(view.locale)}
         <button className="btn-primary" onClick={() => startScenario(scenario.slug)} disabled={busy}>{t("scenarios.intro.startPractice")}</button>
       </div>
     );
@@ -6087,19 +6984,35 @@ function ScenariosPage() {
         </div>
       </div>
       <div className="section">
-        {view.mode === "library" ? (
-          <PageBackButton style={{ marginBottom: "1.5rem" }} />
-        ) : view.mode === "attempt" ? (
-          <button className="btn-ghost" onClick={() => go("dashboard")} style={{ marginBottom: "1.5rem" }}>
-            {t("scenarios.attempt.exit")}
-          </button>
-        ) : (
-          <button className="btn-ghost" onClick={() => setView({ mode: "library" })} style={{ marginBottom: "1.5rem" }}>
-            {t("common.back")}
-          </button>
-        )}
         {error && <div className="field-error" role="alert" style={{ marginBottom: "1rem" }}>{error}</div>}
-        {view.mode === "intro" ? renderIntro() : view.mode === "attempt" ? renderAttempt() : view.mode === "result" ? renderResult() : renderLibrary()}
+        {view.mode === "library" ? (
+          <>
+            <PageBackButton style={{ marginBottom: "1.5rem" }} />
+            {renderLibrary()}
+          </>
+        ) : view.mode === "attempt" ? (
+          <>
+            <button className="btn-ghost" onClick={exitActiveScenario} style={{ marginBottom: "1.5rem" }}>
+              {t("scenarios.attempt.exit")}
+            </button>
+            {renderLocaleFallbackNotice(view.locale)}
+            {renderAttempt()}
+          </>
+        ) : view.mode === "intro" ? (
+          <div className="scenario-detail-layout">
+            <div className="scenario-detail-back-rail">
+              <button className="btn-ghost" onClick={() => setView({ mode: "library" })}>
+                ← {t("scenarios.library.backToLibrary")}
+              </button>
+            </div>
+            <div className="scenario-detail-main">
+              {renderIntro()}
+            </div>
+            <div aria-hidden="true" />
+          </div>
+        ) : (
+          renderResult()
+        )}
       </div>
     </div>
   );
@@ -7595,20 +8508,27 @@ function ConversationHistoryItem({
 
 function AdminPage({ acceptedHash }) {
   const { t } = useTranslation();
-  const { user, go, registerActivityGuard, requestGuardedAction, requestHashNavigation } = useApp();
+  const { user, go, registerActivityGuard, requestGuardedAction, requestHashNavigation, completeGuardedActivity } = useApp();
+  const adminRoute = useMemo(() => parseAdminRoute(acceptedHash), [acceptedHash]);
   const [status, setStatus] = useState(null);
-  const [activeSection, setActiveSection] = useState(() => getAdminSectionFromHash(acceptedHash));
-  const [editorResourceId, setEditorResourceId] = useState(() => getAdminResourceEditorIdFromHash(acceptedHash));
   const [loading, setLoading] = useState(Boolean(user?.role === "admin"));
   const [error, setError] = useState("");
+  const activeSection = adminRoute.notFound ? getAdminSectionFromHash("#/admin/resources") : getAdminSectionFromHash(adminRoute.canonicalHash);
+  const editorResourceId = getAdminResourceEditorIdFromHash(adminRoute.canonicalHash);
+  const governanceResourceId = getAdminResourceGovernanceIdFromHash(adminRoute.canonicalHash);
+  const metadataResourceId = getAdminResourceMetadataIdFromHash(adminRoute.canonicalHash);
+  const creatingResource = isAdminResourceCreateRoute(adminRoute.canonicalHash);
+  const editorScenarioId = getAdminScenarioEditorIdFromHash(adminRoute.canonicalHash);
+  const creatingScenario = isAdminScenarioCreateRoute(adminRoute.canonicalHash);
 
   useEffect(() => {
-    setActiveSection(getAdminSectionFromHash(acceptedHash));
-    setEditorResourceId(getAdminResourceEditorIdFromHash(acceptedHash));
-  }, [acceptedHash]);
+    if (adminRoute.shouldReplace) {
+      requestHashNavigation(adminRoute.canonicalHash, { replace: true });
+    }
+  }, [adminRoute, requestHashNavigation]);
 
   const handleSectionNavigate = useCallback((section) => {
-    return requestHashNavigation(section.path);
+    return requestHashNavigation(buildAdminHash({ section: section.id }));
   }, [requestHashNavigation]);
 
   useEffect(() => {
@@ -7664,6 +8584,47 @@ function AdminPage({ acceptedHash }) {
         <div className="card">
           <p className="field-error" role="alert">{error}</p>
         </div>
+      ) : adminRoute.notFound ? (
+        <div className="card">
+          <p className="res-tag">{t("admin.notFound.badge")}</p>
+          <h2>{t("admin.notFound.title")}</h2>
+          <p className="section-sub">{t("admin.notFound.description")}</p>
+          <button type="button" className="btn-primary" onClick={() => requestHashNavigation(buildAdminHash({ section: "resources" }), { replace: true })}>
+            {t("admin.notFound.backToResources")}
+          </button>
+        </div>
+      ) : activeSection.id === "scenarios" && creatingScenario ? (
+        <AdminScenarioEditorPage
+          creating
+          registerActivityGuard={registerActivityGuard}
+          completeGuardedActivity={completeGuardedActivity}
+          requestGuardedAction={requestGuardedAction}
+          requestHashNavigation={requestHashNavigation}
+        />
+      ) : activeSection.id === "scenarios" && editorScenarioId ? (
+        <AdminScenarioEditorPage
+          scenarioId={editorScenarioId}
+          registerActivityGuard={registerActivityGuard}
+          completeGuardedActivity={completeGuardedActivity}
+          requestGuardedAction={requestGuardedAction}
+          requestHashNavigation={requestHashNavigation}
+        />
+      ) : activeSection.id === "scenarios" ? (
+        <AdminScenarioPage requestHashNavigation={requestHashNavigation} />
+      ) : activeSection.id === "ai-agentic" ? (
+        <AdminAiProvidersPage />
+      ) : creatingResource ? (
+        <AdminResourceCreatePage
+          registerActivityGuard={registerActivityGuard}
+          requestHashNavigation={requestHashNavigation}
+        />
+      ) : metadataResourceId ? (
+        <AdminResourceMetadataPage
+          resourceId={metadataResourceId}
+          registerActivityGuard={registerActivityGuard}
+          requestGuardedAction={requestGuardedAction}
+          requestHashNavigation={requestHashNavigation}
+        />
       ) : editorResourceId ? (
         <AdminResourceEditorPage
           resourceId={editorResourceId}
@@ -7672,7 +8633,10 @@ function AdminPage({ acceptedHash }) {
           requestHashNavigation={requestHashNavigation}
         />
       ) : (
-        <AdminResourcePage requestHashNavigation={requestHashNavigation} />
+        <AdminResourcePage
+          initialQuickReviewId={governanceResourceId}
+          requestHashNavigation={requestHashNavigation}
+        />
       )}
     </AdminWorkspace>
   );
@@ -8096,7 +9060,7 @@ function LanguageSelector() {
       }
     };
 
-    const blocker = activityGuard?.source === "resource-editor"
+    const blocker = activityGuard?.source === "resource-content"
       ? {
           ...activityGuard,
           title: t("admin.resourceEditor.discardTitle"),
@@ -8109,14 +9073,16 @@ function LanguageSelector() {
           confirmLabel: t("admin.resourceEditor.discardAndChangeLanguage"),
         }
       : activityGuard;
+    const shouldBypassScenarioGuard = blocker?.source === "scenario";
 
     const appliedImmediately = requestGuardedAction?.(execute, {
       actionType: "interface-locale-change",
       guard: blocker,
+      bypassGuard: shouldBypassScenarioGuard,
       meta: {
         currentInterfaceLocale,
         nextLocale,
-        editorTranslationLocale: activityGuard?.source === "resource-editor" ? activityGuard.locale : null,
+        editorTranslationLocale: activityGuard?.source === "resource-content" ? activityGuard.locale : null,
       },
       onCancel: () => {
         setLocale(currentInterfaceLocale);
@@ -8670,10 +9636,15 @@ export default function App() {
       if (!active) return;
       if (result.ok) {
         const restoredUser = normalizeSessionUser(result.user, result.profile);
-        const restoredPage = parseHashPage();
+        const currentHash = normalizeHashRoute(window.location.hash);
+        const restoredPage = parseHashPage(currentHash);
         setUser(restoredUser);
         if (PROTECTED_PAGES.has(restoredPage)) {
-          commitHashRoute(`/${restoredUser.onboardingCompleted ? restoredPage : "profile"}`, { replace: true });
+          commitHashRoute(resolveSessionRestoreHash({
+            currentHash,
+            restoredPage,
+            onboardingCompleted: restoredUser.onboardingCompleted,
+          }), { replace: true });
         } else if (restoredPage === "login") {
           commitHashRoute(`/${restoredUser.onboardingCompleted ? "dashboard" : "profile"}`, { replace: true });
         } else {
@@ -8882,6 +9853,17 @@ export default function App() {
     commitHashRoute(nextHash, { replace: options.replace });
     return true;
   }
+  function completeGuardedActivity({ blockerKey, destinationHash, replace = false } = {}) {
+    const currentBlocker = activityGuardRef.current;
+    if (currentBlocker && currentBlocker.key !== blockerKey) return false;
+    if (currentBlocker?.key === blockerKey) {
+      activityGuardRef.current = null;
+      setActivityGuard(null);
+    }
+    setPendingNavigation(current => current?.guard?.key === blockerKey ? null : current);
+    commitHashRoute(destinationHash, { replace });
+    return true;
+  }
   function requestGuardedAction(action, options = {}) {
     if (typeof action !== "function") return false;
     const blocker = options.guard || activityGuardRef.current;
@@ -8970,6 +9952,11 @@ export default function App() {
     setPendingNavigation(null);
     activityGuardRef.current = null;
     setActivityGuard(null);
+    if (target.guard?.source === "scenario") {
+      target.guard.onLeave?.();
+      commitHashRoute("/scenarios", { replace: true });
+      return;
+    }
     if (target.type === "hash") {
       if (Number.isInteger(target.historyDelta) && target.historyDelta !== 0) {
         suppressHashGuardRef.current = { accept: true };
@@ -9013,6 +10000,7 @@ export default function App() {
     handleChatAction,
     registerActivityGuard,
     requestHashNavigation,
+    completeGuardedActivity,
     requestGuardedAction,
     requestLogoutWithGuard,
     activityGuard,
@@ -9057,6 +10045,10 @@ export default function App() {
             onCancel={cancelPendingNavigation}
             onConfirm={confirmPendingNavigation}
             danger
+            adminTheme={
+              String((pendingNavigation.guard || activityGuard).source || "").startsWith("resource-") ||
+              routeIdentityFromHash(acceptedHash).page === "admin"
+            }
           />
         )}
       </ChatProvider>

@@ -107,6 +107,23 @@ function createScenarioRepository(pool) {
     return rows[0] || null;
   }
 
+  async function getLocaleResolution(scenarioId, requestedLocale = 'en', connection) {
+    const [rows] = await db(connection).query(
+      `SELECT locale
+       FROM scenario_definition_translations
+       WHERE scenario_id = ? AND locale IN (?, 'en')
+       ORDER BY FIELD(locale, ?, 'en')
+       LIMIT 1`,
+      [scenarioId, requestedLocale, requestedLocale]
+    );
+    const resolvedLocale = rows[0]?.locale || 'en';
+    return {
+      requestedLocale,
+      resolvedLocale,
+      fallbackUsed: resolvedLocale !== requestedLocale,
+    };
+  }
+
   async function findScenarioById(id, locale = 'en', connection) {
     const [rows] = await db(connection).query(
       `SELECT sd.*,
@@ -360,6 +377,7 @@ function createScenarioRepository(pool) {
     findStep,
     findStepByOrder,
     getProgressEventForAttempt,
+    getLocaleResolution,
     listCompletedScenarioStats,
     listDecisions,
     listPublishedScenarios,

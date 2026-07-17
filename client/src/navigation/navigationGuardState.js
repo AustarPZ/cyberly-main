@@ -36,6 +36,13 @@ export function shouldGuardAction({ blocker, bypassGuard = false }) {
   return Boolean(blocker) && !bypassGuard;
 }
 
+export function resolveSessionRestoreHash({ currentHash, restoredPage, onboardingCompleted }) {
+  if (!onboardingCompleted) return "#/profile";
+  const normalizedHash = normalizeHashRoute(currentHash);
+  if (restoredPage === "admin") return normalizedHash;
+  return `#/${restoredPage || "home"}`;
+}
+
 export function createPendingRouteTransition({ acceptedHash, requestedHash, requestedIndex, acceptedIndex }) {
   const hasManagedIndexes = Number.isInteger(requestedIndex) && Number.isInteger(acceptedIndex);
   return {

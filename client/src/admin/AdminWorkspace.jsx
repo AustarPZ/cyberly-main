@@ -5,7 +5,7 @@ export default function AdminWorkspace({ onSectionNavigate, sections, activeSect
   const { t } = useTranslation();
 
   return (
-    <section className="admin-workspace">
+    <section className="admin-workspace admin-theme">
       <AdminSidebar sections={sections} activeSection={activeSection} onSectionNavigate={onSectionNavigate} />
 
       <main className="admin-workspace-main">

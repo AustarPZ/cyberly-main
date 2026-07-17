@@ -48,9 +48,11 @@ function createScenarioService(repository, progressService) {
     const locale = normalizeLocale(localeInput);
     const scenario = await repository.findPublishedBySlug(normalizeSlug(slug), locale);
     if (!scenario) throw httpError(404, ERROR_CODES.SCENARIO_NOT_FOUND, 'Scenario was not found.');
+    const localeResolution = await repository.getLocaleResolution(scenario.id, locale);
     const firstStep = await repository.findStepByOrder(scenario.id, 1, locale);
     return {
       scenario: mapScenarioMeta(scenario),
+      locale: localeResolution,
       firstStep: mapSafeStep(firstStep),
       choicesFinal: true,
     };
@@ -63,12 +65,13 @@ function createScenarioService(repository, progressService) {
       if (!scenario) throw httpError(404, ERROR_CODES.SCENARIO_NOT_FOUND, 'Scenario was not found.');
       let attempt = await repository.findInProgressAttempt(userId, scenario.id, connection);
       if (!attempt) attempt = await repository.createAttempt(userId, scenario.id, connection);
+      const localeResolution = await repository.getLocaleResolution(scenario.id, locale, connection);
       const steps = await repository.listSteps(scenario.id, locale, connection);
       const decisions = await repository.listDecisions(attempt.id, connection);
       const currentStep = decisions.length === steps.length
         ? null
         : steps.find(step => Number(step.step_order) === Number(attempt.current_step_order)) || steps[0];
-      return mapAttempt(attempt, scenario, currentStep, decisions, steps);
+      return mapAttempt(attempt, scenario, currentStep, decisions, steps, localeResolution);
     });
   }
 
@@ -77,12 +80,13 @@ function createScenarioService(repository, progressService) {
     const attempt = await repository.findAttemptById(Number(attemptId));
     if (!attempt || attempt.user_id !== userId) throw httpError(404, ERROR_CODES.SCENARIO_ATTEMPT_NOT_FOUND, 'Scenario attempt was not found.');
     const scenario = await repository.findScenarioById(attempt.scenario_id, locale);
+    const localeResolution = await repository.getLocaleResolution(scenario.id, locale);
     const steps = await repository.listSteps(scenario.id, locale);
     const decisions = await repository.listDecisions(attempt.id);
     const currentStep = attempt.status === 'completed' || decisions.length === steps.length
       ? null
       : steps.find(step => Number(step.step_order) === Number(attempt.current_step_order));
-    return mapAttempt(attempt, scenario, currentStep, decisions, steps);
+    return mapAttempt(attempt, scenario, currentStep, decisions, steps, localeResolution);
   }
 
   async function saveDecision(userId, attemptId, body, localeInput) {
@@ -96,6 +100,7 @@ function createScenarioService(repository, progressService) {
       if (attempt.status !== 'in_progress') throw httpError(409, ERROR_CODES.SCENARIO_ALREADY_COMPLETED, 'Scenario attempt is already completed.');
 
       const scenario = await repository.findScenarioById(attempt.scenario_id, locale, connection);
+      const localeResolution = await repository.getLocaleResolution(scenario.id, locale, connection);
       const step = await repository.findStep(validation.value.stepId, locale, connection);
       if (!step || step.scenario_id !== scenario.id) throw httpError(400, ERROR_CODES.SCENARIO_STEP_MISMATCH, 'Step does not belong to this scenario.');
       if (Number(step.step_order) !== Number(attempt.current_step_order)) {
@@ -120,6 +125,7 @@ function createScenarioService(repository, progressService) {
       const updatedAttempt = await repository.updateCurrentStep(attempt.id, nextStep ? nextStep.step_order : scenario.total_steps, connection);
 
       return {
+        locale: localeResolution,
         attempt: {
           id: updatedAttempt.id,
           status: updatedAttempt.status,
@@ -138,6 +144,7 @@ function createScenarioService(repository, progressService) {
       const attempt = await repository.findAttemptById(Number(attemptId), connection);
       if (!attempt || attempt.user_id !== userId) throw httpError(404, ERROR_CODES.SCENARIO_ATTEMPT_NOT_FOUND, 'Scenario attempt was not found.');
       const scenario = await repository.findScenarioById(attempt.scenario_id, locale, connection);
+      const localeResolution = await repository.getLocaleResolution(scenario.id, locale, connection);
       const steps = await repository.listSteps(scenario.id, locale, connection);
       const decisions = await repository.listDecisions(attempt.id, connection);
 
@@ -146,7 +153,7 @@ function createScenarioService(repository, progressService) {
         return mapCompletedResult(attempt, scenario, steps, decisions, {
           applied: false,
           masteryDelta: existingImpact?.mastery_delta || getMasteryDelta(attempt.percentage),
-        }, (await progressService.getCurrentRecommendation(userId, locale)).recommendation);
+        }, (await progressService.getCurrentRecommendation(userId, locale)).recommendation, localeResolution);
       }
 
       if (decisions.length !== steps.length) {
@@ -173,7 +180,8 @@ function createScenarioService(repository, progressService) {
           summary: progressImpact.summary,
           topics: progressImpact.topics,
         },
-        progressImpact.recommendation
+        progressImpact.recommendation,
+        localeResolution
       );
     });
   }
@@ -185,6 +193,7 @@ function createScenarioService(repository, progressService) {
       throw httpError(404, ERROR_CODES.SCENARIO_RESULT_NOT_FOUND, 'Completed scenario result was not found.');
     }
     const scenario = await repository.findScenarioById(attempt.scenario_id, locale);
+    const localeResolution = await repository.getLocaleResolution(scenario.id, locale);
     const [steps, decisions, progressEvent, currentRecommendation] = await Promise.all([
       repository.listSteps(scenario.id, locale),
       repository.listDecisions(attempt.id),
@@ -194,7 +203,7 @@ function createScenarioService(repository, progressService) {
     return mapCompletedResult(attempt, scenario, steps, decisions, {
       applied: Boolean(progressEvent),
       masteryDelta: progressEvent?.mastery_delta || getMasteryDelta(attempt.percentage),
-    }, currentRecommendation.recommendation);
+    }, currentRecommendation.recommendation, localeResolution);
   }
 
   async function getRecommendedScenarios(userId, localeInput) {

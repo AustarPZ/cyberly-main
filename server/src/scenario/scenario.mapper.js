@@ -51,7 +51,7 @@ function mapDecisionFeedback(decision, step) {
   };
 }
 
-function mapAttempt(attempt, scenario, currentStep, decisions = [], steps = []) {
+function mapAttempt(attempt, scenario, currentStep, decisions = [], steps = [], locale = null) {
   const stepById = new Map(steps.map(step => [Number(step.id), step]));
   return {
     attempt: {
@@ -66,6 +66,7 @@ function mapAttempt(attempt, scenario, currentStep, decisions = [], steps = []) 
       completedAt: toIso(attempt.completed_at),
     },
     scenario: mapScenarioMeta(scenario),
+    ...(locale ? { locale } : {}),
     currentStep: mapSafeStep(currentStep),
     decisions: decisions.map(decision => {
       const step = stepById.get(Number(decision.step_id));
@@ -74,7 +75,7 @@ function mapAttempt(attempt, scenario, currentStep, decisions = [], steps = []) 
   };
 }
 
-function mapCompletedResult(attempt, scenario, steps, decisions, progressImpact, recommendation) {
+function mapCompletedResult(attempt, scenario, steps, decisions, progressImpact, recommendation, locale = null) {
   return {
     attempt: {
       id: attempt.id,
@@ -86,6 +87,7 @@ function mapCompletedResult(attempt, scenario, steps, decisions, progressImpact,
       completedAt: toIso(attempt.completed_at),
     },
     scenario: mapScenarioMeta(scenario),
+    ...(locale ? { locale } : {}),
     review: decisions.map(decision => {
       const step = steps.find(item => Number(item.id) === Number(decision.step_id));
       return {

@@ -1,19 +1,23 @@
-import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
   getAdminResource,
   listAdminResources,
   updateAdminResourceGovernance,
 } from "./adminApi";
+import { formatAdminDate } from "./adminDateFormat";
+import AdminQuickReviewActions from "./AdminQuickReviewActions";
+import AdminResourceLifecycleDialog from "./AdminResourceLifecycleDialog";
+import {
+  getCyberGuardStatusDisplay,
+  getPublicationStatusDisplay,
+  getResourceRowActions,
+  getReviewStatusDisplay,
+} from "./resourceDisplayState";
 
 const PUBLICATION_OPTIONS = ["", "published", "draft", "archived"];
 const REVIEW_OPTIONS = ["", "approved", "needs_review", "draft", "rejected"];
 const RAG_OPTIONS = ["", "true", "false"];
-
-function formatDate(value) {
-  if (!value) return "";
-  return String(value).slice(0, 10);
-}
 
 function StatusBadge({ children, tone = "neutral" }) {
   return <span className={`admin-status-badge ${tone}`}>{children}</span>;
@@ -33,59 +37,32 @@ function labelFor(t, prefix, value) {
   return t(`${prefix}.${value}`, { defaultValue: value });
 }
 
+function displayLabel(t, display, fallback) {
+  return t(display.labelKey, { defaultValue: fallback });
+}
+
+function formFromResource(resource) {
+  return {
+    publicationStatus: resource?.publicationStatus || "draft",
+    reviewStatus: resource?.reviewStatus || "draft",
+    ragReady: Boolean(resource?.ragReady),
+    reviewNotes: resource?.reviewNotes || "",
+    nextReviewAt: formatAdminDate(resource?.nextReviewAt, undefined, ""),
+  };
+}
+
 function buildPayload(form, initial) {
   const payload = {};
   if (form.publicationStatus !== initial.publicationStatus) payload.publicationStatus = form.publicationStatus;
   if (form.reviewStatus !== initial.reviewStatus) payload.reviewStatus = form.reviewStatus;
   if (form.ragReady !== initial.ragReady) payload.ragReady = form.ragReady;
-  if (form.reviewNotes !== (initial.reviewNotes || "")) payload.reviewNotes = form.reviewNotes;
-  if (form.nextReviewAt !== formatDate(initial.nextReviewAt)) payload.nextReviewAt = form.nextReviewAt || null;
+  if (form.reviewNotes !== initial.reviewNotes) payload.reviewNotes = form.reviewNotes;
+  if (form.nextReviewAt !== initial.nextReviewAt) payload.nextReviewAt = form.nextReviewAt || null;
   return payload;
 }
 
-function ConfirmationDialog({ confirmation, onCancel }) {
+export default function AdminResourcePage({ initialQuickReviewId = null, requestHashNavigation }) {
   const { t } = useTranslation();
-  const cancelRef = useRef(null);
-
-  useEffect(() => {
-    const previous = document.activeElement;
-    cancelRef.current?.focus();
-    const onKeyDown = (event) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        onCancel();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => {
-      document.removeEventListener("keydown", onKeyDown);
-      if (previous && typeof previous.focus === "function") previous.focus();
-    };
-  }, [onCancel]);
-
-  return (
-    <div className="admin-confirm-backdrop" role="presentation">
-      <div className="admin-confirm-dialog" role="dialog" aria-modal="true" aria-labelledby="admin-confirm-title" aria-describedby="admin-confirm-description">
-        <p className="res-tag">{t("admin.resourceGovernance.confirmation.badge")}</p>
-        <h3 id="admin-confirm-title">{confirmation.title}</h3>
-        <p id="admin-confirm-description">{confirmation.message}</p>
-        {confirmation.resourceTitle && <p className="admin-confirm-resource">{confirmation.resourceTitle}</p>}
-        <div className="admin-confirm-actions">
-          <button type="button" className="btn-secondary" ref={cancelRef} onClick={onCancel}>
-            {t("common.cancel")}
-          </button>
-          <button type="button" className="btn-primary" onClick={confirmation.onConfirm}>
-            {confirmation.confirmLabel || t("admin.resourceGovernance.confirmation.confirm")}
-          </button>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function AdminResourcePage({ requestHashNavigation }) {
-  const { t } = useTranslation();
-  const lastReviewButtonRef = useRef(null);
   const [filters, setFilters] = useState({
     search: "",
     publicationStatus: "",
@@ -105,26 +82,10 @@ export default function AdminResourcePage({ requestHashNavigation }) {
   const [detailError, setDetailError] = useState("");
   const [form, setForm] = useState(null);
   const [saveState, setSaveState] = useState({ saving: false, message: "", error: "" });
-  const [confirmation, setConfirmation] = useState(null);
+  const [lifecycleDialogOpen, setLifecycleDialogOpen] = useState(false);
 
-  const dirty = useMemo(() => {
-    if (!detail || !form) return false;
-    return Object.keys(buildPayload(form, detail)).length > 0;
-  }, [detail, form]);
-
-  const loadList = async (nextFilters = filters) => {
-    setLoading(true);
-    setError("");
-    const result = await listAdminResources(nextFilters);
-    if (result.ok) {
-      setItems(result.items);
-      setSummary(result.summary);
-      setPagination(result.pagination);
-    } else {
-      setError(result.error || t("admin.resourceGovernance.errors.list"));
-    }
-    setLoading(false);
-  };
+  const initialForm = useMemo(() => formFromResource(detail), [detail]);
+  const dirty = Boolean(form && detail && Object.keys(buildPayload(form, initialForm)).length > 0);
 
   useEffect(() => {
     let active = true;
@@ -144,81 +105,62 @@ export default function AdminResourcePage({ requestHashNavigation }) {
     return () => { active = false; };
   }, [filters, t]);
 
-  const openResource = async (resourceId, triggerElement = null) => {
-    lastReviewButtonRef.current = triggerElement;
+  const openResource = useCallback(async (resourceId) => {
     setSelectedId(resourceId);
     setDetailLoading(true);
     setDetailError("");
     setSaveState({ saving: false, message: "", error: "" });
+    setLifecycleDialogOpen(false);
     const result = await getAdminResource(resourceId);
     if (result.ok) {
       setDetail(result.resource);
-      setForm({
-        publicationStatus: result.resource.publicationStatus,
-        reviewStatus: result.resource.reviewStatus,
-        ragReady: Boolean(result.resource.ragReady),
-        reviewNotes: result.resource.reviewNotes || "",
-        nextReviewAt: formatDate(result.resource.nextReviewAt),
-      });
+      setForm(formFromResource(result.resource));
     } else {
       setDetail(null);
       setForm(null);
       setDetailError(result.error || t("admin.resourceGovernance.errors.detail"));
     }
     setDetailLoading(false);
-  };
+  }, [t]);
 
-  const closeDetailNow = useCallback(() => {
+  useEffect(() => {
+    if (!initialQuickReviewId) return;
+    openResource(initialQuickReviewId);
+  }, [initialQuickReviewId, openResource]);
+
+  const closeDrawer = useCallback(() => {
     setSelectedId(null);
     setDetail(null);
     setForm(null);
     setDetailError("");
+    setLifecycleDialogOpen(false);
     setSaveState({ saving: false, message: "", error: "" });
-    setTimeout(() => {
-      lastReviewButtonRef.current?.focus?.();
-    }, 0);
   }, []);
 
-  const closeDetail = useCallback(() => {
-    if (dirty) {
-      setConfirmation({
-        title: t("admin.resourceGovernance.confirmation.discardTitle"),
-        message: t("admin.resourceGovernance.confirmation.discardMessage"),
-        resourceTitle: detail?.title,
-        confirmLabel: t("admin.resourceGovernance.confirmation.discardConfirm"),
-        onConfirm: () => {
-          setConfirmation(null);
-          closeDetailNow();
-        },
-      });
-      return;
-    }
-    closeDetailNow();
-  }, [closeDetailNow, detail?.title, dirty, t]);
-
-  const openContentEditor = useCallback((resourceId) => {
+  const openMetadataEditor = useCallback((resourceId) => {
     const navigate = () => {
+      closeDrawer();
       if (requestHashNavigation) {
-        requestHashNavigation(`/admin/resources/${resourceId}/edit`);
+        requestHashNavigation(`/admin/resources/${resourceId}/metadata`);
       } else {
-        window.location.hash = `/admin/resources/${resourceId}/edit`;
+        window.location.hash = `/admin/resources/${resourceId}/metadata`;
       }
     };
     if (dirty) {
-      setConfirmation({
-        title: t("admin.resourceGovernance.confirmation.discardTitle"),
-        message: t("admin.resourceGovernance.confirmation.discardMessage"),
-        resourceTitle: detail?.title,
-        confirmLabel: t("admin.resourceGovernance.confirmation.discardConfirm"),
-        onConfirm: () => {
-          setConfirmation(null);
-          navigate();
+      requestHashNavigation?.(`/admin/resources/${resourceId}/metadata`, {
+        guard: {
+          title: t("admin.resourceGovernance.confirmation.discardTitle"),
+          description: t("admin.resourceGovernance.confirmation.discardMessage"),
         },
       });
       return;
     }
     navigate();
-  }, [detail?.title, dirty, requestHashNavigation, t]);
+  }, [closeDrawer, dirty, requestHashNavigation, t]);
+
+  const openCreateResource = useCallback(() => {
+    requestHashNavigation?.("/admin/resources/new");
+  }, [requestHashNavigation]);
 
   const updateFilter = (field, value) => {
     setFilters(current => ({ ...current, [field]: value, page: 1 }));
@@ -228,72 +170,31 @@ export default function AdminResourcePage({ requestHashNavigation }) {
     setFilters({ search: "", publicationStatus: "", reviewStatus: "", ragReady: "", page: 1, pageSize: 20 });
   };
 
-  const performSave = async (payload) => {
-    setConfirmation(null);
+  function updateForm(field, value) {
+    setForm(current => ({ ...current, [field]: value }));
+    setSaveState({ saving: false, message: "", error: "" });
+  }
+
+  async function save() {
+    if (!detail || !form || !dirty) return;
     setSaveState({ saving: true, message: "", error: "" });
-    const result = await updateAdminResourceGovernance(detail.id, payload);
+    const result = await updateAdminResourceGovernance(detail.id, buildPayload(form, initialForm));
     if (!result.ok) {
       setSaveState({ saving: false, message: "", error: result.error || t("admin.resourceGovernance.errors.save") });
       return;
     }
     setDetail(result.resource);
-    setForm({
-      publicationStatus: result.resource.publicationStatus,
-      reviewStatus: result.resource.reviewStatus,
-      ragReady: Boolean(result.resource.ragReady),
-      reviewNotes: result.resource.reviewNotes || "",
-      nextReviewAt: formatDate(result.resource.nextReviewAt),
+    setForm(formFromResource(result.resource));
+    setSaveState({
+      saving: false,
+      message: result.automaticChanges?.includes("rag_ready_disabled")
+        ? t("admin.resourceGovernance.savedWithRagDisabled")
+        : t("admin.resourceGovernance.saved"),
+      error: "",
     });
-    const message = result.automaticChanges.includes("rag_ready_disabled")
-      ? t("admin.resourceGovernance.savedWithRagDisabled")
-      : t("admin.resourceGovernance.saved");
-    setSaveState({ saving: false, message, error: "" });
-    await loadList(filters);
-  };
+  }
 
-  const save = async () => {
-    if (!detail || !form || !dirty) return;
-    const payload = buildPayload(form, detail);
-    const disablesCyberGuard = detail.effectiveRagEligible && (
-      payload.ragReady === false ||
-      payload.publicationStatus === "draft" ||
-      payload.publicationStatus === "archived" ||
-      (payload.reviewStatus && payload.reviewStatus !== "approved")
-    );
-    const changingPublication = payload.publicationStatus === "draft" || payload.publicationStatus === "archived";
-    if (changingPublication || disablesCyberGuard) {
-      const titleKey = changingPublication
-        ? "admin.resourceGovernance.confirmation.publicationTitle"
-        : "admin.resourceGovernance.confirmation.aiUseTitle";
-      const messageKey = changingPublication && disablesCyberGuard
-        ? "admin.resourceGovernance.confirmation.publicationAndAiUseMessage"
-        : changingPublication
-          ? "admin.resourceGovernance.confirmation.publicationMessage"
-          : "admin.resourceGovernance.confirmation.aiUseMessage";
-      setConfirmation({
-        title: t(titleKey),
-        message: t(messageKey),
-        resourceTitle: detail.title,
-        confirmLabel: t("admin.resourceGovernance.confirmation.saveConfirm"),
-        onConfirm: () => performSave(payload),
-      });
-      return;
-    }
-
-    await performSave(payload);
-  };
-
-  useEffect(() => {
-    if (!selectedId || confirmation) return undefined;
-    const onKeyDown = (event) => {
-      if (event.key === "Escape") {
-        event.preventDefault();
-        closeDetail();
-      }
-    };
-    document.addEventListener("keydown", onKeyDown);
-    return () => document.removeEventListener("keydown", onKeyDown);
-  }, [selectedId, confirmation, closeDetail]);
+  const rowActions = getResourceRowActions();
 
   return (
     <div className="admin-resource-governance" aria-labelledby="admin-resource-governance-title">
@@ -303,6 +204,9 @@ export default function AdminResourcePage({ requestHashNavigation }) {
           <h2 id="admin-resource-governance-title">{t("admin.resourceGovernance.title")}</h2>
           <p>{t("admin.resourceGovernance.description")}</p>
         </div>
+        <button type="button" className="btn-primary" onClick={openCreateResource}>
+          {t("admin.resourceCreate.createResource")}
+        </button>
       </div>
 
       <div className="admin-resource-summary" aria-label={t("admin.resourceGovernance.summaryLabel")}>
@@ -381,11 +285,40 @@ export default function AdminResourcePage({ requestHashNavigation }) {
                     <span>{resource.slug}</span>
                   </td>
                   <td>{resource.displayCategory || resource.category}</td>
-                  <td><StatusBadge>{labelFor(t, "admin.resourceGovernance.publicationStatus", resource.publicationStatus)}</StatusBadge></td>
-                  <td><StatusBadge tone={resource.reviewStatus === "approved" ? "good" : "warn"}>{labelFor(t, "admin.resourceGovernance.reviewStatus", resource.reviewStatus)}</StatusBadge></td>
-                  <td><StatusBadge tone={resource.effectiveRagEligible ? "good" : "warn"}>{resource.effectiveRagEligible ? t("admin.resourceGovernance.flags.effective") : t("admin.resourceGovernance.flags.notEffective")}</StatusBadge></td>
-                  <td>{formatDate(resource.updatedAt) || t("common.notSet")}</td>
-                  <td><button type="button" className="btn-secondary" onClick={event => openResource(resource.id, event.currentTarget)}>{t("admin.resourceGovernance.reviewAction")}</button></td>
+                  <td>
+                    {(() => {
+                      const display = getPublicationStatusDisplay(resource.publicationStatus);
+                      return <StatusBadge tone={display.tone}>{displayLabel(t, display, resource.publicationStatus)}</StatusBadge>;
+                    })()}
+                  </td>
+                  <td>
+                    {(() => {
+                      const display = getReviewStatusDisplay(resource.reviewStatus);
+                      return <StatusBadge tone={display.tone}>{displayLabel(t, display, resource.reviewStatus)}</StatusBadge>;
+                    })()}
+                  </td>
+                  <td>
+                    {(() => {
+                      const display = getCyberGuardStatusDisplay(resource.effectiveRagEligible);
+                      return <StatusBadge tone={display.tone}>{displayLabel(t, display, "")}</StatusBadge>;
+                    })()}
+                  </td>
+                  <td>{formatAdminDate(resource.updatedAt, undefined, t("common.notSet"))}</td>
+                  <td>
+                    <div className="admin-resource-row-actions">
+                      {rowActions.map(action => (
+                        action.id === "quickReview" ? (
+                          <button key={action.id} type="button" className="btn-secondary" onClick={() => openResource(resource.id)}>
+                            {t(action.labelKey)}
+                          </button>
+                        ) : (
+                          <button key={action.id} type="button" className="btn-primary" onClick={() => openMetadataEditor(resource.id)}>
+                            {t(action.labelKey)}
+                          </button>
+                        )
+                      ))}
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
@@ -403,15 +336,15 @@ export default function AdminResourcePage({ requestHashNavigation }) {
 
       {selectedId && (
         <div className="admin-resource-drawer-backdrop" role="presentation" onMouseDown={event => {
-          if (event.target === event.currentTarget) closeDetail();
+          if (event.target === event.currentTarget) closeDrawer();
         }}>
           <aside className="admin-resource-drawer" aria-label={t("admin.resourceGovernance.drawerLabel")} aria-modal="true" role="dialog">
             <div className="admin-resource-drawer-head">
               <div>
-                <p className="res-tag">{dirty ? t("admin.resourceGovernance.unsaved") : t("admin.resourceGovernance.drawerBadge")}</p>
+                <p className="res-tag">{t("admin.resourceGovernance.drawerBadge")}</p>
                 <h3>{detail?.title || t("admin.resourceGovernance.loading")}</h3>
               </div>
-              <button type="button" className="btn-secondary" onClick={closeDetail}>{t("common.close")}</button>
+              <button type="button" className="btn-secondary" onClick={closeDrawer}>{t("common.close")}</button>
             </div>
 
             {detailLoading ? (
@@ -420,64 +353,55 @@ export default function AdminResourcePage({ requestHashNavigation }) {
               <p className="field-error" role="alert">{detailError}</p>
             ) : detail && form ? (
               <div className="admin-resource-drawer-body">
+                <AdminQuickReviewActions
+                  lifecycleLabelKey="admin.resourceLifecycle.archiveOrDelete"
+                  onEdit={() => openMetadataEditor(detail.id)}
+                  onLifecycle={() => setLifecycleDialogOpen(true)}
+                />
+
                 <section>
                   <h4>{t("admin.resourceGovernance.detail.overview")}</h4>
                   <p><strong>{detail.slug}</strong></p>
                   <p>{detail.summary || t("common.notSet")}</p>
-                  <p>{t("admin.resourceGovernance.detail.translations", { count: detail.translations?.length || 0 })}</p>
+                  <dl className="admin-lifecycle-counts">
+                    <div><dt>{t("admin.resourceGovernance.filters.publicationStatus")}</dt><dd>{labelFor(t, "admin.resourceGovernance.publicationStatus", detail.publicationStatus)}</dd></div>
+                    <div><dt>{t("admin.resourceGovernance.filters.reviewStatus")}</dt><dd>{labelFor(t, "admin.resourceGovernance.reviewStatus", detail.reviewStatus)}</dd></div>
+                    <div><dt>{t("admin.resourceLifecycle.cyberGuardStatus")}</dt><dd>{detail.effectiveRagEligible ? t("admin.resourceGovernance.flags.cyberGuardEnabled") : t("admin.resourceGovernance.flags.cyberGuardDisabled")}</dd></div>
+                  </dl>
                 </section>
 
                 <section>
                   <h4>{t("admin.resourceGovernance.detail.source")}</h4>
                   <p>{detail.sourceLabel || t("common.notSet")}</p>
-                  <p>{detail.sourceType || t("common.notSet")} · {detail.sourceCountry || t("common.notSet")} · {detail.sourceAuthorityLevel || t("common.notSet")}</p>
-                  <p>{t("admin.resourceGovernance.detail.flags", {
-                    malaysia: detail.malaysiaGuidanceFlag ? t("common.yes") : t("common.no"),
-                    sensitive: detail.sensitiveTopicFlag ? t("common.yes") : t("common.no"),
-                  })}</p>
-                </section>
-
-                <section>
-                  <h4>{t("admin.resourceGovernance.detail.rag")}</h4>
-                  <p>{detail.effectiveRagEligible ? t("admin.resourceGovernance.flags.effective") : t("admin.resourceGovernance.flags.notEffective")}</p>
-                  {detail.effectiveRagReasons?.length > 0 && (
-                    <ul>
-                      {detail.effectiveRagReasons.map(reason => <li key={reason}>{t(`admin.resourceGovernance.eligibilityReasons.${reason}`)}</li>)}
-                    </ul>
-                  )}
+                  <p>{detail.sourceType || t("common.notSet")} / {detail.sourceCountry || t("common.notSet")} / {detail.sourceAuthorityLevel || t("common.notSet")}</p>
                   <p>{t("admin.resourceGovernance.detail.retrievableChunks", { count: detail.retrievableChunkCount || 0 })}</p>
-                  {(detail.ragDocuments || []).map(document => (
-                    <p key={document.id} className="admin-resource-rag-doc">
-                      {document.locale}: {labelFor(t, "admin.resourceGovernance.publicationStatus", document.status)} / {labelFor(t, "admin.resourceGovernance.ragDocumentReviewStatus", document.reviewStatus)} / {document.ragReady ? t("admin.resourceGovernance.flags.ragReady") : t("admin.resourceGovernance.flags.notRagReady")} · {t("admin.resourceGovernance.detail.chunks", { count: document.chunkCount || 0 })}
-                    </p>
-                  ))}
                 </section>
 
                 <section className="admin-resource-form">
                   <h4>{t("admin.resourceGovernance.detail.controls")}</h4>
                   <label>
                     <span>{t("admin.resourceGovernance.filters.publicationStatus")}</span>
-                    <select value={form.publicationStatus} onChange={event => setForm(current => ({ ...current, publicationStatus: event.target.value }))}>
+                    <select value={form.publicationStatus} onChange={event => updateForm("publicationStatus", event.target.value)}>
                       {PUBLICATION_OPTIONS.filter(Boolean).map(option => <option key={option} value={option}>{labelFor(t, "admin.resourceGovernance.publicationStatus", option)}</option>)}
                     </select>
                   </label>
                   <label>
                     <span>{t("admin.resourceGovernance.filters.reviewStatus")}</span>
-                    <select value={form.reviewStatus} onChange={event => setForm(current => ({ ...current, reviewStatus: event.target.value }))}>
+                    <select value={form.reviewStatus} onChange={event => updateForm("reviewStatus", event.target.value)}>
                       {REVIEW_OPTIONS.filter(Boolean).map(option => <option key={option} value={option}>{labelFor(t, "admin.resourceGovernance.reviewStatus", option)}</option>)}
                     </select>
                   </label>
                   <label className="admin-resource-checkbox">
-                    <input type="checkbox" checked={form.ragReady} onChange={event => setForm(current => ({ ...current, ragReady: event.target.checked }))} />
+                    <input type="checkbox" checked={form.ragReady} onChange={event => updateForm("ragReady", event.target.checked)} />
                     <span>{t("admin.resourceGovernance.fields.ragReady")}</span>
                   </label>
                   <label>
                     <span>{t("admin.resourceGovernance.fields.nextReviewAt")}</span>
-                    <input type="date" value={form.nextReviewAt} onChange={event => setForm(current => ({ ...current, nextReviewAt: event.target.value }))} />
+                    <input type="date" value={form.nextReviewAt} onChange={event => updateForm("nextReviewAt", event.target.value)} />
                   </label>
                   <label>
                     <span>{t("admin.resourceGovernance.fields.reviewNotes")}</span>
-                    <textarea rows={5} value={form.reviewNotes} onChange={event => setForm(current => ({ ...current, reviewNotes: event.target.value }))} />
+                    <textarea rows={5} value={form.reviewNotes} onChange={event => updateForm("reviewNotes", event.target.value)} />
                   </label>
                 </section>
 
@@ -485,21 +409,29 @@ export default function AdminResourcePage({ requestHashNavigation }) {
                 {saveState.message && <p className="admin-resource-success" role="status">{saveState.message}</p>}
 
                 <div className="admin-resource-drawer-actions">
-                  <button type="button" className="btn-secondary" onClick={() => openContentEditor(detail.id)}>{t("admin.resourceEditor.editContent")}</button>
-                  <button type="button" className="btn-secondary" onClick={closeDetail}>{t("common.cancel")}</button>
-                  <button type="button" className="btn-primary" disabled={!dirty || saveState.saving} onClick={save}>
-                    {saveState.saving ? t("common.saving") : t("common.save")}
-                  </button>
+                  <button type="button" className="btn-secondary" onClick={() => setForm(initialForm)} disabled={!dirty || saveState.saving}>{t("admin.resourceEditor.reset")}</button>
+                  <button type="button" className="btn-primary" onClick={save} disabled={!dirty || saveState.saving}>{saveState.saving ? t("common.saving") : t("common.save")}</button>
                 </div>
               </div>
             ) : null}
           </aside>
         </div>
       )}
-      {confirmation && (
-        <ConfirmationDialog
-          confirmation={confirmation}
-          onCancel={() => setConfirmation(null)}
+
+      {lifecycleDialogOpen && detail && (
+        <AdminResourceLifecycleDialog
+          resource={detail}
+          resourceId={detail.id}
+          onArchived={(resource) => {
+            setDetail(resource);
+            setForm(formFromResource(resource));
+            setItems(current => current.map(item => Number(item.id) === Number(resource.id) ? { ...item, ...resource } : item));
+          }}
+          onDeleted={() => {
+            closeDrawer();
+            setItems(current => current.filter(item => Number(item.id) !== Number(detail.id)));
+          }}
+          onCancel={() => setLifecycleDialogOpen(false)}
         />
       )}
     </div>

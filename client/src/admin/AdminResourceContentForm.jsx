@@ -17,6 +17,7 @@ export default function AdminResourceContentForm({
   onChange,
   onReset,
   onSave,
+  saveLabel,
   saveState,
 }) {
   const { t } = useTranslation();
@@ -70,7 +71,7 @@ export default function AdminResourceContentForm({
           {t("admin.resourceEditor.reset")}
         </button>
         <button type="submit" className="btn-primary" disabled={!dirty || saveState.saving}>
-          {saveState.saving ? t("common.saving") : t("admin.resourceEditor.save")}
+          {saveState.saving ? t("common.saving") : (saveLabel || t("admin.resourceEditor.save"))}
         </button>
       </div>
     </form>

@@ -408,10 +408,11 @@
       "loading": "正在加载情境...",
       "empty": "未找到情境",
       "emptyDescription": "可以尝试选择其他主题或难度筛选。",
+      "backToLibrary": "返回情境库",
       "backToDashboard": "返回仪表板"
     },
-    "leaveTitle": "离开这个情境练习？",
-    "leaveDescription": "已保存的决策会保留，你之后可以从情境库继续这个练习。",
+    "leaveTitle": "要离开此场景吗？",
+    "leaveDescription": "已保存的选择会继续保留。你之后可以从场景库继续此场景。",
     "filters": {
       "topic": "主题筛选",
       "difficulty": "难度筛选",
@@ -467,7 +468,10 @@
       "step": "第 {{step}} 步",
       "stepChoice": "第 {{step}} 步：你的选择 {{choice}}",
       "updatedRecommendation": "已更新推荐"
-    }
+    },
+    "continueScenario": "继续场景",
+    "leaveScenario": "离开场景",
+    "localeFallback": "此场景目前以{{displayed}}显示，因为{{requested}}暂不可用。"
   },
   "home": {
     "hero": {
@@ -494,9 +498,18 @@
       "title": "为什么选择 Cyberly？",
       "description": "从你的当前水平出发的网络安全教育。",
       "cards": {
-        "adaptive": { "title": "自适应 AI", "description": "我们的 AI 会根据你的经验水平和偏好语言调整解释方式。" },
-        "skills": { "title": "真实技能", "description": "学习实用技能，包括识别诈骗、保护账号和安全浏览。" },
-        "topics": { "title": "聚焦主题", "description": "选择对你重要的内容，从网络安全到网络安全职业方向。" }
+        "adaptive": {
+          "title": "自适应 AI",
+          "description": "我们的 AI 会根据你的经验水平和偏好语言调整解释方式。"
+        },
+        "skills": {
+          "title": "真实技能",
+          "description": "学习实用技能，包括识别诈骗、保护账号和安全浏览。"
+        },
+        "topics": {
+          "title": "聚焦主题",
+          "description": "选择对你重要的内容，从网络安全到网络安全职业方向。"
+        }
       }
     },
     "threatOfWeek": {
@@ -521,9 +534,18 @@
       "description": "三个简单步骤即可开始。"
     },
     "steps": {
-      "signUp": { "title": "免费注册", "description": "不到一分钟即可创建个人资料，告诉我们你的年龄、语言和想学习的内容。" },
-      "aiTutor": { "title": "认识你的 AI 导师", "description": "CyberGuard AI 会根据你的水平调整，并可用英语、马来语或中文与你聊天。" },
-      "levelUp": { "title": "学习并提升", "description": "探索指南、完成模拟，并在网络安全技能提升时追踪你的进度。" }
+      "signUp": {
+        "title": "免费注册",
+        "description": "不到一分钟即可创建个人资料，告诉我们你的年龄、语言和想学习的内容。"
+      },
+      "aiTutor": {
+        "title": "认识你的 AI 导师",
+        "description": "CyberGuard AI 会根据你的水平调整，并可用英语、马来语或中文与你聊天。"
+      },
+      "levelUp": {
+        "title": "学习并提升",
+        "description": "探索指南、完成模拟，并在网络安全技能提升时追踪你的进度。"
+      }
     },
     "bottomCta": {
       "title": "准备提升你的网络安全技能了吗？",
@@ -592,21 +614,51 @@
       "description": "一个模块化、AI 驱动的工具包，具备六项核心能力。"
     },
     "features": {
-      "agentic": { "title": "Agentic AI 指导", "description": "自主、目标导向的学习支持，结合情境决策帮助与实时个性化推荐。" },
-      "chatbot": { "title": "网络健康聊天机器人", "description": "通过自然语言互动，实时回答网络安全问题。" },
-      "adaptive": { "title": "自适应难度", "description": "根据用户的知识和进度自动选择难度，提供更有效的学习体验。" },
-      "simulations": { "title": "网络威胁模拟", "description": "模拟网络钓鱼、诈骗和虚假信息情境，锻炼批判性思维和网络安全决策能力。" },
-      "progress": { "title": "进度追踪", "description": "监测学习进度和参与模式，以评估效果并推动自适应推荐。" },
-      "gamified": { "title": "游戏化挑战", "description": "可选测验、成就和互动活动，用于提升动力、参与度和知识保留。" }
+      "agentic": {
+        "title": "Agentic AI 指导",
+        "description": "自主、目标导向的学习支持，结合情境决策帮助与实时个性化推荐。"
+      },
+      "chatbot": {
+        "title": "网络健康聊天机器人",
+        "description": "通过自然语言互动，实时回答网络安全问题。"
+      },
+      "adaptive": {
+        "title": "自适应难度",
+        "description": "根据用户的知识和进度自动选择难度，提供更有效的学习体验。"
+      },
+      "simulations": {
+        "title": "网络威胁模拟",
+        "description": "模拟网络钓鱼、诈骗和虚假信息情境，锻炼批判性思维和网络安全决策能力。"
+      },
+      "progress": {
+        "title": "进度追踪",
+        "description": "监测学习进度和参与模式，以评估效果并推动自适应推荐。"
+      },
+      "gamified": {
+        "title": "游戏化挑战",
+        "description": "可选测验、成就和互动活动，用于提升动力、参与度和知识保留。"
+      }
     },
     "how": {
       "title": "它如何运作",
       "description": "每一次体验都会围绕个人学习者进行调整。",
       "steps": {
-        "signUp": { "title": "你注册账号", "description": "完成简短的入门资料，包括年龄、语言、熟悉程度和学习目标。" },
-        "path": { "title": "AI 构建你的路径", "description": "Agentic AI 模块会根据你的回答构建个性化学习路径。" },
-        "learn": { "title": "按你的方式学习", "description": "与 CyberGuard AI 聊天、探索资源并完成模拟，全部都会根据你的水平调整。" },
-        "track": { "title": "追踪你的成长", "description": "系统会追踪你的进度，并持续优化后续推荐。" }
+        "signUp": {
+          "title": "你注册账号",
+          "description": "完成简短的入门资料，包括年龄、语言、熟悉程度和学习目标。"
+        },
+        "path": {
+          "title": "AI 构建你的路径",
+          "description": "Agentic AI 模块会根据你的回答构建个性化学习路径。"
+        },
+        "learn": {
+          "title": "按你的方式学习",
+          "description": "与 CyberGuard AI 聊天、探索资源并完成模拟，全部都会根据你的水平调整。"
+        },
+        "track": {
+          "title": "追踪你的成长",
+          "description": "系统会追踪你的进度，并持续优化后续推荐。"
+        }
       }
     },
     "objectives": {
@@ -628,11 +680,26 @@
         "description": "在整个项目期间提供指导、专业监督和行业客户方向。"
       },
       "members": {
-        "jayron": { "role": "网页开发", "description": "确保逻辑和网页可用性正常，并负责实现 Agentic AI 功能和自适应学习工具。" },
-        "jinHong": { "role": "UI/UX 设计师", "description": "开发核心线框图和低保真原型设计，确保界面适合青少年目标用户。" },
-        "edward": { "role": "系统架构师与聊天机器人负责人", "description": "负责后端架构和 AI 工作流规划，确保组件能支持自适应学习功能。" },
-        "arman": { "role": "Agentic AI 个性化", "description": "构建用于个性化功能和自适应学习的 Agentic AI 分析，关注用户行为分析。" },
-        "puah": { "role": "Agentic AI 模块负责人", "description": "负责系统架构和 Agentic AI 模块实现，并支持聊天机器人功能。" }
+        "jayron": {
+          "role": "网页开发",
+          "description": "确保逻辑和网页可用性正常，并负责实现 Agentic AI 功能和自适应学习工具。"
+        },
+        "jinHong": {
+          "role": "UI/UX 设计师",
+          "description": "开发核心线框图和低保真原型设计，确保界面适合青少年目标用户。"
+        },
+        "edward": {
+          "role": "系统架构师与聊天机器人负责人",
+          "description": "负责后端架构和 AI 工作流规划，确保组件能支持自适应学习功能。"
+        },
+        "arman": {
+          "role": "Agentic AI 个性化",
+          "description": "构建用于个性化功能和自适应学习的 Agentic AI 分析，关注用户行为分析。"
+        },
+        "puah": {
+          "role": "Agentic AI 模块负责人",
+          "description": "负责系统架构和 Agentic AI 模块实现，并支持聊天机器人功能。"
+        }
       }
     }
   },
@@ -856,7 +923,7 @@
       "resources": "资源",
       "resourcesDescription": "审核学习资源的发布、批准和 CyberGuard 检索。",
       "scenarios": "场景",
-      "scenariosDescription": "场景治理稍后推出。",
+      "scenariosDescription": "管理现有情境练习内容。",
       "assessments": "评估",
       "assessmentsDescription": "评估治理稍后推出。",
       "faqGuidance": "FAQ 与指导",
@@ -916,6 +983,8 @@
       "loadingDetail": "正在加载资源详情...",
       "empty": "没有符合这些筛选条件的资源。",
       "reviewAction": "审核治理",
+      "quickReviewAction": "快速审核",
+      "drawerActionsLabel": "资源抽屉操作",
       "drawerLabel": "资源治理详情",
       "drawerBadge": "治理详情",
       "unsaved": "有未保存的更改",
@@ -959,7 +1028,7 @@
       "reviewStatus": {
         "approved": "已批准",
         "needs_review": "需要审核",
-        "draft": "草稿",
+        "draft": "草稿审核",
         "rejected": "已拒绝"
       },
       "ragDocumentReviewStatus": {
@@ -970,8 +1039,10 @@
       "flags": {
         "ragReady": "RAG 就绪",
         "notRagReady": "未就绪 RAG",
-        "effective": "CyberGuard 可用",
-        "notEffective": "不可用"
+        "effective": "CyberGuard 已启用",
+        "notEffective": "CyberGuard 已停用",
+        "cyberGuardEnabled": "CyberGuard 已启用",
+        "cyberGuardDisabled": "CyberGuard 已停用"
       },
       "eligibilityReasons": {
         "resource_not_published": "资源尚未发布。",
@@ -1008,6 +1079,143 @@
         "list": "无法加载资源。",
         "detail": "无法加载资源详情。",
         "save": "无法保存资源治理。"
+      }
+    },
+    "translation": {
+      "tabsLabel": "内容语言标签",
+      "coverage": "翻译覆盖",
+      "coverageValue": "{{complete}} / {{total}} 完成",
+      "required": "必需",
+      "optional": "可选",
+      "requiredReady": "必需英文已完成",
+      "requiredMissing": "必需英文未完成",
+      "locales": {
+        "en": "英语",
+        "ms": "马来语",
+        "zh-CN": "简体中文"
+      },
+      "status": {
+        "complete": "完成",
+        "incomplete": "未完成",
+        "missing": "缺失",
+        "unsaved": "未保存"
+      }
+    },
+    "publication": {
+      "label": "发布准备情况",
+      "ready": "可发布",
+      "cannotPublish": "不能发布",
+      "missing": "缺失",
+      "publishResource": "发布资源",
+      "publishScenario": "发布场景",
+      "returnToDraft": "返回草稿",
+      "publishWithFallback": "使用英文 fallback 发布",
+      "restoreInLifecycle": "发布前请先在生命周期对话框中恢复。",
+      "publishedResource": "资源已发布。",
+      "returnedResourceToDraft": "资源已返回草稿。",
+      "returnedScenarioToDraft": "场景已返回草稿。",
+      "optionalLocaleWarning": "缺少可选翻译：{{locales}}。使用这些语言的学习者可能会看到英文 fallback。",
+      "confirmPublishResource": "学习者将可以查看此资源。CyberGuard 检索仍需要审核通过并开启 RAG 就绪。",
+      "confirmPublishScenario": "学习者将可以开始此场景。它的评分结构会面向学习者。",
+      "confirmReturnToDraft": "学习者将不再看到或开始此项目。已保存内容和历史引用会保留。",
+      "confirmOptionalFallback": "缺少可选翻译：{{locales}}。学习者可能会看到英文 fallback。",
+      "status": {
+        "draft": "草稿",
+        "published": "已发布",
+        "archived": "已归档"
+      },
+      "reasons": {
+        "unknown": "必需检查尚未完成。",
+        "english_required": "英文内容未完成。",
+        "english_title_required": "缺少英文标题。",
+        "english_summary_required": "缺少英文摘要。",
+        "english_body_required": "缺少英文正文。",
+        "category_required": "缺少类别。",
+        "archived": "已归档内容必须先恢复。",
+        "resource_archived": "已归档资源必须先恢复。",
+        "title_required": "缺少标题。",
+        "summary_required": "缺少摘要。",
+        "topic_invalid": "主题无效。",
+        "difficulty_invalid": "难度无效。",
+        "duration_invalid": "时长无效。",
+        "total_steps_invalid": "总步骤数无效。",
+        "step_count_mismatch": "步骤数与预期总数不一致。",
+        "step_situation_required": "缺少步骤情境。",
+        "step_prompt_required": "缺少步骤提示。",
+        "choice_text_required": "缺少选项文字。",
+        "choice_feedback_required": "缺少选项反馈。",
+        "choice_safety_explanation_required": "缺少选项安全说明。"
+      },
+      "errors": {
+        "publishResource": "无法发布资源。",
+        "unpublishResource": "无法将资源返回草稿。"
+      }
+    },
+    "resourceLifecycle": {
+      "badge": "资源生命周期",
+      "headerLabel": "资源操作标题区",
+      "tabsLabel": "资源部分",
+      "actionsLabel": "资源生命周期操作",
+      "moreActions": "更多操作",
+      "loading": "正在加载生命周期...",
+      "loadingInformation": "正在加载生命周期信息...",
+      "archiveOrDelete": "归档或删除资源",
+      "archiveDeleteShort": "归档 / 删除",
+      "manageTitle": "归档或删除资源",
+      "manageDescription": "在归档、恢复或永久删除此资源前，请先查看当前生命周期状态。",
+      "archiveTitle": "归档资源",
+      "archiveDescription": "学习者将不再看到此资源，CyberGuard 也不再检索它。内容、元数据和历史来源记录会保留，方便之后再次审核。",
+      "deleteTitle": "永久删除资源",
+      "restoreTitle": "恢复资源",
+      "restoreDescription": "将此资源恢复为草稿，并保持 CyberGuard 检索关闭，直到再次完成审核。",
+      "deleteDescription": "此操作无法撤销。此草稿资源拥有的所有翻译和元数据都会被删除。请输入完全相同的 slug 进行确认。",
+      "deleteUnavailableDescription": "此资源已有发布、审核、RAG 或历史引用记录。它不能被永久删除；请改为归档。",
+      "archiveButton": "归档资源",
+      "restoreButton": "恢复资源",
+      "deleteButton": "永久删除",
+      "archiveShort": "归档",
+      "deleteShort": "永久删除",
+      "confirmSlugLabel": "输入完全相同的 slug 以确认",
+      "blockingReasons": "阻止原因",
+      "archiveStillAvailable": "此资源仍可归档。",
+      "restoreStillAvailable": "此已归档资源仍可恢复。",
+      "breadcrumbLabel": "资源面包屑",
+      "breadcrumbResources": "资源",
+      "cyberGuardStatus": "CyberGuard 状态",
+      "deletionEligibility": "删除资格",
+      "deleteAvailable": "可以永久删除",
+      "deleteBlocked": "永久删除被阻止",
+      "countsLabel": "生命周期引用计数",
+      "counts": {
+        "translations": "翻译",
+        "ragDocuments": "RAG 文档",
+        "ragChunks": "RAG 片段",
+        "chatSourceReferences": "已保存的 CyberGuard 回复"
+      },
+      "tabs": {
+        "content": "内容",
+        "metadata": "元数据",
+        "governance": "治理"
+      },
+      "reasons": {
+        "resource_not_draft": "资源已发布或已归档。",
+        "review_not_draft": "资源审核状态不是草稿。",
+        "resource_rag_ready": "资源已设置为 RAG 就绪。",
+        "rag_documents_exist": "此资源已有 {{count}} 个 RAG 文档。",
+        "rag_chunks_exist": "此资源已有 {{count}} 个 RAG 片段。",
+        "chat_sources_exist": "已保存的 CyberGuard 回复引用了此资源。",
+        "chat_source_history_exists": "此资源出现在 {{count}} 条已保存的 CyberGuard 回复中。",
+        "content_relationships_exist": "{{count}} 个内容关系引用了此资源。",
+        "resource_not_found": "未找到资源。"
+      },
+      "errors": {
+        "archive": "无法归档资源。",
+        "restore": "无法恢复资源。",
+        "delete": "无法永久删除资源。",
+        "load": "生命周期详情仍在加载。",
+        "loadFailed": "无法加载生命周期信息。",
+        "slugMismatch": "确认 slug 不匹配。",
+        "notEligible": "此资源不能永久删除。请改为归档。"
       }
     },
     "resourceEditor": {
@@ -1070,6 +1278,96 @@
         "notFound": "未找到资源内容。"
       }
     },
+    "resourceCreate": {
+      "createResource": "创建资源",
+      "createDraft": "创建草稿",
+      "draftPreview": "草稿预览",
+      "title": "创建资源",
+      "description": "创建安全的资源草稿，包含 English 内容、来源元数据和默认治理状态。",
+      "identity": "资源身份",
+      "classification": "分类",
+      "slug": "Slug",
+      "slugHint": "只能使用小写字母、数字和连字符。此阶段之后不能更改 slug。",
+      "invalidSlug": "只能使用小写字母、数字，并用单个连字符连接。",
+      "invalidSourceUrl": "请输入有效的 http 或 https 来源网址。",
+      "duplicateSlug": "已有资源使用这个 slug。",
+      "englishContent": "English 内容",
+      "created": "资源已创建为草稿。",
+      "nextStepsTitle": "创建后的下一步",
+      "addMalay": "在内容编辑器中添加马来语翻译。",
+      "addChinese": "在内容编辑器中添加简体中文翻译。",
+      "reviewMetadata": "在治理批准前审核来源元数据。",
+      "reviewBeforePublishing": "发布或允许 CyberGuard 检索前，请先审核治理状态。",
+      "unsavedTitle": "放弃新的资源草稿？",
+      "unsavedMessage": "你的新资源表单有未保存的更改。",
+      "unsavedLogoutMessage": "退出登录会放弃未保存的资源创建表单。",
+      "errors": {
+        "options": "无法加载资源创建选项。",
+        "create": "无法创建资源。"
+      }
+    },
+    "resourceMetadata": {
+      "title": "编辑资源元数据",
+      "editMetadata": "编辑元数据",
+      "sourceInformation": "来源信息",
+      "sourceLabel": "来源标签",
+      "sourceUrl": "来源网址",
+      "openSource": "打开来源",
+      "missingSource": "尚未设置可点击的来源网址。",
+      "sourceClassification": "来源分类",
+      "sourceType": "来源类型",
+      "sourceCountry": "来源国家",
+      "authorityLevel": "权威级别",
+      "sourceMaintenance": "来源维护",
+      "lastSourceChecked": "上次检查来源日期",
+      "markCheckedToday": "标记为今天已检查",
+      "markCheckedTodayHint": "记录管理员已手动检查此来源。",
+      "replacementSourceNeeded": "需要替换来源",
+      "replacementWarning": "此资源已标记为需要替换来源。这不会自动归档或停用该资源。",
+      "safetyMetadata": "安全元数据",
+      "ageSuitability": "年龄适合度",
+      "sensitiveTopic": "敏感主题",
+      "malaysiaGuidance": "马来西亚指导",
+      "saveMetadata": "保存元数据",
+      "saved": "元数据已保存。",
+      "loading": "正在加载资源元数据...",
+      "unsavedTitle": "放弃元数据更改？",
+      "unsavedMessage": "你的资源元数据更改尚未保存。",
+      "unsavedLogoutMessage": "退出登录会放弃未保存的资源元数据更改。",
+      "sourceTypes": {
+        "government_cybersecurity_agency": "政府网络安全机构",
+        "government": "政府",
+        "education": "教育",
+        "ngo": "非政府组织",
+        "international_organisation": "国际组织",
+        "general_web": "普通网站",
+        "test_source": "测试来源"
+      },
+      "sourceCountries": {
+        "MY": "马来西亚",
+        "SG": "新加坡",
+        "GLOBAL": "全球",
+        "OTHER": "其他"
+      },
+      "authorityLevels": {
+        "official_agency": "官方机构",
+        "recognised_organisation": "认可组织",
+        "education_provider": "教育提供方",
+        "general_reference": "一般参考",
+        "unknown": "未知"
+      },
+      "ageOptions": {
+        "13-17": "13-17",
+        "all_teens": "所有青少年",
+        "older_teens": "较年长青少年",
+        "general": "一般"
+      },
+      "errors": {
+        "load": "无法加载资源元数据。",
+        "save": "无法保存资源元数据。",
+        "stale": "元数据已在其他地方更改。保存前请重新加载最新版本。"
+      }
+    },
     "moduleStatus": {
       "planned": "规划中"
     },
@@ -1106,6 +1404,271 @@
         "title": "角色管理",
         "description": "未来为管理员和审核者提供最小权限访问控制。"
       }
+    },
+    "scenarioManagement": {
+      "badge": "情境管理",
+      "title": "情境管理",
+      "description": "查看、预览和管理现有 Cyberly 情境练习内容，不更改学习者分数。",
+      "create": "创建草稿情境",
+      "summaryLabel": "情境管理摘要",
+      "metrics": {
+        "total": "总数",
+        "published": "已发布",
+        "draft": "草稿",
+        "archived": "已归档",
+        "incomplete": "结构待完善"
+      },
+      "filters": {
+        "search": "搜索",
+        "searchPlaceholder": "搜索标题、slug 或摘要",
+        "status": "状态",
+        "topic": "主题",
+        "difficulty": "难度",
+        "all": "全部",
+        "clear": "清除筛选"
+      },
+      "status": {
+        "published": "已发布",
+        "draft": "草稿",
+        "archived": "已归档"
+      },
+      "table": {
+        "scenario": "情境",
+        "topic": "主题",
+        "difficulty": "难度",
+        "status": "状态",
+        "updated": "更新时间",
+        "actions": "操作",
+        "scrollLabel": "情境管理表格"
+      },
+      "structure": {
+        "ready": "就绪",
+        "needsWork": "需完善"
+      },
+      "loading": "正在加载情境...",
+      "empty": "没有找到情境。",
+      "pagination": "第 {{page}} 页，共 {{totalPages}} 页",
+      "preview": "预览",
+      "quickPreview": "快速查看",
+      "quickReview": "快速查看",
+      "edit": "编辑",
+      "drawerLabel": "情境预览",
+      "loadingDetail": "正在加载情境详情...",
+      "previewHeading": "学习者预览",
+      "stepsHeading": "情境步骤",
+      "minutes": "{{count}} 分钟",
+      "updatedAt": "更新于 {{date}}",
+      "errors": {
+        "list": "无法加载情境。",
+        "detail": "无法加载情境详情。"
+      }
+    },
+    "scenarioEditor": {
+      "createBadge": "新情境",
+      "editBadge": "情境编辑器",
+      "createTitle": "创建草稿情境",
+      "createDraftScenario": "创建草稿情境",
+      "createScenarioTitle": "创建情境",
+      "createDescription": "创建一个安全的草稿情境。完成并发布前，学习者不会看到它。",
+      "backToScenarios": "← 返回情境",
+      "learnerHidden": "对学习者隐藏",
+      "draftPreview": "草稿预览",
+      "previewOnly": "仅供预览。发布前，学习者不会看到此情境。",
+      "previewSubmissionDisabled": "预览模式已禁用学习者提交。",
+      "previewSituationPlaceholder": "步骤情境会显示在这里。",
+      "previewChoicePlaceholder": "选项文本会显示在这里。",
+      "previewFeedbackPlaceholder": "学习者选择选项后，示例反馈会显示在这里。",
+      "previewStepProgress": "第 {{current}} 步，共 {{total}} 步",
+      "currentStep": "当前步骤",
+      "decisionsCount": "{{count}} 个决策",
+      "structureCompleteness": "结构完整度",
+      "structureCompletenessValue": "{{ready}} / {{total}} 已就绪",
+      "identityHeading": "情境身份",
+      "classificationHeading": "分类",
+      "structureHeading": "结构规划",
+      "description": "管理元数据和结构化决策步骤。评分仍由后端控制。",
+      "discardTitle": "放弃情境更改？",
+      "discardDescription": "你有尚未保存的情境更改。",
+      "logoutDescription": "你有尚未保存的情境更改。退出前请先保存。",
+      "loading": "正在加载情境编辑器...",
+      "back": "← 返回",
+      "tabsLabel": "情境编辑器分区",
+      "overviewHeading": "概览",
+      "metadataHeading": "元数据",
+      "stepsHeading": "决策步骤",
+      "previewHeading": "预览",
+      "scenarioActions": "情境操作",
+      "attempts": "{{count}} 次尝试",
+      "attemptsLock": "此情境已有学习者尝试记录，因此步骤结构编辑已锁定，以保留历史结果。",
+      "createDraft": "创建草稿",
+      "saveMetadata": "保存元数据",
+      "saveSteps": "保存步骤",
+      "publish": "发布",
+      "archive": "归档",
+      "restore": "恢复",
+      "publishScenario": "发布情境",
+      "archiveScenario": "归档情境",
+      "restoreScenario": "恢复情境",
+      "savedMetadata": "情境元数据已保存。",
+      "savedSteps": "情境步骤已保存。已发布情境在结构编辑后会回到草稿。",
+      "structuralDraftTitle": "保存结构更改？",
+      "structuralDraftDescription": "保存结构更改会将此场景返回草稿，并在重新发布前对学习者隐藏。",
+      "saveAndReturnToDraft": "保存并返回草稿",
+      "createDraftSaved": "草稿情境已创建。",
+      "previewTitlePlaceholder": "情境标题",
+      "previewSummaryPlaceholder": "情境摘要会显示在这里。",
+      "previewPromptPlaceholder": "步骤提示",
+      "previewChoices": "个选项已准备",
+      "stepTitle": "步骤 {{number}}",
+      "optionTitle": "选项 {{key}}",
+      "fields": {
+        "slug": "Slug",
+        "title": "标题",
+        "summary": "摘要",
+        "topic": "主题",
+        "difficulty": "难度",
+        "minutes": "预计分钟",
+        "totalSteps": "总步骤数",
+        "situation": "情境文本",
+        "prompt": "提示",
+        "optionText": "选项文本",
+        "score": "分数",
+        "outcome": "结果代码",
+        "feedback": "反馈",
+        "safetyExplanation": "安全解释"
+      },
+      "scores": {
+        "safest": "最安全 (2)",
+        "partial": "部分正确 (1)",
+        "unsafe": "不安全 (0)"
+      },
+      "validation": {
+        "correctFields": "请修正标出的字段。",
+        "required": "必填",
+        "slug": {
+          "required": "需要填写 slug。",
+          "format": "只能使用小写字母、数字和单个连字符。",
+          "duplicate": "此 slug 已被使用。"
+        },
+        "title": {
+          "required": "需要填写标题。",
+          "tooLong": "标题太长。"
+        },
+        "summary": {
+          "required": "需要填写摘要。",
+          "tooLong": "摘要太长。"
+        },
+        "topicCode": {
+          "invalid": "请选择支持的主题。"
+        },
+        "difficulty": {
+          "invalid": "请选择支持的难度。"
+        },
+        "estimatedMinutes": {
+          "positiveInteger": "预计分钟必须是正整数。",
+          "tooLarge": "预计分钟太大。"
+        },
+        "totalSteps": {
+          "positiveInteger": "总步骤数必须是正整数。",
+          "range": "总步骤数必须在 3 到 5 之间。"
+        }
+      },
+      "lifecycle": {
+        "publish": "情境已发布。",
+        "archive": "情境已归档。",
+        "restore": "情境已恢复为草稿。"
+      },
+      "tabs": {
+        "overview": "概览",
+        "steps": "步骤",
+        "preview": "预览"
+      },
+      "errors": {
+        "saveTranslation": "无法保存场景翻译。"
+      },
+      "slugHelp": "只能使用小写字母、数字和单个连字符。例如：phishing-practice",
+      "creating": "正在创建...",
+      "translationTabsLabel": "场景翻译语言",
+      "translationExists": "已有翻译",
+      "translationMissing": "缺少翻译",
+      "missingTranslationNotice": "缺少翻译。你可以添加本地化文本，而不改变共享的场景结构。",
+      "saveTranslation": "保存翻译",
+      "savedTranslation": "场景翻译已保存。",
+      "continueEditing": "继续编辑",
+      "discardAndSwitchTranslation": "放弃并切换语言",
+      "locales": {
+        "en": "英语",
+        "ms": "马来语",
+        "zh-CN": "简体中文"
+      },
+      "requestedLanguage": "请求语言",
+      "displayedLanguage": "显示语言",
+      "addTranslation": "添加翻译"
+    },
+    "scenarioLifecycle": {
+      "badge": "情境生命周期",
+      "archiveDeleteShort": "归档 / 删除",
+      "restoreDeleteShort": "恢复 / 删除",
+      "archiveOrDelete": "归档或删除情境",
+      "archiveDeleteTitle": "归档或删除情境",
+      "restoreDeleteTitle": "恢复或删除情境",
+      "description": "查看此情境可执行的安全生命周期操作。这些操作不会更改学习者分数。",
+      "loading": "正在加载情境生命周期...",
+      "openForScenario": "打开 {{title}} 的生命周期操作",
+      "archiveTitle": "归档情境",
+      "archiveDescription": "向学习者隐藏此情境，同时保留历史记录和管理员记录。",
+      "archiveButton": "归档情境",
+      "restoreTitle": "恢复情境",
+      "restoreDescription": "将已归档情境恢复为草稿，让管理员在发布前重新检查。",
+      "restoreButton": "恢复情境",
+      "deleteTitle": "永久删除",
+      "deleteDescription": "只有未使用的草稿情境可以永久删除。请输入完全一致的 slug 进行确认。",
+      "deleteUnavailableDescription": "此情境已有学习者或系统引用，不能永久删除。",
+      "neverPublished": "从未发布",
+      "firstPublished": "首次发布",
+      "availability": "可用性",
+      "learnerVisible": "学习者可见",
+      "learnerHidden": "学习者不可见",
+      "identity": {
+        "slug": "Slug",
+        "status": "当前状态"
+      },
+      "confirmSlugLabel": "输入完全一致的情境 slug",
+      "deleteButton": "永久删除情境",
+      "counts": {
+        "steps": "步骤",
+        "choices": "选项",
+        "attempts": "尝试",
+        "completedAttempts": "已完成尝试",
+        "decisions": "决策",
+        "progressReferences": "进度引用",
+        "recommendationReferences": "推荐引用",
+        "ragDocuments": "RAG 文档"
+      },
+      "reasons": {
+        "scenario_published": "已发布情境必须先归档，才能永久删除。",
+        "scenario_previously_published": "情境以前曾发布过。",
+        "attempts_exist": "存在 {{count}} 个学习者尝试引用。",
+        "completed_attempts_exist": "存在 {{count}} 个已完成尝试引用。",
+        "decisions_exist": "存在 {{count}} 个学习者决策引用。",
+        "progress_references_exist": "存在 {{count}} 个进度引用。",
+        "rag_documents_exist": "存在 {{count}} 个 RAG 文档引用。"
+      },
+      "errors": {
+        "load": "无法加载情境生命周期信息。",
+        "archive": "无法归档情境。",
+        "restore": "无法恢复情境。",
+        "delete": "无法永久删除情境。",
+        "dirty": "请先保存或放弃情境更改，再更改它的生命周期。",
+        "slugMismatch": "确认 slug 必须完全一致。",
+        "notEligible": "此情境不符合永久删除条件。"
+      }
+    },
+    "notFound": {
+      "badge": "管理员路线",
+      "title": "找不到管理员页面",
+      "description": "此管理员路线不可用。请使用标准管理员导航继续。",
+      "backToResources": "返回资源"
     }
   },
   "common": {
@@ -1115,6 +1678,7 @@
     "saved": "已保存。",
     "cancel": "取消",
     "retry": "重试",
+    "edit": "编辑",
     "close": "关闭",
     "yes": "是",
     "no": "否",

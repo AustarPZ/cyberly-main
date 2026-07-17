@@ -1,155 +1,51 @@
-const OpenAI = require('openai');
-const { ERROR_CODES } = require('../errors/errorCodes');
-
-let mockFailOnceUsed = false;
-
-function providerError(code, message, status = 503) {
-  const error = new Error(message);
-  error.code = code;
-  error.status = status;
-  return error;
-}
-
-function delay(ms) {
-  return new Promise(resolve => setTimeout(resolve, ms));
-}
-
-function buildResponsesInstructions(systemPrompt, learnerContext, ragContext, routeContext) {
-  return [
-    systemPrompt,
-    `Learner context: ${JSON.stringify(learnerContext)}`,
-    ragContext || null,
-    routeContext || null,
-  ].filter(Boolean).join('\n\n');
-}
-
-function buildResponsesInput(messages) {
-  return messages.map(message => ({
-    role: message.role === 'assistant' ? 'assistant' : 'user',
-    content: message.content,
-  }));
-}
-
-function usageFromResponse(response) {
-  const usage = response?.usage || {};
-  return {
-    inputTokens: usage.input_tokens || usage.prompt_tokens || 0,
-    outputTokens: usage.output_tokens || usage.completion_tokens || 0,
-  };
-}
-
-function normalizeProviderError(error) {
-  if (error?.name === 'AbortError' || error?.code === ERROR_CODES.AI_TIMEOUT) {
-    return providerError(ERROR_CODES.AI_TIMEOUT, 'The AI provider timed out.', 503);
-  }
-  const status = Number(error?.status || error?.response?.status || 0);
-  if (status === 429) return providerError(ERROR_CODES.AI_RATE_LIMITED, 'The AI provider is rate limited.', 429);
-  return providerError(ERROR_CODES.AI_PROVIDER_UNAVAILABLE, 'The AI provider is unavailable.', 503);
-}
-
-async function mockGenerate(config, request) {
-  const mode = config.testMockMode;
-  if (mode === 'timeout') throw providerError(ERROR_CODES.AI_TIMEOUT, 'Mock timeout.', 503);
-  if (mode === 'rate-limit') throw providerError(ERROR_CODES.AI_RATE_LIMITED, 'Mock rate limit.', 429);
-  if (mode === 'provider-error') throw providerError(ERROR_CODES.AI_PROVIDER_UNAVAILABLE, 'Mock provider error.', 503);
-  if (mode === 'empty') {
-    return { providerRequestId: 'mock-empty', content: '', inputTokens: 12, outputTokens: 0 };
-  }
-  if (mode === 'unsafe-output') {
-    return { providerRequestId: 'mock-unsafe', content: 'Send me your password and OTP.', inputTokens: 12, outputTokens: 8 };
-  }
-  if (mode === 'delay') await delay(500);
-  if (mode === 'fail-once' && !mockFailOnceUsed) {
-    mockFailOnceUsed = true;
-    throw providerError(ERROR_CODES.AI_PROVIDER_UNAVAILABLE, 'Mock fail once.', 503);
-  }
-  if (mode === 'context') {
-    const chars = request.messages.reduce((sum, message) => sum + String(message.content || '').length, 0);
-    const context = request.learnerContext || {};
-    const ragContext = String(request.ragContext || '');
-    const routeContext = String(request.routeContext || '');
-    const sourceCount = (ragContext.match(/\[\d+\] Title:/g) || []).length;
-    const routeStepCount = (routeContext.match(/^\d+\. /gm) || []).length;
-    const routeTimeBudget = routeContext.match(/Time budget: (\d+) minutes/)?.[1] || 'none';
-    const routeTopic = routeContext.match(/Topic: ([^\n]+)/)?.[1] || 'none';
-    const secondaryCount = Array.isArray(context.secondaryFocus) ? context.secondaryFocus.length : 0;
-    const focusCount = (context.primaryFocus ? 1 : 0) + secondaryCount;
-    const recommendation = context.currentRecommendation
-      ? `${context.currentRecommendation.topicCode}:${context.currentRecommendation.level}:${context.currentRecommendation.reasonCode}`
-      : 'none';
-    const nonJudgmental = /non-judgmental/.test(request.systemPrompt) &&
-      /Do not describe the learner as bad, weak, failing, or behind/.test(request.systemPrompt);
-    return {
-      providerRequestId: 'mock-context',
-      content: [
-        `locale=${context.locale}`,
-        `ageBand=${context.ageBand}`,
-        `learnerLevel=${context.learnerLevel?.code || 'unknown'}`,
-        `confidence=${context.learnerLevel?.confidence || 'Low'}`,
-        `schoolStage=${context.schoolStage || 'none'}`,
-        `primaryFocus=${context.primaryFocus?.topicCode || 'none'}`,
-        `secondaryCount=${secondaryCount}`,
-        `focusCount=${focusCount}`,
-        `recommendation=${recommendation}`,
-        `nonJudgmental=${nonJudgmental}`,
-        `messageCount=${request.messages.length}`,
-        `sourceCount=${sourceCount}`,
-        `hasReviewedSources=${/Reviewed Cyberly Sources:/.test(ragContext)}`,
-        `hasChunkId=${/chunkId=/i.test(ragContext)}`,
-        `hasLearningRoute=${/Suggested Cyberly Learning Route:/.test(routeContext)}`,
-        `routeStepCount=${routeStepCount}`,
-        `routeTimeBudget=${routeTimeBudget}`,
-        `routeTopic=${routeTopic}`,
-        `chars=${chars}`,
-      ].join(' '),
-      inputTokens: 100,
-      outputTokens: 25,
-    };
-  }
-  return {
-    providerRequestId: 'mock-success',
-    content: 'CyberGuard can help you learn this safely. Check the sender, links, urgency, and requests for secrets before you act.',
-    inputTokens: 120,
-    outputTokens: 36,
-  };
-}
+const { createProviderRegistry } = require('./providers/aiProvider.registry');
 
 function createAiProvider(config) {
-  const client = config.openAiApiKey
-    ? new OpenAI({ apiKey: config.openAiApiKey })
-    : null;
+  const registry = createProviderRegistry({
+    env: {
+      ...process.env,
+      AI_DEFAULT_PROVIDER: config.provider || process.env.AI_DEFAULT_PROVIDER || process.env.AI_PROVIDER,
+      AI_PROVIDER_CYBERGUARD: config.provider || process.env.AI_PROVIDER_CYBERGUARD || process.env.AI_PROVIDER,
+      OPENAI_MODEL: config.model || process.env.OPENAI_MODEL,
+      AI_MODEL: config.model || process.env.AI_MODEL,
+      OPENAI_API_KEY: config.openAiApiKey || process.env.OPENAI_API_KEY,
+      AI_TIMEOUT_MS: String(config.timeoutMs || process.env.AI_TIMEOUT_MS || ''),
+      AI_MAX_OUTPUT_TOKENS: String(config.maxOutputTokens || process.env.AI_MAX_OUTPUT_TOKENS || ''),
+      AI_TEST_MOCK_OPENAI: config.testMockMode || process.env.AI_TEST_MOCK_OPENAI || '',
+      AI_TEST_MOCK_PROVIDER: config.testMockMode || process.env.AI_TEST_MOCK_PROVIDER || process.env.AI_TEST_MOCK_OPENAI || '',
+      NODE_ENV: process.env.NODE_ENV,
+    },
+  });
 
-  async function generateReply(request) {
-    if (config.testMockMode) return mockGenerate(config, request);
-    if (!client) throw providerError(ERROR_CODES.AI_NOT_CONFIGURED, 'AI provider is not configured.', 503);
-    if (config.provider !== 'openai') throw providerError(ERROR_CODES.AI_NOT_CONFIGURED, 'AI provider is not configured.', 503);
-
-    const controller = new AbortController();
-    const timeout = setTimeout(() => controller.abort(), config.timeoutMs);
-    try {
-      const response = await client.responses.create({
-        model: config.model,
-        instructions: buildResponsesInstructions(request.systemPrompt, request.learnerContext, request.ragContext, request.routeContext),
-        input: buildResponsesInput(request.messages),
-        max_output_tokens: config.maxOutputTokens,
-        store: false,
-      }, { signal: controller.signal });
-      const usage = usageFromResponse(response);
-      return {
-        providerRequestId: response.id || null,
-        content: response.output_text || '',
-        inputTokens: usage.inputTokens,
-        outputTokens: usage.outputTokens,
-      };
-    } catch (error) {
-      throw normalizeProviderError(error);
-    } finally {
-      clearTimeout(timeout);
-    }
+  function selectedProvider() {
+    return registry.resolve(registry.selection.providerForPurpose('cyberguard_chat'));
   }
 
   return {
-    generateReply,
+    get id() {
+      return selectedProvider().id;
+    },
+    get model() {
+      return selectedProvider().model;
+    },
+    get configured() {
+      return selectedProvider().configured;
+    },
+    get capabilities() {
+      return selectedProvider().capabilities;
+    },
+    generateReply(request) {
+      return selectedProvider().generateReply
+        ? selectedProvider().generateReply(request)
+        : selectedProvider().generate(request).then(result => ({
+          providerRequestId: result.providerRequestId || null,
+          content: result.text || '',
+          inputTokens: result.usage?.inputTokens || 0,
+          outputTokens: result.usage?.outputTokens || 0,
+          latencyMs: result.latencyMs,
+        }));
+    },
+    registry,
   };
 }
 

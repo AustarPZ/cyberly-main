@@ -102,9 +102,9 @@ function mapGeneration(row) {
 }
 
 function normalizeProviderFailure(error) {
-  if (error?.code === ERROR_CODES.AI_TIMEOUT) return httpError(503, ERROR_CODES.AI_TIMEOUT, 'AI provider timed out.');
+  if (error?.code === 'AI_PROVIDER_TIMEOUT' || error?.code === ERROR_CODES.AI_TIMEOUT) return httpError(503, ERROR_CODES.AI_TIMEOUT, 'AI provider timed out.');
   if (error?.code === ERROR_CODES.AI_RATE_LIMITED) return httpError(429, ERROR_CODES.AI_RATE_LIMITED, 'AI provider is rate limited.');
-  if (error?.code === ERROR_CODES.AI_NOT_CONFIGURED) return httpError(503, ERROR_CODES.AI_NOT_CONFIGURED, 'AI provider is not configured.');
+  if (error?.code === 'AI_PROVIDER_NOT_CONFIGURED' || error?.code === ERROR_CODES.AI_NOT_CONFIGURED) return httpError(503, ERROR_CODES.AI_NOT_CONFIGURED, 'AI provider is not configured.');
   return httpError(503, ERROR_CODES.AI_PROVIDER_UNAVAILABLE, 'AI provider is unavailable.');
 }
 
@@ -185,11 +185,16 @@ function createAiService(repository, provider, config, options = {}) {
 
   async function generateReply(userId, conversationIdInput, messageIdInput, input = {}) {
     const target = await loadOwnedTarget(userId, conversationIdInput, messageIdInput);
-    if (!configured(config)) {
+    if (!(provider.configured || configured(config))) {
       throw httpError(503, ERROR_CODES.AI_NOT_CONFIGURED, 'AI provider is not configured.');
     }
 
-    let generation = await repository.createGeneration(target.conversationId, target.messageId, config.provider, config.model);
+    let generation = await repository.createGeneration(
+      target.conversationId,
+      target.messageId,
+      provider.id || config.provider,
+      provider.model || config.model
+    );
     if (generation.status === 'completed') {
       return completedResponse(userId, generation, target.userMessage);
     }

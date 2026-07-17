@@ -71,7 +71,7 @@
     "signInButton": "Sign in",
     "goToRegister": "Create an account",
     "displayNameRequired": "Display name must be 2 to 50 characters.",
-    "ageInvalid": "Please enter a whole-number age from 1 to 120."  
+    "ageInvalid": "Please enter a whole-number age from 1 to 120."
   },
   "onboarding": {
     "account": "Account",
@@ -301,7 +301,7 @@
     "ageInvalid": "Please enter a whole-number age from 1 to 120.",
     "nicknameRequired": "Please enter a nickname for the AI to use.",
     "chooseOne": "Choose one",
-      "learnerProfile": "Learner Profile",
+    "learnerProfile": "Learner Profile",
     "title": "Shape your Cyberly experience",
     "description": "These preferences are saved separately from your account identity. Age and education level stay separate.",
     "finishOnboarding": "Finish onboarding",
@@ -408,10 +408,11 @@
       "loading": "Loading scenarios...",
       "empty": "No scenarios found",
       "emptyDescription": "Try a different topic or difficulty filter.",
+      "backToLibrary": "Back to Scenario Library",
       "backToDashboard": "Back to dashboard"
     },
-    "leaveTitle": "Leave this scenario?",
-    "leaveDescription": "Your saved decisions will remain available, and you can resume this scenario later from the library.",
+    "leaveTitle": "Leave this Scenario?",
+    "leaveDescription": "Your saved decisions will remain available. You can resume this Scenario later from the Scenario Library.",
     "filters": {
       "topic": "Topic filter",
       "difficulty": "Difficulty filter",
@@ -467,7 +468,10 @@
       "step": "Step {{step}}",
       "stepChoice": "Step {{step}}: your choice {{choice}}",
       "updatedRecommendation": "Updated recommendation"
-    }
+    },
+    "continueScenario": "Continue Scenario",
+    "leaveScenario": "Leave Scenario",
+    "localeFallback": "This Scenario is currently shown in {{displayed}} because {{requested}} is not available yet."
   },
   "home": {
     "hero": {
@@ -610,21 +614,51 @@
       "description": "A modular, AI-powered toolkit with six core capabilities."
     },
     "features": {
-      "agentic": { "title": "Agentic AI Guidance", "description": "Autonomous, goal-oriented learning support with scenario-based decision assistance and real-time personalised recommendations." },
-      "chatbot": { "title": "Cyber Wellness Chatbot", "description": "Real-time conversational support that answers cybersecurity questions through natural language interaction." },
-      "adaptive": { "title": "Adaptive Difficulty", "description": "Auto-selects difficulty based on the user's knowledge and progress for a more effective lesson experience." },
-      "simulations": { "title": "Cyber Threat Simulations", "description": "Simulate phishing, scams, and misinformation scenarios to sharpen critical thinking and cybersecurity decisions." },
-      "progress": { "title": "Progress Tracking", "description": "Monitors learning progress and engagement patterns to assess effectiveness and drive adaptive recommendations." },
-      "gamified": { "title": "Gamified Challenges", "description": "Optional quizzes, achievements, and interactive activities to boost motivation, engagement, and knowledge retention." }
+      "agentic": {
+        "title": "Agentic AI Guidance",
+        "description": "Autonomous, goal-oriented learning support with scenario-based decision assistance and real-time personalised recommendations."
+      },
+      "chatbot": {
+        "title": "Cyber Wellness Chatbot",
+        "description": "Real-time conversational support that answers cybersecurity questions through natural language interaction."
+      },
+      "adaptive": {
+        "title": "Adaptive Difficulty",
+        "description": "Auto-selects difficulty based on the user's knowledge and progress for a more effective lesson experience."
+      },
+      "simulations": {
+        "title": "Cyber Threat Simulations",
+        "description": "Simulate phishing, scams, and misinformation scenarios to sharpen critical thinking and cybersecurity decisions."
+      },
+      "progress": {
+        "title": "Progress Tracking",
+        "description": "Monitors learning progress and engagement patterns to assess effectiveness and drive adaptive recommendations."
+      },
+      "gamified": {
+        "title": "Gamified Challenges",
+        "description": "Optional quizzes, achievements, and interactive activities to boost motivation, engagement, and knowledge retention."
+      }
     },
     "how": {
       "title": "How it works",
       "description": "Every experience is shaped around the individual learner.",
       "steps": {
-        "signUp": { "title": "You sign up", "description": "Complete a short onboarding profile — your age, language, familiarity, and learning goals." },
-        "path": { "title": "AI builds your path", "description": "The Agentic AI module constructs a personalised learning path based on your responses." },
-        "learn": { "title": "Learn your way", "description": "Chat with CyberGuard AI, explore resources, and tackle simulations — all adapted to your level." },
-        "track": { "title": "Track your growth", "description": "Your progress is tracked to continuously refine recommendations over time." }
+        "signUp": {
+          "title": "You sign up",
+          "description": "Complete a short onboarding profile — your age, language, familiarity, and learning goals."
+        },
+        "path": {
+          "title": "AI builds your path",
+          "description": "The Agentic AI module constructs a personalised learning path based on your responses."
+        },
+        "learn": {
+          "title": "Learn your way",
+          "description": "Chat with CyberGuard AI, explore resources, and tackle simulations — all adapted to your level."
+        },
+        "track": {
+          "title": "Track your growth",
+          "description": "Your progress is tracked to continuously refine recommendations over time."
+        }
       }
     },
     "objectives": {
@@ -646,11 +680,26 @@
         "description": "Provides guidance, professional oversight, and industry client direction throughout the project."
       },
       "members": {
-        "jayron": { "role": "Web Developer", "description": "Ensures logic and webpage usability are functional, and leads implementation of Agentic AI features and adaptive learning tools." },
-        "jinHong": { "role": "UI/UX Designer", "description": "Develops the core wireframe and low-fidelity prototype design, ensuring the interface is tailored to our teenage target demographic." },
-        "edward": { "role": "System Architect & Chatbot Lead", "description": "Handles backend architecture and AI workflow planning, ensuring components are streamlined for adaptive learning features." },
-        "arman": { "role": "Agentic AI Personalisation", "description": "Builds Agentic AI analytics for personalised features and adaptive learning, focusing on user behaviour analysis." },
-        "puah": { "role": "Agentic AI Module Lead", "description": "Leads the implementation of system architecture and the Agentic AI module, with support in chatbot functionalities." }
+        "jayron": {
+          "role": "Web Developer",
+          "description": "Ensures logic and webpage usability are functional, and leads implementation of Agentic AI features and adaptive learning tools."
+        },
+        "jinHong": {
+          "role": "UI/UX Designer",
+          "description": "Develops the core wireframe and low-fidelity prototype design, ensuring the interface is tailored to our teenage target demographic."
+        },
+        "edward": {
+          "role": "System Architect & Chatbot Lead",
+          "description": "Handles backend architecture and AI workflow planning, ensuring components are streamlined for adaptive learning features."
+        },
+        "arman": {
+          "role": "Agentic AI Personalisation",
+          "description": "Builds Agentic AI analytics for personalised features and adaptive learning, focusing on user behaviour analysis."
+        },
+        "puah": {
+          "role": "Agentic AI Module Lead",
+          "description": "Leads the implementation of system architecture and the Agentic AI module, with support in chatbot functionalities."
+        }
       }
     }
   },
@@ -874,13 +923,13 @@
       "resources": "Resources",
       "resourcesDescription": "Review publication, approval, and CyberGuard retrieval for learning Resources.",
       "scenarios": "Scenarios",
-      "scenariosDescription": "Scenario governance will be added later.",
+      "scenariosDescription": "Manage existing scenario practice content.",
       "assessments": "Assessments",
       "assessmentsDescription": "Assessment governance will be added later.",
       "faqGuidance": "FAQ & Guidance",
       "faqGuidanceDescription": "FAQ and guidance governance will be added later.",
       "aiAgentic": "AI & Agentic",
-      "aiAgenticDescription": "AI safety and Agentic governance will be added later.",
+      "aiAgenticDescription": "Provider diagnostics, purpose routing, and Agentic safety boundaries.",
       "comingLater": "Coming later"
     },
     "accessDenied": {
@@ -895,6 +944,60 @@
       "role": "Role",
       "modules": "Planned modules",
       "error": "Unable to verify admin access."
+    },
+    "ai": {
+      "badge": "AI gateway",
+      "providers": {
+        "title": "AI providers",
+        "description": "View server-side provider configuration for OpenAI, Gemini, and ILMU. Connection tests run only when an Admin clicks Test connection.",
+        "configuration": "Provider configuration",
+        "provider": "Provider",
+        "configured": "Configured",
+        "notConfigured": "Not configured",
+        "notConfiguredHelp": "Add the server-side API key and restart the backend before testing this provider.",
+        "model": "Model",
+        "capabilities": "Capabilities",
+        "testConnection": "Test connection",
+        "testing": "Testing...",
+        "connectionSuccessful": "Connection successful",
+        "connectionFailed": "Connection failed",
+        "safeFailure": "The provider test failed safely.",
+        "testLatency": "Test latency: {{latency}} ms",
+        "costNoteLabel": "Provider test cost note",
+        "costNoteTitle": "Cost awareness",
+        "costNote": "This test sends a small real request to the selected provider and may use provider quota.",
+        "defaultProvider": "Default: {{provider}}",
+        "usedFor": "Used for: {{purposes}}",
+        "loading": "Loading AI provider diagnostics...",
+        "errors": {
+          "load": "Unable to load AI provider diagnostics."
+        }
+      },
+      "capabilities": {
+        "chat": "Chat",
+        "structuredOutput": "Structured output",
+        "toolCalling": "Tool calling",
+        "streaming": "Streaming",
+        "usageReporting": "Usage reporting"
+      },
+      "purposes": {
+        "title": "Purpose routing",
+        "heading": "Backend-controlled provider selection",
+        "cyberguard": "CyberGuard chat",
+        "agentRouter": "Agent Router",
+        "lightweight": "Lightweight selection",
+        "translation": "Translation assistance",
+        "safety": "Safety evaluation"
+      },
+      "safety": {
+        "badge": "Agentic safety boundary",
+        "title": "Current Agentic limits",
+        "readOnlyTools": "Read-only tools only",
+        "backendControlled": "Tool execution remains backend-controlled",
+        "noScoreChanges": "No automatic score or mastery changes",
+        "noProgressMutation": "No automatic progress mutation",
+        "learnerControlled": "Learners accept, modify, or ignore recommendations"
+      }
     },
     "resourceReview": {
       "badge": "Read-only review",
@@ -933,7 +1036,9 @@
       "loading": "Loading resources...",
       "loadingDetail": "Loading resource detail...",
       "empty": "No resources match these filters.",
-        "reviewAction": "Review governance",
+      "reviewAction": "Review governance",
+      "quickReviewAction": "Quick Review",
+      "drawerActionsLabel": "Resource drawer actions",
       "drawerLabel": "Resource governance detail",
       "drawerBadge": "Governance detail",
       "unsaved": "Unsaved changes",
@@ -977,7 +1082,7 @@
       "reviewStatus": {
         "approved": "Approved",
         "needs_review": "Needs review",
-        "draft": "Draft",
+        "draft": "Draft review",
         "rejected": "Rejected"
       },
       "ragDocumentReviewStatus": {
@@ -988,24 +1093,26 @@
       "flags": {
         "ragReady": "RAG-ready",
         "notRagReady": "Not RAG-ready",
-        "effective": "CyberGuard eligible",
-        "notEffective": "Not eligible"
+        "effective": "CyberGuard enabled",
+        "notEffective": "CyberGuard disabled",
+        "cyberGuardEnabled": "CyberGuard enabled",
+        "cyberGuardDisabled": "CyberGuard disabled"
       },
       "eligibilityReasons": {
         "resource_not_published": "Resource is not published.",
         "resource_not_approved": "Resource is not approved.",
         "resource_rag_disabled": "RAG readiness is disabled."
       },
-        "table": {
-          "resource": "Resource",
-          "category": "Category",
-          "publication": "Publication",
-          "review": "Review",
-          "rag": "RAG",
-          "updated": "Updated",
-          "action": "Action",
-          "scrollLabel": "Resource governance table. Use horizontal scrolling to view all columns."
-        },
+      "table": {
+        "resource": "Resource",
+        "category": "Category",
+        "publication": "Publication",
+        "review": "Review",
+        "rag": "RAG",
+        "updated": "Updated",
+        "action": "Action",
+        "scrollLabel": "Resource governance table. Use horizontal scrolling to view all columns."
+      },
       "pagination": "Page {{page}} of {{totalPages}} · {{totalItems}} resources",
       "detail": {
         "overview": "Learner preview",
@@ -1026,6 +1133,143 @@
         "list": "Unable to load resources.",
         "detail": "Unable to load resource detail.",
         "save": "Unable to save resource governance."
+      }
+    },
+    "translation": {
+      "tabsLabel": "Content language tabs",
+      "coverage": "Translation coverage",
+      "coverageValue": "{{complete}} / {{total}} complete",
+      "required": "Required",
+      "optional": "Optional",
+      "requiredReady": "Required English complete",
+      "requiredMissing": "Required English missing",
+      "locales": {
+        "en": "English",
+        "ms": "Bahasa Melayu",
+        "zh-CN": "Simplified Chinese"
+      },
+      "status": {
+        "complete": "Complete",
+        "incomplete": "Incomplete",
+        "missing": "Missing",
+        "unsaved": "Unsaved"
+      }
+    },
+    "publication": {
+      "label": "Publication readiness",
+      "ready": "Ready to publish",
+      "cannotPublish": "Cannot publish",
+      "missing": "Missing",
+      "publishResource": "Publish Resource",
+      "publishScenario": "Publish Scenario",
+      "returnToDraft": "Return to Draft",
+      "publishWithFallback": "Publish with English fallback",
+      "restoreInLifecycle": "Restore from the lifecycle dialog before publishing.",
+      "publishedResource": "Resource published.",
+      "returnedResourceToDraft": "Resource returned to Draft.",
+      "returnedScenarioToDraft": "Scenario returned to Draft.",
+      "optionalLocaleWarning": "Optional translations missing: {{locales}}. Learners using those languages may see English fallback.",
+      "confirmPublishResource": "Learners will be able to view this Resource. CyberGuard retrieval still requires approved review status and RAG readiness.",
+      "confirmPublishScenario": "Learners will be able to start this Scenario. Its scoring structure becomes learner-facing.",
+      "confirmReturnToDraft": "Learners will no longer see or start this item. Saved content and historical references remain.",
+      "confirmOptionalFallback": "Missing optional translations: {{locales}}. Learners may see English fallback.",
+      "status": {
+        "draft": "Draft",
+        "published": "Published",
+        "archived": "Archived"
+      },
+      "reasons": {
+        "unknown": "A required check is incomplete.",
+        "english_required": "English content is incomplete.",
+        "english_title_required": "English title is missing.",
+        "english_summary_required": "English summary is missing.",
+        "english_body_required": "English body is missing.",
+        "category_required": "Category is missing.",
+        "archived": "Archived content must be restored first.",
+        "resource_archived": "Archived Resource must be restored first.",
+        "title_required": "Title is missing.",
+        "summary_required": "Summary is missing.",
+        "topic_invalid": "Topic is invalid.",
+        "difficulty_invalid": "Difficulty is invalid.",
+        "duration_invalid": "Duration is invalid.",
+        "total_steps_invalid": "Total step count is invalid.",
+        "step_count_mismatch": "Step count does not match the expected total.",
+        "step_situation_required": "A step situation is missing.",
+        "step_prompt_required": "A step prompt is missing.",
+        "choice_text_required": "A choice text is missing.",
+        "choice_feedback_required": "Choice feedback is missing.",
+        "choice_safety_explanation_required": "Choice safety explanation is missing."
+      },
+      "errors": {
+        "publishResource": "Unable to publish Resource.",
+        "unpublishResource": "Unable to return Resource to Draft."
+      }
+    },
+    "resourceLifecycle": {
+      "badge": "Resource lifecycle",
+      "headerLabel": "Resource action header",
+      "tabsLabel": "Resource sections",
+      "actionsLabel": "Resource lifecycle actions",
+      "moreActions": "More actions",
+      "loading": "Loading lifecycle...",
+      "loadingInformation": "Loading lifecycle information...",
+      "archiveOrDelete": "Archive or delete Resource",
+      "archiveDeleteShort": "Archive / Delete",
+      "manageTitle": "Archive or delete Resource",
+      "manageDescription": "Review the current lifecycle state before archiving, restoring, or permanently deleting this Resource.",
+      "archiveTitle": "Archive Resource",
+      "archiveDescription": "Learners will no longer see this Resource, and CyberGuard will no longer retrieve it. Content, metadata, and historical source records will remain so it can be reviewed later.",
+      "deleteTitle": "Permanently delete Resource",
+      "restoreTitle": "Restore Resource",
+      "restoreDescription": "Restore this Resource to Draft and keep CyberGuard retrieval disabled until review is completed again.",
+      "deleteDescription": "This cannot be undone. All owned translations and metadata for this draft Resource will be deleted. Type the exact slug to confirm.",
+      "deleteUnavailableDescription": "This Resource has publication, review, RAG, or historical references. It cannot be permanently deleted; archive it instead.",
+      "archiveButton": "Archive Resource",
+      "restoreButton": "Restore Resource",
+      "deleteButton": "Permanently Delete",
+      "archiveShort": "Archive",
+      "deleteShort": "Permanently delete",
+      "confirmSlugLabel": "Type the exact slug to confirm",
+      "blockingReasons": "Blocking reasons",
+      "archiveStillAvailable": "Archive remains available for this Resource.",
+      "restoreStillAvailable": "Restore remains available for this archived Resource.",
+      "breadcrumbLabel": "Resource breadcrumb",
+      "breadcrumbResources": "Resources",
+      "cyberGuardStatus": "CyberGuard status",
+      "deletionEligibility": "Deletion eligibility",
+      "deleteAvailable": "Permanent deletion available",
+      "deleteBlocked": "Permanent deletion blocked",
+      "countsLabel": "Lifecycle reference counts",
+      "counts": {
+        "translations": "Translations",
+        "ragDocuments": "RAG documents",
+        "ragChunks": "RAG chunks",
+        "chatSourceReferences": "Saved CyberGuard responses"
+      },
+      "tabs": {
+        "content": "Content",
+        "metadata": "Metadata",
+        "governance": "Governance"
+      },
+      "reasons": {
+        "resource_not_draft": "Resource is published or archived.",
+        "review_not_draft": "Resource review is not Draft.",
+        "resource_rag_ready": "Resource is RAG-ready.",
+        "rag_documents_exist": "{{count}} RAG document exists for this Resource.",
+        "rag_chunks_exist": "{{count}} RAG chunk exists for this Resource.",
+        "chat_sources_exist": "Saved CyberGuard responses reference this Resource.",
+        "chat_source_history_exists": "This Resource appears in {{count}} saved CyberGuard response.",
+        "content_relationships_exist": "{{count}} content relationship references this Resource.",
+        "resource_not_found": "Resource was not found."
+      },
+      "errors": {
+        "archive": "Unable to archive Resource.",
+        "restore": "Unable to restore Resource.",
+        "delete": "Unable to permanently delete Resource.",
+        "load": "Lifecycle details are still loading.",
+        "loadFailed": "Unable to load lifecycle information.",
+        "slugMismatch": "The confirmation slug does not match.",
+        "notEligible": "This Resource cannot be permanently deleted. Archive it instead."
       }
     },
     "resourceEditor": {
@@ -1088,6 +1332,96 @@
         "notFound": "Resource content was not found."
       }
     },
+    "resourceCreate": {
+      "createResource": "Create Resource",
+      "createDraft": "Create draft",
+      "draftPreview": "Draft preview",
+      "title": "Create Resource",
+      "description": "Create a safe draft Resource with English content, source metadata, and governance defaults.",
+      "identity": "Resource identity",
+      "classification": "Classification",
+      "slug": "Slug",
+      "slugHint": "Lowercase letters, numbers, and hyphens only. The slug cannot be changed later in this phase.",
+      "invalidSlug": "Use lowercase letters, numbers, and single hyphens only.",
+      "invalidSourceUrl": "Enter a valid http or https source URL.",
+      "duplicateSlug": "A Resource with this slug already exists.",
+      "englishContent": "English content",
+      "created": "Resource created as a draft.",
+      "nextStepsTitle": "Next steps after creation",
+      "addMalay": "Add Malay translation in the content editor.",
+      "addChinese": "Add Simplified Chinese translation in the content editor.",
+      "reviewMetadata": "Review source metadata before governance approval.",
+      "reviewBeforePublishing": "Review governance before publication or CyberGuard retrieval.",
+      "unsavedTitle": "Discard new Resource draft?",
+      "unsavedMessage": "Your new Resource form has unsaved changes.",
+      "unsavedLogoutMessage": "Logging out will discard your unsaved Resource creation form.",
+      "errors": {
+        "options": "Unable to load Resource creation options.",
+        "create": "Unable to create Resource."
+      }
+    },
+    "resourceMetadata": {
+      "title": "Edit Resource metadata",
+      "editMetadata": "Edit metadata",
+      "sourceInformation": "Source information",
+      "sourceLabel": "Source label",
+      "sourceUrl": "Source URL",
+      "openSource": "Open source",
+      "missingSource": "No clickable source URL is set.",
+      "sourceClassification": "Source classification",
+      "sourceType": "Source type",
+      "sourceCountry": "Source country",
+      "authorityLevel": "Authority level",
+      "sourceMaintenance": "Source maintenance",
+      "lastSourceChecked": "Last source checked",
+      "markCheckedToday": "Mark checked today",
+      "markCheckedTodayHint": "Record that an Admin manually checked this source.",
+      "replacementSourceNeeded": "Replacement source needed",
+      "replacementWarning": "This Resource is flagged for source replacement. This does not automatically archive or disable it.",
+      "safetyMetadata": "Safety metadata",
+      "ageSuitability": "Age suitability",
+      "sensitiveTopic": "Sensitive topic",
+      "malaysiaGuidance": "Malaysia guidance",
+      "saveMetadata": "Save metadata",
+      "saved": "Metadata saved.",
+      "loading": "Loading Resource metadata...",
+      "unsavedTitle": "Discard metadata changes?",
+      "unsavedMessage": "Your Resource metadata changes have not been saved.",
+      "unsavedLogoutMessage": "Logging out will discard your unsaved Resource metadata changes.",
+      "sourceTypes": {
+        "government_cybersecurity_agency": "Government cybersecurity agency",
+        "government": "Government",
+        "education": "Education",
+        "ngo": "NGO",
+        "international_organisation": "International organisation",
+        "general_web": "General web",
+        "test_source": "Test source"
+      },
+      "sourceCountries": {
+        "MY": "Malaysia",
+        "SG": "Singapore",
+        "GLOBAL": "Global",
+        "OTHER": "Other"
+      },
+      "authorityLevels": {
+        "official_agency": "Official agency",
+        "recognised_organisation": "Recognised organisation",
+        "education_provider": "Education provider",
+        "general_reference": "General reference",
+        "unknown": "Unknown"
+      },
+      "ageOptions": {
+        "13-17": "13-17",
+        "all_teens": "All teenagers",
+        "older_teens": "Older teenagers",
+        "general": "General"
+      },
+      "errors": {
+        "load": "Unable to load Resource metadata.",
+        "save": "Unable to save Resource metadata.",
+        "stale": "Metadata changed elsewhere. Reload the latest version before saving."
+      }
+    },
     "moduleStatus": {
       "planned": "Planned"
     },
@@ -1124,6 +1458,271 @@
         "title": "Role Management",
         "description": "Future least-privilege access controls for admins and reviewers."
       }
+    },
+    "scenarioManagement": {
+      "badge": "Scenario Admin",
+      "title": "Scenario Management",
+      "description": "Review, preview, and manage existing Cyberly scenario practice content without changing learner scores.",
+      "create": "Create draft scenario",
+      "summaryLabel": "Scenario management summary",
+      "metrics": {
+        "total": "Total",
+        "published": "Published",
+        "draft": "Draft",
+        "archived": "Archived",
+        "incomplete": "Needs structure"
+      },
+      "filters": {
+        "search": "Search",
+        "searchPlaceholder": "Search title, slug, or summary",
+        "status": "Status",
+        "topic": "Topic",
+        "difficulty": "Difficulty",
+        "all": "All",
+        "clear": "Clear filters"
+      },
+      "status": {
+        "published": "Published",
+        "draft": "Draft",
+        "archived": "Archived"
+      },
+      "table": {
+        "scenario": "Scenario",
+        "topic": "Topic",
+        "difficulty": "Difficulty",
+        "status": "Status",
+        "updated": "Updated",
+        "actions": "Actions",
+        "scrollLabel": "Scenario management table"
+      },
+      "structure": {
+        "ready": "Ready",
+        "needsWork": "Needs work"
+      },
+      "loading": "Loading scenarios...",
+      "empty": "No scenarios found.",
+      "pagination": "Page {{page}} of {{totalPages}}",
+      "preview": "Preview",
+      "quickPreview": "Quick Review",
+      "quickReview": "Quick Review",
+      "edit": "Edit",
+      "drawerLabel": "Scenario preview",
+      "loadingDetail": "Loading scenario details...",
+      "previewHeading": "Learner preview",
+      "stepsHeading": "Scenario steps",
+      "minutes": "{{count}} min",
+      "updatedAt": "Updated {{date}}",
+      "errors": {
+        "list": "Unable to load scenarios.",
+        "detail": "Unable to load scenario details."
+      }
+    },
+    "scenarioEditor": {
+      "createBadge": "New Scenario",
+      "editBadge": "Scenario Editor",
+      "createTitle": "Create draft scenario",
+      "createDraftScenario": "Create draft Scenario",
+      "createScenarioTitle": "Create Scenario",
+      "createDescription": "Create a safe Draft Scenario. It remains hidden from learners until it is complete and published.",
+      "backToScenarios": "← Back to Scenarios",
+      "learnerHidden": "Learner hidden",
+      "draftPreview": "Draft Preview",
+      "previewOnly": "Preview only. Learners will not see this Scenario until it is published.",
+      "previewSubmissionDisabled": "Learner submission is disabled in Preview mode.",
+      "previewSituationPlaceholder": "Step situation will appear here.",
+      "previewChoicePlaceholder": "Choice text will appear here.",
+      "previewFeedbackPlaceholder": "Sample feedback appears here after a learner chooses an option.",
+      "previewStepProgress": "Step {{current}} of {{total}}",
+      "currentStep": "Current step",
+      "decisionsCount": "{{count}} decisions",
+      "structureCompleteness": "Structure completeness",
+      "structureCompletenessValue": "{{ready}} / {{total}} ready",
+      "identityHeading": "Scenario identity",
+      "classificationHeading": "Classification",
+      "structureHeading": "Structure planning",
+      "description": "Manage metadata and structured decision steps. Scoring stays controlled by the backend.",
+      "discardTitle": "Discard scenario changes?",
+      "discardDescription": "You have unsaved scenario changes.",
+      "logoutDescription": "You have unsaved scenario changes. Save before signing out.",
+      "loading": "Loading scenario editor...",
+      "back": "← Back",
+      "tabsLabel": "Scenario editor sections",
+      "overviewHeading": "Overview",
+      "metadataHeading": "Metadata",
+      "stepsHeading": "Decision steps",
+      "previewHeading": "Preview",
+      "scenarioActions": "Scenario actions",
+      "attempts": "{{count}} attempts",
+      "attemptsLock": "This scenario has learner attempts, so structural step edits are locked to preserve historical results.",
+      "createDraft": "Create draft",
+      "saveMetadata": "Save metadata",
+      "saveSteps": "Save steps",
+      "publish": "Publish",
+      "archive": "Archive",
+      "restore": "Restore",
+      "publishScenario": "Publish Scenario",
+      "archiveScenario": "Archive Scenario",
+      "restoreScenario": "Restore Scenario",
+      "savedMetadata": "Scenario metadata saved.",
+      "savedSteps": "Scenario steps saved. Published scenarios return to draft after structural edits.",
+      "structuralDraftTitle": "Save structural changes?",
+      "structuralDraftDescription": "Saving structural changes will return this Scenario to Draft and hide it from learners until it is republished.",
+      "saveAndReturnToDraft": "Save and return to Draft",
+      "createDraftSaved": "Draft scenario created.",
+      "previewTitlePlaceholder": "Scenario title",
+      "previewSummaryPlaceholder": "Scenario summary will appear here.",
+      "previewPromptPlaceholder": "Step prompt",
+      "previewChoices": "choices ready",
+      "stepTitle": "Step {{number}}",
+      "optionTitle": "Choice {{key}}",
+      "fields": {
+        "slug": "Slug",
+        "title": "Title",
+        "summary": "Summary",
+        "topic": "Topic",
+        "difficulty": "Difficulty",
+        "minutes": "Estimated minutes",
+        "totalSteps": "Total steps",
+        "situation": "Situation text",
+        "prompt": "Prompt",
+        "optionText": "Choice text",
+        "score": "Score",
+        "outcome": "Outcome code",
+        "feedback": "Feedback",
+        "safetyExplanation": "Safety explanation"
+      },
+      "scores": {
+        "safest": "Safest (2)",
+        "partial": "Partial (1)",
+        "unsafe": "Unsafe (0)"
+      },
+      "validation": {
+        "correctFields": "Correct the highlighted fields.",
+        "required": "Required",
+        "slug": {
+          "required": "Slug is required.",
+          "format": "Use lowercase letters, numbers, and single hyphens only.",
+          "duplicate": "This slug is already used."
+        },
+        "title": {
+          "required": "Title is required.",
+          "tooLong": "Title is too long."
+        },
+        "summary": {
+          "required": "Summary is required.",
+          "tooLong": "Summary is too long."
+        },
+        "topicCode": {
+          "invalid": "Choose a supported topic."
+        },
+        "difficulty": {
+          "invalid": "Choose a supported difficulty."
+        },
+        "estimatedMinutes": {
+          "positiveInteger": "Estimated minutes must be a positive whole number.",
+          "tooLarge": "Estimated minutes is too large."
+        },
+        "totalSteps": {
+          "positiveInteger": "Total steps must be a positive whole number.",
+          "range": "Total steps must be between 3 and 5."
+        }
+      },
+      "lifecycle": {
+        "publish": "Scenario published.",
+        "archive": "Scenario archived.",
+        "restore": "Scenario restored as draft."
+      },
+      "tabs": {
+        "overview": "Overview",
+        "steps": "Steps",
+        "preview": "Preview"
+      },
+      "errors": {
+        "saveTranslation": "Unable to save scenario translation."
+      },
+      "slugHelp": "Use lowercase letters, numbers, and single hyphens only. Example: phishing-practice-plan",
+      "creating": "Creating...",
+      "translationTabsLabel": "Scenario translation languages",
+      "translationExists": "Translation exists",
+      "translationMissing": "Missing translation",
+      "missingTranslationNotice": "Missing translation. Add localized text without changing the shared Scenario structure.",
+      "saveTranslation": "Save translation",
+      "savedTranslation": "Scenario translation saved.",
+      "continueEditing": "Continue editing",
+      "discardAndSwitchTranslation": "Discard and switch language",
+      "locales": {
+        "en": "English",
+        "ms": "Bahasa Melayu",
+        "zh-CN": "Simplified Chinese"
+      },
+      "requestedLanguage": "Requested language",
+      "displayedLanguage": "Displayed language",
+      "addTranslation": "Add translation"
+    },
+    "scenarioLifecycle": {
+      "badge": "Scenario lifecycle",
+      "archiveDeleteShort": "Archive / Delete",
+      "restoreDeleteShort": "Restore / Delete",
+      "archiveOrDelete": "Archive or delete Scenario",
+      "archiveDeleteTitle": "Archive or delete Scenario",
+      "restoreDeleteTitle": "Restore or delete Scenario",
+      "description": "Review safe lifecycle actions for this Scenario. These actions do not change learner scores.",
+      "loading": "Loading Scenario lifecycle...",
+      "openForScenario": "Open lifecycle actions for {{title}}",
+      "archiveTitle": "Archive Scenario",
+      "archiveDescription": "Hide this Scenario from learners while preserving history and admin records.",
+      "archiveButton": "Archive Scenario",
+      "restoreTitle": "Restore Scenario",
+      "restoreDescription": "Return this archived Scenario to Draft so admins can review it again before publishing.",
+      "restoreButton": "Restore Scenario",
+      "deleteTitle": "Permanently Delete",
+      "deleteDescription": "Only unused Draft Scenarios can be permanently deleted. Type the exact slug to confirm.",
+      "deleteUnavailableDescription": "This Scenario cannot be permanently deleted because it has learner or system references.",
+      "neverPublished": "Never published",
+      "firstPublished": "First published",
+      "availability": "Availability",
+      "learnerVisible": "Learner visible",
+      "learnerHidden": "Learner hidden",
+      "identity": {
+        "slug": "Slug",
+        "status": "Current status"
+      },
+      "confirmSlugLabel": "Type the exact Scenario slug",
+      "deleteButton": "Permanently Delete Scenario",
+      "counts": {
+        "steps": "Steps",
+        "choices": "Choices",
+        "attempts": "Attempts",
+        "completedAttempts": "Completed attempts",
+        "decisions": "Decisions",
+        "progressReferences": "Progress references",
+        "recommendationReferences": "Recommendation references",
+        "ragDocuments": "RAG documents"
+      },
+      "reasons": {
+        "scenario_published": "Published Scenarios must be archived before permanent deletion.",
+        "scenario_previously_published": "Scenario has been published before.",
+        "attempts_exist": "{{count}} learner attempt reference exists.",
+        "completed_attempts_exist": "{{count}} completed attempt reference exists.",
+        "decisions_exist": "{{count}} learner decision reference exists.",
+        "progress_references_exist": "{{count}} progress reference exists.",
+        "rag_documents_exist": "{{count}} RAG document reference exists."
+      },
+      "errors": {
+        "load": "Unable to load Scenario lifecycle information.",
+        "archive": "Unable to archive Scenario.",
+        "restore": "Unable to restore Scenario.",
+        "delete": "Unable to permanently delete Scenario.",
+        "dirty": "Save or discard your Scenario changes before changing its lifecycle.",
+        "slugMismatch": "The confirmation slug must match exactly.",
+        "notEligible": "This Scenario is not eligible for permanent deletion."
+      }
+    },
+    "notFound": {
+      "badge": "Admin route",
+      "title": "Admin page not found",
+      "description": "This Admin route is not available. Use the canonical Admin navigation to continue.",
+      "backToResources": "Back to Resources"
     }
   },
   "common": {
@@ -1133,6 +1732,7 @@
     "saved": "Saved.",
     "cancel": "Cancel",
     "retry": "Retry",
+    "edit": "Edit",
     "close": "Close",
     "yes": "Yes",
     "no": "No",
@@ -1240,10 +1840,10 @@
     }
   },
   "levels": {
-  "beginner": "Beginner",
-  "developing": "Developing",
-  "intermediate": "Intermediate",
-  "advanced": "Advanced"
+    "beginner": "Beginner",
+    "developing": "Developing",
+    "intermediate": "Intermediate",
+    "advanced": "Advanced"
   },
   "scenarioResults": {
     "needs_review": "Needs review",

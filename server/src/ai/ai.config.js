@@ -19,13 +19,14 @@ function numberFromEnv(value, fallback, { min = 0, max = Number.MAX_SAFE_INTEGER
 }
 
 function createAiConfig(env = process.env) {
-  const provider = String(env.AI_PROVIDER || DEFAULT_PROVIDER).trim().toLowerCase() || DEFAULT_PROVIDER;
-  const model = String(env.AI_MODEL || env.OPENAI_MODEL || DEFAULT_MODEL).trim() || DEFAULT_MODEL;
+  const provider = String(env.AI_PROVIDER_CYBERGUARD || env.AI_DEFAULT_PROVIDER || env.AI_PROVIDER || DEFAULT_PROVIDER).trim().toLowerCase() || DEFAULT_PROVIDER;
+  const model = String(env.AI_DEFAULT_MODEL || env.AI_MODEL || env.OPENAI_MODEL || DEFAULT_MODEL).trim() || DEFAULT_MODEL;
   const pricing = MODEL_PRICING_PER_MILLION[model] || MODEL_PRICING_PER_MILLION[DEFAULT_MODEL];
 
   return {
     provider,
     model,
+    defaultProvider: String(env.AI_DEFAULT_PROVIDER || env.AI_PROVIDER || DEFAULT_PROVIDER).trim().toLowerCase() || DEFAULT_PROVIDER,
     openAiApiKey: String(env.OPENAI_API_KEY || '').trim(),
     timeoutMs: numberFromEnv(env.AI_TIMEOUT_MS, DEFAULT_TIMEOUT_MS, { min: 100, max: 120000 }),
     maxOutputTokens: numberFromEnv(env.AI_MAX_OUTPUT_TOKENS, DEFAULT_MAX_OUTPUT_TOKENS, { min: 1, max: 4096 }),

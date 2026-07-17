@@ -71,7 +71,7 @@
     "signInButton": "Log masuk",
     "goToRegister": "Cipta akaun",
     "displayNameRequired": "Nama paparan mesti antara 2 hingga 50 aksara.",
-    "ageInvalid": "Sila masukkan umur dalam nombor bulat dari 1 hingga 120."  
+    "ageInvalid": "Sila masukkan umur dalam nombor bulat dari 1 hingga 120."
   },
   "onboarding": {
     "account": "Akaun",
@@ -408,10 +408,11 @@
       "loading": "Memuatkan senario...",
       "empty": "Tiada senario dijumpai",
       "emptyDescription": "Cuba tapis dengan topik atau tahap yang lain.",
+      "backToLibrary": "Kembali ke Perpustakaan Senario",
       "backToDashboard": "Kembali ke papan pemuka"
     },
-    "leaveTitle": "Keluar daripada senario ini?",
-    "leaveDescription": "Keputusan yang telah disimpan masih tersedia, dan anda boleh menyambung senario ini kemudian daripada pustaka.",
+    "leaveTitle": "Tinggalkan Senario ini?",
+    "leaveDescription": "Keputusan yang telah disimpan akan kekal tersedia. Anda boleh menyambung Senario ini kemudian daripada Perpustakaan Senario.",
     "filters": {
       "topic": "Tapis topik",
       "difficulty": "Tapis tahap",
@@ -467,7 +468,10 @@
       "step": "Langkah {{step}}",
       "stepChoice": "Langkah {{step}}: pilihan anda {{choice}}",
       "updatedRecommendation": "Cadangan dikemas kini"
-    }
+    },
+    "continueScenario": "Teruskan Senario",
+    "leaveScenario": "Tinggalkan Senario",
+    "localeFallback": "Senario ini sedang dipaparkan dalam {{displayed}} kerana {{requested}} belum tersedia."
   },
   "home": {
     "hero": {
@@ -494,9 +498,18 @@
       "title": "Mengapa Cyberly?",
       "description": "Pendidikan keselamatan siber yang bermula dari tahap anda.",
       "cards": {
-        "adaptive": { "title": "AI Adaptif", "description": "AI kami menyesuaikan penerangan berdasarkan tahap pengalaman dan bahasa pilihan anda." },
-        "skills": { "title": "Kemahiran Sebenar", "description": "Pelajari kemahiran praktikal — mengenal pasti penipuan, melindungi akaun dan melayari internet dengan selamat." },
-        "topics": { "title": "Topik Berfokus", "description": "Pilih perkara yang penting untuk anda — daripada keselamatan dalam talian hingga kerjaya keselamatan siber." }
+        "adaptive": {
+          "title": "AI Adaptif",
+          "description": "AI kami menyesuaikan penerangan berdasarkan tahap pengalaman dan bahasa pilihan anda."
+        },
+        "skills": {
+          "title": "Kemahiran Sebenar",
+          "description": "Pelajari kemahiran praktikal — mengenal pasti penipuan, melindungi akaun dan melayari internet dengan selamat."
+        },
+        "topics": {
+          "title": "Topik Berfokus",
+          "description": "Pilih perkara yang penting untuk anda — daripada keselamatan dalam talian hingga kerjaya keselamatan siber."
+        }
       }
     },
     "threatOfWeek": {
@@ -521,9 +534,18 @@
       "description": "Bermula dalam tiga langkah mudah."
     },
     "steps": {
-      "signUp": { "title": "Daftar percuma", "description": "Cipta profil anda dalam masa kurang seminit — beritahu umur, bahasa dan perkara yang ingin anda pelajari." },
-      "aiTutor": { "title": "Kenali tutor AI anda", "description": "CyberGuard AI menyesuaikan diri dengan tahap anda dan berbual dalam Bahasa Inggeris, BM atau Cina." },
-      "levelUp": { "title": "Belajar & tingkatkan kemahiran", "description": "Teroka panduan, selesaikan simulasi dan pantau kemajuan apabila kemahiran siber anda meningkat." }
+      "signUp": {
+        "title": "Daftar percuma",
+        "description": "Cipta profil anda dalam masa kurang seminit — beritahu umur, bahasa dan perkara yang ingin anda pelajari."
+      },
+      "aiTutor": {
+        "title": "Kenali tutor AI anda",
+        "description": "CyberGuard AI menyesuaikan diri dengan tahap anda dan berbual dalam Bahasa Inggeris, BM atau Cina."
+      },
+      "levelUp": {
+        "title": "Belajar & tingkatkan kemahiran",
+        "description": "Teroka panduan, selesaikan simulasi dan pantau kemajuan apabila kemahiran siber anda meningkat."
+      }
     },
     "bottomCta": {
       "title": "Sedia tingkatkan kemahiran siber anda?",
@@ -592,21 +614,51 @@
       "description": "Toolkit modular berkuasa AI dengan enam keupayaan utama."
     },
     "features": {
-      "agentic": { "title": "Panduan AI Agentic", "description": "Sokongan pembelajaran autonomi dan berorientasikan matlamat dengan bantuan keputusan berasaskan senario serta cadangan masa nyata yang diperibadikan." },
-      "chatbot": { "title": "Chatbot Kesihatan Siber", "description": "Sokongan perbualan masa nyata yang menjawab soalan keselamatan siber melalui interaksi bahasa semula jadi." },
-      "adaptive": { "title": "Kesukaran Adaptif", "description": "Memilih tahap kesukaran secara automatik berdasarkan pengetahuan dan kemajuan pengguna untuk pengalaman pembelajaran yang lebih berkesan." },
-      "simulations": { "title": "Simulasi Ancaman Siber", "description": "Mensimulasikan pancingan data, penipuan dan senario maklumat palsu untuk mengasah pemikiran kritis serta keputusan keselamatan siber." },
-      "progress": { "title": "Penjejakan Kemajuan", "description": "Memantau kemajuan pembelajaran dan corak penglibatan untuk menilai keberkesanan dan memacu cadangan adaptif." },
-      "gamified": { "title": "Cabaran Bergamifikasi", "description": "Kuiz, pencapaian dan aktiviti interaktif pilihan untuk meningkatkan motivasi, penglibatan dan pengekalan pengetahuan." }
+      "agentic": {
+        "title": "Panduan AI Agentic",
+        "description": "Sokongan pembelajaran autonomi dan berorientasikan matlamat dengan bantuan keputusan berasaskan senario serta cadangan masa nyata yang diperibadikan."
+      },
+      "chatbot": {
+        "title": "Chatbot Kesihatan Siber",
+        "description": "Sokongan perbualan masa nyata yang menjawab soalan keselamatan siber melalui interaksi bahasa semula jadi."
+      },
+      "adaptive": {
+        "title": "Kesukaran Adaptif",
+        "description": "Memilih tahap kesukaran secara automatik berdasarkan pengetahuan dan kemajuan pengguna untuk pengalaman pembelajaran yang lebih berkesan."
+      },
+      "simulations": {
+        "title": "Simulasi Ancaman Siber",
+        "description": "Mensimulasikan pancingan data, penipuan dan senario maklumat palsu untuk mengasah pemikiran kritis serta keputusan keselamatan siber."
+      },
+      "progress": {
+        "title": "Penjejakan Kemajuan",
+        "description": "Memantau kemajuan pembelajaran dan corak penglibatan untuk menilai keberkesanan dan memacu cadangan adaptif."
+      },
+      "gamified": {
+        "title": "Cabaran Bergamifikasi",
+        "description": "Kuiz, pencapaian dan aktiviti interaktif pilihan untuk meningkatkan motivasi, penglibatan dan pengekalan pengetahuan."
+      }
     },
     "how": {
       "title": "Cara ia berfungsi",
       "description": "Setiap pengalaman dibentuk mengikut pelajar secara individu.",
       "steps": {
-        "signUp": { "title": "Anda mendaftar", "description": "Lengkapkan profil permulaan ringkas — umur, bahasa, tahap kebiasaan dan matlamat pembelajaran anda." },
-        "path": { "title": "AI membina laluan anda", "description": "Modul Agentic AI membina laluan pembelajaran diperibadikan berdasarkan respons anda." },
-        "learn": { "title": "Belajar dengan cara anda", "description": "Berbual dengan CyberGuard AI, teroka sumber dan cuba simulasi — semuanya disesuaikan dengan tahap anda." },
-        "track": { "title": "Pantau perkembangan anda", "description": "Kemajuan anda dijejaki untuk terus memperhalusi cadangan dari semasa ke semasa." }
+        "signUp": {
+          "title": "Anda mendaftar",
+          "description": "Lengkapkan profil permulaan ringkas — umur, bahasa, tahap kebiasaan dan matlamat pembelajaran anda."
+        },
+        "path": {
+          "title": "AI membina laluan anda",
+          "description": "Modul Agentic AI membina laluan pembelajaran diperibadikan berdasarkan respons anda."
+        },
+        "learn": {
+          "title": "Belajar dengan cara anda",
+          "description": "Berbual dengan CyberGuard AI, teroka sumber dan cuba simulasi — semuanya disesuaikan dengan tahap anda."
+        },
+        "track": {
+          "title": "Pantau perkembangan anda",
+          "description": "Kemajuan anda dijejaki untuk terus memperhalusi cadangan dari semasa ke semasa."
+        }
       }
     },
     "objectives": {
@@ -628,11 +680,26 @@
         "description": "Memberikan panduan, penyeliaan profesional dan hala tuju klien industri sepanjang projek."
       },
       "members": {
-        "jayron": { "role": "Pembangun Web", "description": "Memastikan logik dan kebolehgunaan halaman web berfungsi, serta mengetuai pelaksanaan ciri Agentic AI dan alat pembelajaran adaptif." },
-        "jinHong": { "role": "Pereka UI/UX", "description": "Membangunkan wireframe utama dan reka bentuk prototaip fideliti rendah, memastikan antara muka disesuaikan untuk demografi sasaran remaja." },
-        "edward": { "role": "Arkitek Sistem & Ketua Chatbot", "description": "Mengendalikan seni bina bahagian belakang dan perancangan aliran kerja AI, memastikan komponen diperkemas untuk ciri pembelajaran adaptif." },
-        "arman": { "role": "Pemperibadian Agentic AI", "description": "Membina analitik Agentic AI untuk ciri diperibadikan dan pembelajaran adaptif, dengan fokus pada analisis tingkah laku pengguna." },
-        "puah": { "role": "Ketua Modul Agentic AI", "description": "Mengetuai pelaksanaan seni bina sistem dan modul Agentic AI, serta menyokong fungsi chatbot." }
+        "jayron": {
+          "role": "Pembangun Web",
+          "description": "Memastikan logik dan kebolehgunaan halaman web berfungsi, serta mengetuai pelaksanaan ciri Agentic AI dan alat pembelajaran adaptif."
+        },
+        "jinHong": {
+          "role": "Pereka UI/UX",
+          "description": "Membangunkan wireframe utama dan reka bentuk prototaip fideliti rendah, memastikan antara muka disesuaikan untuk demografi sasaran remaja."
+        },
+        "edward": {
+          "role": "Arkitek Sistem & Ketua Chatbot",
+          "description": "Mengendalikan seni bina bahagian belakang dan perancangan aliran kerja AI, memastikan komponen diperkemas untuk ciri pembelajaran adaptif."
+        },
+        "arman": {
+          "role": "Pemperibadian Agentic AI",
+          "description": "Membina analitik Agentic AI untuk ciri diperibadikan dan pembelajaran adaptif, dengan fokus pada analisis tingkah laku pengguna."
+        },
+        "puah": {
+          "role": "Ketua Modul Agentic AI",
+          "description": "Mengetuai pelaksanaan seni bina sistem dan modul Agentic AI, serta menyokong fungsi chatbot."
+        }
       }
     }
   },
@@ -856,7 +923,7 @@
       "resources": "Sumber",
       "resourcesDescription": "Semak penerbitan, kelulusan dan carian CyberGuard untuk Sumber pembelajaran.",
       "scenarios": "Senario",
-      "scenariosDescription": "Tadbir urus senario akan ditambah kemudian.",
+      "scenariosDescription": "Urus kandungan latihan senario sedia ada.",
       "assessments": "Penilaian",
       "assessmentsDescription": "Tadbir urus penilaian akan ditambah kemudian.",
       "faqGuidance": "FAQ & Panduan",
@@ -916,6 +983,8 @@
       "loadingDetail": "Memuatkan butiran sumber...",
       "empty": "Tiada sumber sepadan dengan penapis ini.",
       "reviewAction": "Semak tadbir urus",
+      "quickReviewAction": "Semak Cepat",
+      "drawerActionsLabel": "Tindakan panel Sumber",
       "drawerLabel": "Butiran tadbir urus sumber",
       "drawerBadge": "Butiran tadbir urus",
       "unsaved": "Perubahan belum disimpan",
@@ -959,7 +1028,7 @@
       "reviewStatus": {
         "approved": "Diluluskan",
         "needs_review": "Perlu semakan",
-        "draft": "Draf",
+        "draft": "Semakan draf",
         "rejected": "Ditolak"
       },
       "ragDocumentReviewStatus": {
@@ -970,8 +1039,10 @@
       "flags": {
         "ragReady": "Sedia RAG",
         "notRagReady": "Belum sedia RAG",
-        "effective": "Layak untuk CyberGuard",
-        "notEffective": "Tidak layak"
+        "effective": "CyberGuard diaktifkan",
+        "notEffective": "CyberGuard dinyahaktifkan",
+        "cyberGuardEnabled": "CyberGuard diaktifkan",
+        "cyberGuardDisabled": "CyberGuard dinyahaktifkan"
       },
       "eligibilityReasons": {
         "resource_not_published": "Sumber belum diterbitkan.",
@@ -1008,6 +1079,143 @@
         "list": "Tidak dapat memuatkan sumber.",
         "detail": "Tidak dapat memuatkan butiran sumber.",
         "save": "Tidak dapat menyimpan tadbir urus sumber."
+      }
+    },
+    "translation": {
+      "tabsLabel": "Tab bahasa kandungan",
+      "coverage": "Liputan terjemahan",
+      "coverageValue": "{{complete}} / {{total}} lengkap",
+      "required": "Wajib",
+      "optional": "Pilihan",
+      "requiredReady": "Bahasa Inggeris wajib lengkap",
+      "requiredMissing": "Bahasa Inggeris wajib belum lengkap",
+      "locales": {
+        "en": "Bahasa Inggeris",
+        "ms": "Bahasa Melayu",
+        "zh-CN": "Bahasa Cina Ringkas"
+      },
+      "status": {
+        "complete": "Lengkap",
+        "incomplete": "Belum lengkap",
+        "missing": "Tiada",
+        "unsaved": "Belum disimpan"
+      }
+    },
+    "publication": {
+      "label": "Kesediaan penerbitan",
+      "ready": "Sedia diterbitkan",
+      "cannotPublish": "Tidak boleh diterbitkan",
+      "missing": "Tiada",
+      "publishResource": "Terbitkan Sumber",
+      "publishScenario": "Terbitkan Senario",
+      "returnToDraft": "Kembali ke Draf",
+      "publishWithFallback": "Terbitkan dengan sandaran Bahasa Inggeris",
+      "restoreInLifecycle": "Pulihkan daripada dialog kitar hayat sebelum menerbitkan.",
+      "publishedResource": "Sumber diterbitkan.",
+      "returnedResourceToDraft": "Sumber dikembalikan kepada Draf.",
+      "returnedScenarioToDraft": "Senario dikembalikan kepada Draf.",
+      "optionalLocaleWarning": "Terjemahan pilihan belum ada: {{locales}}. Pelajar dalam bahasa tersebut mungkin melihat sandaran Bahasa Inggeris.",
+      "confirmPublishResource": "Pelajar akan dapat melihat Sumber ini. Carian CyberGuard masih memerlukan status semakan diluluskan dan kesediaan RAG.",
+      "confirmPublishScenario": "Pelajar akan dapat memulakan Senario ini. Struktur pemarkahannya akan dipaparkan kepada pelajar.",
+      "confirmReturnToDraft": "Pelajar tidak lagi melihat atau memulakan item ini. Kandungan tersimpan dan rujukan sejarah kekal.",
+      "confirmOptionalFallback": "Terjemahan pilihan belum ada: {{locales}}. Pelajar mungkin melihat sandaran Bahasa Inggeris.",
+      "status": {
+        "draft": "Draf",
+        "published": "Diterbitkan",
+        "archived": "Diarkibkan"
+      },
+      "reasons": {
+        "unknown": "Semakan wajib belum lengkap.",
+        "english_required": "Kandungan Bahasa Inggeris belum lengkap.",
+        "english_title_required": "Tajuk Bahasa Inggeris tiada.",
+        "english_summary_required": "Ringkasan Bahasa Inggeris tiada.",
+        "english_body_required": "Isi kandungan Bahasa Inggeris tiada.",
+        "category_required": "Kategori tiada.",
+        "archived": "Kandungan diarkibkan perlu dipulihkan dahulu.",
+        "resource_archived": "Sumber diarkibkan perlu dipulihkan dahulu.",
+        "title_required": "Tajuk tiada.",
+        "summary_required": "Ringkasan tiada.",
+        "topic_invalid": "Topik tidak sah.",
+        "difficulty_invalid": "Tahap kesukaran tidak sah.",
+        "duration_invalid": "Tempoh tidak sah.",
+        "total_steps_invalid": "Jumlah langkah tidak sah.",
+        "step_count_mismatch": "Bilangan langkah tidak sepadan dengan jumlah dijangka.",
+        "step_situation_required": "Situasi langkah tiada.",
+        "step_prompt_required": "Prompt langkah tiada.",
+        "choice_text_required": "Teks pilihan tiada.",
+        "choice_feedback_required": "Maklum balas pilihan tiada.",
+        "choice_safety_explanation_required": "Penjelasan keselamatan pilihan tiada."
+      },
+      "errors": {
+        "publishResource": "Tidak dapat menerbitkan Sumber.",
+        "unpublishResource": "Tidak dapat mengembalikan Sumber kepada Draf."
+      }
+    },
+    "resourceLifecycle": {
+      "badge": "Kitar hayat Sumber",
+      "headerLabel": "Pengepala tindakan Sumber",
+      "tabsLabel": "Bahagian Sumber",
+      "actionsLabel": "Tindakan kitar hayat Sumber",
+      "moreActions": "Lagi tindakan",
+      "loading": "Memuatkan kitar hayat...",
+      "loadingInformation": "Memuatkan maklumat kitar hayat...",
+      "archiveOrDelete": "Arkibkan atau padam Sumber",
+      "archiveDeleteShort": "Arkib / Padam",
+      "manageTitle": "Arkibkan atau padam Sumber",
+      "manageDescription": "Semak keadaan kitar hayat semasa sebelum mengarkib, memulihkan, atau memadam Sumber ini secara kekal.",
+      "archiveTitle": "Arkibkan Sumber",
+      "archiveDescription": "Pelajar tidak lagi melihat Sumber ini, dan CyberGuard tidak lagi mendapatkannya. Kandungan, metadata, dan rekod sumber sejarah akan kekal supaya ia boleh disemak kemudian.",
+      "deleteTitle": "Padam Sumber secara kekal",
+      "restoreTitle": "Pulihkan Sumber",
+      "restoreDescription": "Pulihkan Sumber ini kepada Draf dan pastikan carian CyberGuard dinyahaktifkan sehingga semakan selesai semula.",
+      "deleteDescription": "Tindakan ini tidak boleh dibuat asal. Semua terjemahan dan metadata milik Sumber draf ini akan dipadam. Taip slug tepat untuk mengesahkan.",
+      "deleteUnavailableDescription": "Sumber ini mempunyai rujukan penerbitan, semakan, RAG, atau sejarah. Ia tidak boleh dipadam secara kekal; arkibkan sahaja.",
+      "archiveButton": "Arkibkan Sumber",
+      "restoreButton": "Pulihkan Sumber",
+      "deleteButton": "Padam Secara Kekal",
+      "archiveShort": "Arkib",
+      "deleteShort": "Padam kekal",
+      "confirmSlugLabel": "Taip slug yang tepat untuk mengesahkan",
+      "blockingReasons": "Sebab halangan",
+      "archiveStillAvailable": "Arkib masih tersedia untuk Sumber ini.",
+      "restoreStillAvailable": "Pulihkan masih tersedia untuk Sumber yang diarkibkan ini.",
+      "breadcrumbLabel": "Jejak Sumber",
+      "breadcrumbResources": "Sumber",
+      "cyberGuardStatus": "Status CyberGuard",
+      "deletionEligibility": "Kelayakan pemadaman",
+      "deleteAvailable": "Pemadaman kekal tersedia",
+      "deleteBlocked": "Pemadaman kekal disekat",
+      "countsLabel": "Kiraan rujukan kitar hayat",
+      "counts": {
+        "translations": "Terjemahan",
+        "ragDocuments": "Dokumen RAG",
+        "ragChunks": "Cebisan RAG",
+        "chatSourceReferences": "Respons CyberGuard tersimpan"
+      },
+      "tabs": {
+        "content": "Kandungan",
+        "metadata": "Metadata",
+        "governance": "Tadbir urus"
+      },
+      "reasons": {
+        "resource_not_draft": "Sumber diterbitkan atau diarkibkan.",
+        "review_not_draft": "Semakan Sumber bukan Draf.",
+        "resource_rag_ready": "Sumber sedia untuk RAG.",
+        "rag_documents_exist": "{{count}} dokumen RAG wujud untuk Sumber ini.",
+        "rag_chunks_exist": "{{count}} cebisan RAG wujud untuk Sumber ini.",
+        "chat_sources_exist": "Respons CyberGuard tersimpan merujuk Sumber ini.",
+        "chat_source_history_exists": "Sumber ini muncul dalam {{count}} respons CyberGuard tersimpan.",
+        "content_relationships_exist": "{{count}} hubungan kandungan merujuk Sumber ini.",
+        "resource_not_found": "Sumber tidak ditemui."
+      },
+      "errors": {
+        "archive": "Tidak dapat mengarkibkan Sumber.",
+        "restore": "Tidak dapat memulihkan Sumber.",
+        "delete": "Tidak dapat memadam Sumber secara kekal.",
+        "load": "Butiran kitar hayat masih dimuatkan.",
+        "loadFailed": "Tidak dapat memuatkan maklumat kitar hayat.",
+        "slugMismatch": "Slug pengesahan tidak sepadan.",
+        "notEligible": "Sumber ini tidak boleh dipadam secara kekal. Arkibkan sahaja."
       }
     },
     "resourceEditor": {
@@ -1070,6 +1278,96 @@
         "notFound": "Kandungan Sumber tidak ditemui."
       }
     },
+    "resourceCreate": {
+      "createResource": "Cipta Sumber",
+      "createDraft": "Cipta draf",
+      "draftPreview": "Pratonton draf",
+      "title": "Cipta Sumber",
+      "description": "Cipta Sumber draf yang selamat dengan kandungan English, metadata sumber, dan tetapan tadbir urus lalai.",
+      "identity": "Identiti Sumber",
+      "classification": "Pengelasan",
+      "slug": "Slug",
+      "slugHint": "Huruf kecil, nombor, dan tanda sempang sahaja. Slug tidak boleh diubah kemudian dalam fasa ini.",
+      "invalidSlug": "Gunakan huruf kecil, nombor, dan satu tanda sempang antara perkataan sahaja.",
+      "invalidSourceUrl": "Masukkan URL sumber http atau https yang sah.",
+      "duplicateSlug": "Sumber dengan slug ini sudah wujud.",
+      "englishContent": "Kandungan English",
+      "created": "Sumber dicipta sebagai draf.",
+      "nextStepsTitle": "Langkah seterusnya selepas ciptaan",
+      "addMalay": "Tambah terjemahan Bahasa Melayu dalam editor kandungan.",
+      "addChinese": "Tambah terjemahan Cina Ringkas dalam editor kandungan.",
+      "reviewMetadata": "Semak metadata sumber sebelum kelulusan tadbir urus.",
+      "reviewBeforePublishing": "Semak tadbir urus sebelum penerbitan atau carian CyberGuard.",
+      "unsavedTitle": "Buang draf Sumber baharu?",
+      "unsavedMessage": "Borang Sumber baharu anda mempunyai perubahan belum disimpan.",
+      "unsavedLogoutMessage": "Log keluar akan membuang borang ciptaan Sumber yang belum disimpan.",
+      "errors": {
+        "options": "Tidak dapat memuatkan pilihan ciptaan Sumber.",
+        "create": "Tidak dapat mencipta Sumber."
+      }
+    },
+    "resourceMetadata": {
+      "title": "Edit metadata Sumber",
+      "editMetadata": "Edit metadata",
+      "sourceInformation": "Maklumat sumber",
+      "sourceLabel": "Label sumber",
+      "sourceUrl": "URL sumber",
+      "openSource": "Buka sumber",
+      "missingSource": "Tiada URL sumber boleh klik ditetapkan.",
+      "sourceClassification": "Pengelasan sumber",
+      "sourceType": "Jenis sumber",
+      "sourceCountry": "Negara sumber",
+      "authorityLevel": "Tahap autoriti",
+      "sourceMaintenance": "Penyelenggaraan sumber",
+      "lastSourceChecked": "Sumber terakhir disemak",
+      "markCheckedToday": "Tanda disemak hari ini",
+      "markCheckedTodayHint": "Rekod bahawa Admin menyemak sumber ini secara manual.",
+      "replacementSourceNeeded": "Sumber gantian diperlukan",
+      "replacementWarning": "Sumber ini ditandakan untuk penggantian sumber. Ini tidak mengarkibkan atau menyahaktifkannya secara automatik.",
+      "safetyMetadata": "Metadata keselamatan",
+      "ageSuitability": "Kesesuaian umur",
+      "sensitiveTopic": "Topik sensitif",
+      "malaysiaGuidance": "Panduan Malaysia",
+      "saveMetadata": "Simpan metadata",
+      "saved": "Metadata disimpan.",
+      "loading": "Memuatkan metadata Sumber...",
+      "unsavedTitle": "Buang perubahan metadata?",
+      "unsavedMessage": "Perubahan metadata Sumber anda belum disimpan.",
+      "unsavedLogoutMessage": "Log keluar akan membuang perubahan metadata Sumber yang belum disimpan.",
+      "sourceTypes": {
+        "government_cybersecurity_agency": "Agensi keselamatan siber kerajaan",
+        "government": "Kerajaan",
+        "education": "Pendidikan",
+        "ngo": "NGO",
+        "international_organisation": "Organisasi antarabangsa",
+        "general_web": "Web umum",
+        "test_source": "Sumber ujian"
+      },
+      "sourceCountries": {
+        "MY": "Malaysia",
+        "SG": "Singapura",
+        "GLOBAL": "Global",
+        "OTHER": "Lain-lain"
+      },
+      "authorityLevels": {
+        "official_agency": "Agensi rasmi",
+        "recognised_organisation": "Organisasi diiktiraf",
+        "education_provider": "Penyedia pendidikan",
+        "general_reference": "Rujukan umum",
+        "unknown": "Tidak diketahui"
+      },
+      "ageOptions": {
+        "13-17": "13-17",
+        "all_teens": "Semua remaja",
+        "older_teens": "Remaja lebih tua",
+        "general": "Umum"
+      },
+      "errors": {
+        "load": "Tidak dapat memuatkan metadata Sumber.",
+        "save": "Tidak dapat menyimpan metadata Sumber.",
+        "stale": "Metadata telah berubah di tempat lain. Muat semula versi terkini sebelum menyimpan."
+      }
+    },
     "moduleStatus": {
       "planned": "Dirancang"
     },
@@ -1106,6 +1404,271 @@
         "title": "Pengurusan Peranan",
         "description": "Kawalan akses berkeistimewaan minimum masa depan untuk admin dan penyemak."
       }
+    },
+    "scenarioManagement": {
+      "badge": "Admin Senario",
+      "title": "Pengurusan Senario",
+      "description": "Semak, pratonton dan urus kandungan latihan senario Cyberly tanpa mengubah skor pelajar.",
+      "create": "Cipta senario draf",
+      "summaryLabel": "Ringkasan pengurusan senario",
+      "metrics": {
+        "total": "Jumlah",
+        "published": "Diterbitkan",
+        "draft": "Draf",
+        "archived": "Diarkibkan",
+        "incomplete": "Perlu struktur"
+      },
+      "filters": {
+        "search": "Cari",
+        "searchPlaceholder": "Cari tajuk, slug atau ringkasan",
+        "status": "Status",
+        "topic": "Topik",
+        "difficulty": "Kesukaran",
+        "all": "Semua",
+        "clear": "Kosongkan penapis"
+      },
+      "status": {
+        "published": "Diterbitkan",
+        "draft": "Draf",
+        "archived": "Diarkibkan"
+      },
+      "table": {
+        "scenario": "Senario",
+        "topic": "Topik",
+        "difficulty": "Kesukaran",
+        "status": "Status",
+        "updated": "Dikemas kini",
+        "actions": "Tindakan",
+        "scrollLabel": "Jadual pengurusan senario"
+      },
+      "structure": {
+        "ready": "Sedia",
+        "needsWork": "Perlu dilengkapkan"
+      },
+      "loading": "Memuatkan senario...",
+      "empty": "Tiada senario ditemui.",
+      "pagination": "Halaman {{page}} daripada {{totalPages}}",
+      "preview": "Pratonton",
+      "quickPreview": "Semakan Pantas",
+      "quickReview": "Semakan Pantas",
+      "edit": "Edit",
+      "drawerLabel": "Pratonton senario",
+      "loadingDetail": "Memuatkan butiran senario...",
+      "previewHeading": "Pratonton pelajar",
+      "stepsHeading": "Langkah senario",
+      "minutes": "{{count}} min",
+      "updatedAt": "Dikemas kini {{date}}",
+      "errors": {
+        "list": "Tidak dapat memuatkan senario.",
+        "detail": "Tidak dapat memuatkan butiran senario."
+      }
+    },
+    "scenarioEditor": {
+      "createBadge": "Senario Baharu",
+      "editBadge": "Editor Senario",
+      "createTitle": "Cipta senario draf",
+      "createDraftScenario": "Cipta Senario draf",
+      "createScenarioTitle": "Cipta Senario",
+      "createDescription": "Cipta Senario Draf yang selamat. Ia kekal tersembunyi daripada pelajar sehingga lengkap dan diterbitkan.",
+      "backToScenarios": "← Kembali ke Senario",
+      "learnerHidden": "Tersembunyi daripada pelajar",
+      "draftPreview": "Pratonton Draf",
+      "previewOnly": "Pratonton sahaja. Pelajar tidak akan melihat Senario ini sehingga ia diterbitkan.",
+      "previewSubmissionDisabled": "Penghantaran pelajar dilumpuhkan dalam mod Pratonton.",
+      "previewSituationPlaceholder": "Situasi langkah akan dipaparkan di sini.",
+      "previewChoicePlaceholder": "Teks pilihan akan dipaparkan di sini.",
+      "previewFeedbackPlaceholder": "Contoh maklum balas dipaparkan di sini selepas pelajar memilih pilihan.",
+      "previewStepProgress": "Langkah {{current}} daripada {{total}}",
+      "currentStep": "Langkah semasa",
+      "decisionsCount": "{{count}} keputusan",
+      "structureCompleteness": "Kelengkapan struktur",
+      "structureCompletenessValue": "{{ready}} / {{total}} sedia",
+      "identityHeading": "Identiti senario",
+      "classificationHeading": "Klasifikasi",
+      "structureHeading": "Perancangan struktur",
+      "description": "Urus metadata dan langkah keputusan berstruktur. Pemarkahan kekal dikawal oleh backend.",
+      "discardTitle": "Buang perubahan senario?",
+      "discardDescription": "Anda mempunyai perubahan senario yang belum disimpan.",
+      "logoutDescription": "Anda mempunyai perubahan senario yang belum disimpan. Simpan sebelum log keluar.",
+      "loading": "Memuatkan editor senario...",
+      "back": "← Kembali",
+      "tabsLabel": "Bahagian editor senario",
+      "overviewHeading": "Gambaran keseluruhan",
+      "metadataHeading": "Metadata",
+      "stepsHeading": "Langkah keputusan",
+      "previewHeading": "Pratonton",
+      "scenarioActions": "Tindakan senario",
+      "attempts": "{{count}} percubaan",
+      "attemptsLock": "Senario ini mempunyai percubaan pelajar, jadi edit struktur langkah dikunci untuk mengekalkan keputusan sejarah.",
+      "createDraft": "Cipta draf",
+      "saveMetadata": "Simpan metadata",
+      "saveSteps": "Simpan langkah",
+      "publish": "Terbitkan",
+      "archive": "Arkibkan",
+      "restore": "Pulihkan",
+      "publishScenario": "Terbitkan Senario",
+      "archiveScenario": "Arkibkan Senario",
+      "restoreScenario": "Pulihkan Senario",
+      "savedMetadata": "Metadata senario disimpan.",
+      "savedSteps": "Langkah senario disimpan. Senario diterbitkan kembali kepada draf selepas edit struktur.",
+      "structuralDraftTitle": "Simpan perubahan struktur?",
+      "structuralDraftDescription": "Menyimpan perubahan struktur akan mengembalikan Senario ini kepada Draf dan menyembunyikannya daripada pelajar sehingga diterbitkan semula.",
+      "saveAndReturnToDraft": "Simpan dan kembali ke Draf",
+      "createDraftSaved": "Senario draf dicipta.",
+      "previewTitlePlaceholder": "Tajuk senario",
+      "previewSummaryPlaceholder": "Ringkasan senario akan dipaparkan di sini.",
+      "previewPromptPlaceholder": "Prompt langkah",
+      "previewChoices": "pilihan sedia",
+      "stepTitle": "Langkah {{number}}",
+      "optionTitle": "Pilihan {{key}}",
+      "fields": {
+        "slug": "Slug",
+        "title": "Tajuk",
+        "summary": "Ringkasan",
+        "topic": "Topik",
+        "difficulty": "Kesukaran",
+        "minutes": "Anggaran minit",
+        "totalSteps": "Jumlah langkah",
+        "situation": "Teks situasi",
+        "prompt": "Prompt",
+        "optionText": "Teks pilihan",
+        "score": "Skor",
+        "outcome": "Kod hasil",
+        "feedback": "Maklum balas",
+        "safetyExplanation": "Penjelasan keselamatan"
+      },
+      "scores": {
+        "safest": "Paling selamat (2)",
+        "partial": "Sebahagian (1)",
+        "unsafe": "Tidak selamat (0)"
+      },
+      "validation": {
+        "correctFields": "Betulkan medan yang ditanda.",
+        "required": "Diperlukan",
+        "slug": {
+          "required": "Slug diperlukan.",
+          "format": "Gunakan huruf kecil, nombor dan tanda sempang tunggal sahaja.",
+          "duplicate": "Slug ini sudah digunakan."
+        },
+        "title": {
+          "required": "Tajuk diperlukan.",
+          "tooLong": "Tajuk terlalu panjang."
+        },
+        "summary": {
+          "required": "Ringkasan diperlukan.",
+          "tooLong": "Ringkasan terlalu panjang."
+        },
+        "topicCode": {
+          "invalid": "Pilih topik yang disokong."
+        },
+        "difficulty": {
+          "invalid": "Pilih tahap kesukaran yang disokong."
+        },
+        "estimatedMinutes": {
+          "positiveInteger": "Anggaran minit mestilah nombor bulat positif.",
+          "tooLarge": "Anggaran minit terlalu besar."
+        },
+        "totalSteps": {
+          "positiveInteger": "Jumlah langkah mestilah nombor bulat positif.",
+          "range": "Jumlah langkah mestilah antara 3 hingga 5."
+        }
+      },
+      "lifecycle": {
+        "publish": "Senario diterbitkan.",
+        "archive": "Senario diarkibkan.",
+        "restore": "Senario dipulihkan sebagai draf."
+      },
+      "tabs": {
+        "overview": "Gambaran keseluruhan",
+        "steps": "Langkah",
+        "preview": "Pratonton"
+      },
+      "errors": {
+        "saveTranslation": "Tidak dapat menyimpan terjemahan Senario."
+      },
+      "slugHelp": "Gunakan huruf kecil, nombor dan tanda sempang tunggal sahaja. Contoh: latihan-phishing",
+      "creating": "Mencipta...",
+      "translationTabsLabel": "Bahasa terjemahan Senario",
+      "translationExists": "Terjemahan tersedia",
+      "translationMissing": "Terjemahan tiada",
+      "missingTranslationNotice": "Terjemahan tiada. Tambah teks setempat tanpa mengubah struktur Senario yang dikongsi.",
+      "saveTranslation": "Simpan terjemahan",
+      "savedTranslation": "Terjemahan Senario disimpan.",
+      "continueEditing": "Teruskan mengedit",
+      "discardAndSwitchTranslation": "Buang dan tukar bahasa",
+      "locales": {
+        "en": "Bahasa Inggeris",
+        "ms": "Bahasa Melayu",
+        "zh-CN": "Cina Ringkas"
+      },
+      "requestedLanguage": "Bahasa diminta",
+      "displayedLanguage": "Bahasa dipaparkan",
+      "addTranslation": "Tambah terjemahan"
+    },
+    "scenarioLifecycle": {
+      "badge": "Kitar hayat senario",
+      "archiveDeleteShort": "Arkib / Padam",
+      "restoreDeleteShort": "Pulih / Padam",
+      "archiveOrDelete": "Arkibkan atau padam Senario",
+      "archiveDeleteTitle": "Arkibkan atau padam Senario",
+      "restoreDeleteTitle": "Pulihkan atau padam Senario",
+      "description": "Semak tindakan kitar hayat yang selamat untuk Senario ini. Tindakan ini tidak mengubah skor pelajar.",
+      "loading": "Memuatkan kitar hayat Senario...",
+      "openForScenario": "Buka tindakan kitar hayat untuk {{title}}",
+      "archiveTitle": "Arkibkan Senario",
+      "archiveDescription": "Sembunyikan Senario ini daripada pelajar sambil mengekalkan sejarah dan rekod admin.",
+      "archiveButton": "Arkibkan Senario",
+      "restoreTitle": "Pulihkan Senario",
+      "restoreDescription": "Kembalikan Senario arkib ini kepada Draf supaya admin boleh menyemaknya semula sebelum diterbitkan.",
+      "restoreButton": "Pulihkan Senario",
+      "deleteTitle": "Padam Secara Kekal",
+      "deleteDescription": "Hanya Senario Draf yang belum digunakan boleh dipadam secara kekal. Taip slug tepat untuk mengesahkan.",
+      "deleteUnavailableDescription": "Senario ini tidak boleh dipadam secara kekal kerana mempunyai rujukan pelajar atau sistem.",
+      "neverPublished": "Belum pernah diterbitkan",
+      "firstPublished": "Pertama kali diterbitkan",
+      "availability": "Ketersediaan",
+      "learnerVisible": "Kelihatan kepada pelajar",
+      "learnerHidden": "Tersembunyi daripada pelajar",
+      "identity": {
+        "slug": "Slug",
+        "status": "Status semasa"
+      },
+      "confirmSlugLabel": "Taip slug Senario yang tepat",
+      "deleteButton": "Padam Senario Secara Kekal",
+      "counts": {
+        "steps": "Langkah",
+        "choices": "Pilihan",
+        "attempts": "Percubaan",
+        "completedAttempts": "Percubaan selesai",
+        "decisions": "Keputusan",
+        "progressReferences": "Rujukan kemajuan",
+        "recommendationReferences": "Rujukan cadangan",
+        "ragDocuments": "Dokumen RAG"
+      },
+      "reasons": {
+        "scenario_published": "Senario yang diterbitkan mesti diarkibkan sebelum pemadaman kekal.",
+        "scenario_previously_published": "Senario pernah diterbitkan sebelum ini.",
+        "attempts_exist": "{{count}} rujukan percubaan pelajar wujud.",
+        "completed_attempts_exist": "{{count}} rujukan percubaan selesai wujud.",
+        "decisions_exist": "{{count}} rujukan keputusan pelajar wujud.",
+        "progress_references_exist": "{{count}} rujukan kemajuan wujud.",
+        "rag_documents_exist": "{{count}} rujukan dokumen RAG wujud."
+      },
+      "errors": {
+        "load": "Tidak dapat memuatkan maklumat kitar hayat Senario.",
+        "archive": "Tidak dapat mengarkibkan Senario.",
+        "restore": "Tidak dapat memulihkan Senario.",
+        "delete": "Tidak dapat memadam Senario secara kekal.",
+        "dirty": "Simpan atau buang perubahan Senario sebelum menukar kitar hayatnya.",
+        "slugMismatch": "Slug pengesahan mesti sepadan dengan tepat.",
+        "notEligible": "Senario ini tidak layak untuk pemadaman kekal."
+      }
+    },
+    "notFound": {
+      "badge": "Laluan Admin",
+      "title": "Halaman Admin tidak ditemui",
+      "description": "Laluan Admin ini tidak tersedia. Gunakan navigasi Admin rasmi untuk teruskan.",
+      "backToResources": "Kembali ke Sumber"
     }
   },
   "common": {
@@ -1115,6 +1678,7 @@
     "saved": "Disimpan.",
     "cancel": "Batal",
     "retry": "Cuba lagi",
+    "edit": "Edit",
     "close": "Tutup",
     "yes": "Ya",
     "no": "Tidak",

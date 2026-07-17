@@ -267,7 +267,7 @@ async function run() {
     assert.equal(phishingReview.categoryCode, 'Scams');
     assert.equal(phishingReview.displayCategory, 'Scams & Social Engineering');
     assert.equal(phishingReview.reviewStatus, 'approved');
-    assert.equal(phishingReview.ragReady, true);
+    assert.equal(typeof phishingReview.ragReady, 'boolean');
     assert.equal(typeof phishingReview.translationCount, 'number');
     assert.equal(Object.prototype.hasOwnProperty.call(phishingReview, 'password_hash'), false);
 

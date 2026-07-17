@@ -1,9 +1,18 @@
 import { useCallback, useEffect, useMemo, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { getAdminResourceContent, updateAdminResourceContent } from "./adminApi";
+import { getAdminResourceContent, publishAdminResource, unpublishAdminResource, updateAdminResourceContent } from "./adminApi";
+import { buildTranslationCoverage, getResourcePublishReadiness } from "./adminContentState";
+import AdminPublicationControl from "./AdminPublicationControl";
+import AdminResourceActions from "./AdminResourceActions";
 import AdminResourceContentForm from "./AdminResourceContentForm";
 import AdminResourceLanguageTabs, { localeLabel, RESOURCE_EDITOR_LOCALES } from "./AdminResourceLanguageTabs";
 import AdminResourceLearnerPreview from "./AdminResourceLearnerPreview";
+import AdminTranslationCoverage from "./AdminTranslationCoverage";
+import {
+  createContentSnapshot,
+  isFormDirty,
+  normalizeContentFormValues,
+} from "./resourceFormState";
 
 function emptyTranslation(locale) {
   return {
@@ -18,15 +27,12 @@ function emptyTranslation(locale) {
 
 function formFromTranslation(locale, translation) {
   const item = translation || emptyTranslation(locale);
+  const normalized = normalizeContentFormValues(locale, item);
   return {
-    title: item.title || "",
-    summary: item.summary || "",
-    body: item.body || "",
+    title: normalized.title,
+    summary: normalized.summary,
+    body: normalized.body,
   };
-}
-
-function formsEqual(first, second) {
-  return first.title === second.title && first.summary === second.summary && first.body === second.body;
 }
 
 function validateForm(t, form) {
@@ -48,6 +54,7 @@ export default function AdminResourceEditorPage({
 }) {
   const { t } = useTranslation();
   const [loading, setLoading] = useState(true);
+  const [formStatus, setFormStatus] = useState("idle");
   const [error, setError] = useState("");
   const [resource, setResource] = useState(null);
   const [translations, setTranslations] = useState({});
@@ -58,15 +65,27 @@ export default function AdminResourceEditorPage({
 
   const activeTranslation = translations[activeLocale] || null;
   const savedForm = useMemo(() => formFromTranslation(activeLocale, activeTranslation), [activeLocale, activeTranslation]);
-  const dirty = !formsEqual(form, savedForm);
+  const currentSnapshot = useMemo(() => createContentSnapshot({ locale: activeLocale, ...form }), [activeLocale, form]);
+  const savedSnapshot = useMemo(() => createContentSnapshot({ locale: activeLocale, ...savedForm }), [activeLocale, savedForm]);
+  const dirty = isFormDirty({
+    status: formStatus,
+    currentSnapshot,
+    savedSnapshot,
+  });
+  const coverage = useMemo(() => buildTranslationCoverage({
+    type: "resource",
+    translations,
+    dirtyLocale: dirty ? activeLocale : null,
+  }), [activeLocale, dirty, translations]);
+  const publishReadiness = useMemo(() => getResourcePublishReadiness(resource, translations), [resource, translations]);
 
   useEffect(() => {
     if (!dirty || !registerActivityGuard) return undefined;
     return registerActivityGuard({
-      source: "resource-editor",
+      source: "resource-content",
       resourceId,
       locale: activeLocale,
-      key: `resource-editor:${resourceId}:${activeLocale}`,
+      key: `resource-content:${resourceId}:${activeLocale}`,
       title: t("admin.resourceEditor.discardTitle"),
       description: t("admin.resourceEditor.discardLocaleMessage", { locale: localeLabel(t, activeLocale) }),
       logoutDescription: t("admin.resourceEditor.logoutMessage"),
@@ -76,6 +95,7 @@ export default function AdminResourceEditorPage({
 
   const load = useCallback(async () => {
     setLoading(true);
+    setFormStatus("loading");
     setError("");
     const result = await getAdminResourceContent(resourceId);
     if (!result.ok) {
@@ -83,8 +103,10 @@ export default function AdminResourceEditorPage({
       setTranslations({});
       setError(result.error || t("admin.resourceEditor.errors.load"));
       setLoading(false);
+      setFormStatus("error");
       return;
     }
+    setFormStatus("hydrating");
     setResource(result.resource);
     setTranslations(result.translations || {});
     const nextLocale = RESOURCE_EDITOR_LOCALES.includes(activeLocale) ? activeLocale : "en";
@@ -92,6 +114,7 @@ export default function AdminResourceEditorPage({
     setSaveState({ saving: false, message: "", error: "" });
     setValidationErrors({});
     setLoading(false);
+    setFormStatus("ready");
   }, [activeLocale, resourceId, t]);
 
   useEffect(() => {
@@ -110,7 +133,7 @@ export default function AdminResourceEditorPage({
       requestGuardedAction?.(perform, {
         actionType: "locale-switch",
         guard: {
-          key: `resource-editor:${resourceId}:${activeLocale}`,
+          key: `resource-content:${resourceId}:${activeLocale}`,
           title: t("admin.resourceEditor.discardTitle"),
           description: t("admin.resourceEditor.discardLocaleMessage", { locale: localeLabel(t, activeLocale) }),
         },
@@ -141,6 +164,7 @@ export default function AdminResourceEditorPage({
     if (Object.keys(errors).length) return;
 
     setSaveState({ saving: true, message: "", error: "" });
+    setFormStatus("saving");
     const result = await updateAdminResourceContent(resourceId, {
       locale: activeLocale,
       title: form.title,
@@ -156,15 +180,20 @@ export default function AdminResourceEditorPage({
         message: "",
         error: stale ? t("admin.resourceEditor.errors.stale") : (result.error || t("admin.resourceEditor.errors.save")),
       });
+      setFormStatus("ready");
       return;
     }
 
     setResource(result.resource || resource);
+    const normalizedForm = formFromTranslation(activeLocale, result.translation);
     setTranslations(current => ({
       ...current,
-      [activeLocale]: result.translation,
+      [activeLocale]: {
+        ...result.translation,
+        ...normalizedForm,
+      },
     }));
-    setForm(formFromTranslation(activeLocale, result.translation));
+    setForm(normalizedForm);
     setValidationErrors({});
     setSaveState({
       saving: false,
@@ -175,7 +204,30 @@ export default function AdminResourceEditorPage({
           : t("admin.resourceEditor.saved"),
       error: "",
     });
+    setFormStatus("ready");
   };
+
+  async function publishResource() {
+    setSaveState({ saving: true, message: "", error: "" });
+    const result = await publishAdminResource(resourceId);
+    if (!result.ok) {
+      setSaveState({ saving: false, message: "", error: result.error || t("admin.publication.errors.publishResource") });
+      return;
+    }
+    setResource(result.resource || resource);
+    setSaveState({ saving: false, message: t("admin.publication.publishedResource"), error: "" });
+  }
+
+  async function returnResourceToDraft() {
+    setSaveState({ saving: true, message: "", error: "" });
+    const result = await unpublishAdminResource(resourceId);
+    if (!result.ok) {
+      setSaveState({ saving: false, message: "", error: result.error || t("admin.publication.errors.unpublishResource") });
+      return;
+    }
+    setResource(result.resource || resource);
+    setSaveState({ saving: false, message: t("admin.publication.returnedResourceToDraft"), error: "" });
+  }
 
   if (loading) {
     return <p className="admin-resource-state" role="status">{t("admin.resourceEditor.loading")}</p>;
@@ -193,30 +245,21 @@ export default function AdminResourceEditorPage({
   }
 
   const categoryLabel = t(`resources.categories.${resource.categoryCode}`, { defaultValue: resource.category || resource.categoryCode });
+  const resourceTitle = translations.en?.title || activeTranslation?.title || resource.slug;
 
   return (
     <div className="admin-resource-editor">
-      <div className="admin-resource-editor-toolbar">
-        <button type="button" className="btn-secondary" onClick={goBack}>
-          {t("admin.resourceEditor.backToResources")}
-        </button>
-        {dirty && <span className="admin-resource-editor-dirty">{t("admin.resourceEditor.unsavedChanges")}</span>}
-      </div>
+      <AdminResourceActions
+        currentSection="content"
+        onArchived={setResource}
+        onDeleted={() => requestHashNavigation?.("/admin/resources", { replace: true, bypassGuard: true })}
+        requestGuardedAction={requestGuardedAction}
+        requestHashNavigation={requestHashNavigation}
+        resource={{ ...resource, title: resourceTitle }}
+        resourceId={resourceId}
+      />
 
-      <section className="admin-resource-editor-identity">
-        <div>
-          <p className="res-tag">{resource.slug}</p>
-          <h2>{t("admin.resourceEditor.title")}</h2>
-          <p>{t("admin.resourceEditor.description")}</p>
-        </div>
-        <div className="admin-resource-editor-badges" aria-label={t("admin.resourceEditor.governanceStatus")}>
-          <span className="admin-status-badge">{resource.publicationStatus}</span>
-          <span className={`admin-status-badge ${resource.reviewStatus === "approved" ? "good" : "warn"}`}>{resource.reviewStatus}</span>
-          <span className={`admin-status-badge ${resource.effectiveRagEligible ? "good" : "warn"}`}>
-            {resource.effectiveRagEligible ? t("admin.resourceGovernance.flags.effective") : t("admin.resourceGovernance.flags.notEffective")}
-          </span>
-        </div>
-      </section>
+      {dirty && <span className="admin-resource-editor-dirty">{t("admin.resourceEditor.unsavedChanges")}</span>}
 
       <AdminResourceLanguageTabs
         activeLocale={activeLocale}
@@ -224,6 +267,18 @@ export default function AdminResourceEditorPage({
         onSelect={switchLocale}
         translations={translations}
       />
+
+      <div className="admin-editor-status-grid">
+        <AdminTranslationCoverage coverage={coverage} />
+        <AdminPublicationControl
+          busy={saveState.saving || dirty}
+          itemType="resource"
+          onPublish={publishResource}
+          onReturnToDraft={returnResourceToDraft}
+          readiness={publishReadiness}
+          status={resource.publicationStatus || resource.status || "draft"}
+        />
+      </div>
 
       <div className="admin-resource-editor-grid">
         <AdminResourceContentForm
