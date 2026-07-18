@@ -7,8 +7,14 @@ function createAiProvider(config) {
       AI_DEFAULT_PROVIDER: config.provider || process.env.AI_DEFAULT_PROVIDER || process.env.AI_PROVIDER,
       AI_PROVIDER_CYBERGUARD: config.provider || process.env.AI_PROVIDER_CYBERGUARD || process.env.AI_PROVIDER,
       OPENAI_MODEL: config.model || process.env.OPENAI_MODEL,
+      GEMINI_MODEL: process.env.GEMINI_MODEL,
+      ILMU_MODEL: process.env.ILMU_MODEL,
       AI_MODEL: config.model || process.env.AI_MODEL,
       OPENAI_API_KEY: config.openAiApiKey || process.env.OPENAI_API_KEY,
+      GEMINI_API_KEY: process.env.GEMINI_API_KEY,
+      ILMU_API_KEY: process.env.ILMU_API_KEY,
+      ILMU_BASE_URL: process.env.ILMU_BASE_URL,
+      AI_PROVIDER_RUNTIME_DISABLED: process.env.AI_PROVIDER_RUNTIME_DISABLED,
       AI_TIMEOUT_MS: String(config.timeoutMs || process.env.AI_TIMEOUT_MS || ''),
       AI_MAX_OUTPUT_TOKENS: String(config.maxOutputTokens || process.env.AI_MAX_OUTPUT_TOKENS || ''),
       AI_TEST_MOCK_OPENAI: config.testMockMode || process.env.AI_TEST_MOCK_OPENAI || '',
@@ -18,7 +24,7 @@ function createAiProvider(config) {
   });
 
   function selectedProvider() {
-    return registry.resolve(registry.selection.providerForPurpose('cyberguard_chat'));
+    return registry.resolveForPurpose('cyberguard_chat');
   }
 
   return {

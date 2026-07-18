@@ -278,7 +278,7 @@ async function run() {
 
     result = await service.executeTool({
       toolName: 'search_learning_resources',
-      input: { query: 'phishing suspicious links', locale: 'en', limit: 3 },
+      input: { query: 'online scam fraud money', locale: 'en', limit: 3 },
       userId,
       locale: 'en',
     });

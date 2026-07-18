@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { getAdminAiProviders, testAdminAiProvider } from "./adminApi";
 
@@ -24,8 +24,16 @@ const PURPOSE_KEYS = {
   safety_evaluation: "admin.ai.purposes.safety",
 };
 
-function statusClass(configured) {
-  return configured ? "admin-status-badge review-approved" : "admin-status-badge review-draft";
+function statusClass(configured, runtimeAvailable) {
+  if (!configured) return "admin-status-badge review-draft";
+  return runtimeAvailable === false ? "admin-status-badge publication-draft" : "admin-status-badge review-approved";
+}
+
+function runtimeReasonKey(provider) {
+  if (!provider.configured) return "admin.ai.providers.notConfigured";
+  if (provider.runtimeAvailable !== false) return "admin.ai.providers.runtimeAvailable";
+  if (provider.lastRuntimeError === "AI_AUTH_FAILED") return "admin.ai.providers.runtimeAuthFailed";
+  return "admin.ai.providers.runtimeUnavailable";
 }
 
 function ProviderTestResult({ result }) {
@@ -40,6 +48,28 @@ function ProviderTestResult({ result }) {
       ) : (
         <span>{result.code || result.error || t("admin.ai.providers.safeFailure")}</span>
       )}
+      <dl className="admin-ai-runtime-details">
+        <div>
+          <dt>{t("admin.ai.providers.runtimeOk")}</dt>
+          <dd>{success ? t("common.yes") : t("common.no")}</dd>
+        </div>
+        <div>
+          <dt>{t("admin.ai.providers.lastTest")}</dt>
+          <dd>{result.testedAt ? new Date(result.testedAt).toLocaleString() : t("admin.ai.providers.notTested")}</dd>
+        </div>
+        {success && (
+          <>
+            <div>
+              <dt>{t("admin.ai.providers.finishReason")}</dt>
+              <dd>{result.finishReason || t("common.notSet")}</dd>
+            </div>
+            <div>
+              <dt>{t("admin.ai.providers.requestIdAvailable")}</dt>
+              <dd>{result.providerRequestId ? t("common.yes") : t("common.no")}</dd>
+            </div>
+          </>
+        )}
+      </dl>
       {success && result.textPreview && <small>{result.textPreview}</small>}
     </div>
   );
@@ -48,6 +78,7 @@ function ProviderTestResult({ result }) {
 function ProviderCard({ provider, onTest, testing, result }) {
   const { t } = useTranslation();
   const label = PROVIDER_LABELS[provider.id] || provider.id;
+  const runtimeUnavailable = provider.configured && provider.runtimeAvailable === false;
   return (
     <article className="admin-ai-provider-card">
       <div className="admin-ai-provider-head">
@@ -55,9 +86,18 @@ function ProviderCard({ provider, onTest, testing, result }) {
           <p className="res-tag">{t("admin.ai.providers.provider")}</p>
           <h3>{label}</h3>
         </div>
-        <span className={statusClass(provider.configured)}>
-          {provider.configured ? t("admin.ai.providers.configured") : t("admin.ai.providers.notConfigured")}
-        </span>
+        <div className="admin-ai-provider-statuses" aria-label={t("admin.ai.providers.status")}>
+          <span className={statusClass(provider.configured, provider.runtimeAvailable)}>
+            {provider.configured ? t("admin.ai.providers.configured") : t("admin.ai.providers.notConfigured")}
+          </span>
+          {provider.configured && (
+            <span className={statusClass(provider.configured, provider.runtimeAvailable)}>
+              {provider.runtimeAvailable === false
+                ? t("admin.ai.providers.runtimeUnavailable")
+                : t("admin.ai.providers.runtimeAvailable")}
+            </span>
+          )}
+        </div>
       </div>
       <dl className="admin-ai-provider-meta">
         <div>
@@ -76,6 +116,30 @@ function ProviderCard({ provider, onTest, testing, result }) {
           );
         })}
       </div>
+      <dl className="admin-ai-runtime-summary">
+        <div>
+          <dt>{t("admin.ai.providers.runtimeOk")}</dt>
+          <dd>
+            {result
+              ? (result.status === "success" ? t("common.yes") : t("common.no"))
+              : (provider.runtimeAvailable === false ? t("common.no") : t("admin.ai.providers.notTested"))}
+          </dd>
+        </div>
+        {provider.configured && (
+          <div>
+            <dt>{t("admin.ai.providers.runtimeState")}</dt>
+            <dd>{t(runtimeReasonKey(provider))}</dd>
+          </div>
+        )}
+        <div>
+          <dt>{t("admin.ai.providers.lastTest")}</dt>
+          <dd>{result?.testedAt ? new Date(result.testedAt).toLocaleString() : t("admin.ai.providers.notTested")}</dd>
+        </div>
+        <div>
+          <dt>{t("admin.ai.providers.latency")}</dt>
+          <dd>{Number.isFinite(Number(result?.latencyMs)) ? t("admin.ai.providers.testLatency", { latency: result.latencyMs }) : t("admin.ai.providers.notTested")}</dd>
+        </div>
+      </dl>
       {provider.effectivePurposes?.length > 0 && (
         <p className="admin-ai-purpose-note">
           {t("admin.ai.providers.usedFor", {
@@ -92,8 +156,142 @@ function ProviderCard({ provider, onTest, testing, result }) {
         {testing ? t("admin.ai.providers.testing") : t("admin.ai.providers.testConnection")}
       </button>
       {!provider.configured && <p className="admin-resource-summary-note">{t("admin.ai.providers.notConfiguredHelp")}</p>}
+      {runtimeUnavailable && (
+        <p className="admin-resource-summary-note">
+          {provider.id === "gemini"
+            ? t("admin.ai.providers.geminiRuntimeUnavailableNote")
+            : t("admin.ai.providers.runtimeUnavailableNote")}
+        </p>
+      )}
       <ProviderTestResult result={result} />
     </article>
+  );
+}
+
+function ControlledAgenticRuntime({ runtime }) {
+  const { t } = useTranslation();
+  if (!runtime) return null;
+  const tools = Array.isArray(runtime.allowedTools) ? runtime.allowedTools : [];
+  return (
+    <section className="admin-ai-panel" aria-labelledby="admin-agentic-runtime-title">
+      <p className="res-tag">{t("admin.ai.agentic.badge")}</p>
+      <h3 id="admin-agentic-runtime-title">{t("admin.ai.agentic.title")}</h3>
+      <p>{t("admin.ai.agentic.description")}</p>
+      <dl className="admin-ai-purpose-list">
+        <div>
+          <dt>{t("admin.ai.agentic.productionRouter")}</dt>
+          <dd>{PROVIDER_LABELS[runtime.productionRouter] || runtime.productionRouter || "OpenAI"}</dd>
+        </div>
+        <div>
+          <dt>{t("admin.ai.agentic.executionMode")}</dt>
+          <dd>{t("admin.ai.agentic.singleStep")}</dd>
+        </div>
+        <div>
+          <dt>{t("admin.ai.agentic.maxModelCalls")}</dt>
+          <dd>{runtime.maxModelCalls ?? 2}</dd>
+        </div>
+        <div>
+          <dt>{t("admin.ai.agentic.maxToolExecutions")}</dt>
+          <dd>{runtime.maxToolExecutions ?? 1}</dd>
+        </div>
+        <div>
+          <dt>{t("admin.ai.agentic.approvedTools")}</dt>
+          <dd>{tools.length}</dd>
+        </div>
+        <div>
+          <dt>{t("admin.ai.agentic.autonomousLoop")}</dt>
+          <dd>{t("admin.ai.agentic.disabled")}</dd>
+        </div>
+        <div>
+          <dt>{t("admin.ai.agentic.writeActions")}</dt>
+          <dd>{t("admin.ai.agentic.disabled")}</dd>
+        </div>
+      </dl>
+      <ul className="admin-ai-safety-list">
+        <li>{t("admin.ai.agentic.readOnly")}</li>
+        <li>{t("admin.ai.agentic.backendControlled")}</li>
+        <li>{t("admin.ai.agentic.deterministicFallback")}</li>
+        <li>{t("admin.ai.agentic.toolValidation")}</li>
+        <li>{t("admin.ai.agentic.secureSessionIdentity")}</li>
+        <li>{t("admin.ai.agentic.noAutomaticProgressChanges")}</li>
+      </ul>
+      <div className="admin-ai-tool-list" aria-label={t("admin.ai.agentic.toolListLabel")}>
+        {tools.map(tool => (
+          <article key={tool.name} className="admin-ai-tool-card">
+            <h4>{tool.name}</h4>
+            <p>{tool.description}</p>
+            <dl>
+              <div>
+                <dt>{t("admin.ai.agentic.mode")}</dt>
+                <dd>{t("admin.ai.agentic.readOnlyShort")}</dd>
+              </div>
+              <div>
+                <dt>{t("admin.ai.agentic.allowedRole")}</dt>
+                <dd>{(tool.allowedRoles || []).join(", ") || "user"}</dd>
+              </div>
+              <div>
+                <dt>{t("admin.ai.agentic.riskLevel")}</dt>
+                <dd>{tool.riskLevel}</dd>
+              </div>
+            </dl>
+          </article>
+        ))}
+      </div>
+    </section>
+  );
+}
+
+function AdaptiveLearningRuntime({ runtime }) {
+  const { t } = useTranslation();
+  if (!runtime) return null;
+  const sources = Array.isArray(runtime.dataSources) ? runtime.dataSources : [];
+  const rules = Array.isArray(runtime.rulesSummary) ? runtime.rulesSummary : [];
+  return (
+    <section className="admin-ai-panel" aria-labelledby="admin-adaptive-runtime-title">
+      <p className="res-tag">{t("admin.ai.adaptive.badge")}</p>
+      <h3 id="admin-adaptive-runtime-title">{t("admin.ai.adaptive.title")}</h3>
+      <p>{t("admin.ai.adaptive.description")}</p>
+      <dl className="admin-ai-purpose-list">
+        <div>
+          <dt>{t("admin.ai.adaptive.status")}</dt>
+          <dd>{t("admin.ai.adaptive.enabled")}</dd>
+        </div>
+        <div>
+          <dt>{t("admin.ai.adaptive.mode")}</dt>
+          <dd>{t("admin.ai.adaptive.deterministicExplainable")}</dd>
+        </div>
+        <div>
+          <dt>{t("admin.ai.adaptive.persistentAiRecommendations")}</dt>
+          <dd>{runtime.persistentAiRecommendations ? t("admin.ai.adaptive.enabled") : t("admin.ai.adaptive.disabled")}</dd>
+        </div>
+        <div>
+          <dt>{t("admin.ai.adaptive.automaticDifficultyChanges")}</dt>
+          <dd>{runtime.automaticDifficultyChanges ? t("admin.ai.adaptive.enabled") : t("admin.ai.adaptive.disabled")}</dd>
+        </div>
+        <div>
+          <dt>{t("admin.ai.adaptive.automaticScoreChanges")}</dt>
+          <dd>{runtime.automaticScoreChanges ? t("admin.ai.adaptive.enabled") : t("admin.ai.adaptive.disabled")}</dd>
+        </div>
+        <div>
+          <dt>{t("admin.ai.adaptive.learnerChoiceRequired")}</dt>
+          <dd>{runtime.learnerChoiceRequired ? t("admin.ai.adaptive.enabled") : t("common.no")}</dd>
+        </div>
+      </dl>
+      <div className="admin-ai-tool-list" aria-label={t("admin.ai.adaptive.dataSources")}>
+        {sources.map(source => (
+          <span key={source} className="admin-status-badge publication-draft">
+            {t(`admin.ai.adaptive.sources.${source}`, { defaultValue: source })}
+          </span>
+        ))}
+      </div>
+      <ul className="admin-ai-safety-list">
+        {rules.map(rule => (
+          <li key={rule}>{t(`admin.ai.adaptive.rules.${rule}`, { defaultValue: rule })}</li>
+        ))}
+        <li>{t("admin.ai.adaptive.basedOnAvailableRecords")}</li>
+        <li>{t("admin.ai.adaptive.youAreAlwaysInControl")}</li>
+      </ul>
+    </section>
   );
 }
 
@@ -105,8 +303,11 @@ export default function AdminAiProvidersPage() {
     providers: [],
     defaultProvider: null,
     purposeAssignments: {},
+    controlledAgenticRuntime: null,
+    adaptiveLearningRuntime: null,
   });
   const [testingProvider, setTestingProvider] = useState(null);
+  const testingProviderRef = useRef(null);
   const [testResults, setTestResults] = useState({});
 
   useEffect(() => {
@@ -123,6 +324,8 @@ export default function AdminAiProvidersPage() {
         providers: result.providers,
         defaultProvider: result.defaultProvider,
         purposeAssignments: result.purposeAssignments,
+        controlledAgenticRuntime: result.controlledAgenticRuntime,
+        adaptiveLearningRuntime: result.adaptiveLearningRuntime,
       });
     });
     return () => { active = false; };
@@ -131,17 +334,22 @@ export default function AdminAiProvidersPage() {
   const purposeRows = useMemo(() => Object.entries(state.purposeAssignments || {}), [state.purposeAssignments]);
 
   async function runProviderTest(providerId) {
-    if (testingProvider) return;
+    if (testingProviderRef.current) return;
+    testingProviderRef.current = providerId;
     setTestingProvider(providerId);
     setTestResults(current => ({ ...current, [providerId]: null }));
-    const result = await testAdminAiProvider(providerId);
-    setTestingProvider(null);
-    setTestResults(current => ({
-      ...current,
-      [providerId]: result.ok
-        ? result.result
-        : { status: "failed", code: result.code, error: result.error, httpStatus: result.status },
-    }));
+    try {
+      const result = await testAdminAiProvider(providerId);
+      setTestResults(current => ({
+        ...current,
+        [providerId]: result.ok
+          ? result.result
+          : { status: "failed", code: result.code, error: result.error, httpStatus: result.status },
+      }));
+    } finally {
+      testingProviderRef.current = null;
+      setTestingProvider(null);
+    }
   }
 
   if (state.loading) {
@@ -193,6 +401,9 @@ export default function AdminAiProvidersPage() {
           ))}
         </dl>
       </section>
+
+      <ControlledAgenticRuntime runtime={state.controlledAgenticRuntime} />
+      <AdaptiveLearningRuntime runtime={state.adaptiveLearningRuntime} />
 
       <section className="admin-ai-panel">
         <p className="res-tag">{t("admin.ai.safety.badge")}</p>

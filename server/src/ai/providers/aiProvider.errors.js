@@ -31,11 +31,27 @@ function normalizeProviderError(error) {
 
   const status = Number(error.status || error.response?.status || 0);
   const message = String(error.message || error.response?.data?.error?.message || '');
+  let googleStatus = '';
+  try {
+    googleStatus = String(JSON.parse(message)?.error?.status || '');
+  } catch {}
   if (status === 401 || status === 403) {
+    return createProviderError(PROVIDER_ERROR_CODES.AI_AUTH_FAILED, 'AI provider authentication failed.', status);
+  }
+  if (/UNAUTHENTICATED|PERMISSION_DENIED/i.test(googleStatus)) {
+    return createProviderError(PROVIDER_ERROR_CODES.AI_AUTH_FAILED, 'AI provider authentication failed.', status || 403);
+  }
+  if (status === 400 && (/api[_\s-]?key|API_KEY_INVALID|invalid.*key/i.test(message) || /INVALID_ARGUMENT/i.test(googleStatus) && /key/i.test(message))) {
     return createProviderError(PROVIDER_ERROR_CODES.AI_AUTH_FAILED, 'AI provider authentication failed.', status);
   }
   if (status === 429) {
     return createProviderError(PROVIDER_ERROR_CODES.AI_RATE_LIMITED, 'AI provider rate limit reached.', 429);
+  }
+  if (/RESOURCE_EXHAUSTED/i.test(googleStatus)) {
+    return createProviderError(PROVIDER_ERROR_CODES.AI_RATE_LIMITED, 'AI provider rate limit reached.', 429);
+  }
+  if (/FAILED_PRECONDITION|BILLING|REGION/i.test(`${googleStatus} ${message}`)) {
+    return createProviderError(PROVIDER_ERROR_CODES.AI_PROVIDER_UNAVAILABLE, 'AI provider is unavailable.', status || 503);
   }
   if (status === 400 && /context|token|length|too long/i.test(message)) {
     return createProviderError(PROVIDER_ERROR_CODES.AI_CONTEXT_LIMIT, 'AI provider context limit was reached.', 400);

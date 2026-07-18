@@ -1,6 +1,7 @@
 const express = require('express');
 const { createRequireAdmin } = require('./admin.middleware');
 const { createProviderRegistry, AI_PROVIDER_IDS } = require('../ai/providers/aiProvider.registry');
+const { listControlledToolMetadata } = require('../agent/agent.toolCatalogue');
 const { createRagRepository } = require('../rag/rag.repository');
 const { createRagService } = require('../rag/rag.service');
 const {
@@ -59,6 +60,48 @@ const ADMIN_MODULES = [
   'contentRelationships',
   'malaysiaGuidance',
 ];
+
+function buildControlledAgenticRuntimeStatus() {
+  return {
+    productionRouter: 'openai',
+    executionMode: 'single_step',
+    maxModelCalls: 2,
+    maxToolExecutions: 1,
+    readOnlyOnly: true,
+    autonomousLoop: false,
+    writeActions: false,
+    backendControlled: true,
+    deterministicFallback: true,
+    toolValidation: true,
+    secureSessionIdentity: true,
+    allowedTools: listControlledToolMetadata(),
+  };
+}
+
+function buildAdaptiveLearningRuntimeStatus() {
+  return {
+    status: 'enabled',
+    mode: 'deterministic_explainable',
+    dataSources: [
+      'learner_profile',
+      'initial_assessment',
+      'topic_progress',
+      'scenario_outcomes',
+      'active_recommendations',
+    ],
+    persistentAiRecommendations: false,
+    automaticDifficultyChanges: false,
+    automaticScoreChanges: false,
+    learnerChoiceRequired: true,
+    rulesSummary: [
+      'strengths',
+      'support_priorities',
+      'confidence_data_quality',
+      'response_guidance',
+      'suggested_next_steps',
+    ],
+  };
+}
 
 function toBoolean(value) {
   return Number(value || 0) === 1;
@@ -409,7 +452,11 @@ function createAdminRouter(pool) {
 
   router.get('/ai/providers', requireAdmin, (_req, res) => {
     const registry = createProviderRegistry();
-    res.json(registry.getSafeStatus());
+    res.json({
+      ...registry.getSafeStatus(),
+      controlledAgenticRuntime: buildControlledAgenticRuntimeStatus(),
+      adaptiveLearningRuntime: buildAdaptiveLearningRuntimeStatus(),
+    });
   });
 
   router.post('/ai/providers/:providerId/test', requireAdmin, async (req, res, next) => {

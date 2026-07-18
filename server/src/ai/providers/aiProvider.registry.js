@@ -1,7 +1,7 @@
 const { createOpenAiProvider } = require('./openai.provider');
 const { createGeminiProvider } = require('./gemini.provider');
 const { createIlmuProvider } = require('./ilmu.provider');
-const { publicProviderError } = require('./aiProvider.errors');
+const { createProviderError, publicProviderError, PROVIDER_ERROR_CODES } = require('./aiProvider.errors');
 
 const AI_PROVIDER_IDS = ['openai', 'gemini', 'ilmu'];
 const AI_PURPOSE_IDS = [
@@ -50,6 +50,44 @@ function providerConfig(id, env = process.env) {
   return { ...common, apiKey: String(env.OPENAI_API_KEY || '').trim() };
 }
 
+function healthCheckMaxOutputTokens(providerId) {
+  return providerId === 'openai' ? 16 : 5;
+}
+
+function runtimeDisabledProviders(env = process.env) {
+  const raw = env.AI_PROVIDER_RUNTIME_DISABLED === undefined
+    ? 'gemini'
+    : String(env.AI_PROVIDER_RUNTIME_DISABLED || '');
+  return new Set(
+    raw
+      .split(',')
+      .map(value => value.trim().toLowerCase())
+      .filter(value => value && value !== 'none' && value !== 'false')
+  );
+}
+
+function runtimeState(providerId, provider, env = process.env) {
+  if (!provider?.configured) {
+    return {
+      runtimeAvailable: false,
+      lastRuntimeStatus: 'not_configured',
+      lastRuntimeError: 'AI_PROVIDER_NOT_CONFIGURED',
+    };
+  }
+  if (runtimeDisabledProviders(env).has(providerId)) {
+    return {
+      runtimeAvailable: false,
+      lastRuntimeStatus: 'runtime_unavailable',
+      lastRuntimeError: 'AI_AUTH_FAILED',
+    };
+  }
+  return {
+    runtimeAvailable: true,
+    lastRuntimeStatus: 'runtime_ok',
+    lastRuntimeError: null,
+  };
+}
+
 function createProviderSelectionPolicy(env = process.env) {
   const defaultProvider = normalizedProviderId(env.AI_DEFAULT_PROVIDER || env.AI_PROVIDER || 'openai');
   const assignments = {
@@ -87,6 +125,28 @@ function createProviderRegistry({ env = process.env, overrides = {} } = {}) {
     return instances.get(providerId);
   }
 
+  function assertRuntimeAvailable(providerId, provider, { allowRuntimeUnavailable = false } = {}) {
+    const state = runtimeState(providerId, provider, env);
+    if (state.runtimeAvailable || allowRuntimeUnavailable) return state;
+    throw createProviderError(
+      PROVIDER_ERROR_CODES.AI_PROVIDER_UNAVAILABLE,
+      `AI provider ${providerId} is not runtime available.`,
+      503,
+      {
+        provider: providerId,
+        lastRuntimeStatus: state.lastRuntimeStatus,
+        lastRuntimeError: state.lastRuntimeError,
+      }
+    );
+  }
+
+  function resolveForPurpose(purposeId, options = {}) {
+    const providerId = selection.providerForPurpose(purposeId);
+    const provider = resolve(providerId);
+    assertRuntimeAvailable(providerId, provider, options);
+    return provider;
+  }
+
   function purposesForProvider(providerId) {
     return Object.entries(selection.assignments)
       .filter(([, id]) => id === providerId)
@@ -97,9 +157,13 @@ function createProviderRegistry({ env = process.env, overrides = {} } = {}) {
     return {
       providers: AI_PROVIDER_IDS.map(id => {
         const provider = resolve(id);
+        const runtime = runtimeState(id, provider, env);
         return {
           id,
           configured: Boolean(provider.configured),
+          runtimeAvailable: runtime.runtimeAvailable,
+          lastRuntimeStatus: runtime.lastRuntimeStatus,
+          lastRuntimeError: runtime.lastRuntimeError,
           model: provider.model || modelForProvider(id, env),
           capabilities: provider.capabilities || {},
           effectivePurposes: purposesForProvider(id),
@@ -121,7 +185,7 @@ function createProviderRegistry({ env = process.env, overrides = {} } = {}) {
     const result = await provider.generate({
       systemInstruction: 'Cyberly internal provider health check. Reply with OK.',
       messages: [{ role: 'user', content: 'Reply with OK.' }],
-      maxOutputTokens: 12,
+      maxOutputTokens: healthCheckMaxOutputTokens(id),
       temperature: 0,
       tools: [],
       metadata: { purpose: 'admin_provider_test' },
@@ -130,9 +194,14 @@ function createProviderRegistry({ env = process.env, overrides = {} } = {}) {
       provider: id,
       model: provider.model,
       status: 'success',
+      runtimeAvailable: true,
+      lastRuntimeStatus: 'runtime_ok',
+      lastRuntimeError: null,
       latencyMs: Number(result.latencyMs || 0),
       textPreview: String(result.text || '').slice(0, 80),
       usage: result.usage || null,
+      finishReason: result.finishReason || null,
+      providerRequestId: result.providerRequestId || null,
       testedAt: new Date().toISOString(),
     };
   }
@@ -146,6 +215,9 @@ function createProviderRegistry({ env = process.env, overrides = {} } = {}) {
         provider: id,
         model: resolve(id).model,
         status: 'failed',
+        runtimeAvailable: false,
+        lastRuntimeStatus: `runtime_${safe.code || 'failed'}`,
+        lastRuntimeError: safe.code || 'AI_REQUEST_FAILED',
         code: safe.code,
         httpStatus: safe.status,
         latencyMs: null,
@@ -156,6 +228,7 @@ function createProviderRegistry({ env = process.env, overrides = {} } = {}) {
 
   return {
     resolve,
+    resolveForPurpose,
     getSafeStatus,
     testProvider,
     safeTestProvider,
@@ -170,4 +243,6 @@ module.exports = {
   createProviderSelectionPolicy,
   normalizedProviderId,
   providerConfig,
+  healthCheckMaxOutputTokens,
+  runtimeDisabledProviders,
 };

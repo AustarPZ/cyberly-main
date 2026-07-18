@@ -163,6 +163,8 @@ export async function getAdminAiProviders() {
       providers: Array.isArray(data.providers) ? data.providers : [],
       defaultProvider: data.defaultProvider || null,
       purposeAssignments: data.purposeAssignments || {},
+      controlledAgenticRuntime: data.controlledAgenticRuntime || null,
+      adaptiveLearningRuntime: data.adaptiveLearningRuntime || null,
     };
   } catch {
     return networkFailure();

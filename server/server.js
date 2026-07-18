@@ -42,6 +42,8 @@ const { createAiRouter } = require('./src/ai/ai.routes');
 const { createRagRepository } = require('./src/rag/rag.repository');
 const { createRagService } = require('./src/rag/rag.service');
 const { createAgentService } = require('./src/agent/agent.service');
+const { createControlledAgenticService } = require('./src/agent/controlledAgentic.service');
+const { createAdaptiveLearningService } = require('./src/adaptive/adaptiveLearning.service');
 const { createAdminRouter } = require('./src/admin/admin.routes');
 const { createRequireAdmin } = require('./src/admin/admin.middleware');
 const { ERROR_CODES } = require('./src/errors/errorCodes');
@@ -75,7 +77,13 @@ const ragRepository = createRagRepository(pool);
 const ragService = createRagService(ragRepository);
 const agentService = createAgentService({ pool, ragService });
 const aiProvider = createAiProvider(aiConfig);
-const aiService = createAiService(aiRepository, aiProvider, aiConfig, { ragService, agentService });
+const adaptiveLearningService = createAdaptiveLearningService({ repository: aiRepository });
+const controlledAgenticService = createControlledAgenticService({
+    agentService,
+    providerRegistry: aiProvider.registry,
+    adaptiveLearningService,
+});
+const aiService = createAiService(aiRepository, aiProvider, aiConfig, { ragService, agentService, controlledAgenticService });
 
 app.set('trust proxy', 1);
 app.use(cors({ origin: clientOrigin, credentials: true }));

@@ -4,6 +4,7 @@ const {
   AI_PROVIDER_IDS,
   createProviderRegistry,
   createProviderSelectionPolicy,
+  healthCheckMaxOutputTokens,
 } = require('../src/ai/providers/aiProvider.registry');
 const {
   createProviderError,
@@ -41,6 +42,7 @@ async function run() {
       AI_PROVIDER_CYBERGUARD: 'gemini',
       AI_PROVIDER_AGENT_ROUTER: 'ilmu',
       AI_PROVIDER_LIGHTWEIGHT: 'openai',
+      AI_PROVIDER_RUNTIME_DISABLED: 'gemini',
       AI_TEST_MOCK_PROVIDER: 'success',
     },
   });
@@ -55,10 +57,20 @@ async function run() {
   assert.equal(status.purposeAssignments.cyberguard_chat, 'gemini');
   assert.equal(status.purposeAssignments.agent_route_planning, 'ilmu');
   assert.equal(status.providers.find(provider => provider.id === 'gemini').configured, true);
+  assert.equal(status.providers.find(provider => provider.id === 'openai').runtimeAvailable, true);
+  assert.equal(status.providers.find(provider => provider.id === 'gemini').runtimeAvailable, false);
+  assert.equal(status.providers.find(provider => provider.id === 'gemini').lastRuntimeStatus, 'runtime_unavailable');
+  assert.equal(status.providers.find(provider => provider.id === 'gemini').lastRuntimeError, 'AI_AUTH_FAILED');
+  assert.throws(
+    () => registry.resolveForPurpose('cyberguard_chat'),
+    /AI provider gemini is not runtime available/
+  );
+  assert.equal(registry.resolveForPurpose('cyberguard_chat', { allowRuntimeUnavailable: true }).id, 'gemini');
   assertNoSecrets(status);
 
   const missing = createProviderRegistry({ env: { NODE_ENV: 'test' } }).getSafeStatus();
   assert.equal(missing.providers.find(provider => provider.id === 'gemini').configured, false);
+  assert.equal(missing.providers.find(provider => provider.id === 'gemini').runtimeAvailable, false);
 
   assert.deepEqual(buildResponsesInput([
     { role: 'user', content: 'hello' },
@@ -129,6 +141,48 @@ async function run() {
   assert.equal(normalizeProviderError({ name: 'AbortError' }).code, 'AI_PROVIDER_TIMEOUT');
   assert.equal(normalizeProviderError({ status: 401 }).code, 'AI_AUTH_FAILED');
   assert.equal(normalizeProviderError({ status: 429 }).code, 'AI_RATE_LIMITED');
+  assert.equal(normalizeProviderError({ status: 400, message: 'API key not valid. API_KEY_INVALID' }).code, 'AI_AUTH_FAILED');
+  assert.equal(normalizeProviderError({
+    status: 400,
+    message: JSON.stringify({
+      error: {
+        code: 400,
+        message: 'API key not valid. Please pass a valid API key.',
+        status: 'INVALID_ARGUMENT',
+        details: [{ reason: 'API_KEY_INVALID' }],
+      },
+    }),
+  }).code, 'AI_AUTH_FAILED');
+  assert.equal(normalizeProviderError({
+    status: 400,
+    message: JSON.stringify({
+      error: {
+        code: 400,
+        message: 'Request contains an invalid field.',
+        status: 'INVALID_ARGUMENT',
+      },
+    }),
+  }).code, 'AI_REQUEST_FAILED');
+  assert.equal(normalizeProviderError({
+    status: 400,
+    message: JSON.stringify({
+      error: {
+        code: 400,
+        message: 'Billing must be enabled for this project.',
+        status: 'FAILED_PRECONDITION',
+      },
+    }),
+  }).code, 'AI_PROVIDER_UNAVAILABLE');
+  assert.equal(normalizeProviderError({
+    status: 429,
+    message: JSON.stringify({
+      error: {
+        code: 429,
+        message: 'Quota exceeded.',
+        status: 'RESOURCE_EXHAUSTED',
+      },
+    }),
+  }).code, 'AI_RATE_LIMITED');
   assert.equal(normalizeProviderError({ status: 400, message: 'context length' }).code, 'AI_CONTEXT_LIMIT');
 
   const selection = createProviderSelectionPolicy({ AI_DEFAULT_PROVIDER: 'openai', AI_PROVIDER_CYBERGUARD: 'gemini' });
@@ -136,6 +190,49 @@ async function run() {
   assert.equal(selection.providerForPurpose('translation_assistance'), 'openai');
   assert.throws(() => selection.providerForPurpose('made_up'), /Unknown AI purpose/);
   assert.throws(() => createProviderSelectionPolicy({ AI_DEFAULT_PROVIDER: 'made_up' }), /Unknown AI provider/);
+
+  let healthRequest = null;
+  const healthRegistry = createProviderRegistry({
+    env: {
+      NODE_ENV: 'test',
+      AI_DEFAULT_PROVIDER: 'openai',
+    },
+    overrides: {
+      openai: {
+        id: 'openai',
+        model: 'gpt-health',
+        configured: true,
+        capabilities: { chat: true, structuredOutput: true, toolCalling: true, streaming: false, usageReporting: true },
+        async generate(request) {
+          healthRequest = request;
+          return {
+            provider: 'openai',
+            model: 'gpt-health',
+            text: 'OK',
+            toolCalls: [],
+            usage: { inputTokens: 2, outputTokens: 1, totalTokens: 3 },
+            latencyMs: 7,
+            finishReason: 'stop',
+            providerRequestId: 'req-health',
+          };
+        },
+      },
+    },
+  });
+  const health = await healthRegistry.safeTestProvider('openai');
+  assert.equal(healthCheckMaxOutputTokens('openai'), 16);
+  assert.equal(healthCheckMaxOutputTokens('gemini'), 5);
+  assert.equal(healthCheckMaxOutputTokens('ilmu'), 5);
+  assert.equal(healthRequest.maxOutputTokens, 16);
+  assert.equal(healthRequest.tools.length, 0);
+  assert.equal(health.provider, 'openai');
+  assert.equal(health.runtimeAvailable, true);
+  assert.equal(health.lastRuntimeStatus, 'runtime_ok');
+  assert.equal(health.lastRuntimeError, null);
+  assert.equal(health.textPreview, 'OK');
+  assert.equal(health.finishReason, 'stop');
+  assert.equal(health.providerRequestId, 'req-health');
+  assert.deepEqual(health.usage, { inputTokens: 2, outputTokens: 1, totalTokens: 3 });
 
   console.log('AI provider unit verification passed.');
 }

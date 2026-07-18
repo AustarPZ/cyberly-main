@@ -65,12 +65,13 @@ function startServer() {
       NODE_ENV: 'test',
       OPENAI_API_KEY: 'test-openai-secret',
       OPENAI_MODEL: 'gpt-test',
-      GEMINI_API_KEY: '',
+      GEMINI_API_KEY: 'test-gemini-secret',
       GEMINI_MODEL: 'gemini-test',
       ILMU_API_KEY: '',
       ILMU_MODEL: 'nemo-test',
       AI_DEFAULT_PROVIDER: 'openai',
       AI_PROVIDER_CYBERGUARD: 'openai',
+      AI_PROVIDER_RUNTIME_DISABLED: 'gemini',
       AI_TEST_MOCK_PROVIDER: 'success',
     },
     stdio: ['ignore', 'pipe', 'pipe'],
@@ -168,9 +169,35 @@ async function run() {
     assert.equal(result.response.status, 200);
     assert.deepEqual(result.json.providers.map(provider => provider.id), ['openai', 'gemini', 'ilmu']);
     assert.equal(result.json.providers.find(provider => provider.id === 'openai').configured, true);
-    assert.equal(result.json.providers.find(provider => provider.id === 'gemini').configured, false);
+    assert.equal(result.json.providers.find(provider => provider.id === 'gemini').configured, true);
+    assert.equal(result.json.providers.find(provider => provider.id === 'gemini').runtimeAvailable, false);
+    assert.equal(result.json.providers.find(provider => provider.id === 'gemini').lastRuntimeStatus, 'runtime_unavailable');
+    assert.equal(result.json.providers.find(provider => provider.id === 'gemini').lastRuntimeError, 'AI_AUTH_FAILED');
     assert.equal(result.json.defaultProvider, 'openai');
     assert.equal(result.json.purposeAssignments.cyberguard_chat, 'openai');
+    assert.equal(result.json.controlledAgenticRuntime.productionRouter, 'openai');
+    assert.equal(result.json.controlledAgenticRuntime.executionMode, 'single_step');
+    assert.equal(result.json.controlledAgenticRuntime.maxModelCalls, 2);
+    assert.equal(result.json.controlledAgenticRuntime.maxToolExecutions, 1);
+    assert.equal(result.json.controlledAgenticRuntime.readOnlyOnly, true);
+    assert.equal(result.json.controlledAgenticRuntime.autonomousLoop, false);
+    assert.equal(result.json.controlledAgenticRuntime.writeActions, false);
+    assert.ok(result.json.controlledAgenticRuntime.allowedTools.length >= 5);
+    assert.ok(result.json.controlledAgenticRuntime.allowedTools.every(tool => tool.mode === 'read_only'));
+    assert.ok(result.json.controlledAgenticRuntime.allowedTools.some(tool => tool.name === 'get_learning_progress'));
+    assert.equal(result.json.adaptiveLearningRuntime.status, 'enabled');
+    assert.equal(result.json.adaptiveLearningRuntime.mode, 'deterministic_explainable');
+    assert.deepEqual(result.json.adaptiveLearningRuntime.dataSources, [
+      'learner_profile',
+      'initial_assessment',
+      'topic_progress',
+      'scenario_outcomes',
+      'active_recommendations',
+    ]);
+    assert.equal(result.json.adaptiveLearningRuntime.persistentAiRecommendations, false);
+    assert.equal(result.json.adaptiveLearningRuntime.automaticDifficultyChanges, false);
+    assert.equal(result.json.adaptiveLearningRuntime.automaticScoreChanges, false);
+    assert.equal(result.json.adaptiveLearningRuntime.learnerChoiceRequired, true);
     assertNoSecrets(result.json);
 
     result = await request('POST', '/api/admin/ai/providers/unknown/test', {}, adminCookie);
@@ -178,8 +205,8 @@ async function run() {
     assertNoSecrets(result.json);
 
     result = await request('POST', '/api/admin/ai/providers/gemini/test', {}, adminCookie);
-    assert.equal(result.response.status, 503);
-    assert.equal(result.json.code, 'AI_PROVIDER_NOT_CONFIGURED');
+    assert.equal(result.response.status, 200);
+    assert.equal(result.json.status, 'success');
     assertNoSecrets(result.json);
 
     result = await request('POST', '/api/admin/ai/providers/openai/test', { prompt: 'learner data should be ignored', role: 'admin' }, adminCookie);
@@ -187,6 +214,9 @@ async function run() {
     assert.equal(result.json.provider, 'openai');
     assert.equal(result.json.status, 'success');
     assert.equal(typeof result.json.latencyMs, 'number');
+    assert.equal(result.json.finishReason, 'stop');
+    assert.equal(result.json.providerRequestId, 'mock-success');
+    assert.deepEqual(result.json.usage, { inputTokens: 120, outputTokens: 36, totalTokens: 156 });
     assert.ok(result.json.textPreview.length > 0 && result.json.textPreview.length <= 80);
     assert.equal(Object.hasOwn(result.json, 'rawMetadata'), false);
     assertNoSecrets(result.json);

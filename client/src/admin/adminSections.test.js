@@ -28,4 +28,9 @@ describe("admin resource route parsing", () => {
     expect(getAdminScenarioEditorIdFromHash("#/admin/scenarios/not-a-number/edit")).toBeNull();
     expect(getAdminScenarioEditorIdFromHash("#/admin/resources/42/edit")).toBeNull();
   });
+
+  test("AI & Agentic route is enabled and resolves canonically", () => {
+    expect(getAdminSectionFromHash("#/admin/ai-agentic").id).toBe("ai-agentic");
+    expect(getAdminSectionFromHash("#/admin/ai").id).toBe("resources");
+  });
 });

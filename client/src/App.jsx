@@ -580,12 +580,20 @@ body {
   justify-content: space-between;
   gap: 0.8rem;
 }
+.admin-ai-provider-statuses {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 0.35rem;
+}
 .admin-ai-provider-meta {
   display: grid;
   gap: 0.4rem;
   margin: 0;
 }
 .admin-ai-provider-meta div,
+.admin-ai-runtime-summary div,
+.admin-ai-runtime-details div,
 .admin-ai-purpose-list div {
   display: flex;
   justify-content: space-between;
@@ -594,8 +602,12 @@ body {
   padding-top: 0.55rem;
 }
 .admin-ai-provider-meta dt,
+.admin-ai-runtime-summary dt,
+.admin-ai-runtime-details dt,
 .admin-ai-purpose-list dt { color: var(--admin-text-secondary); font-size: 0.82rem; }
 .admin-ai-provider-meta dd,
+.admin-ai-runtime-summary dd,
+.admin-ai-runtime-details dd,
 .admin-ai-purpose-list dd { color: var(--admin-text-primary); font-weight: 700; text-align: right; }
 .admin-ai-capability-list {
   display: flex;
@@ -616,6 +628,21 @@ body {
 .admin-ai-capability-list span.implemented strong { color: #17437a; }
 .admin-ai-capability-list span.not-implemented { opacity: 0.72; }
 .admin-ai-purpose-note { color: var(--admin-text-secondary); font-size: 0.84rem; line-height: 1.4; }
+.admin-ai-runtime-summary,
+.admin-ai-runtime-details {
+  display: grid;
+  gap: 0.4rem;
+  margin: 0;
+}
+.admin-ai-runtime-summary {
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid var(--admin-border-subtle);
+  padding: 0.65rem;
+}
+.admin-ai-runtime-details {
+  margin-top: 0.35rem;
+}
 .admin-ai-test-result {
   display: grid;
   gap: 0.25rem;
@@ -646,6 +673,49 @@ body {
   gap: 0.45rem;
   padding-left: 1.2rem;
   color: var(--admin-text-secondary);
+}
+.admin-ai-tool-list {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 0.75rem;
+}
+.admin-ai-tool-card {
+  border: 1px solid var(--admin-border-default, var(--border-subtle));
+  border-radius: 8px;
+  padding: 0.85rem;
+  background: var(--surface-raised);
+  display: grid;
+  gap: 0.55rem;
+}
+.admin-ai-tool-card h4 {
+  margin: 0;
+  color: var(--admin-text-primary);
+  font-size: 0.95rem;
+  overflow-wrap: anywhere;
+}
+.admin-ai-tool-card p {
+  margin: 0;
+  color: var(--admin-text-secondary);
+  font-size: 0.86rem;
+  line-height: 1.45;
+}
+.admin-ai-tool-card dl {
+  display: grid;
+  gap: 0.35rem;
+  margin: 0;
+}
+.admin-ai-tool-card dl div {
+  display: flex;
+  justify-content: space-between;
+  gap: 0.75rem;
+  font-size: 0.82rem;
+}
+.admin-ai-tool-card dt { color: var(--admin-text-secondary); }
+.admin-ai-tool-card dd {
+  margin: 0;
+  color: var(--admin-text-primary);
+  font-weight: 700;
+  text-align: right;
 }
 .admin-resource-drawer-backdrop {
   position: fixed; inset: 0; z-index: 220; background: rgba(18, 30, 24, 0.35);
@@ -1321,12 +1391,16 @@ body {
   .admin-ai-cost-note,
   .admin-ai-provider-head,
   .admin-ai-provider-meta div,
+  .admin-ai-runtime-summary div,
+  .admin-ai-runtime-details div,
   .admin-ai-purpose-list div {
     flex-direction: column;
     align-items: stretch;
   }
   .admin-ai-provider-grid { grid-template-columns: 1fr; }
   .admin-ai-provider-meta dd,
+  .admin-ai-runtime-summary dd,
+  .admin-ai-runtime-details dd,
   .admin-ai-purpose-list dd { text-align: left; }
   .admin-resource-form-grid,
   .admin-resource-form-grid.three { grid-template-columns: 1fr; }

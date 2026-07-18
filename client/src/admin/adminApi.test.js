@@ -3,6 +3,7 @@ import {
   archiveAdminScenario,
   createAdminScenario,
   getAdminScenario,
+  getAdminAiProviders,
   getAdminScenarioLifecycle,
   getAdminResourceLifecycle,
   listAdminScenarios,
@@ -12,6 +13,7 @@ import {
   publishAdminScenario,
   restoreAdminResource,
   restoreAdminScenario,
+  testAdminAiProvider,
   unpublishAdminResource,
   unpublishAdminScenario,
   updateAdminScenarioMetadata,
@@ -100,5 +102,37 @@ describe("admin API lifecycle adapter", () => {
       ["http://localhost:5000/api/admin/scenarios/3/lifecycle", "GET"],
       ["http://localhost:5000/api/admin/scenarios/3", "DELETE"],
     ]);
+  });
+
+  test("AI provider diagnostics adapters use safe admin endpoints", async () => {
+    global.fetch
+      .mockResolvedValueOnce(jsonResponse(200, {
+        providers: [{ id: "openai", configured: true }],
+        defaultProvider: "openai",
+        purposeAssignments: { cyberguard_chat: "openai" },
+        controlledAgenticRuntime: { productionRouter: "openai", allowedTools: [] },
+        adaptiveLearningRuntime: { status: "enabled", dataSources: ["learner_profile"] },
+      }))
+      .mockResolvedValueOnce(jsonResponse(200, {
+        provider: "openai",
+        status: "success",
+        latencyMs: 12,
+        textPreview: "OK",
+      }));
+
+    const list = await getAdminAiProviders();
+    const test = await testAdminAiProvider("openai");
+
+    expect(list.ok).toBe(true);
+    expect(list.providers).toHaveLength(1);
+    expect(list.controlledAgenticRuntime.productionRouter).toBe("openai");
+    expect(list.adaptiveLearningRuntime.status).toBe("enabled");
+    expect(test.ok).toBe(true);
+    expect(global.fetch.mock.calls.map(call => [String(call[0]), call[1].method])).toEqual([
+      ["http://localhost:5000/api/admin/ai/providers", "GET"],
+      ["http://localhost:5000/api/admin/ai/providers/openai/test", "POST"],
+    ]);
+    expect(JSON.stringify(list)).not.toContain("API_KEY");
+    expect(JSON.stringify(test)).not.toContain("API_KEY");
   });
 });

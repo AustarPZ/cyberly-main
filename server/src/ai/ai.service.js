@@ -111,6 +111,7 @@ function normalizeProviderFailure(error) {
 function createAiService(repository, provider, config, options = {}) {
   const ragService = options.ragService || null;
   const agentService = options.agentService || null;
+  const controlledAgenticService = options.controlledAgenticService || null;
   async function loadOwnedTarget(userId, conversationIdInput, messageIdInput) {
     const conversationId = validatePositiveId(conversationIdInput);
     const messageId = validatePositiveId(messageIdInput);
@@ -176,6 +177,29 @@ function createAiService(repository, provider, config, options = {}) {
       });
     } catch (error) {
       console.warn('Agent route planning failed:', {
+        conversationId: userMessage.conversation_id,
+        messageId: userMessage.id,
+      });
+      return null;
+    }
+  }
+
+  async function buildControlledAgenticContext(userId, userMessage, messages, locale) {
+    if (!controlledAgenticService) return null;
+    try {
+      const result = await controlledAgenticService.planAndExecute({
+        userMessage: userMessage.content,
+        messages,
+        context: {
+          userId,
+          role: 'user',
+          requestedLocale: locale,
+          requestId: `chat-${userMessage.conversation_id}-${userMessage.id}`,
+        },
+      });
+      return result?.contextText || null;
+    } catch (error) {
+      console.warn('Controlled agentic planning failed:', {
         conversationId: userMessage.conversation_id,
         messageId: userMessage.id,
       });
@@ -258,12 +282,17 @@ function createAiService(repository, provider, config, options = {}) {
         config.contextMessageLimit,
         config.contextCharacterLimit
       );
+      const agenticContext = await buildControlledAgenticContext(userId, target.userMessage, messages, locale);
+      const combinedRouteContext = [
+        routeContext,
+        agenticContext,
+      ].filter(Boolean).join('\n\n') || null;
 
       const providerResult = await provider.generateReply({
         systemPrompt: buildCyberGuardSystemPrompt(),
         learnerContext,
         ragContext,
-        routeContext,
+        routeContext: combinedRouteContext,
         messages,
       });
       const validation = validateProviderOutput(providerResult.content);
