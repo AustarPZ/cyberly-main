@@ -78,6 +78,8 @@ import {
   getAchievementDefinitions,
   getLearningInterestStateKey,
 } from "./product/productSemantics";
+import cyberlyNavbarLogo from "./assets/Cyberly-navbar-logo-transparent.png";
+import cyberlyAuthLogo from "./assets/CyberlyLogo-transparent.png";
 
 // ─── Design tokens ────────────────────────────────────────────────
 /*const COLORS = {
@@ -151,13 +153,19 @@ body {
   padding: 0 1.5rem;
 }
 .nav-logo {
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: 1.1rem; font-weight: 600; color: var(--teal);
-  display: flex; align-items: center; gap: 0.4rem;
+  display: flex; align-items: center; justify-content: center;
   background: none; border: none; cursor: pointer; flex: 0 0 auto;
-  padding: 0.35rem 0.15rem; border-radius: 8px;
+  padding: 0.2rem 0.15rem; border-radius: 8px;
+  max-width: min(220px, 34vw);
 }
 .nav-logo:hover, .nav-logo:focus-visible { background: var(--teal-lt); outline: none; }
+.navbar-logo {
+  display: block;
+  width: auto;
+  height: 48px;
+  max-width: 100%;
+  object-fit: contain;
+}
 .nav-primary { display: flex; align-items: center; gap: 0.25rem; flex: 0 1 auto; min-width: 0; }
 .nav-utility { margin-left: auto; display: flex; align-items: center; gap: 0.7rem; flex: 0 0 auto; }
 .nav-divider { width: 1px; height: 28px; background: rgba(0,0,0,0.1); }
@@ -304,7 +312,9 @@ body {
 
 @media (max-width: 560px) {
   .navbar { padding: 0 0.65rem; }
-  .nav-logo span:last-child { display: none; }
+  .nav-logo { max-width: min(160px, 42vw); }
+  .navbar-logo { height: 36px; }
+  .auth-logo-image { height: 96px; max-width: 82%; }
   .account-name { display: none; }
   .account-trigger { gap: 0.25rem; padding-right: 0.35rem; }
   .nav-language select { max-width: 72px; font-size: 0.78rem; }
@@ -1593,11 +1603,14 @@ body {
   padding: 2.5rem; width: 100%; max-width: 460px;
   box-shadow: 0 8px 32px rgba(0,0,0,0.1);
 }
-.auth-logo { text-align: center; margin-bottom: 1.75rem; }
-.auth-logo-icon { font-size: 2.5rem; }
-.auth-logo-name {
-  font-family: 'Space Grotesk', sans-serif; font-size: 1.4rem;
-  font-weight: 600; color: var(--teal);
+.auth-logo { text-align: center; margin-bottom: 1.45rem; }
+.auth-logo-image {
+  display: block;
+  width: auto;
+  height: 118px;
+  max-width: 78%;
+  object-fit: contain;
+  margin: 0 auto;
 }
 .auth-title {
   font-family: 'Space Grotesk', sans-serif; font-size: 1.2rem;
@@ -5012,13 +5025,7 @@ function RegisterPage({ onSwitch }) {
       <div className="auth-card">
         {/* Logo */}
         <div className="auth-logo">
-          <div className="auth-logo-icon">
-            🛡
-          </div>
-
-          <div className="auth-logo-name">
-            Cyberly
-          </div>
+          <img className="auth-logo-image" src={cyberlyAuthLogo} alt="Cyberly" />
         </div>
 
         {/* Progress */}
@@ -5253,13 +5260,7 @@ function LoginPage({ onSwitch }) {
     <div className="auth-wrap">
       <div className="auth-card">
         <div className="auth-logo">
-          <div className="auth-logo-icon">
-            🛡
-          </div>
-
-          <div className="auth-logo-name">
-            Cyberly
-          </div>
+          <img className="auth-logo-image" src={cyberlyAuthLogo} alt="Cyberly" />
         </div>
 
         <div className="auth-title">
@@ -10361,8 +10362,7 @@ function Navbar({ page }) {
         onClick={() => go(user ? "dashboard" : "home")}
         aria-label={t(user ? "nav.brandDashboardAriaLabel" : "nav.brandHomeAriaLabel")}
       >
-        <span aria-hidden="true">🛡</span>
-        <span>Cyberly</span>
+        <img className="navbar-logo" src={cyberlyNavbarLogo} alt="Cyberly" />
       </button>
 
       {isMobileNav && (
