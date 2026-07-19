@@ -28,9 +28,9 @@ Registration and login regenerate the session before storing these values. This 
 The session cookie is configured as:
 
 - HTTP-only
-- `sameSite=lax`
-- `secure=false` in local development and test
-- `secure=true` when `NODE_ENV=production`
+- `sameSite=lax` by default in local development and test
+- `sameSite=none` when `SESSION_COOKIE_SAMESITE=none` is configured for separate production frontend/backend domains
+- `secure=true` when `NODE_ENV=production` or when `sameSite=none`
 
 The frontend sends requests with `credentials: include`, and the backend CORS configuration uses an explicit `CLIENT_ORIGIN` with credentials enabled.
 

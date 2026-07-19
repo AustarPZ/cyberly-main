@@ -59,6 +59,10 @@ const clientOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:3000';
 const sessionName = process.env.SESSION_NAME || 'cyberly.sid';
 const sessionTtlSeconds = Number(process.env.SESSION_TTL_SECONDS || 86400);
 const isProduction = process.env.NODE_ENV === 'production';
+const sessionCookieSameSite = normalizeSameSite(
+    process.env.SESSION_COOKIE_SAMESITE || (isProduction ? 'none' : 'lax')
+);
+const sessionCookieSecure = isProduction || sessionCookieSameSite === 'none';
 const pool = createPool();
 const profileRepository = createProfileRepository(pool);
 const profileService = createProfileService(profileRepository);
@@ -114,8 +118,8 @@ app.use(session({
     store: new MySqlSessionStore(pool, sessionTtlSeconds),
     cookie: {
         httpOnly: true,
-        sameSite: 'lax',
-        secure: isProduction,
+        sameSite: sessionCookieSameSite,
+        secure: sessionCookieSecure,
         maxAge: sessionTtlSeconds * 1000,
     },
     saveUninitialized: false,
@@ -346,8 +350,8 @@ app.post('/api/auth/logout', async (req, res, next) => {
         await destroySession(req);
         res.clearCookie(sessionName, {
             httpOnly: true,
-            sameSite: 'lax',
-            secure: isProduction,
+            sameSite: sessionCookieSameSite,
+            secure: sessionCookieSecure,
         });
         res.json({ ok: true });
     } catch (error) {
@@ -407,6 +411,14 @@ app.post('/api/login', async (req, res, next) => {
         next(error);
     }
 });
+
+function normalizeSameSite(value) {
+    const normalized = String(value || '').trim().toLowerCase();
+    if (['lax', 'strict', 'none'].includes(normalized)) {
+        return normalized;
+    }
+    return isProduction ? 'none' : 'lax';
+}
 
 app.use((error, _req, res, _next) => {
     console.error('Server error:', error.code || error.message);

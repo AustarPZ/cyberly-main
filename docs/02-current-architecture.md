@@ -100,7 +100,7 @@ Frontend authentication calls:
 - `POST /api/scenario-attempts/:attemptId/complete`
 - `GET /api/scenario-attempts/:attemptId/result`
 
-Backend authentication uses MySQL-backed `express-session` cookies. Session data is intentionally minimal: `userId` and `role`. Cookies are HTTP-only, `sameSite=lax`, locally `secure=false`, and expected to become `secure=true` in production.
+Backend authentication uses MySQL-backed `express-session` cookies. Session data is intentionally minimal: `userId` and `role`. Cookies are HTTP-only, default to `sameSite=lax` locally, can use `SESSION_COOKIE_SAMESITE=none` for separate production frontend/backend domains, and become secure in production.
 
 Public registration always creates `role=user`. The `/api/admin/ping` endpoint verifies that role-based middleware is in place for future admin routes.
 

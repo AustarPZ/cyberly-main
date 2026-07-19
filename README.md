@@ -96,6 +96,14 @@ npm start
 
 The backend expects MySQL to be available and the configured `cyberly` database to exist. Run `npm --prefix server run db:ensure` first on a fresh machine.
 
+## Simple Render Deployment
+
+For a public MVP deployment using a Render Static Site, Render Web Service, and managed MySQL database, see:
+
+- `docs/deployment/RENDER_SIMPLE_DEPLOYMENT.md`
+
+Deployment uses the official `client/` frontend and `server/` backend. Do not put secrets in frontend environment variables.
+
 ## Authentication Foundation
 
 Phase 1B.1 implements server-side authentication with MySQL-backed sessions:
@@ -114,7 +122,7 @@ Phase 1B.1 implements server-side authentication with MySQL-backed sessions:
 - Scenarios: `GET /api/scenarios`, `GET /api/scenarios/recommended`, `GET /api/scenarios/dashboard`, `GET /api/scenarios/:slug`
 - Scenario attempts: `POST /api/scenarios/:slug/attempts`, `GET /api/scenario-attempts/:attemptId`, `PUT /api/scenario-attempts/:attemptId/decisions`, `POST /api/scenario-attempts/:attemptId/complete`, `GET /api/scenario-attempts/:attemptId/result`
 
-Session cookies are HTTP-only, use `sameSite=lax`, and are sent by the official frontend with `credentials: include`. Public registration always creates `role=user`; admin self-registration is not allowed. Passwords are stored with bcrypt hashes only.
+Session cookies are HTTP-only and are sent by the official frontend with `credentials: include`. Local development defaults to `sameSite=lax`; production can use `SESSION_COOKIE_SAMESITE=none` with secure cookies for separate frontend/backend deployment domains. Public registration always creates `role=user`; admin self-registration is not allowed. Passwords are stored with bcrypt hashes only.
 
 Seven-step onboarding preferences are saved to `learner_profiles` after account creation. The session still stores only `userId` and `role`.
 

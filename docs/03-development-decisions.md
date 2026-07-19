@@ -40,7 +40,7 @@
 - Onboarding profile fields are not persisted until the learner profile phase.
 - Direct browser-to-provider AI calls are prohibited; chatbot UI remains a preview until the backend AI Gateway phase.
 - Authentication uses MySQL-backed server-side sessions through `express-session`.
-- Session cookies are HTTP-only, `sameSite=lax`, locally `secure=false`, and should be `secure=true` in production.
+- Session cookies are HTTP-only, default to `sameSite=lax` locally, can use `SESSION_COOKIE_SAMESITE=none` for separate production frontend/backend domains, and should be secure in production.
 - Session payloads store only `userId` and `role`.
 - Registration and login regenerate sessions to reduce fixation risk.
 - Authentication requests are rate-limited server-side.
