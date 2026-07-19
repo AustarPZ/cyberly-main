@@ -1,4 +1,4 @@
-const { createPool } = require('../src/database/pool');
+const { createPool, getDatabaseErrorSummary } = require('../src/database/pool');
 const {
   getMigrationId,
   listMigrationFiles,
@@ -102,6 +102,7 @@ async function main() {
   }
 }
 
-main().catch(() => {
+main().catch((error) => {
+  console.error('Migration database connection failed:', getDatabaseErrorSummary(error));
   process.exitCode = 1;
 });

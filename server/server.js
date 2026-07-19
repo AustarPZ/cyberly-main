@@ -4,7 +4,7 @@ const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
 const bcrypt = require('bcrypt');
-const { createPool } = require('./src/database/pool');
+const { createPool, getDatabaseErrorSummary } = require('./src/database/pool');
 const { getAgeGroup } = require('./src/database/age-group');
 const {
     isValidEmail,
@@ -226,6 +226,7 @@ app.get('/api/health', async (_req, res, next) => {
         await pool.query('SELECT 1');
         res.json({ ok: true });
     } catch (error) {
+        console.error('Database health check failed:', getDatabaseErrorSummary(error));
         next(error);
     }
 });

@@ -1,5 +1,5 @@
 const mysql = require('mysql2/promise');
-const { getDatabaseConfig } = require('../src/database/pool');
+const { getDatabaseConfig, getDatabaseErrorSummary } = require('../src/database/pool');
 
 function quoteIdentifier(identifier) {
   if (!/^[A-Za-z0-9_]+$/.test(identifier)) {
@@ -28,6 +28,6 @@ async function run() {
 }
 
 run().catch(error => {
-  console.error(error.code || error.message);
+  console.error('Database ensure failed:', getDatabaseErrorSummary(error));
   process.exitCode = 1;
 });

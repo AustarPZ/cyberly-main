@@ -78,8 +78,9 @@ Set these in Render for the backend service:
 | `DB_USER` | Managed MySQL username. |
 | `DB_PASSWORD` | Managed MySQL password. |
 | `DB_NAME` | Standard value: `cyberly`. |
-| `DB_SSL_MODE` | Use `required` if the managed MySQL provider requires SSL; otherwise `disabled`. |
-| `DB_SSL_REJECT_UNAUTHORIZED` | Keep `true` when the provider has a trusted certificate. Use `false` only if the provider explicitly requires it for MVP testing. |
+| `DB_SSL_MODE` | Use `required` if the managed MySQL provider requires SSL/TLS; otherwise `disabled`. |
+| `DB_SSL_CA` | Optional managed MySQL CA certificate PEM text. Use this for Aiven or any provider that gives a CA certificate for TLS verification. |
+| `DB_SSL_REJECT_UNAUTHORIZED` | Keep `true`. Use `false` only as a temporary diagnostic/MVP fallback when no CA is available and the provider explicitly allows it. |
 | `OPENAI_API_KEY` | Backend-only OpenAI API key, if CyberGuard AI should generate real replies. |
 | `OPENAI_MODEL` | OpenAI model name configured for the project. |
 | `ILMU_API_KEY` | Backend-only ILMU key, if used later. |
@@ -184,13 +185,23 @@ Check `DB_HOST`, `DB_PORT`, `DB_USER`, and `DB_PASSWORD`. Do not assume the MySQ
 
 ### SSL Connection Errors
 
-If the provider requires SSL, set:
+If the provider requires SSL/TLS, set:
 
 ```env
 DB_SSL_MODE=required
 ```
 
-Keep `DB_SSL_REJECT_UNAUTHORIZED=true` unless the provider explicitly documents a different setting for testing.
+Aiven for MySQL normally provides a CA certificate for TLS verification. Add it as `DB_SSL_CA`. In Render, paste the full PEM text into the environment variable value. Either multiline PEM text or escaped newline text using `\n` is supported.
+
+Example placeholder only:
+
+```env
+DB_SSL_CA=-----BEGIN CERTIFICATE-----\nPASTE_PROVIDER_CA_TEXT_HERE\n-----END CERTIFICATE-----
+```
+
+With `DB_SSL_MODE=required` and no `DB_SSL_CA`, Cyberly still requests encrypted TLS and uses Node/mysql2 certificate verification with the default trust store. For Aiven, prefer the proper CA certificate because the default trust store may not be enough and can surface as `HANDSHAKE_SSL_ERROR`.
+
+Keep `DB_SSL_REJECT_UNAUTHORIZED=true`. Setting `DB_SSL_REJECT_UNAUTHORIZED=false` should be treated only as a temporary diagnostic/MVP fallback, not the final secure configuration.
 
 ### Login Works But Refresh Logs Out
 
