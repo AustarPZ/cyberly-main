@@ -1,5 +1,5 @@
 {
-  "generatedAt": "2026-07-17T17:27:50.771Z",
+  "generatedAt": "2026-07-18T06:00:11.063Z",
   "defaultProvider": "openai",
   "purposeAssignments": {
     "cyberguard_chat": "openai",
@@ -16,7 +16,7 @@
       "lastRuntimeStatus": "runtime_ok",
       "lastRuntimeError": null,
       "healthy": true,
-      "latencyMs": 2477,
+      "latencyMs": 1975,
       "capabilities": {
         "chat": true,
         "structuredOutput": true,
@@ -24,7 +24,7 @@
         "streaming": false,
         "usageReporting": true
       },
-      "lastTested": "2026-07-17T17:27:47.126Z",
+      "lastTested": "2026-07-18T06:00:07.711Z",
       "model": "gpt-5.4-mini",
       "usageAvailable": true,
       "finishReason": "completed",
@@ -49,7 +49,7 @@
         "streaming": false,
         "usageReporting": true
       },
-      "lastTested": "2026-07-17T17:27:47.500Z",
+      "lastTested": "2026-07-18T06:00:08.123Z",
       "model": "gemini-2.5-flash",
       "usageAvailable": false,
       "finishReason": null,
@@ -66,7 +66,7 @@
       "lastRuntimeStatus": "runtime_ok",
       "lastRuntimeError": null,
       "healthy": true,
-      "latencyMs": 203,
+      "latencyMs": 420,
       "capabilities": {
         "chat": true,
         "structuredOutput": false,
@@ -74,7 +74,7 @@
         "streaming": false,
         "usageReporting": true
       },
-      "lastTested": "2026-07-17T17:27:47.710Z",
+      "lastTested": "2026-07-18T06:00:08.551Z",
       "model": "nemo-super",
       "usageAvailable": true,
       "finishReason": "stop",

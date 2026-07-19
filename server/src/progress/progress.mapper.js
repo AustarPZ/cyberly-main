@@ -19,6 +19,18 @@ function mapTopicProgress(row) {
   };
 }
 
+function mapAssessmentTopicResult(row) {
+  return {
+    topicCode: row.topic_code,
+    topicLabel: TOPIC_LABELS[row.topic_code] || row.topic_code,
+    correctCount: row.correct_count,
+    totalCount: row.total_count,
+    percentage: row.percentage,
+    resultLevel: row.current_level || null,
+    sourceType: 'initial_assessment',
+  };
+}
+
 function mapProgressSummary(row) {
   if (!row) {
     return {
@@ -43,6 +55,8 @@ function mapProgressSummary(row) {
 
 function mapRecommendation(row, locale = 'en') {
   if (!row) return null;
+  const targetScenarioId = Number(row.targetScenarioId || row.target_scenario_id || 0) || null;
+  const targetScenarioSlug = row.targetScenarioSlug || row.target_scenario_slug || null;
   return {
     id: row.id,
     recommendationType: row.recommendation_type,
@@ -57,10 +71,19 @@ function mapRecommendation(row, locale = 'en') {
     generatedAt: toIso(row.generated_at),
     viewedAt: toIso(row.viewed_at),
     completedAt: toIso(row.completed_at),
+    targetScenarioId,
+    targetScenarioSlug,
+    targetScenarioTitle: row.targetScenarioTitle || row.target_scenario_title || null,
+    target: targetScenarioId || targetScenarioSlug ? {
+      page: 'scenarios',
+      ...(targetScenarioId ? { scenarioId: targetScenarioId } : {}),
+      ...(targetScenarioSlug ? { scenarioSlug: targetScenarioSlug } : {}),
+    } : null,
   };
 }
 
 module.exports = {
+  mapAssessmentTopicResult,
   mapProgressSummary,
   mapRecommendation,
   mapTopicProgress,

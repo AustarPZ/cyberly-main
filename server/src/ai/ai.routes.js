@@ -10,7 +10,13 @@ function createAiRouter(aiService) {
         req.session.userId,
         req.params.conversationId,
         req.params.messageId,
-        req.body || {}
+        {
+          ...(req.body || {}),
+          trustedActionContext: {
+            sessionId: req.sessionID || req.session?.id || '',
+            role: req.session.role,
+          },
+        }
       );
       res.status(result.statusCode).json(result.body);
     } catch (error) {

@@ -172,7 +172,7 @@
     "resumeScenario": "继续情境",
     "noRecommendationYet": "目前还没有推荐。",
     "recommendedNextStep": "推荐的下一步",
-    "measuredProgress": "测评进度",
+    "measuredProgress": "学习活动",
     "welcomeBack": "欢迎回来，{{name}}",
     "beginner": "初学者",
     "levelDisplay": "{{level}}级",
@@ -181,20 +181,20 @@
     "profileSavedDescription": "学习偏好已保存到你的资料中，并会在刷新页面或重新登录后恢复。",
     "editProfile": "编辑资料",
     "stats": {
-      "topics": "主题",
+      "learningTopics": "学习主题",
       "languages": "语言",
       "powered": "AI 驱动"
     },
     "sectionNav": {
       "title": "仪表板分区",
       "ariaLabel": "仪表板分区导航",
-      "overview": "概览",
+      "overview": "学习路径",
       "learningProfile": "学习资料",
       "initialAssessment": "初始测评",
-      "measuredProgress": "测量进度",
+      "measuredProgress": "学习进度",
       "recommendedNextStep": "推荐的下一步",
       "scenarioPractice": "情境练习",
-      "topicMastery": "主题掌握度",
+      "topicMastery": "测评结果",
       "quickActions": "快捷操作",
       "cyberGuardAi": "CyberGuard AI"
     },
@@ -203,11 +203,10 @@
       "inProgress": "初始测评进行中",
       "pending": "初始测评尚未完成",
       "checking": "正在检查测评状态...",
-      "measuredLevel": "测量等级",
-      "score": "分数",
+      "completedDescription": "你的测评结果可在“我的学习旅程”中查看。",
       "resumeDescription": "继续已保存的答案，并在准备好后完成测评。",
       "pendingDescription": "你可以现在或稍后完成。在建立基础水平前，自适应推荐不会启用。",
-      "viewResults": "查看结果",
+      "viewResults": "查看测评结果",
       "resume": "继续",
       "start": "开始／稍后完成"
     },
@@ -221,7 +220,7 @@
       "resources": "浏览资源",
       "resourcesDescription": "查看诈骗、隐私等主题指南",
       "assessment": "初始测评",
-      "assessmentDescription": "建立你的测量基础水平",
+      "assessmentDescription": "建立你的测评基线",
       "scenarios": "情境练习",
       "scenariosDescription": "在真实情境中练习安全选择",
       "profile": "编辑资料",
@@ -235,16 +234,20 @@
     },
     "progress": {
       "progress": "进度",
-      "title": "测量进度",
-      "loading": "正在载入你的基础水平...",
-      "summary": "已测量 {{count}} 个主题 · 结果基于测评，而不是个人偏好。",
-      "empty": "完成初始测评后即可建立测量进度。"
+      "title": "学习活动",
+      "loading": "正在加载已记录活动...",
+      "assessmentTopicsLabel": "个测评主题结果",
+      "summary": "已记录 {{count}} 个测评主题 · {{activityCount}} 条学习活动记录。",
+      "recordedActivitiesLabel": "已记录活动",
+      "activitySummary": "{{scenarios}} 个已完成情境 · {{recommendations}} 个已完成推荐",
+      "viewJourney": "查看我的学习旅程",
+      "empty": "完成初始测评后即可开始记录学习活动。"
     },
     "recommendation": {
       "title": "建议的下一步",
       "loading": "正在检查建议...",
       "initialAssessment": "初始测评",
-      "practiceScenario": "进行情境练习",
+      "practiceScenario": "查看推荐情境",
       "readResource": "阅读资源",
       "startAssessment": "开始测评",
       "empty": "目前没有有效建议。"
@@ -263,7 +266,7 @@
       "unlockDescription": "完成测评后即可解锁情境推荐。"
     },
     "topicMastery": {
-      "title": "主题掌握情况",
+      "title": "测评结果",
       "viewProgress": "查看进度"
     },
     "dailyTip": "每日网络安全提示",
@@ -403,11 +406,13 @@
       "title": "情境库",
       "description": "练习真实的网络安全决策，并在每次最终选择后立即获得反馈。",
       "recommended": "推荐",
+      "recommendedNext": "推荐下一步",
       "all": "所有情境",
       "loadingTitle": "正在加载情境",
       "loading": "正在加载情境...",
       "empty": "未找到情境",
       "emptyDescription": "可以尝试选择其他主题或难度筛选。",
+      "targetUnavailable": "推荐的情境已不再可用。这里有其他学习情境。",
       "backToLibrary": "返回情境库",
       "backToDashboard": "返回仪表板"
     },
@@ -560,13 +565,14 @@
     "error": "无法加载资源。",
     "empty": "未找到资源。",
     "stats": {
-      "topicsCovered": "涵盖主题",
-      "freeToRead": "免费阅读",
+      "learningTopics": "学习主题",
+      "guides": "指南",
+      "freeAccess": "免费访问",
       "malaysiaFocused": "聚焦马来西亚"
     },
     "focus": {
       "title": "推荐关注",
-      "description": "根据你的测评结果，正在显示 {{topic}} 相关指南。",
+      "description": "根据目前可用的测评结果，正在显示 {{topic}} 相关指南。",
       "showAll": "显示所有指南"
     },
     "guideCount_one": "{{count}} 篇指南",
@@ -704,37 +710,65 @@
     }
   },
   "progress": {
-    "title": "我的进度",
+    "title": "我的学习旅程",
     "heroTitle": "{{name}} 的学习旅程 📊",
-    "measuredLevelSummary": "{{level}} 测量等级",
+    "baselineSummary": "已记录 {{count}} 个测评主题",
     "profileFamiliaritySummary": "{{level}} 资料熟悉度",
     "backToDashboard": "返回仪表板",
     "selectedTopics": "已选择 {{count}} 个",
     "sectionNav": {
       "title": "进度分区",
       "ariaLabel": "进度页面分区",
-      "snapshot": "概览",
-      "mastery": "掌握度",
-      "assessmentTopics": "测评主题",
+      "overview": "概览",
+      "assessmentResults": "测评结果",
       "recommendation": "推荐",
-      "learningTopics": "学习主题",
-      "badges": "徽章"
+      "learningActivity": "活动历史",
+      "badges": "成就"
     },
     "snapshot": {
-      "measuredLevel": "测量等级",
+      "assessmentStatus": "测评状态",
+      "baselineAvailable": "已记录基线",
+      "noBaseline": "暂无基线",
       "language": "语言",
       "style": "学习方式",
-      "topics": "主题"
+      "topics": "学习兴趣"
     },
-    "mastery": {
-      "title": "测量掌握度",
-      "description": "根据已完成测评的主题分数计算，而不是根据年龄、教育程度或自我报告的熟悉度。",
-      "loading": "正在加载进度...",
-      "empty": "目前还没有测量基线。完成初始测评即可开启进度追踪。"
+    "learningPath": {
+      "title": "Cyberly 学习路径进度",
+      "shortDescription": "你在 Cyberly 学习体验中的进度。",
+      "shortDisclaimer": "这不是对你整体网络安全能力的衡量。",
+      "disclaimer": "这显示你在 Cyberly 当前学习体验中的进度。它不是对你整体网络安全能力的衡量。",
+      "coreReached": "核心学习进度已达成。",
+      "viewJourney": "查看我的学习旅程",
+      "percentAria": "Cyberly 学习路径进度 {{percent}}%",
+      "barAriaLabel": "学习路径进度贡献条，显示 {{percent}}%",
+      "breakdownTitle": "组成细分",
+      "pointsOutOf": "{{earned}} / {{maximum}} 分",
+      "assessmentCount": "{{correct}} / {{total}} 正确",
+      "scenarioCount": "{{completed}} / {{total}} 已完成",
+      "recommendationCount": "{{count}} 已完成",
+      "noAssessment": "尚未完成测评",
+      "noEligibleScenarios": "暂无符合条件的情境",
+      "noCompletedRecommendations": "尚未完成推荐",
+      "components": {
+        "assessment": "测评贡献",
+        "scenarios": "情境贡献",
+        "engagement": "参与奖励"
+      },
+      "segments": {
+        "assessment": "测评",
+        "scenarios": "情境",
+        "engagement": "参与奖励",
+        "remaining": "剩余"
+      }
     },
-    "assessmentTopics": {
-      "title": "测评主题",
-      "description": "来自初始网络健康测评的主题掌握情况。",
+    "assessmentResults": {
+      "title": "测评结果",
+      "description": "来自初始网络健康测评的主题结果。这只是起点基线，不是完整能力评估。",
+      "correctOutOfTotal": "{{correct}}/{{total}} 正确",
+      "noQuestionCount": "题目数量不可用",
+      "resultLevel": "{{level}} · 此测评主题 {{percent}}%",
+      "assessmentResult": "测评结果：{{level}}",
       "source": "来源：初始测评"
     },
     "recommendation": {
@@ -742,20 +776,76 @@
       "markComplete": "标记完成",
       "completedSaved": "推荐已标记为完成。"
     },
-    "learningTopics": {
-      "title": "你正在学习的主题",
-      "description": "根据你的资料，为每个主题探索指南。",
+    "currentFocus": {
+      "title": "当前学习重点",
+      "basedOn": "基于目前可用的学习记录",
+      "suggestedNextStep": "建议下一步"
+    },
+    "activityComposition": {
+      "title": "学习活动概览",
+      "description": "你的进度由 Cyberly 中已记录的学习活动组成。",
+      "recordedActivities": "已记录 {{count}} 项活动",
+      "recordedActivities_plural": "已记录 {{count}} 项活动",
+      "recordedActivitiesCount": "已记录活动：{{count}}",
+      "barAriaLabel": "Cyberly 已记录学习活动的活动构成",
+      "legendLabel": "活动构成图例",
+      "shareOfActivity": "占已记录活动的 {{share}}%",
+      "segmentShare": "{{label}}：{{count}} 个记录单位，占已记录活动的 {{share}}%",
+      "explanation": "每个分段代表一种不同类型的已记录活动。分段大小表示相对占比，不代表学习价值。",
+      "disclaimer": "此概览反映你在 Cyberly 中已记录的学习活动，并不衡量你的整体网络安全能力。",
+      "empty": "还没有记录任何学习活动。",
+      "assessmentOnlyNote": "你当前的活动概览主要基于已完成的测评。",
+      "singleCategory": "当前已记录活动：{{label}}",
+      "segments": {
+        "assessment_topics": "测评主题",
+        "completed_scenarios": "已完成情境",
+        "completed_recommendations": "已完成推荐",
+        "learning_events": "学习事件"
+      },
+      "segmentCounts": {
+        "assessment_topics": "{{count}} 个测评主题",
+        "assessment_topics_plural": "{{count}} 个测评主题",
+        "completed_scenarios": "{{count}} 个已完成情境",
+        "completed_scenarios_plural": "{{count}} 个已完成情境",
+        "completed_recommendations": "{{count}} 个已完成推荐",
+        "completed_recommendations_plural": "{{count}} 个已完成推荐",
+        "learning_events": "{{count}} 个学习事件",
+        "learning_events_plural": "{{count}} 个学习事件"
+      }
+    },
+    "recentActivity": {
+      "title": "最近学习活动",
+      "description": "最近项目只使用 Cyberly 已记录的活动。",
+      "empty": "暂无最近学习活动。",
+      "types": {
+        "assessment_completed": "已完成初始测评",
+        "scenario_completed": "已完成情境",
+        "recommendation_completed": "已完成推荐"
+      }
+    },
+    "learningActivity": {
+      "title": "活动历史",
+      "description": "此部分显示 Cyberly 当前记录的活动。",
+      "recordedActivity": "{{count}} 条活动记录",
+      "recordedActivity_plural": "{{count}} 条活动记录",
+      "recordedActivityDescription": "这些来自受支持的活动记录，例如情境进度，而不是隐藏的总分。",
       "exploreAll": "探索所有指南 →"
     },
-    "badges": {
-      "title": "徽章",
-      "description": "根据你的活动解锁的成就。",
+    "learningInterests": {
+      "title": "你的学习兴趣",
+      "description": "这些是你在学习者资料中选择的主题。",
+      "selected": "已选择",
+      "notSelected": "未选择"
+    },
+    "achievements": {
+      "title": "成就",
+      "description": "由真实 Cyberly 活动解锁的里程碑。",
       "joined": "加入 Cyberly",
-      "chatPreview": "打开聊天预览",
-      "exploredResources": "探索资源",
+      "resourceExplorer": "资源探索者",
       "setGoals": "设置学习目标",
       "multilingual": "多语言学习者",
-      "measuredBaseline": "测量基线",
+      "assessmentCompleted": "测评已完成",
+      "baselineAssessmentCompleted": "基线测评已完成",
       "earned": "已获得 ✓"
     }
   },
@@ -844,6 +934,34 @@
       "groupLabel": "建议的学习行动",
       "openAction": "打开 {{title}}",
       "unavailable": "不可用"
+    },
+    "proposals": {
+      "suggestedAction": "建议操作",
+      "reviewAction": "查看操作",
+      "confirm": "确认",
+      "cancel": "取消",
+      "dismiss": "关闭",
+      "nothingChanged": "目前还没有任何改变。",
+      "confirmationRequired": "此操作需要你确认。",
+      "processing": "处理中...",
+      "completed": "已完成",
+      "cancelled": "已取消",
+      "expired": "已过期",
+      "failed": "无法准备此操作。",
+      "noLongerAvailable": "此建议已不再可用。",
+      "openResource": "打开资源",
+      "viewScenario": "查看情境练习",
+      "viewRecommendation": "查看推荐",
+      "markRecommendationViewed": "标记推荐为已查看",
+      "markRecommendationCompleted": "标记推荐为已完成",
+      "updateLearningPreferences": "更新学习偏好",
+      "statusOnly": "这只会更新推荐状态。",
+      "noScoreProgressChange": "这不会改变你的分数、掌握度或进度。",
+      "learnerConfirmationRequired": "需要学习者确认",
+      "automaticExecutionDisabled": "自动执行已关闭",
+      "replayProtectionEnabled": "重放保护已启用",
+      "writeToolsExposedNone": "暴露给 AI 的写入工具：无",
+      "canIgnore": "你可以忽略或取消任何建议。"
     },
     "sources": {
       "heading": "来源",
@@ -947,6 +1065,40 @@
     },
     "ai": {
       "badge": "AI 网关",
+      "overview": {
+        "badge": "Admin 概览",
+        "serviceStatus": "AI 服务状态",
+        "cyberGuardStatus": "CyberGuard 状态",
+        "readyWithSafeguards": "已启用安全控制",
+        "needsProvider": "需要配置提供商",
+        "currentProvider": "当前提供商",
+        "backupProviders": "备用提供商可用性",
+        "available": "可用",
+        "notAvailable": "不可用",
+        "notConfigured": "未配置",
+        "geminiStatus": "Gemini 状态",
+        "geminiUnavailable": "Gemini 不可用",
+        "lastProviderTest": "上次提供商测试",
+        "responseStatus": "响应状态",
+        "capabilityBadge": "能力",
+        "whatCyberGuardCanDo": "CyberGuard 可以做什么",
+        "answerCyberSafetyQuestions": "回答网络安全和网络健康问题。",
+        "recommendLearningContent": "推荐已审核资源和已发布情境。",
+        "useLearningRecords": "使用学习记录提供个性化指导。",
+        "provideWellnessGuidance": "提供非诊断性的网络健康指导。",
+        "prepareConfirmedActions": "准备需要学习者确认的受控操作。",
+        "boundaryBadge": "安全",
+        "safetyBoundaries": "安全边界",
+        "cannotChangeScores": "CyberGuard 不能直接更改分数。",
+        "cannotChangeMastery": "CyberGuard 不能直接更改掌握度信号。",
+        "cannotChangeProgress": "CyberGuard 不能直接更改进度记录。",
+        "cannotCompleteScenarios": "CyberGuard 不能替学习者完成情境。",
+        "cannotAccessOtherLearners": "CyberGuard 不能访问其他学习者的数据。",
+        "confirmationRequired": "CyberGuard 不能在没有学习者确认的情况下执行操作。",
+        "nonDiagnostic": "CyberGuard 不能诊断心理健康。",
+        "focusedDomain": "CyberGuard 专注于网络安全、在线安全、网络健康和 Cyberly 学习。",
+        "advancedTechnicalDetails": "高级技术详情"
+      },
       "providers": {
         "title": "AI 提供商",
         "description": "查看服务器端 OpenAI、Gemini 和 ILMU 提供商配置。连接测试只会在 Admin 点击“测试连接”时运行。",
@@ -1036,6 +1188,48 @@
         "allowedRole": "允许角色",
         "riskLevel": "风险等级"
       },
+      "learnerActions": {
+        "badge": "学习者控制的操作",
+        "title": "学习者控制的操作",
+        "description": "CyberGuard 可以准备安全的操作建议，但学习者必须先查看，之后才会发生任何操作。",
+        "status": "状态",
+        "enabled": "已启用",
+        "disabled": "已禁用",
+        "executionAuthority": "执行权限",
+        "learnerConfirmation": "学习者确认",
+        "automaticExecution": "自动执行",
+        "maxProposals": "每次回复最多建议数",
+        "writeToolsExposed": "暴露给 AI 的写入工具",
+        "revalidation": "确认时重新验证",
+        "replayProtection": "重放保护",
+        "cancelAllowed": "学习者可取消",
+        "enabledActions": "已启用的学习者控制操作",
+        "deferred": "已延后",
+        "noWriteTools": "暴露给 AI 的写入工具：无",
+        "noAutomaticExecution": "自动执行已禁用",
+        "prohibitedSummary": "禁止的操作包括分数、掌握度、进度、情境决策、评估结果和 Admin 内容。",
+        "actions": {
+          "open_resource": "打开资源",
+          "open_scenario": "查看情境练习",
+          "open_recommendation": "查看推荐",
+          "mark_recommendation_viewed": "标记推荐为已查看",
+          "mark_recommendation_completed": "标记推荐为已完成",
+          "update_learning_preferences": "更新学习偏好",
+          "change_score": "更改分数",
+          "change_mastery": "更改掌握度",
+          "change_progress": "更改进度",
+          "start_scenario_attempt": "开始情境尝试",
+          "restore_scenario_attempt": "恢复情境尝试",
+          "submit_scenario_decision": "提交情境决策",
+          "complete_assessment_attempt": "完成评估尝试",
+          "create_recommendation": "创建推荐",
+          "publish_content": "发布内容",
+          "delete_content": "删除内容",
+          "execute_sql": "执行 SQL",
+          "read_api_keys": "读取 API key",
+          "bypass_safety_rules": "绕过安全规则"
+        }
+      },
       "adaptive": {
         "badge": "自适应学习智能",
         "title": "自适应学习智能",
@@ -1067,6 +1261,93 @@
           "confidence_data_quality": "信号质量",
           "response_guidance": "回答指导",
           "suggested_next_steps": "建议的下一步"
+        }
+      },
+      "wellness": {
+        "badge": "网络健康",
+        "title": "网络健康指导",
+        "description": "CyberGuard 可以为普通线上情境提供确定性、非诊断的数字健康支持建议。",
+        "status": "状态",
+        "enabled": "已启用",
+        "mode": "模式",
+        "deterministicNonDiagnostic": "确定性且非诊断",
+        "targetUsers": "目标用户",
+        "teenagers13To17": "13-17 岁青少年",
+        "highRiskSafetyHandling": "高风险安全处理",
+        "existingSafetyPathway": "现有安全路径",
+        "domainListLabel": "网络健康领域",
+        "psychologicalDiagnosisDisabled": "心理诊断已禁用",
+        "riskScoringDisabled": "健康风险评分已禁用",
+        "automaticInterventionDisabled": "自动干预已禁用",
+        "learnerChoiceRequired": "需要学习者自行选择",
+        "practicalNextSteps": "实用下一步",
+        "takeShortBreak": "短暂休息",
+        "reduceDistractions": "减少干扰",
+        "pauseBeforeResponding": "回复前先暂停",
+        "protectYourBoundaries": "保护你的边界",
+        "blockOrReport": "屏蔽或举报",
+        "talkToTrustedAdult": "和可信任的大人沟通",
+        "reviewSecuritySteps": "检查你的安全步骤",
+        "youAreInControl": "你可以自己决定",
+        "limitedContext": "上下文有限",
+        "domains": {
+          "digital_balance": "数字平衡",
+          "focus_and_distraction": "专注与干扰",
+          "online_pressure_and_boundaries": "线上压力与边界",
+          "healthy_online_communication": "健康的线上沟通",
+          "safe_help_seeking": "安全求助",
+          "digital_resilience": "数字韧性"
+        }
+      },
+      "traces": {
+        "badge": "审计记录",
+        "title": "Agentic 执行记录",
+        "description": "查看已脱敏的 CyberGuard 执行元数据，不包含提示词、学习者隐私、工具参数或密钥。",
+        "refresh": "刷新",
+        "filters": "记录筛选",
+        "loading": "正在加载最近记录...",
+        "loadingDetail": "正在加载记录详情...",
+        "error": "无法加载执行记录。",
+        "detailError": "无法加载记录详情。",
+        "empty": "暂无执行记录。",
+        "tableLabel": "最近的 Agentic 执行记录",
+        "detailLabel": "Agentic 记录详情",
+        "detailTitle": "记录详情",
+        "viewDetails": "查看详情",
+        "status": "状态",
+        "proposalStatus": "提案状态",
+        "all": "全部",
+        "learner": "学习者引用",
+        "provider": "提供方",
+        "tool": "工具",
+        "proposal": "提案",
+        "wellness": "网络健康",
+        "wellnessPrepared": "网络健康指导已准备",
+        "scope": "范围",
+        "scopeTypes": {
+          "in_scope": "范围内",
+          "casual_allowed": "日常问候",
+          "out_of_scope": "范围外",
+          "unsafe": "不安全",
+          "high_risk": "高风险"
+        },
+        "actions": "操作",
+        "requestId": "请求 ID",
+        "previous": "上一页",
+        "next": "下一页",
+        "total": "共 {{total}} 条",
+        "statuses": {
+          "completed": "已完成",
+          "completedWithFallback": "已用备用方案完成",
+          "safetyBlocked": "已安全拦截",
+          "failedSafely": "已安全失败"
+        },
+        "proposals": {
+          "pending": "待处理",
+          "completed": "已完成",
+          "cancelled": "已取消",
+          "expired": "已过期",
+          "rejected": "已拒绝"
         }
       }
     },

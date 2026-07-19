@@ -43,7 +43,12 @@ const { createRagRepository } = require('./src/rag/rag.repository');
 const { createRagService } = require('./src/rag/rag.service');
 const { createAgentService } = require('./src/agent/agent.service');
 const { createControlledAgenticService } = require('./src/agent/controlledAgentic.service');
+const { createActionProposalRouter } = require('./src/agent/actions/actionProposal.routes');
+const { createActionProposalService } = require('./src/agent/actions/actionProposal.service');
 const { createAdaptiveLearningService } = require('./src/adaptive/adaptiveLearning.service');
+const { createAgenticTraceRepository } = require('./src/agent/audit/agenticTrace.repository');
+const { createAgenticTraceService } = require('./src/agent/audit/agenticTrace.service');
+const { createCyberWellnessService } = require('./src/wellness/cyberWellness.service');
 const { createAdminRouter } = require('./src/admin/admin.routes');
 const { createRequireAdmin } = require('./src/admin/admin.middleware');
 const { ERROR_CODES } = require('./src/errors/errorCodes');
@@ -76,14 +81,29 @@ const aiRepository = createAiRepository(pool);
 const ragRepository = createRagRepository(pool);
 const ragService = createRagService(ragRepository);
 const agentService = createAgentService({ pool, ragService });
+const agenticTraceRepository = createAgenticTraceRepository(pool);
+const agenticTraceService = createAgenticTraceService(agenticTraceRepository);
+const actionProposalService = createActionProposalService({
+    pool,
+    ttlSeconds: Number(process.env.ACTION_PROPOSAL_TTL_SECONDS || 180),
+    agenticTraceService,
+});
 const aiProvider = createAiProvider(aiConfig);
 const adaptiveLearningService = createAdaptiveLearningService({ repository: aiRepository });
+const cyberWellnessService = createCyberWellnessService();
 const controlledAgenticService = createControlledAgenticService({
     agentService,
     providerRegistry: aiProvider.registry,
     adaptiveLearningService,
 });
-const aiService = createAiService(aiRepository, aiProvider, aiConfig, { ragService, agentService, controlledAgenticService });
+const aiService = createAiService(aiRepository, aiProvider, aiConfig, {
+    ragService,
+    agentService,
+    controlledAgenticService,
+    actionProposalService,
+    agenticTraceService,
+    cyberWellnessService,
+});
 
 app.set('trust proxy', 1);
 app.use(cors({ origin: clientOrigin, credentials: true }));
@@ -109,7 +129,8 @@ app.use(createScenarioRouter(scenarioService));
 app.use(createResourceRouter(resourceService));
 app.use('/api/chat', createChatRouter(chatService));
 app.use('/api/chat', createAiRouter(aiService));
-app.use('/api/admin', createAdminRouter(pool));
+app.use(createActionProposalRouter(actionProposalService));
+app.use('/api/admin', createAdminRouter(pool, { agenticTraceService }));
 
 const rateLimitBuckets = new Map();
 

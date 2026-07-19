@@ -334,10 +334,16 @@ async function run() {
 
     result = await request('GET', '/api/scenarios/recommended', undefined, cookieA);
     assert.equal(result.response.status, 200);
-    assert.equal(result.json.scenarios.length > 0, true);
+    assert.equal(result.json.scenarios.length, 1);
     assert.equal(result.json.scenarios[0].topicCode, 'phishing_and_scams');
     assert.ok(['beginner', 'developing'].includes(result.json.scenarios[0].difficulty));
     const slug = result.json.scenarios[0].slug;
+    const scenarioRecommendationId = result.json.scenarios[0].id;
+
+    let currentRecommendation = await request('GET', '/api/recommendations/current', undefined, cookieA);
+    assert.equal(currentRecommendation.response.status, 200);
+    assert.equal(currentRecommendation.json.recommendation.targetScenarioId, scenarioRecommendationId);
+    assert.equal(currentRecommendation.json.recommendation.targetScenarioSlug, slug);
 
     result = await request('GET', `/api/scenarios/${slug}`, undefined, cookieA);
     assert.equal(result.response.status, 200);
@@ -420,6 +426,36 @@ async function run() {
     assert.equal(result.json.review.length, 3);
     assert.ok(result.json.review[0].feedback);
     assert.ok(result.json.review[0].safetyExplanation);
+
+    result = await request('GET', '/api/scenarios/recommended', undefined, cookieA);
+    assert.equal(result.response.status, 200);
+    assert.equal(result.json.scenarios.length, 1);
+    const freshRecommended = result.json.scenarios[0];
+    if (freshRecommended.slug === slug) {
+      assert.equal(freshRecommended.recommendationMode, 'review');
+    } else {
+      assert.notEqual(freshRecommended.latestAttempt?.status, 'completed');
+    }
+    const [incompletePublished] = await pool.query(
+      `SELECT sd.id
+       FROM scenario_definitions sd
+       LEFT JOIN scenario_attempts completed
+         ON completed.scenario_id = sd.id
+        AND completed.user_id = ?
+        AND completed.status = 'completed'
+       WHERE sd.status = 'published'
+         AND completed.id IS NULL
+       LIMIT 1`,
+      [userA.json.user.id]
+    );
+    if (incompletePublished.length) {
+      assert.notEqual(freshRecommended.slug, slug, 'completed strong scenario should not remain the default recommendation while incomplete scenarios exist');
+      assert.notEqual(freshRecommended.latestAttempt?.status, 'completed');
+    }
+    currentRecommendation = await request('GET', '/api/recommendations/current', undefined, cookieA);
+    assert.equal(currentRecommendation.response.status, 200);
+    assert.equal(currentRecommendation.json.recommendation.targetScenarioId, freshRecommended.id);
+    assert.equal(currentRecommendation.json.recommendation.targetScenarioSlug, freshRecommended.slug);
 
     const [[afterProgress]] = await pool.query("SELECT mastery_percentage, activity_count FROM learner_topic_progress WHERE user_id = ? AND topic_code = 'phishing_and_scams'", [userA.json.user.id]);
     assert.equal(afterProgress.mastery_percentage, Math.min(100, beforeProgress.mastery_percentage + 6));

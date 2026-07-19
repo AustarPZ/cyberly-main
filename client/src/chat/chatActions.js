@@ -19,7 +19,45 @@ export function resolveChatActionTarget(target = {}) {
       safeTarget[key] = value;
     }
   });
+  if (safeTarget.page === "scenarios") {
+    if (!safeTarget.scenarioId && target.id !== undefined && target.id !== null && target.id !== "") {
+      safeTarget.scenarioId = target.id;
+    }
+    if (!safeTarget.scenarioSlug && target.slug) {
+      safeTarget.scenarioSlug = target.slug;
+    }
+  }
   return safeTarget.page ? safeTarget : null;
+}
+
+export function buildProposalPayloadForChatAction(action = {}) {
+  const target = resolveChatActionTarget(action?.target);
+  if (!target) return null;
+  if (target.page === "resources") {
+    return {
+      actionType: "open_resource",
+      arguments: {
+        ...(target.resourceId ? { resourceId: target.resourceId } : {}),
+        ...(target.resourceSlug ? { resourceSlug: target.resourceSlug } : {}),
+      },
+    };
+  }
+  if (target.page === "scenarios") {
+    return {
+      actionType: "open_scenario",
+      arguments: {
+        ...(target.scenarioId ? { scenarioId: target.scenarioId } : {}),
+        ...(target.scenarioSlug ? { scenarioSlug: target.scenarioSlug } : {}),
+      },
+    };
+  }
+  if (target.page === "progress" && action?.recommendationId) {
+    return {
+      actionType: "open_recommendation",
+      arguments: { recommendationId: action.recommendationId },
+    };
+  }
+  return null;
 }
 
 export function resolveChatSourceTarget(target = {}) {
@@ -144,6 +182,60 @@ export function mapServerSources(sources = []) {
   return dedupeChatSources(mappedSources);
 }
 
+export function mapServerProposal(proposal = null) {
+  if (!proposal || typeof proposal !== "object") return null;
+  const proposalId = String(proposal.proposalId || "").trim();
+  const actionType = String(proposal.actionType || "").trim();
+  if (!proposalId || !actionType) return null;
+  const target = proposal.target && typeof proposal.target === "object"
+    ? {
+        type: String(proposal.target.type || ""),
+        ...(proposal.target.id ? { id: Number(proposal.target.id) } : {}),
+        ...(proposal.target.label ? { label: String(proposal.target.label) } : {}),
+      }
+    : null;
+  if (!target?.type) return null;
+  return {
+    proposalId,
+    actionType,
+    title: String(proposal.title || ""),
+    explanation: String(proposal.explanation || ""),
+    consequence: String(proposal.consequence || ""),
+    mode: String(proposal.mode || ""),
+    riskLevel: String(proposal.riskLevel || ""),
+    target,
+    requiresConfirmation: Boolean(proposal.requiresConfirmation),
+    status: proposal.status || "pending",
+    createdAt: proposal.createdAt || null,
+    expiresAt: proposal.expiresAt || null,
+    confirmationToken: proposal.confirmationToken || "",
+  };
+}
+
+export function withMessageProposal(message, proposal = null) {
+  if (!message || message.role !== "ai") return message;
+  return {
+    ...message,
+    proposal: mapServerProposal(proposal),
+  };
+}
+
+function actionMatchesProposal(action = {}, proposal = null) {
+  if (!proposal?.target) return false;
+  if (proposal.actionType === "open_resource" && action.target?.page === "resources" && proposal.target.type === "resource") {
+    return Number(action.target.resourceId) === Number(proposal.target.id);
+  }
+  if (proposal.actionType === "open_scenario" && action.target?.page === "scenarios" && proposal.target.type === "scenario") {
+    return Number(action.target.scenarioId) === Number(proposal.target.id);
+  }
+  return false;
+}
+
+export function dedupeActionsAgainstProposal(actions = [], proposal = null) {
+  if (!Array.isArray(actions) || !proposal) return Array.isArray(actions) ? actions : [];
+  return actions.filter(action => !actionMatchesProposal(action, proposal));
+}
+
 export function attachActionGroupsToMessages(messages = [], actionGroups = []) {
   if (!Array.isArray(messages) || !Array.isArray(actionGroups)) return messages;
   const actionsByMessageId = new Map();
@@ -201,4 +293,113 @@ export function getScenarioActionSlug(target = {}, scenarios = []) {
   if (!target.scenarioId) return null;
   const match = scenarios.find(scenario => Number(scenario.id) === Number(target.scenarioId));
   return match?.slug || null;
+}
+
+export function isScenarioHighlightMatch(highlight = null, scenario = {}) {
+  if (!highlight || !scenario) return false;
+  const highlightSlug = highlight.scenarioSlug || highlight.slug || null;
+  const highlightId = Number(highlight.scenarioId || highlight.id || 0);
+  if (highlightSlug && scenario.slug === highlightSlug) return true;
+  return Boolean(highlightId && Number(scenario.id) === highlightId);
+}
+
+function isSafeScenarioSlug(value = "") {
+  return /^[a-z0-9][a-z0-9_-]{0,159}$/i.test(String(value || "").trim());
+}
+
+const RECOMMENDED_SCENARIO_TARGET_KEY = "cyberly.recommendedScenarioTarget";
+const ALLOWED_RECOMMENDED_SCENARIO_SOURCES = new Set(["dashboard", "progress", "cyberguard", "legacy"]);
+
+function getScenarioStorage() {
+  if (typeof window === "undefined" || !window.sessionStorage) return null;
+  return window.sessionStorage;
+}
+
+function normalizeRecommendedScenarioTarget(target = {}, source = "unknown") {
+  const scenarioSlug = String(target.scenarioSlug || target.slug || "").trim();
+  const scenarioId = Number(target.scenarioId || target.id || 0);
+  if (scenarioSlug && isSafeScenarioSlug(scenarioSlug)) {
+    return {
+      slug: scenarioSlug,
+      source: ALLOWED_RECOMMENDED_SCENARIO_SOURCES.has(source) ? source : "unknown",
+      createdAt: new Date().toISOString(),
+    };
+  }
+  if (Number.isInteger(scenarioId) && scenarioId > 0) {
+    return {
+      id: scenarioId,
+      source: ALLOWED_RECOMMENDED_SCENARIO_SOURCES.has(source) ? source : "unknown",
+      createdAt: new Date().toISOString(),
+    };
+  }
+  return null;
+}
+
+export function clearRecommendedScenarioTarget() {
+  try {
+    getScenarioStorage()?.removeItem(RECOMMENDED_SCENARIO_TARGET_KEY);
+  } catch {}
+}
+
+export function readRecommendedScenarioTarget() {
+  try {
+    const raw = getScenarioStorage()?.getItem(RECOMMENDED_SCENARIO_TARGET_KEY);
+    if (!raw) return null;
+    const parsed = JSON.parse(raw);
+    return normalizeRecommendedScenarioTarget(parsed, parsed.source);
+  } catch {
+    clearRecommendedScenarioTarget();
+    return null;
+  }
+}
+
+export function consumeRecommendedScenarioTarget() {
+  const target = readRecommendedScenarioTarget();
+  clearRecommendedScenarioTarget();
+  return target;
+}
+
+export function buildRecommendedScenarioNavigation(target = {}, source = "unknown") {
+  const safeTarget = normalizeRecommendedScenarioTarget(target, source);
+  clearRecommendedScenarioTarget();
+  if (safeTarget) {
+    try {
+      getScenarioStorage()?.setItem(RECOMMENDED_SCENARIO_TARGET_KEY, JSON.stringify(safeTarget));
+    } catch {}
+  }
+  return "#/scenarios";
+}
+
+export function buildScenarioHighlightLink(target = {}) {
+  const scenarioSlug = String(target.scenarioSlug || "").trim();
+  if (scenarioSlug && isSafeScenarioSlug(scenarioSlug)) {
+    return `#/scenarios?highlight=${encodeURIComponent(scenarioSlug)}`;
+  }
+  const scenarioId = Number(target.scenarioId);
+  if (Number.isInteger(scenarioId) && scenarioId > 0) {
+    return `#/scenarios?highlight=${scenarioId}`;
+  }
+  return "#/scenarios";
+}
+
+export function parseScenarioHighlightTargetFromHash(hashValue = "") {
+  const raw = String(hashValue || "");
+  if (!raw.startsWith("#/scenarios")) return null;
+  const queryIndex = raw.indexOf("?");
+  if (queryIndex < 0) return null;
+  const query = raw.slice(queryIndex + 1).split("#")[0];
+  const params = new URLSearchParams(query);
+  const highlightValue = String(params.get("highlight") || "").trim();
+  const legacyScenarioValue = String(params.get("scenario") || "").trim();
+  const legacy = !highlightValue && Boolean(legacyScenarioValue);
+  const scenarioValue = highlightValue || legacyScenarioValue;
+  if (!scenarioValue) return null;
+  if (/^\d+$/.test(scenarioValue)) {
+    const scenarioId = Number(scenarioValue);
+    return Number.isInteger(scenarioId) && scenarioId > 0
+      ? { scenarioSlug: null, scenarioId, legacy }
+      : null;
+  }
+  if (!isSafeScenarioSlug(scenarioValue)) return null;
+  return { scenarioSlug: scenarioValue, scenarioId: null, legacy };
 }

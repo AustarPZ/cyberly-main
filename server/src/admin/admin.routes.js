@@ -2,6 +2,11 @@ const express = require('express');
 const { createRequireAdmin } = require('./admin.middleware');
 const { createProviderRegistry, AI_PROVIDER_IDS } = require('../ai/providers/aiProvider.registry');
 const { listControlledToolMetadata } = require('../agent/agent.toolCatalogue');
+const {
+  DEFERRED_ACTION_TYPES,
+  ENABLED_ACTION_TYPES,
+  PROHIBITED_ACTION_TYPES,
+} = require('../agent/actions/actionPolicy');
 const { createRagRepository } = require('../rag/rag.repository');
 const { createRagService } = require('../rag/rag.service');
 const {
@@ -100,6 +105,43 @@ function buildAdaptiveLearningRuntimeStatus() {
       'response_guidance',
       'suggested_next_steps',
     ],
+  };
+}
+
+function buildLearnerControlledActionStatus() {
+  return {
+    status: 'enabled',
+    executionAuthority: 'learner_confirmation',
+    automaticExecution: false,
+    maximumProposalsPerResponse: 1,
+    writeToolsExposedToModel: 0,
+    confirmationRevalidation: true,
+    replayProtection: true,
+    learnerMayCancel: true,
+    enabledActions: ENABLED_ACTION_TYPES,
+    deferredActions: DEFERRED_ACTION_TYPES,
+    prohibitedActions: PROHIBITED_ACTION_TYPES,
+  };
+}
+
+function buildCyberWellnessRuntimeStatus() {
+  return {
+    status: 'enabled',
+    mode: 'deterministic_non_diagnostic',
+    targetUsers: 'teenagers_13_17',
+    domains: [
+      'digital_balance',
+      'focus_and_distraction',
+      'online_pressure_and_boundaries',
+      'healthy_online_communication',
+      'safe_help_seeking',
+      'digital_resilience',
+    ],
+    psychologicalDiagnosis: false,
+    wellnessRiskScoring: false,
+    automaticIntervention: false,
+    learnerChoiceRequired: true,
+    highRiskSafetyHandling: 'existing_safety_pathway',
   };
 }
 
@@ -435,11 +477,12 @@ async function fetchResourceLifecycle(poolOrConnection, resourceId, lock = false
   };
 }
 
-function createAdminRouter(pool) {
+function createAdminRouter(pool, options = {}) {
   const router = express.Router();
   const requireAdmin = createRequireAdmin(pool);
   const ragRepository = createRagRepository(pool);
   const ragService = createRagService(ragRepository);
+  const agenticTraceService = options.agenticTraceService || null;
 
   router.get('/status', requireAdmin, (_req, res) => {
     res.json({
@@ -456,6 +499,8 @@ function createAdminRouter(pool) {
       ...registry.getSafeStatus(),
       controlledAgenticRuntime: buildControlledAgenticRuntimeStatus(),
       adaptiveLearningRuntime: buildAdaptiveLearningRuntimeStatus(),
+      learnerControlledActions: buildLearnerControlledActionStatus(),
+      cyberWellnessRuntime: buildCyberWellnessRuntimeStatus(),
     });
   });
 
@@ -471,6 +516,47 @@ function createAdminRouter(pool) {
         return res.status(result.httpStatus || 503).json(result);
       }
       res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/ai/traces', requireAdmin, async (req, res, next) => {
+    try {
+      if (!agenticTraceService) {
+        return res.json({
+          items: [],
+          pagination: { limit: 20, offset: 0, total: 0, hasMore: false },
+        });
+      }
+      const result = await agenticTraceService.listTraces({
+        limit: req.query.limit,
+        offset: req.query.offset,
+        status: String(req.query.status || '').trim(),
+        proposalStatus: String(req.query.proposalStatus || '').trim(),
+        from: String(req.query.from || '').trim(),
+        to: String(req.query.to || '').trim(),
+      });
+      res.json(result);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  router.get('/ai/traces/:traceId', requireAdmin, async (req, res, next) => {
+    try {
+      if (!agenticTraceService) {
+        throw httpError(404, 'AGENTIC_TRACE_NOT_FOUND', 'Agentic trace was not found.');
+      }
+      const traceId = String(req.params.traceId || '').trim();
+      if (!/^agt_[a-f0-9-]{36}$/.test(traceId)) {
+        throw httpError(400, 'AGENTIC_TRACE_INVALID_ID', 'Agentic trace id is invalid.');
+      }
+      const trace = await agenticTraceService.getTrace(traceId);
+      if (!trace) {
+        throw httpError(404, 'AGENTIC_TRACE_NOT_FOUND', 'Agentic trace was not found.');
+      }
+      res.json({ trace });
     } catch (error) {
       next(error);
     }

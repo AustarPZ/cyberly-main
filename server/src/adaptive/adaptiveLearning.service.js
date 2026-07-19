@@ -4,7 +4,7 @@ const { buildAdaptiveContext } = require('./adaptiveLearning.rules');
 
 const ADAPTIVE_REQUEST_PATTERNS = [
   /\b(what|which).{0,30}\b(study|learn|practice|practise|improve|weak|weakness|progress|next)\b/i,
-  /\b(am i improving|support priorities|recommend.*based on my progress|based on my progress|study today|practise today|practice today)\b/i,
+  /\b(am i improving|support priorities|recommend.*scenario|recommend.*based on my progress|based on my progress|study today|practise today|practice today)\b/i,
   /\b(why).{0,40}\b(practise|practice|recommend|scenario|difficult)\b/i,
   /我.{0,16}(学习|學習|练习|練習|进步|進步|提高|改进|改進)|应该学|應該學|先学|先學/i,
   /(apa|topik|patut|belajar|latih|kemajuan|cadangkan|lemah).{0,40}(saya|seterusnya|hari ini|berdasarkan)/i,

@@ -38,6 +38,34 @@ function usageFromResponse(response) {
 
 async function mockGenerate(config, request) {
   const mode = config.testMockMode || config.mockMode;
+  if (request.metadata?.purpose === 'agent_route_planning' && process.env.AI_TEST_ACTION_PROPOSAL) {
+    return {
+      provider: 'openai',
+      model: config.model,
+      providerRequestId: 'mock-agent-action-proposal',
+      content: 'Suggested learner-controlled action.',
+      text: 'Suggested learner-controlled action.',
+      actionProposal: {
+        actionType: process.env.AI_TEST_ACTION_PROPOSAL,
+        arguments: {
+          ...(process.env.AI_TEST_ACTION_PROPOSAL_RESOURCE_SLUG
+            ? { resourceSlug: process.env.AI_TEST_ACTION_PROPOSAL_RESOURCE_SLUG }
+            : {}),
+          ...(process.env.AI_TEST_ACTION_PROPOSAL_SCENARIO_SLUG
+            ? { scenarioSlug: process.env.AI_TEST_ACTION_PROPOSAL_SCENARIO_SLUG }
+            : {}),
+          ...(process.env.AI_TEST_ACTION_PROPOSAL_RECOMMENDATION_ID
+            ? { recommendationId: Number(process.env.AI_TEST_ACTION_PROPOSAL_RECOMMENDATION_ID) }
+            : {}),
+        },
+      },
+      inputTokens: 20,
+      outputTokens: 8,
+      usage: { inputTokens: 20, outputTokens: 8, totalTokens: 28 },
+      latencyMs: 1,
+      finishReason: 'stop',
+    };
+  }
   if (mode === 'timeout') throw createProviderError(PROVIDER_ERROR_CODES.AI_PROVIDER_TIMEOUT, 'Mock timeout.', 503);
   if (mode === 'rate-limit') throw createProviderError(PROVIDER_ERROR_CODES.AI_RATE_LIMITED, 'Mock rate limit.', 429);
   if (mode === 'auth-failed') throw createProviderError(PROVIDER_ERROR_CODES.AI_AUTH_FAILED, 'Mock auth failure.', 401);
@@ -64,6 +92,7 @@ async function mockGenerate(config, request) {
     const routeStepCount = (routeContext.match(/^\d+\. /gm) || []).length;
     const routeTimeBudget = routeContext.match(/Time budget: (\d+) minutes/)?.[1] || 'none';
     const routeTopic = routeContext.match(/Topic: ([^\n]+)/)?.[1] || 'none';
+    const hasCyberWellness = /Cyber Wellness situation:/.test(routeContext);
     const secondaryCount = Array.isArray(context.secondaryFocus) ? context.secondaryFocus.length : 0;
     const focusCount = (context.primaryFocus ? 1 : 0) + secondaryCount;
     const recommendation = context.currentRecommendation
@@ -91,6 +120,7 @@ async function mockGenerate(config, request) {
         `hasReviewedSources=${/Reviewed Cyberly Sources:/.test(ragContext)}`,
         `hasChunkId=${/chunkId=/i.test(ragContext)}`,
         `hasLearningRoute=${/Suggested Cyberly Learning Route:/.test(routeContext)}`,
+        `hasCyberWellness=${hasCyberWellness}`,
         `routeStepCount=${routeStepCount}`,
         `routeTimeBudget=${routeTimeBudget}`,
         `routeTopic=${routeTopic}`,
@@ -187,6 +217,7 @@ function createOpenAiProvider(config = {}) {
         inputTokens: result.usage?.inputTokens || result.inputTokens || 0,
         outputTokens: result.usage?.outputTokens || result.outputTokens || 0,
         latencyMs: result.latencyMs,
+        actionProposal: result.actionProposal || null,
       };
     },
   };

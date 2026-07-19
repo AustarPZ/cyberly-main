@@ -1,5 +1,8 @@
-const { mapProgressSummary, mapRecommendation, mapTopicProgress } = require('./progress.mapper');
+const { mapAssessmentTopicResult, mapProgressSummary, mapRecommendation, mapTopicProgress } = require('./progress.mapper');
+const { buildActivityComposition } = require('./progress.composition');
+const { buildLearningPathProgress } = require('./learning-path-progress.service');
 const { getLevelForPercentage, selectRecommendation } = require('./progress.rules');
+const { selectScenarioCandidates } = require('../scenario/scenarioRecommendation');
 const { normalizeLocale } = require('../i18n/locale');
 const { ERROR_CODES } = require('../errors/errorCodes');
 
@@ -25,7 +28,113 @@ function calculateSummary(topicRows) {
   };
 }
 
+function toIso(value) {
+  return value ? new Date(value).toISOString() : null;
+}
+
+function mapRecentActivity(row, type) {
+  if (type === 'assessment_completed') {
+    return {
+      type,
+      label: 'Initial assessment completed',
+      occurredAt: toIso(row.completed_at),
+      source: 'assessment_attempts',
+    };
+  }
+  if (type === 'scenario_completed') {
+    return {
+      type,
+      label: row.title || 'Scenario completed',
+      topicCode: row.topic_code || null,
+      scenarioSlug: row.slug || null,
+      occurredAt: toIso(row.completed_at),
+      source: 'scenario_attempts',
+    };
+  }
+  return {
+    type: 'recommendation_completed',
+    label: 'Recommendation completed',
+    topicCode: row.topic_code || null,
+    recommendationId: row.id,
+    occurredAt: toIso(row.completed_at),
+    source: 'learner_recommendations',
+  };
+}
+
+function scenarioTopicCode(scenario = {}) {
+  return scenario.topicCode || scenario.topic_code || null;
+}
+
+function scenarioTargetExtras(scenario = null) {
+  if (!scenario) return {};
+  return {
+    targetScenarioId: Number(scenario.id),
+    targetScenarioSlug: scenario.slug || null,
+    targetScenarioTitle: scenario.title || null,
+  };
+}
+
+function recommendationFromScenario(scenario, base = {}) {
+  const topicCode = scenarioTopicCode(scenario);
+  return {
+    recommendationType: scenario.recommendationMode === 'review' ? 'review_topic' : 'next_topic',
+    topicCode,
+    recommendedLevel: scenario.difficulty || base.recommended_level || base.recommendedLevel || 'beginner',
+    reasonCode: scenario.recommendationMode === 'review'
+      ? 'continue_progress'
+      : (base.reason_code && base.reason_code !== 'assessment_pending' ? base.reason_code : 'continue_progress'),
+    reasonText: scenario.recommendationMode === 'review'
+      ? 'Review a previous scenario to strengthen this topic.'
+      : 'Continue with a recommended Cyberly scenario.',
+    sourceType: 'scenario',
+    sourceReferenceId: Number(scenario.id),
+  };
+}
+
 function createProgressService(repository) {
+  async function selectCanonicalScenario(userId, recommendation, locale, connection) {
+    if (!recommendation?.topic_code && !recommendation?.topicCode) return null;
+    const scenarios = await repository.listScenarioRecommendationCandidates(userId, locale, connection);
+    const [scenario] = selectScenarioCandidates({
+      scenarios,
+      topicCode: recommendation.topic_code || recommendation.topicCode,
+      recommendedLevel: recommendation.recommended_level || recommendation.recommendedLevel,
+      limit: 1,
+    });
+    return scenario || null;
+  }
+
+  async function createFreshScenarioRecommendation(userId, locale, baseRecommendation = {}, connection) {
+    const scenarios = await repository.listScenarioRecommendationCandidates(userId, locale, connection);
+    const [scenario] = selectScenarioCandidates({
+      scenarios,
+      topicCode: baseRecommendation.topic_code || baseRecommendation.topicCode || null,
+      recommendedLevel: baseRecommendation.recommended_level || baseRecommendation.recommendedLevel || null,
+      limit: 1,
+    });
+    if (!scenario) return null;
+    await repository.supersedeActiveRecommendations(userId, connection);
+    return repository.createRecommendation(userId, recommendationFromScenario(scenario, baseRecommendation), connection);
+  }
+
+  async function ensureActionableCurrentRecommendation(userId, recommendation, locale, connection) {
+    if (!recommendation) return null;
+    if (!['active', 'viewed'].includes(recommendation.status)) return null;
+    const scenario = await selectCanonicalScenario(userId, recommendation, locale, connection);
+    if (!scenario) return recommendation;
+
+    const recommendationTopic = recommendation.topic_code || recommendation.topicCode || null;
+    const selectedTopic = scenarioTopicCode(scenario);
+    const shouldReplace = selectedTopic && recommendationTopic && selectedTopic !== recommendationTopic;
+    if (shouldReplace) {
+      return createFreshScenarioRecommendation(userId, locale, recommendation, connection);
+    }
+    return {
+      ...recommendation,
+      ...scenarioTargetExtras(scenario),
+    };
+  }
+
   async function syncInitialAssessment(userId, attemptId, externalConnection, localeInput) {
     const locale = normalizeLocale(localeInput);
     const runner = async (connection) => {
@@ -58,10 +167,12 @@ function createProgressService(repository) {
       await repository.supersedeActiveRecommendations(userId, connection);
       const savedRecommendation = await repository.createRecommendation(userId, recommendation, connection);
 
+      const actionableRecommendation = await ensureActionableCurrentRecommendation(userId, savedRecommendation, locale, connection);
+
       return {
         summary: mapProgressSummary(await repository.getSummary(userId, connection)),
         topics: topicProgressRows.map(mapTopicProgress),
-        recommendation: mapRecommendation(savedRecommendation, locale),
+        recommendation: mapRecommendation(actionableRecommendation, locale),
       };
     };
 
@@ -76,10 +187,11 @@ function createProgressService(repository) {
       if (!attempt) {
         await repository.supersedeActiveRecommendations(userId, connection);
         const recommendation = await repository.createRecommendation(userId, selectRecommendation([]), connection);
+        const actionableRecommendation = await ensureActionableCurrentRecommendation(userId, recommendation, locale, connection);
         return {
           summary: mapProgressSummary(await repository.getSummary(userId, connection)),
           topics: (await repository.listTopicProgress(userId, connection)).map(mapTopicProgress),
-          recommendation: mapRecommendation(recommendation, locale),
+          recommendation: mapRecommendation(actionableRecommendation, locale),
         };
       }
       return syncInitialAssessment(userId, attempt.id, connection, locale);
@@ -92,10 +204,43 @@ function createProgressService(repository) {
       repository.listTopicProgress(userId),
       repository.findLatestCompletedInitialAttempt(userId),
     ]);
+    const assessmentTopicRows = latestAttempt
+      ? await repository.listTopicScoresForAttempt(latestAttempt.id)
+      : [];
+    const [
+      completedScenarioCount,
+      completedRecommendationCount,
+      recentScenarios,
+      recentRecommendations,
+    ] = await Promise.all([
+      repository.countUniqueCompletedScenarios(userId),
+      repository.countCompletedRecommendations(userId),
+      repository.listRecentCompletedScenarioActivities(userId, 5),
+      repository.listRecentCompletedRecommendationActivities(userId, 5),
+    ]);
+    const recentLearningActivity = [
+      ...(latestAttempt?.completed_at ? [mapRecentActivity(latestAttempt, 'assessment_completed')] : []),
+      ...recentScenarios.map(row => mapRecentActivity(row, 'scenario_completed')),
+      ...recentRecommendations.map(row => mapRecentActivity(row, 'recommendation_completed')),
+    ]
+      .filter(activity => activity.occurredAt)
+      .sort((a, b) => new Date(b.occurredAt).getTime() - new Date(a.occurredAt).getTime())
+      .slice(0, 5);
 
     return {
       summary: mapProgressSummary(summary),
       topics: topics.map(mapTopicProgress),
+      learningPathProgress: await buildLearningPathProgress(repository, userId),
+      activityComposition: buildActivityComposition({
+        assessedTopicCount: assessmentTopicRows.length,
+        completedScenarioCount,
+        completedRecommendationCount,
+      }),
+      recentLearningActivity,
+      assessmentTopicResults: assessmentTopicRows.map(row => mapAssessmentTopicResult({
+        ...row,
+        current_level: getLevelForPercentage(row.percentage),
+      })),
       latestCompletedAssessment: latestAttempt ? {
         attemptId: latestAttempt.id,
         completedAt: latestAttempt.completed_at ? new Date(latestAttempt.completed_at).toISOString() : null,
@@ -107,19 +252,23 @@ function createProgressService(repository) {
 
   async function getCurrentRecommendation(userId, localeInput) {
     const locale = normalizeLocale(localeInput);
-    let recommendation = await repository.getCurrentRecommendation(userId);
-    if (!recommendation) {
-      const latestAttempt = await repository.findLatestCompletedInitialAttempt(userId);
-      if (!latestAttempt) {
-        const result = await syncLatestInitialAssessment(userId, locale);
+    return repository.withTransaction(async (connection) => {
+      let recommendation = await repository.getCurrentRecommendation(userId, connection);
+      if (!recommendation) {
+        const latestAttempt = await repository.findLatestCompletedInitialAttempt(userId, connection);
+        if (!latestAttempt) {
+          await repository.supersedeActiveRecommendations(userId, connection);
+          const savedRecommendation = await repository.createRecommendation(userId, selectRecommendation([]), connection);
+          const actionableRecommendation = await ensureActionableCurrentRecommendation(userId, savedRecommendation, locale, connection);
+          return { exists: true, recommendation: mapRecommendation(actionableRecommendation, locale) };
+        }
+        const result = await syncInitialAssessment(userId, latestAttempt.id, connection, locale);
         recommendation = result.recommendation;
         return { exists: true, recommendation };
       }
-      const result = await syncInitialAssessment(userId, latestAttempt.id, undefined, locale);
-      recommendation = result.recommendation;
-      return { exists: true, recommendation };
-    }
-    return { exists: true, recommendation: mapRecommendation(recommendation, locale) };
+      const actionableRecommendation = await ensureActionableCurrentRecommendation(userId, recommendation, locale, connection);
+      return { exists: Boolean(actionableRecommendation), recommendation: mapRecommendation(actionableRecommendation, locale) };
+    });
   }
 
   async function markViewed(userId, id, localeInput) {
@@ -131,9 +280,19 @@ function createProgressService(repository) {
 
   async function markCompleted(userId, id, localeInput) {
     const locale = normalizeLocale(localeInput);
-    const recommendation = await repository.markRecommendationCompleted(userId, Number(id));
-    if (!recommendation || recommendation.user_id !== userId) throw httpError(404, ERROR_CODES.RECOMMENDATION_NOT_FOUND, 'Recommendation was not found.');
-    return { recommendation: mapRecommendation(recommendation, locale) };
+    return repository.withTransaction(async (connection) => {
+      const completedRecommendation = await repository.markRecommendationCompleted(userId, Number(id), connection);
+      if (!completedRecommendation || completedRecommendation.user_id !== userId) throw httpError(404, ERROR_CODES.RECOMMENDATION_NOT_FOUND, 'Recommendation was not found.');
+      let currentRecommendation = await repository.getCurrentRecommendation(userId, connection);
+      if (!currentRecommendation) {
+        currentRecommendation = await createFreshScenarioRecommendation(userId, locale, completedRecommendation, connection);
+      }
+      currentRecommendation = await ensureActionableCurrentRecommendation(userId, currentRecommendation, locale, connection);
+      return {
+        completedRecommendation: mapRecommendation(completedRecommendation, locale),
+        recommendation: mapRecommendation(currentRecommendation, locale),
+      };
+    });
   }
 
   async function applyScenarioCompletion(userId, scenarioResult, externalConnection, localeInput) {
@@ -141,12 +300,13 @@ function createProgressService(repository) {
     const runner = async (connection) => {
       const existingEvent = await repository.getScenarioProgressEvent(scenarioResult.scenarioAttemptId, connection);
       if (existingEvent) {
+        const currentRecommendation = await ensureActionableCurrentRecommendation(userId, await repository.getCurrentRecommendation(userId, connection), locale, connection);
         return {
           applied: false,
           masteryDelta: existingEvent.mastery_delta,
           summary: mapProgressSummary(await repository.getSummary(userId, connection)),
           topics: (await repository.listTopicProgress(userId, connection)).map(mapTopicProgress),
-          recommendation: mapRecommendation(await repository.getCurrentRecommendation(userId, connection), locale),
+          recommendation: mapRecommendation(currentRecommendation, locale),
         };
       }
 
@@ -181,13 +341,14 @@ function createProgressService(repository) {
 
       await repository.supersedeActiveRecommendations(userId, connection);
       const savedRecommendation = await repository.createRecommendation(userId, recommendation, connection);
+      const actionableRecommendation = await ensureActionableCurrentRecommendation(userId, savedRecommendation, locale, connection);
 
       return {
         applied: wasCreated,
         masteryDelta,
         summary: mapProgressSummary(await repository.getSummary(userId, connection)),
         topics: topicProgressRows.map(mapTopicProgress),
-        recommendation: mapRecommendation(savedRecommendation, locale),
+        recommendation: mapRecommendation(actionableRecommendation, locale),
       };
     };
 

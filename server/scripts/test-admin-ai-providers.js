@@ -198,6 +198,14 @@ async function run() {
     assert.equal(result.json.adaptiveLearningRuntime.automaticDifficultyChanges, false);
     assert.equal(result.json.adaptiveLearningRuntime.automaticScoreChanges, false);
     assert.equal(result.json.adaptiveLearningRuntime.learnerChoiceRequired, true);
+    assert.equal(result.json.cyberWellnessRuntime.status, 'enabled');
+    assert.equal(result.json.cyberWellnessRuntime.mode, 'deterministic_non_diagnostic');
+    assert.equal(result.json.cyberWellnessRuntime.psychologicalDiagnosis, false);
+    assert.equal(result.json.cyberWellnessRuntime.wellnessRiskScoring, false);
+    assert.equal(result.json.cyberWellnessRuntime.automaticIntervention, false);
+    assert.equal(result.json.cyberWellnessRuntime.learnerChoiceRequired, true);
+    assert.equal(result.json.cyberWellnessRuntime.highRiskSafetyHandling, 'existing_safety_pathway');
+    assert.equal(result.json.cyberWellnessRuntime.domains.length, 6);
     assertNoSecrets(result.json);
 
     result = await request('POST', '/api/admin/ai/providers/unknown/test', {}, adminCookie);

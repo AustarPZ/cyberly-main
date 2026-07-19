@@ -172,7 +172,7 @@
     "resumeScenario": "Sambung senario",
     "noRecommendationYet": "Belum ada cadangan aktif.",
     "recommendedNextStep": "Langkah seterusnya yang dicadangkan",
-    "measuredProgress": "Kemajuan terukur",
+    "measuredProgress": "Aktiviti pembelajaran",
     "welcomeBack": "Selamat kembali, {{name}}",
     "beginner": "Pemula",
     "levelDisplay": "Tahap {{level}}",
@@ -181,7 +181,7 @@
     "profileSavedDescription": "Pilihan pembelajaran disimpan dalam profil anda dan dipulihkan selepas halaman dimuat semula atau anda log masuk.",
     "editProfile": "Edit profil",
     "stats": {
-      "topics": "Topik",
+      "learningTopics": "Topik Pembelajaran",
       "languages": "Bahasa",
       "powered": "Dikuasakan"
     },
@@ -191,10 +191,10 @@
       "overview": "Gambaran Keseluruhan",
       "learningProfile": "Profil Pembelajaran",
       "initialAssessment": "Penilaian Awal",
-      "measuredProgress": "Kemajuan Terukur",
+      "measuredProgress": "Kemajuan Pembelajaran",
       "recommendedNextStep": "Langkah Seterusnya",
       "scenarioPractice": "Latihan Senario",
-      "topicMastery": "Penguasaan Topik",
+      "topicMastery": "Keputusan Penilaian",
       "quickActions": "Tindakan Pantas",
       "cyberGuardAi": "CyberGuard AI"
     },
@@ -203,11 +203,10 @@
       "inProgress": "Penilaian awal sedang dijalankan",
       "pending": "Penilaian awal belum dilakukan",
       "checking": "Sedang menyemak status penilaian...",
-      "measuredLevel": "Tahap yang diukur",
-      "score": "Markah",
+      "completedDescription": "Keputusan penilaian anda tersedia dalam Perjalanan Pembelajaran Saya.",
       "resumeDescription": "Sambung jawapan yang disimpan apabila anda sudah bersedia.",
       "pendingDescription": "Anda boleh melengkapkannya sekarang atau kemudian. Cadangan adaptif belum aktif sehingga tahap asas ini diwujudkan.",
-      "viewResults": "Lihat keputusan",
+      "viewResults": "Lihat keputusan penilaian",
       "resume": "Sambung",
       "start": "Mula / lakukan kemudian"
     },
@@ -221,7 +220,7 @@
       "resources": "Lihat Sumber",
       "resourcesDescription": "Panduan tentang penipuan, privasi dan banyak lagi",
       "assessment": "Penilaian Awal",
-      "assessmentDescription": "Tetapkan tahap asas yang diukur",
+      "assessmentDescription": "Cipta tahap asas penilaian anda",
       "scenarios": "Latihan Senario",
       "scenariosDescription": "Buat pilihan selamat dalam situasi realistik",
       "profile": "Edit Profil",
@@ -235,16 +234,20 @@
     },
     "progress": {
       "progress": "Kemajuan",
-      "title": "Kemajuan yang diukur",
-      "loading": "Sedang memuat tahap asas anda...",
-      "summary": "{{count}} topik telah diukur · Berdasarkan keputusan penilaian, bukan pilihan profil.",
-      "empty": "Lengkapkan penilaian awal untuk menghasilkan kemajuan yang diukur."
+      "title": "Aktiviti pembelajaran",
+      "loading": "Sedang memuat aktiviti direkodkan anda...",
+      "assessmentTopicsLabel": "keputusan topik penilaian",
+      "summary": "{{count}} topik penilaian direkodkan · {{activityCount}} rekod aktiviti pembelajaran.",
+      "recordedActivitiesLabel": "aktiviti direkodkan",
+      "activitySummary": "{{scenarios}} senario selesai · {{recommendations}} cadangan selesai",
+      "viewJourney": "Lihat Perjalanan Pembelajaran Saya",
+      "empty": "Lengkapkan penilaian awal untuk mula merekodkan aktiviti pembelajaran anda."
     },
     "recommendation": {
       "title": "Langkah seterusnya yang disyorkan",
       "loading": "Sedang menyemak cadangan...",
       "initialAssessment": "Penilaian awal",
-      "practiceScenario": "Berlatih dengan senario",
+      "practiceScenario": "Lihat senario yang dicadangkan",
       "readResource": "Baca sumber",
       "startAssessment": "Mulakan penilaian",
       "empty": "Belum ada cadangan aktif."
@@ -262,10 +265,10 @@
       "minutes": "{{count}} minit",
       "unlockDescription": "Lengkapkan penilaian untuk membuka cadangan senario."
     },
-    "topicMastery": {
-      "title": "Penguasaan topik",
-      "viewProgress": "Lihat kemajuan"
-    },
+      "topicMastery": {
+        "title": "Keputusan penilaian",
+        "viewProgress": "Lihat kemajuan"
+      },
     "dailyTip": "Tip Siber Harian",
     "quickActions": {
       "title": "Tindakan pantas",
@@ -403,11 +406,13 @@
       "title": "Perpustakaan Senario",
       "description": "Berlatih membuat keputusan keselamatan siber yang realistik dengan maklum balas segera selepas setiap pilihan akhir.",
       "recommended": "Dicadangkan",
+      "recommendedNext": "Langkah dicadangkan",
       "all": "Semua senario",
       "loadingTitle": "Memuatkan senario",
       "loading": "Memuatkan senario...",
       "empty": "Tiada senario dijumpai",
       "emptyDescription": "Cuba tapis dengan topik atau tahap yang lain.",
+      "targetUnavailable": "Senario yang dicadangkan tidak lagi tersedia. Berikut ialah senario pembelajaran lain.",
       "backToLibrary": "Kembali ke Perpustakaan Senario",
       "backToDashboard": "Kembali ke papan pemuka"
     },
@@ -560,13 +565,14 @@
     "error": "Tidak dapat memuatkan sumber.",
     "empty": "Tiada sumber dijumpai.",
     "stats": {
-      "topicsCovered": "Topik diliputi",
-      "freeToRead": "Percuma dibaca",
+      "learningTopics": "Topik Pembelajaran",
+      "guides": "Panduan",
+      "freeAccess": "Akses Percuma",
       "malaysiaFocused": "Berfokus Malaysia"
     },
     "focus": {
       "title": "Fokus disyorkan",
-      "description": "Menunjukkan panduan untuk {{topic}} berdasarkan keputusan penilaian terukur anda.",
+      "description": "Menunjukkan panduan untuk {{topic}} berdasarkan keputusan penilaian yang tersedia.",
       "showAll": "Tunjuk semua panduan"
     },
     "guideCount_one": "{{count}} panduan",
@@ -704,37 +710,65 @@
     }
   },
   "progress": {
-    "title": "Kemajuan Saya",
+    "title": "Perjalanan Pembelajaran Saya",
     "heroTitle": "Perjalanan Pembelajaran {{name}} 📊",
-    "measuredLevelSummary": "Tahap terukur {{level}}",
+    "baselineSummary": "{{count}} topik penilaian direkodkan",
     "profileFamiliaritySummary": "Kebiasaan profil {{level}}",
     "backToDashboard": "Kembali ke Papan Pemuka",
     "selectedTopics": "{{count}} dipilih",
     "sectionNav": {
       "title": "Bahagian kemajuan",
       "ariaLabel": "Bahagian halaman kemajuan",
-      "snapshot": "Ringkasan",
-      "mastery": "Penguasaan",
-      "assessmentTopics": "Topik Penilaian",
+      "overview": "Laluan Pembelajaran",
+      "assessmentResults": "Keputusan Penilaian",
       "recommendation": "Cadangan",
-      "learningTopics": "Topik Pembelajaran",
-      "badges": "Lencana"
+      "learningActivity": "Sejarah Aktiviti",
+      "badges": "Pencapaian"
     },
     "snapshot": {
-      "measuredLevel": "Tahap yang diukur",
+      "assessmentStatus": "Status penilaian",
+      "baselineAvailable": "Tahap asas direkodkan",
+      "noBaseline": "Belum ada tahap asas",
       "language": "Bahasa",
       "style": "Cara belajar",
-      "topics": "Topik"
+      "topics": "Minat pembelajaran"
     },
-    "mastery": {
-      "title": "Penguasaan Terukur",
-      "description": "Dikira daripada skor topik penilaian yang selesai, bukan daripada umur, tahap pendidikan atau kebiasaan yang dilaporkan sendiri.",
-      "loading": "Memuatkan kemajuan...",
-      "empty": "Belum ada tahap asas terukur. Lengkapkan penilaian awal untuk membuka penjejakan kemajuan."
+    "learningPath": {
+      "title": "Kemajuan Laluan Pembelajaran Cyberly",
+      "shortDescription": "Kemajuan anda melalui pengalaman pembelajaran Cyberly.",
+      "shortDisclaimer": "Ini bukan ukuran kebolehan keselamatan siber keseluruhan anda.",
+      "disclaimer": "Ini menunjukkan kemajuan anda melalui pengalaman pembelajaran Cyberly semasa. Ia bukan ukuran kebolehan keselamatan siber keseluruhan anda.",
+      "coreReached": "Kemajuan pembelajaran teras telah dicapai.",
+      "viewJourney": "Lihat Perjalanan Pembelajaran Saya",
+      "percentAria": "Kemajuan Laluan Pembelajaran Cyberly {{percent}} peratus",
+      "barAriaLabel": "Bar sumbangan kemajuan laluan pembelajaran, {{percent}} peratus dipaparkan",
+      "breakdownTitle": "Pecahan Komponen",
+      "pointsOutOf": "{{earned}} / {{maximum}} mata",
+      "assessmentCount": "{{correct}} daripada {{total}} betul",
+      "scenarioCount": "{{completed}} daripada {{total}} selesai",
+      "recommendationCount": "{{count}} selesai",
+      "noAssessment": "Belum ada penilaian selesai",
+      "noEligibleScenarios": "Tiada senario layak tersedia",
+      "noCompletedRecommendations": "Belum ada cadangan selesai",
+      "components": {
+        "assessment": "Sumbangan Penilaian",
+        "scenarios": "Sumbangan Senario",
+        "engagement": "Bonus Penglibatan"
+      },
+      "segments": {
+        "assessment": "Penilaian",
+        "scenarios": "Senario",
+        "engagement": "Bonus Penglibatan",
+        "remaining": "Baki"
+      }
     },
-    "assessmentTopics": {
-      "title": "Topik Penilaian",
-      "description": "Penguasaan per topik daripada penilaian kesihatan siber awal anda.",
+    "assessmentResults": {
+      "title": "Keputusan Penilaian",
+      "description": "Keputusan topik daripada penilaian kesihatan siber awal anda. Ini ialah tahap asas permulaan, bukan ukuran lengkap kebolehan.",
+      "correctOutOfTotal": "{{correct}}/{{total}} betul",
+      "noQuestionCount": "Bilangan soalan tidak tersedia",
+      "resultLevel": "{{level}} · {{percent}}% untuk topik penilaian ini",
+      "assessmentResult": "Keputusan penilaian: {{level}}",
       "source": "Sumber: penilaian awal"
     },
     "recommendation": {
@@ -742,20 +776,76 @@
       "markComplete": "Tanda selesai",
       "completedSaved": "Cadangan ditanda sebagai selesai."
     },
-    "learningTopics": {
-      "title": "Topik yang Anda Pelajari",
-      "description": "Berdasarkan profil anda — teroka panduan untuk setiap topik.",
+    "currentFocus": {
+      "title": "Fokus pembelajaran semasa",
+      "basedOn": "Berdasarkan rekod pembelajaran yang tersedia",
+      "suggestedNextStep": "Langkah seterusnya yang dicadangkan"
+    },
+    "activityComposition": {
+      "title": "Gambaran Aktiviti Pembelajaran",
+      "description": "Kemajuan anda dibina daripada aktiviti pembelajaran yang direkodkan merentas Cyberly.",
+      "recordedActivities": "{{count}} aktiviti direkodkan",
+      "recordedActivities_plural": "{{count}} aktiviti direkodkan",
+      "recordedActivitiesCount": "Aktiviti direkodkan: {{count}}",
+      "barAriaLabel": "Campuran aktiviti merentas aktiviti pembelajaran Cyberly yang direkodkan",
+      "legendLabel": "Petunjuk campuran aktiviti",
+      "shareOfActivity": "{{share}}% daripada aktiviti direkodkan",
+      "segmentShare": "{{label}}: {{count}} unit direkodkan, {{share}}% daripada aktiviti direkodkan",
+      "explanation": "Setiap segmen mewakili jenis aktiviti direkodkan yang berbeza. Saiz segmen menunjukkan bahagian relatif, bukan nilai pembelajarannya.",
+      "disclaimer": "Gambaran ini mencerminkan aktiviti pembelajaran Cyberly yang direkodkan. Ia tidak mengukur keseluruhan kebolehan keselamatan siber anda.",
+      "empty": "Belum ada aktiviti pembelajaran direkodkan.",
+      "assessmentOnlyNote": "Gambaran aktiviti semasa anda kebanyakannya berdasarkan penilaian yang telah anda selesaikan.",
+      "singleCategory": "Aktiviti direkodkan semasa: {{label}}",
+      "segments": {
+        "assessment_topics": "Topik penilaian",
+        "completed_scenarios": "Senario selesai",
+        "completed_recommendations": "Cadangan selesai",
+        "learning_events": "Peristiwa pembelajaran"
+      },
+      "segmentCounts": {
+        "assessment_topics": "{{count}} topik penilaian",
+        "assessment_topics_plural": "{{count}} topik penilaian",
+        "completed_scenarios": "{{count}} senario selesai",
+        "completed_scenarios_plural": "{{count}} senario selesai",
+        "completed_recommendations": "{{count}} cadangan selesai",
+        "completed_recommendations_plural": "{{count}} cadangan selesai",
+        "learning_events": "{{count}} peristiwa pembelajaran",
+        "learning_events_plural": "{{count}} peristiwa pembelajaran"
+      }
+    },
+    "recentActivity": {
+      "title": "Aktiviti Pembelajaran Terkini",
+      "description": "Item terkini hanya menggunakan aktiviti yang telah direkodkan oleh Cyberly.",
+      "empty": "Belum ada aktiviti pembelajaran terkini.",
+      "types": {
+        "assessment_completed": "Penilaian awal selesai",
+        "scenario_completed": "Senario selesai",
+        "recommendation_completed": "Cadangan selesai"
+      }
+    },
+    "learningActivity": {
+      "title": "Sejarah Aktiviti",
+      "description": "Bahagian ini menunjukkan aktiviti yang sedang direkodkan oleh Cyberly.",
+      "recordedActivity": "{{count}} rekod aktiviti",
+      "recordedActivity_plural": "{{count}} rekod aktiviti",
+      "recordedActivityDescription": "Ini datang daripada rekod aktiviti yang disokong seperti kemajuan senario, bukan daripada skor keseluruhan tersembunyi.",
       "exploreAll": "Teroka semua panduan →"
     },
-    "badges": {
-      "title": "Lencana",
-      "description": "Pencapaian yang dibuka daripada aktiviti anda.",
+    "learningInterests": {
+      "title": "Minat Pembelajaran Anda",
+      "description": "Ini ialah topik yang dipilih dalam profil pembelajaran anda.",
+      "selected": "Dipilih",
+      "notSelected": "Tidak dipilih"
+    },
+    "achievements": {
+      "title": "Pencapaian",
+      "description": "Pencapaian yang dibuka daripada aktiviti Cyberly sebenar.",
       "joined": "Menyertai Cyberly",
-      "chatPreview": "Pratonton Sembang Dibuka",
-      "exploredResources": "Meneroka Sumber",
+      "resourceExplorer": "Peneroka Sumber",
       "setGoals": "Menetapkan Matlamat Pembelajaran",
       "multilingual": "Pelajar Berbilang Bahasa",
-      "measuredBaseline": "Tahap Asas Terukur",
+      "assessmentCompleted": "Penilaian Selesai",
+      "baselineAssessmentCompleted": "Penilaian Asas Selesai",
       "earned": "Diperoleh ✓"
     }
   },
@@ -844,6 +934,34 @@
       "groupLabel": "Cadangan tindakan pembelajaran",
       "openAction": "Buka {{title}}",
       "unavailable": "Tidak tersedia"
+    },
+    "proposals": {
+      "suggestedAction": "Tindakan dicadangkan",
+      "reviewAction": "Semak tindakan",
+      "confirm": "Sahkan",
+      "cancel": "Batal",
+      "dismiss": "Tutup",
+      "nothingChanged": "Belum ada apa-apa yang berubah.",
+      "confirmationRequired": "Tindakan ini memerlukan pengesahan anda.",
+      "processing": "Sedang memproses...",
+      "completed": "Selesai",
+      "cancelled": "Dibatalkan",
+      "expired": "Tamat tempoh",
+      "failed": "Tindakan ini tidak dapat disediakan.",
+      "noLongerAvailable": "Cadangan ini tidak lagi tersedia.",
+      "openResource": "Buka sumber",
+      "viewScenario": "Lihat senario",
+      "viewRecommendation": "Lihat cadangan",
+      "markRecommendationViewed": "Tanda cadangan sebagai dilihat",
+      "markRecommendationCompleted": "Tanda cadangan sebagai selesai",
+      "updateLearningPreferences": "Kemas kini pilihan pembelajaran",
+      "statusOnly": "Ini hanya mengemas kini status cadangan.",
+      "noScoreProgressChange": "Ini tidak mengubah skor, penguasaan atau kemajuan anda.",
+      "learnerConfirmationRequired": "Pengesahan pelajar diperlukan",
+      "automaticExecutionDisabled": "Pelaksanaan automatik dinyahaktifkan",
+      "replayProtectionEnabled": "Perlindungan ulangan diaktifkan",
+      "writeToolsExposedNone": "Alat tulis yang didedahkan kepada AI: tiada",
+      "canIgnore": "Anda boleh abaikan atau batalkan mana-mana cadangan."
     },
     "sources": {
       "heading": "Sumber",
@@ -947,6 +1065,40 @@
     },
     "ai": {
       "badge": "Gerbang AI",
+      "overview": {
+        "badge": "Gambaran Admin",
+        "serviceStatus": "Status Perkhidmatan AI",
+        "cyberGuardStatus": "Status CyberGuard",
+        "readyWithSafeguards": "Sedia dengan kawalan keselamatan",
+        "needsProvider": "Persediaan penyedia diperlukan",
+        "currentProvider": "Penyedia semasa",
+        "backupProviders": "Ketersediaan penyedia sandaran",
+        "available": "Tersedia",
+        "notAvailable": "Tidak tersedia",
+        "notConfigured": "Belum dikonfigurasi",
+        "geminiStatus": "Status Gemini",
+        "geminiUnavailable": "Gemini tidak tersedia",
+        "lastProviderTest": "Ujian penyedia terakhir",
+        "responseStatus": "Status respons",
+        "capabilityBadge": "Keupayaan",
+        "whatCyberGuardCanDo": "Perkara yang CyberGuard Boleh Lakukan",
+        "answerCyberSafetyQuestions": "Menjawab soalan keselamatan siber dan kesejahteraan digital.",
+        "recommendLearningContent": "Mencadangkan Sumber yang disemak dan Senario yang diterbitkan.",
+        "useLearningRecords": "Menggunakan rekod pembelajaran untuk panduan peribadi.",
+        "provideWellnessGuidance": "Memberi panduan Kesejahteraan Siber tanpa diagnosis.",
+        "prepareConfirmedActions": "Menyediakan tindakan terkawal pelajar untuk pengesahan.",
+        "boundaryBadge": "Keselamatan",
+        "safetyBoundaries": "Sempadan Keselamatan",
+        "cannotChangeScores": "CyberGuard tidak boleh menukar markah secara langsung.",
+        "cannotChangeMastery": "CyberGuard tidak boleh menukar isyarat penguasaan secara langsung.",
+        "cannotChangeProgress": "CyberGuard tidak boleh menukar rekod kemajuan secara langsung.",
+        "cannotCompleteScenarios": "CyberGuard tidak boleh melengkapkan Senario bagi pelajar.",
+        "cannotAccessOtherLearners": "CyberGuard tidak boleh mengakses data pelajar lain.",
+        "confirmationRequired": "CyberGuard tidak boleh bertindak tanpa pengesahan pelajar.",
+        "nonDiagnostic": "CyberGuard tidak boleh membuat diagnosis kesihatan mental.",
+        "focusedDomain": "CyberGuard tertumpu pada keselamatan siber, keselamatan dalam talian, kesejahteraan digital dan pembelajaran Cyberly.",
+        "advancedTechnicalDetails": "Butiran Teknikal Lanjutan"
+      },
       "providers": {
         "title": "Penyedia AI",
         "description": "Lihat konfigurasi penyedia sebelah pelayan untuk OpenAI, Gemini dan ILMU. Ujian sambungan hanya berjalan apabila Admin menekan Uji sambungan.",
@@ -1036,6 +1188,48 @@
         "allowedRole": "Peranan dibenarkan",
         "riskLevel": "Tahap risiko"
       },
+      "learnerActions": {
+        "badge": "Tindakan Dikawal Pelajar",
+        "title": "Tindakan Dikawal Pelajar",
+        "description": "CyberGuard boleh menyediakan cadangan tindakan yang selamat, tetapi pelajar mesti menyemaknya sebelum apa-apa berlaku.",
+        "status": "Status",
+        "enabled": "Dihidupkan",
+        "disabled": "Dimatikan",
+        "executionAuthority": "Kuasa pelaksanaan",
+        "learnerConfirmation": "Pengesahan pelajar",
+        "automaticExecution": "Pelaksanaan automatik",
+        "maxProposals": "Cadangan maksimum setiap respons",
+        "writeToolsExposed": "Alat tulis didedahkan kepada AI",
+        "revalidation": "Pengesahan semula semasa pengesahan",
+        "replayProtection": "Perlindungan ulangan",
+        "cancelAllowed": "Pelajar boleh membatalkan",
+        "enabledActions": "Tindakan dikawal pelajar yang dihidupkan",
+        "deferred": "Ditangguhkan",
+        "noWriteTools": "Alat tulis didedahkan kepada AI: tiada",
+        "noAutomaticExecution": "Pelaksanaan automatik dimatikan",
+        "prohibitedSummary": "Tindakan dilarang termasuk skor, penguasaan, kemajuan, keputusan senario, keputusan penilaian, dan kandungan Admin.",
+        "actions": {
+          "open_resource": "Buka sumber",
+          "open_scenario": "Lihat senario",
+          "open_recommendation": "Lihat cadangan",
+          "mark_recommendation_viewed": "Tanda cadangan dilihat",
+          "mark_recommendation_completed": "Tanda cadangan selesai",
+          "update_learning_preferences": "Kemas kini pilihan pembelajaran",
+          "change_score": "Ubah skor",
+          "change_mastery": "Ubah penguasaan",
+          "change_progress": "Ubah kemajuan",
+          "start_scenario_attempt": "Mulakan percubaan senario",
+          "restore_scenario_attempt": "Pulihkan percubaan senario",
+          "submit_scenario_decision": "Hantar keputusan senario",
+          "complete_assessment_attempt": "Lengkapkan percubaan penilaian",
+          "create_recommendation": "Cipta cadangan",
+          "publish_content": "Terbitkan kandungan",
+          "delete_content": "Padam kandungan",
+          "execute_sql": "Jalankan SQL",
+          "read_api_keys": "Baca kunci API",
+          "bypass_safety_rules": "Pintas peraturan keselamatan"
+        }
+      },
       "adaptive": {
         "badge": "Kecerdasan Pembelajaran Adaptif",
         "title": "Kecerdasan Pembelajaran Adaptif",
@@ -1067,6 +1261,93 @@
           "confidence_data_quality": "Kualiti isyarat",
           "response_guidance": "Panduan respons",
           "suggested_next_steps": "Langkah seterusnya yang dicadangkan"
+        }
+      },
+      "wellness": {
+        "badge": "Kesejahteraan Siber",
+        "title": "Panduan Kesejahteraan Siber",
+        "description": "CyberGuard boleh menyediakan panduan kesejahteraan digital yang deterministik dan bukan diagnostik untuk situasi dalam talian biasa.",
+        "status": "Status",
+        "enabled": "Dihidupkan",
+        "mode": "Mod",
+        "deterministicNonDiagnostic": "Deterministik dan bukan diagnostik",
+        "targetUsers": "Pengguna sasaran",
+        "teenagers13To17": "Remaja berumur 13-17 tahun",
+        "highRiskSafetyHandling": "Pengendalian keselamatan berisiko tinggi",
+        "existingSafetyPathway": "Laluan keselamatan sedia ada",
+        "domainListLabel": "Domain Kesejahteraan Siber",
+        "psychologicalDiagnosisDisabled": "Diagnosis psikologi dimatikan",
+        "riskScoringDisabled": "Skor risiko kesejahteraan dimatikan",
+        "automaticInterventionDisabled": "Intervensi automatik dimatikan",
+        "learnerChoiceRequired": "Pilihan pelajar diperlukan",
+        "practicalNextSteps": "Langkah praktikal seterusnya",
+        "takeShortBreak": "Ambil rehat pendek",
+        "reduceDistractions": "Kurangkan gangguan",
+        "pauseBeforeResponding": "Berhenti seketika sebelum membalas",
+        "protectYourBoundaries": "Lindungi batas peribadi anda",
+        "blockOrReport": "Sekat atau laporkan",
+        "talkToTrustedAdult": "Bercakap dengan orang dewasa yang dipercayai",
+        "reviewSecuritySteps": "Semak langkah keselamatan anda",
+        "youAreInControl": "Anda mengawal pilihan anda",
+        "limitedContext": "Konteks terhad",
+        "domains": {
+          "digital_balance": "Keseimbangan digital",
+          "focus_and_distraction": "Fokus dan gangguan",
+          "online_pressure_and_boundaries": "Tekanan dalam talian dan batas peribadi",
+          "healthy_online_communication": "Komunikasi dalam talian yang sihat",
+          "safe_help_seeking": "Mendapatkan bantuan dengan selamat",
+          "digital_resilience": "Ketahanan digital"
+        }
+      },
+      "traces": {
+        "badge": "Jejak audit",
+        "title": "Jejak pelaksanaan Agentic",
+        "description": "Semak metadata pelaksanaan CyberGuard yang telah disanitasi tanpa prompt, data peribadi pelajar, argumen alat, atau rahsia.",
+        "refresh": "Muat semula",
+        "filters": "Penapis jejak",
+        "loading": "Memuatkan jejak terkini...",
+        "loadingDetail": "Memuatkan butiran jejak...",
+        "error": "Tidak dapat memuatkan jejak.",
+        "detailError": "Tidak dapat memuatkan butiran jejak.",
+        "empty": "Tiada jejak ditemui.",
+        "tableLabel": "Jejak pelaksanaan Agentic terkini",
+        "detailLabel": "Butiran jejak Agentic",
+        "detailTitle": "Butiran jejak",
+        "viewDetails": "Lihat butiran",
+        "status": "Status",
+        "proposalStatus": "Status cadangan",
+        "all": "Semua",
+        "learner": "Rujukan pelajar",
+        "provider": "Penyedia",
+        "tool": "Alat",
+        "proposal": "Cadangan",
+        "wellness": "Kesejahteraan",
+        "wellnessPrepared": "Panduan Kesejahteraan Siber disediakan",
+        "scope": "Skop",
+        "scopeTypes": {
+          "in_scope": "Dalam skop",
+          "casual_allowed": "Santai",
+          "out_of_scope": "Di luar skop",
+          "unsafe": "Tidak selamat",
+          "high_risk": "Risiko tinggi"
+        },
+        "actions": "Tindakan",
+        "requestId": "ID permintaan",
+        "previous": "Sebelumnya",
+        "next": "Seterusnya",
+        "total": "{{total}} jumlah",
+        "statuses": {
+          "completed": "Selesai",
+          "completedWithFallback": "Selesai dengan sandaran",
+          "safetyBlocked": "Disekat keselamatan",
+          "failedSafely": "Gagal dengan selamat"
+        },
+        "proposals": {
+          "pending": "Menunggu",
+          "completed": "Selesai",
+          "cancelled": "Dibatalkan",
+          "expired": "Tamat tempoh",
+          "rejected": "Ditolak"
         }
       }
     },

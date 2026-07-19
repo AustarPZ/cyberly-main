@@ -229,7 +229,21 @@ function createAiRepository(pool) {
       [locale, userId]
     );
 
-    return { resources, scenarios };
+    const [recommendations] = await db(connection).query(
+      `SELECT id,
+              topic_code,
+              recommended_level,
+              reason_code,
+              status
+       FROM learner_recommendations
+       WHERE user_id = ?
+         AND status IN ('active', 'viewed')
+       ORDER BY generated_at DESC, id DESC
+       LIMIT 1`,
+      [userId]
+    );
+
+    return { resources, scenarios, recommendations };
   }
 
   async function findGenerationByUserMessage(userMessageId, connection) {

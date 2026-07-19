@@ -4,6 +4,8 @@ import {
   createAdminScenario,
   getAdminScenario,
   getAdminAiProviders,
+  getAdminAgenticTrace,
+  listAdminAgenticTraces,
   getAdminScenarioLifecycle,
   getAdminResourceLifecycle,
   listAdminScenarios,
@@ -134,5 +136,29 @@ describe("admin API lifecycle adapter", () => {
     ]);
     expect(JSON.stringify(list)).not.toContain("API_KEY");
     expect(JSON.stringify(test)).not.toContain("API_KEY");
+  });
+
+  test("agentic trace adapters use safe admin endpoints", async () => {
+    global.fetch
+      .mockResolvedValueOnce(jsonResponse(200, {
+        items: [{ traceId: "agt_123", safeStatus: "completed" }],
+        pagination: { total: 1 },
+      }))
+      .mockResolvedValueOnce(jsonResponse(200, {
+        trace: { traceId: "agt_123", safeStatus: "completed", timeline: [] },
+      }));
+
+    const list = await listAdminAgenticTraces({ status: "completed", limit: 5 });
+    const detail = await getAdminAgenticTrace("agt_123");
+
+    expect(list.ok).toBe(true);
+    expect(list.items).toHaveLength(1);
+    expect(detail.ok).toBe(true);
+    expect(global.fetch.mock.calls.map(call => [String(call[0]), call[1].method])).toEqual([
+      ["http://localhost:5000/api/admin/ai/traces?status=completed&limit=5", "GET"],
+      ["http://localhost:5000/api/admin/ai/traces/agt_123", "GET"],
+    ]);
+    expect(JSON.stringify(list)).not.toContain("confirmationToken");
+    expect(JSON.stringify(detail)).not.toContain("systemPrompt");
   });
 });

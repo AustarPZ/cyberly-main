@@ -1,8 +1,17 @@
 import {
   attachActionGroupsToMessages,
   attachSourceGroupsToMessages,
+  buildProposalPayloadForChatAction,
+  buildRecommendedScenarioNavigation,
+  buildScenarioHighlightLink,
+  consumeRecommendedScenarioTarget,
+  dedupeActionsAgainstProposal,
   getScenarioActionSlug,
+  isScenarioHighlightMatch,
+  parseScenarioHighlightTargetFromHash,
+  readRecommendedScenarioTarget,
   mapServerActions,
+  mapServerProposal,
   mapServerSources,
   dedupeChatSources,
   resolveChatActionTarget,
@@ -92,7 +101,48 @@ test("uses safe fallback label and slug-first scenario lookup", () => {
   )).toBe("id-only-scenario");
 });
 
+test("builds and parses stable scenario highlight links without auto-open routes", () => {
+  expect(buildScenarioHighlightLink({ scenarioSlug: "phishing-practice", scenarioId: 12 })).toBe("#/scenarios?highlight=phishing-practice");
+  expect(buildScenarioHighlightLink({ scenarioId: 12 })).toBe("#/scenarios?highlight=12");
+  expect(buildScenarioHighlightLink({ scenarioSlug: "../bad" })).toBe("#/scenarios");
+  expect(parseScenarioHighlightTargetFromHash("#/scenarios?highlight=phishing-practice")).toEqual({ scenarioSlug: "phishing-practice", scenarioId: null, legacy: false });
+  expect(parseScenarioHighlightTargetFromHash("#/scenarios?highlight=12")).toEqual({ scenarioSlug: null, scenarioId: 12, legacy: false });
+  expect(parseScenarioHighlightTargetFromHash("#/scenarios?scenario=phishing-practice")).toEqual({ scenarioSlug: "phishing-practice", scenarioId: null, legacy: true });
+  expect(parseScenarioHighlightTargetFromHash("#/dashboard?highlight=12")).toBeNull();
+  expect(parseScenarioHighlightTargetFromHash("#/scenarios?highlight=https://bad.example")).toBeNull();
+});
+
+test("stores recommended scenario transiently and navigates to plain scenarios route", () => {
+  sessionStorage.clear();
+  expect(buildRecommendedScenarioNavigation({ scenarioSlug: "phishing-practice", scenarioId: 12 }, "dashboard")).toBe("#/scenarios");
+  expect(readRecommendedScenarioTarget()).toMatchObject({
+    slug: "phishing-practice",
+    source: "dashboard",
+  });
+  const consumed = consumeRecommendedScenarioTarget();
+  expect(consumed).toMatchObject({ slug: "phishing-practice", source: "dashboard" });
+  expect(readRecommendedScenarioTarget()).toBeNull();
+
+  expect(buildRecommendedScenarioNavigation({ scenarioId: 12 }, "progress")).toBe("#/scenarios");
+  expect(readRecommendedScenarioTarget()).toMatchObject({ id: 12, source: "progress" });
+
+  expect(buildRecommendedScenarioNavigation({ scenarioSlug: "../bad" }, "cyberguard")).toBe("#/scenarios");
+  expect(readRecommendedScenarioTarget()).toBeNull();
+});
+
+test("matches scenario highlight state by slug or stable id", () => {
+  expect(isScenarioHighlightMatch({ scenarioSlug: "phishing-practice" }, { slug: "phishing-practice", id: 12 })).toBe(true);
+  expect(isScenarioHighlightMatch({ scenarioId: 12 }, { slug: "phishing-practice", id: 12 })).toBe(true);
+  expect(isScenarioHighlightMatch({ scenarioSlug: "old-scenario" }, { slug: "new-scenario", id: 13 })).toBe(false);
+  expect(isScenarioHighlightMatch(null, { slug: "phishing-practice", id: 12 })).toBe(false);
+});
+
 test("resolves only supported internal action targets", () => {
+  expect(resolveChatActionTarget({ page: "scenarios", id: 12, slug: "phishing-practice" })).toEqual({
+    page: "scenarios",
+    scenarioId: 12,
+    scenarioSlug: "phishing-practice",
+  });
   expect(resolveChatActionTarget({ page: "progress", sectionId: "progress-recommendation" })).toEqual({
     page: "progress",
     sectionId: "progress-recommendation",
@@ -103,6 +153,82 @@ test("resolves only supported internal action targets", () => {
   });
   expect(resolveChatActionTarget({ page: "https://example.com" })).toBeNull();
   expect(resolveChatActionTarget({ page: "resources", url: "https://example.com" })).toEqual({ page: "resources" });
+});
+
+test("builds learner-controlled proposal payloads only from safe chat action targets", () => {
+  expect(buildProposalPayloadForChatAction({
+    target: { page: "resources", resourceSlug: "phishing", route: "/bad", userId: 999 },
+  })).toEqual({
+    actionType: "open_resource",
+    arguments: { resourceSlug: "phishing" },
+  });
+
+  expect(buildProposalPayloadForChatAction({
+    target: { page: "scenarios", scenarioId: 42, url: "https://bad.example" },
+  })).toEqual({
+    actionType: "open_scenario",
+    arguments: { scenarioId: 42 },
+  });
+
+  expect(buildProposalPayloadForChatAction({
+    recommendationId: 7,
+    target: { page: "progress", sectionId: "progress-recommendation" },
+  })).toEqual({
+    actionType: "open_recommendation",
+    arguments: { recommendationId: 7 },
+  });
+
+  expect(buildProposalPayloadForChatAction({ target: { page: "progress" } })).toBeNull();
+  expect(buildProposalPayloadForChatAction({ target: { page: "assessment" } })).toBeNull();
+  expect(buildProposalPayloadForChatAction({ target: { page: "https://example.com" } })).toBeNull();
+});
+
+test("maps model-origin proposals without exposing trusted execution parameters", () => {
+  const proposal = mapServerProposal({
+    proposalId: "proposal-1",
+    actionType: "open_resource",
+    title: "Open resource",
+    explanation: "Open a resource.",
+    consequence: "Nothing changes.",
+    target: { type: "resource", id: 12, label: "Phishing", secret: "nope" },
+    parameters: { resourceId: 12, resourceSlug: "phishing" },
+    status: "pending",
+    confirmationToken: "token",
+  });
+
+  expect(proposal).toMatchObject({
+    proposalId: "proposal-1",
+    actionType: "open_resource",
+    target: { type: "resource", id: 12, label: "Phishing" },
+    confirmationToken: "token",
+  });
+  expect(proposal.parameters).toBeUndefined();
+  expect(proposal.target.secret).toBeUndefined();
+});
+
+test("deduplicates action cards that match a model-origin proposal target", () => {
+  const actions = mapServerActions([
+    {
+      id: 1,
+      type: "resource",
+      labelKey: "chat.actions.startResource",
+      target: { page: "resources", resourceId: 12, resourceSlug: "phishing" },
+    },
+    {
+      id: 2,
+      type: "scenario",
+      labelKey: "chat.actions.startScenario",
+      target: { page: "scenarios", scenarioId: 5, scenarioSlug: "safe-practice" },
+    },
+  ]);
+  const proposal = mapServerProposal({
+    proposalId: "proposal-1",
+    actionType: "open_resource",
+    target: { type: "resource", id: 12, label: "Phishing" },
+    status: "pending",
+  });
+
+  expect(dedupeActionsAgainstProposal(actions, proposal).map(action => action.id)).toEqual([2]);
 });
 
 test("attaches source groups only to matching assistant messages", () => {

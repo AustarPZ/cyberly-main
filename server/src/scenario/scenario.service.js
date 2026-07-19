@@ -7,6 +7,7 @@ const {
   parseOptions,
 } = require('./scenario.mapper');
 const { calculateScenarioScore, getMasteryDelta } = require('./scenario.scoring');
+const { selectScenarioCandidates } = require('./scenarioRecommendation');
 const {
   isValidDifficulty,
   isValidTopicCode,
@@ -15,8 +16,6 @@ const {
 } = require('./scenario.validation');
 const { normalizeLocale } = require('../i18n/locale');
 const { ERROR_CODES } = require('../errors/errorCodes');
-
-const DIFFICULTY_ORDER = ['beginner', 'developing', 'intermediate', 'advanced'];
 
 function httpError(status, code, message, errors) {
   const error = new Error(message);
@@ -212,7 +211,7 @@ function createScenarioService(repository, progressService) {
     const recommendation = currentRecommendation.recommendation;
     if (!recommendation?.topicCode) return { recommendation, scenarios: [] };
 
-    const all = (await repository.listPublishedScenarios({ topicCode: recommendation.topicCode }, userId, locale))
+    const all = (await repository.listPublishedScenarios({}, userId, locale))
       .map(row => mapScenarioMeta(row, {
         latestAttempt: row.latest_attempt_id ? {
           id: row.latest_attempt_id,
@@ -222,18 +221,14 @@ function createScenarioService(repository, progressService) {
         } : null,
       }));
 
-    const target = recommendation.recommendedLevel || 'beginner';
-    const targetIndex = DIFFICULTY_ORDER.indexOf(target);
-    const ranked = [...all].sort((a, b) => {
-      const ai = DIFFICULTY_ORDER.indexOf(a.difficulty);
-      const bi = DIFFICULTY_ORDER.indexOf(b.difficulty);
-      const aDistance = ai <= targetIndex ? targetIndex - ai : ai - targetIndex + 10;
-      const bDistance = bi <= targetIndex ? targetIndex - bi : bi - targetIndex + 10;
-      if (aDistance !== bDistance) return aDistance - bDistance;
-      return ai - bi;
+    const ranked = selectScenarioCandidates({
+      scenarios: all,
+      topicCode: recommendation.topicCode,
+      recommendedLevel: recommendation.recommendedLevel || 'beginner',
+      limit: 1,
     });
 
-    return { recommendation, scenarios: ranked.slice(0, 2) };
+    return { recommendation, scenarios: ranked };
   }
 
   async function getScenarioDashboard(userId, localeInput) {

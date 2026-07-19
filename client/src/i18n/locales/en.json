@@ -172,7 +172,7 @@
     "resumeScenario": "Resume scenario",
     "noRecommendationYet": "No active recommendation yet.",
     "recommendedNextStep": "Recommended next step",
-    "measuredProgress": "Measured progress",
+    "measuredProgress": "Learning activity",
     "welcomeBack": "Welcome back, {{name}}",
     "beginner": "Beginner",
     "levelDisplay": "{{level}} level",
@@ -181,20 +181,20 @@
     "profileSavedDescription": "Learner preferences are saved to your profile and restored after refresh or login.",
     "editProfile": "Edit profile",
     "stats": {
-      "topics": "Topics",
+      "learningTopics": "Learning Topics",
       "languages": "Languages",
       "powered": "Powered"
     },
     "sectionNav": {
       "title": "Dashboard sections",
       "ariaLabel": "Dashboard section navigation",
-      "overview": "Overview",
+      "overview": "Learning Path",
       "learningProfile": "Learning Profile",
       "initialAssessment": "Initial Assessment",
-      "measuredProgress": "Measured Progress",
+        "measuredProgress": "Learning Progress",
       "recommendedNextStep": "Recommended Next Step",
       "scenarioPractice": "Scenario Practice",
-      "topicMastery": "Topic Mastery",
+        "topicMastery": "Assessment Results",
       "quickActions": "Quick Actions",
       "cyberGuardAi": "CyberGuard AI"
     },
@@ -203,11 +203,10 @@
       "inProgress": "Initial assessment in progress",
       "pending": "Initial assessment pending",
       "checking": "Checking assessment status...",
-      "measuredLevel": "Measured level",
-      "score": "Score",
+      "completedDescription": "Your assessment results are available in My Learning Journey.",
       "resumeDescription": "Resume your saved answers and continue when ready.",
       "pendingDescription": "Complete it now or later. Adaptive recommendations remain inactive until this baseline exists.",
-      "viewResults": "View results",
+      "viewResults": "View assessment results",
       "resume": "Resume",
       "start": "Start / do later"
     },
@@ -221,7 +220,7 @@
       "resources": "Browse Resources",
       "resourcesDescription": "Guides on scams, privacy and more",
       "assessment": "Initial Assessment",
-      "assessmentDescription": "Set your measured baseline",
+      "assessmentDescription": "Create your assessment baseline",
       "scenarios": "Practice Scenarios",
       "scenariosDescription": "Make safe choices in realistic situations",
       "profile": "Edit Profile",
@@ -235,16 +234,20 @@
     },
     "progress": {
       "progress": "Progress",
-      "title": "Measured progress",
-      "loading": "Loading your measured baseline...",
-      "summary": "{{count}} measured topics · Based on assessment results, not profile preferences.",
-      "empty": "Complete the initial assessment to create measured progress."
+      "title": "Learning activity",
+      "loading": "Loading your recorded activity...",
+      "assessmentTopicsLabel": "assessment topic results",
+      "summary": "{{count}} assessment topics recorded · {{activityCount}} learning activity records.",
+      "recordedActivitiesLabel": "recorded activities",
+      "activitySummary": "{{scenarios}} completed scenario(s) · {{recommendations}} completed recommendation(s)",
+      "viewJourney": "View My Learning Journey",
+      "empty": "Complete the initial assessment to start recording your learning activity."
     },
     "recommendation": {
       "title": "Recommended next step",
       "loading": "Checking recommendation...",
       "initialAssessment": "Initial assessment",
-      "practiceScenario": "Practice with scenario",
+      "practiceScenario": "View recommended scenario",
       "readResource": "Read resource",
       "startAssessment": "Start assessment",
       "empty": "No active recommendation yet."
@@ -262,10 +265,10 @@
       "minutes": "{{count}} min",
       "unlockDescription": "Complete the assessment to unlock scenario recommendations."
     },
-    "topicMastery": {
-      "title": "Topic mastery",
-      "viewProgress": "View progress"
-    },
+      "topicMastery": {
+        "title": "Assessment results",
+        "viewProgress": "View progress"
+      },
     "dailyTip": "Daily Cyber Tip",
     "quickActions": {
       "title": "Quick actions",
@@ -403,11 +406,13 @@
       "title": "Scenario Library",
       "description": "Practice realistic cyber safety decisions with immediate feedback after each final choice.",
       "recommended": "Recommended",
+      "recommendedNext": "Recommended next",
       "all": "All scenarios",
       "loadingTitle": "Loading scenarios",
       "loading": "Loading scenarios...",
       "empty": "No scenarios found",
       "emptyDescription": "Try a different topic or difficulty filter.",
+      "targetUnavailable": "The recommended scenario is no longer available. Here are other learning scenarios.",
       "backToLibrary": "Back to Scenario Library",
       "backToDashboard": "Back to dashboard"
     },
@@ -560,13 +565,14 @@
     "error": "Unable to load resources.",
     "empty": "No resources found.",
     "stats": {
-      "topicsCovered": "Topics covered",
-      "freeToRead": "Free to read",
+      "learningTopics": "Learning Topics",
+      "guides": "Guides",
+      "freeAccess": "Free Access",
       "malaysiaFocused": "Malaysia focused"
     },
     "focus": {
       "title": "Recommended focus",
-      "description": "Showing guides for {{topic}} based on your measured assessment result.",
+      "description": "Showing guides for {{topic}} based on your available assessment result.",
       "showAll": "Show all guides"
     },
     "guideCount_one": "{{count}} guide",
@@ -704,37 +710,65 @@
     }
   },
   "progress": {
-    "title": "My Progress",
+    "title": "My Learning Journey",
     "heroTitle": "{{name}}'s Learning Journey 📊",
-    "measuredLevelSummary": "{{level}} measured level",
+    "baselineSummary": "{{count}} assessment topics recorded",
     "profileFamiliaritySummary": "{{level}} profile familiarity",
     "backToDashboard": "Back to Dashboard",
     "selectedTopics": "{{count}} selected",
     "sectionNav": {
       "title": "Progress sections",
       "ariaLabel": "Progress page sections",
-      "snapshot": "Snapshot",
-      "mastery": "Mastery",
-      "assessmentTopics": "Assessment Topics",
-      "recommendation": "Recommendation",
-      "learningTopics": "Learning Topics",
-      "badges": "Badges"
+      "overview": "Overview",
+      "assessmentResults": "Assessment Results",
+      "recommendation": "Recommendations",
+      "learningActivity": "Activity History",
+      "badges": "Achievements"
     },
     "snapshot": {
-      "measuredLevel": "Measured level",
+      "assessmentStatus": "Assessment status",
+      "baselineAvailable": "Baseline recorded",
+      "noBaseline": "No baseline yet",
       "language": "Language",
       "style": "Style",
-      "topics": "Topics"
+      "topics": "Learning interests"
     },
-    "mastery": {
-      "title": "Measured Mastery",
-      "description": "Calculated from completed assessment topic scores, not from age, education level, or self-reported familiarity.",
-      "loading": "Loading progress...",
-      "empty": "No measured baseline yet. Complete the initial assessment to unlock progress tracking."
+    "learningPath": {
+      "title": "Cyberly Learning Path Progress",
+      "shortDescription": "Your progress through Cyberly’s learning experience.",
+      "shortDisclaimer": "This is not a measure of your overall cybersecurity ability.",
+      "disclaimer": "This shows your progress through Cyberly’s current learning experience. It is not a measure of your overall cybersecurity ability.",
+      "coreReached": "Core learning progress reached.",
+      "viewJourney": "View My Learning Journey",
+      "percentAria": "Cyberly Learning Path Progress {{percent}} percent",
+      "barAriaLabel": "Learning path progress contribution bar, {{percent}} percent displayed",
+      "breakdownTitle": "Component Breakdown",
+      "pointsOutOf": "{{earned}} / {{maximum}} points",
+      "assessmentCount": "{{correct}} of {{total}} correct",
+      "scenarioCount": "{{completed}} of {{total}} completed",
+      "recommendationCount": "{{count}} completed",
+      "noAssessment": "No assessment completed yet",
+      "noEligibleScenarios": "No eligible scenarios available",
+      "noCompletedRecommendations": "No completed recommendations yet",
+      "components": {
+        "assessment": "Assessment Contribution",
+        "scenarios": "Scenario Contribution",
+        "engagement": "Engagement Bonus"
+      },
+      "segments": {
+        "assessment": "Assessment",
+        "scenarios": "Scenarios",
+        "engagement": "Engagement Bonus",
+        "remaining": "Remaining"
+      }
     },
-    "assessmentTopics": {
-      "title": "Assessment Topics",
-      "description": "Topic-level mastery from your initial cyber wellness assessment.",
+    "assessmentResults": {
+      "title": "Assessment Results",
+      "description": "Topic results from your initial cyber wellness assessment. These are a starting baseline, not a complete measure of ability.",
+      "correctOutOfTotal": "{{correct}}/{{total}} correct",
+      "noQuestionCount": "Question count unavailable",
+      "resultLevel": "{{level}} · {{percent}}% on this assessment topic",
+      "assessmentResult": "Assessment result: {{level}}",
       "source": "Source: initial assessment"
     },
     "recommendation": {
@@ -742,20 +776,76 @@
       "markComplete": "Mark complete",
       "completedSaved": "Recommendation marked complete."
     },
-    "learningTopics": {
-      "title": "Topics You're Learning",
-      "description": "Based on your profile — explore guides for each one.",
+    "currentFocus": {
+      "title": "Current learning focus",
+      "basedOn": "Based on available learning records",
+      "suggestedNextStep": "Suggested next step"
+    },
+    "activityComposition": {
+      "title": "Learning Activity Overview",
+      "description": "Your progress is built from the learning activities recorded across Cyberly.",
+      "recordedActivities": "{{count}} recorded activity",
+      "recordedActivities_plural": "{{count}} recorded activities",
+      "recordedActivitiesCount": "Recorded activities: {{count}}",
+      "barAriaLabel": "Activity mix across recorded Cyberly learning activities",
+      "legendLabel": "Activity mix legend",
+      "shareOfActivity": "{{share}}% of recorded activity",
+      "segmentShare": "{{label}}: {{count}} recorded unit(s), {{share}}% of recorded activity",
+      "explanation": "Each segment represents a different type of recorded activity. Segment sizes show their relative share, not their learning value.",
+      "disclaimer": "This overview reflects your recorded Cyberly learning activities. It does not measure your overall cybersecurity ability.",
+      "empty": "No learning activity has been recorded yet.",
+      "assessmentOnlyNote": "Your current activity overview is based mainly on your completed assessment.",
+      "singleCategory": "Current recorded activity: {{label}}",
+      "segments": {
+        "assessment_topics": "Assessment topics",
+        "completed_scenarios": "Completed scenarios",
+        "completed_recommendations": "Completed recommendations",
+        "learning_events": "Learning events"
+      },
+      "segmentCounts": {
+        "assessment_topics": "{{count}} assessed topic(s)",
+        "assessment_topics_plural": "{{count}} assessed topic(s)",
+        "completed_scenarios": "{{count}} completed scenario(s)",
+        "completed_scenarios_plural": "{{count}} completed scenario(s)",
+        "completed_recommendations": "{{count}} completed recommendation(s)",
+        "completed_recommendations_plural": "{{count}} completed recommendation(s)",
+        "learning_events": "{{count}} learning event(s)",
+        "learning_events_plural": "{{count}} learning event(s)"
+      }
+    },
+    "recentActivity": {
+      "title": "Recent Learning Activity",
+      "description": "Recent items use only activity Cyberly has recorded.",
+      "empty": "No recent learning activity yet.",
+      "types": {
+        "assessment_completed": "Initial assessment completed",
+        "scenario_completed": "Scenario completed",
+        "recommendation_completed": "Recommendation completed"
+      }
+    },
+    "learningActivity": {
+      "title": "Activity History",
+      "description": "This section shows activities currently recorded by Cyberly.",
+      "recordedActivity": "{{count}} recorded activity item",
+      "recordedActivity_plural": "{{count}} recorded activity items",
+      "recordedActivityDescription": "This comes from supported activity records such as scenario progress, not from a hidden overall score.",
       "exploreAll": "Explore all guides →"
     },
-    "badges": {
-      "title": "Badges",
-      "description": "Achievements unlocked from your activity.",
+    "learningInterests": {
+      "title": "Your Learning Interests",
+      "description": "These are the topics selected in your learner profile.",
+      "selected": "Selected",
+      "notSelected": "Not selected"
+    },
+    "achievements": {
+      "title": "Achievements",
+      "description": "Milestones unlocked from real Cyberly activity.",
       "joined": "Joined Cyberly",
-      "chatPreview": "Chat Preview Open",
-      "exploredResources": "Explored Resources",
+      "resourceExplorer": "Resource Explorer",
       "setGoals": "Set Learning Goals",
       "multilingual": "Multilingual Learner",
-      "measuredBaseline": "Measured Baseline",
+      "assessmentCompleted": "Assessment Completed",
+      "baselineAssessmentCompleted": "Baseline Assessment Completed",
       "earned": "Earned ✓"
     }
   },
@@ -844,6 +934,34 @@
       "groupLabel": "Suggested learning actions",
       "openAction": "Open {{title}}",
       "unavailable": "Unavailable"
+    },
+    "proposals": {
+      "suggestedAction": "Suggested action",
+      "reviewAction": "Review action",
+      "confirm": "Confirm",
+      "cancel": "Cancel",
+      "dismiss": "Dismiss",
+      "nothingChanged": "Nothing has changed yet.",
+      "confirmationRequired": "This action requires your confirmation.",
+      "processing": "Processing...",
+      "completed": "Completed",
+      "cancelled": "Cancelled",
+      "expired": "Expired",
+      "failed": "This action could not be prepared.",
+      "noLongerAvailable": "This proposal is no longer available.",
+      "openResource": "Open resource",
+      "viewScenario": "View scenario",
+      "viewRecommendation": "View recommendation",
+      "markRecommendationViewed": "Mark recommendation as viewed",
+      "markRecommendationCompleted": "Mark recommendation as completed",
+      "updateLearningPreferences": "Update learning preferences",
+      "statusOnly": "This updates recommendation status only.",
+      "noScoreProgressChange": "This does not change your score, mastery or progress.",
+      "learnerConfirmationRequired": "Learner confirmation required",
+      "automaticExecutionDisabled": "Automatic execution disabled",
+      "replayProtectionEnabled": "Replay protection enabled",
+      "writeToolsExposedNone": "Write tools exposed to AI: none",
+      "canIgnore": "You can ignore or cancel any suggestion."
     },
     "sources": {
       "heading": "Sources",
@@ -947,6 +1065,40 @@
     },
     "ai": {
       "badge": "AI gateway",
+      "overview": {
+        "badge": "Admin overview",
+        "serviceStatus": "AI Service Status",
+        "cyberGuardStatus": "CyberGuard status",
+        "readyWithSafeguards": "Ready with safeguards",
+        "needsProvider": "Provider setup needed",
+        "currentProvider": "Current provider",
+        "backupProviders": "Backup provider availability",
+        "available": "Available",
+        "notAvailable": "Not available",
+        "notConfigured": "Not configured",
+        "geminiStatus": "Gemini status",
+        "geminiUnavailable": "Gemini unavailable",
+        "lastProviderTest": "Last provider test",
+        "responseStatus": "Response status",
+        "capabilityBadge": "Capabilities",
+        "whatCyberGuardCanDo": "What CyberGuard Can Do",
+        "answerCyberSafetyQuestions": "Answer cyber-safety and cyber wellness questions.",
+        "recommendLearningContent": "Recommend reviewed Resources and published Scenarios.",
+        "useLearningRecords": "Use learning records for personalized guidance.",
+        "provideWellnessGuidance": "Provide non-diagnostic Cyber Wellness guidance.",
+        "prepareConfirmedActions": "Prepare learner-controlled actions for confirmation.",
+        "boundaryBadge": "Safety",
+        "safetyBoundaries": "Safety Boundaries",
+        "cannotChangeScores": "CyberGuard cannot directly change scores.",
+        "cannotChangeMastery": "CyberGuard cannot directly change mastery signals.",
+        "cannotChangeProgress": "CyberGuard cannot directly change progress records.",
+        "cannotCompleteScenarios": "CyberGuard cannot complete Scenarios for learners.",
+        "cannotAccessOtherLearners": "CyberGuard cannot access another learner's data.",
+        "confirmationRequired": "CyberGuard cannot act without learner confirmation.",
+        "nonDiagnostic": "CyberGuard cannot diagnose mental health.",
+        "focusedDomain": "CyberGuard focuses on cybersecurity, online safety, cyber wellness and Cyberly learning.",
+        "advancedTechnicalDetails": "Advanced Technical Details"
+      },
       "providers": {
         "title": "AI providers",
         "description": "View server-side provider configuration for OpenAI, Gemini, and ILMU. Connection tests run only when an Admin clicks Test connection.",
@@ -1036,6 +1188,48 @@
         "allowedRole": "Allowed role",
         "riskLevel": "Risk level"
       },
+      "learnerActions": {
+        "badge": "Learner-Controlled Actions",
+        "title": "Learner-Controlled Actions",
+        "description": "CyberGuard can prepare a safe action proposal, but the learner must review it before anything happens.",
+        "status": "Status",
+        "enabled": "Enabled",
+        "disabled": "Disabled",
+        "executionAuthority": "Execution authority",
+        "learnerConfirmation": "Learner confirmation",
+        "automaticExecution": "Automatic execution",
+        "maxProposals": "Maximum proposals per response",
+        "writeToolsExposed": "Write tools exposed to AI",
+        "revalidation": "Confirmation revalidation",
+        "replayProtection": "Replay protection",
+        "cancelAllowed": "Learner may cancel",
+        "enabledActions": "Enabled learner-controlled actions",
+        "deferred": "Deferred",
+        "noWriteTools": "Write tools exposed to AI: none",
+        "noAutomaticExecution": "Automatic execution is disabled",
+        "prohibitedSummary": "Prohibited actions include scores, mastery, progress, scenario decisions, assessment results, and Admin content.",
+        "actions": {
+          "open_resource": "Open resource",
+          "open_scenario": "View scenario",
+          "open_recommendation": "View recommendation",
+          "mark_recommendation_viewed": "Mark recommendation viewed",
+          "mark_recommendation_completed": "Mark recommendation completed",
+          "update_learning_preferences": "Update learning preferences",
+          "change_score": "Change scores",
+          "change_mastery": "Change mastery",
+          "change_progress": "Change progress",
+          "start_scenario_attempt": "Start scenario attempt",
+          "restore_scenario_attempt": "Restore scenario attempt",
+          "submit_scenario_decision": "Submit scenario decision",
+          "complete_assessment_attempt": "Complete assessment attempt",
+          "create_recommendation": "Create recommendation",
+          "publish_content": "Publish content",
+          "delete_content": "Delete content",
+          "execute_sql": "Execute SQL",
+          "read_api_keys": "Read API keys",
+          "bypass_safety_rules": "Bypass safety rules"
+        }
+      },
       "adaptive": {
         "badge": "Adaptive Learning Intelligence",
         "title": "Adaptive Learning Intelligence",
@@ -1067,6 +1261,93 @@
           "confidence_data_quality": "Signal quality",
           "response_guidance": "Response guidance",
           "suggested_next_steps": "Suggested next steps"
+        }
+      },
+      "wellness": {
+        "badge": "Cyber Wellness",
+        "title": "Cyber Wellness Guidance",
+        "description": "CyberGuard can prepare deterministic, non-diagnostic digital wellbeing guidance for ordinary online situations.",
+        "status": "Status",
+        "enabled": "Enabled",
+        "mode": "Mode",
+        "deterministicNonDiagnostic": "Deterministic and non-diagnostic",
+        "targetUsers": "Target users",
+        "teenagers13To17": "Teenagers aged 13-17",
+        "highRiskSafetyHandling": "High-risk safety handling",
+        "existingSafetyPathway": "Existing safety pathway",
+        "domainListLabel": "Cyber Wellness domains",
+        "psychologicalDiagnosisDisabled": "Psychological diagnosis disabled",
+        "riskScoringDisabled": "Wellness risk scoring disabled",
+        "automaticInterventionDisabled": "Automatic intervention disabled",
+        "learnerChoiceRequired": "Learner choice required",
+        "practicalNextSteps": "Practical next steps",
+        "takeShortBreak": "Take a short break",
+        "reduceDistractions": "Reduce distractions",
+        "pauseBeforeResponding": "Pause before responding",
+        "protectYourBoundaries": "Protect your boundaries",
+        "blockOrReport": "Block or report",
+        "talkToTrustedAdult": "Talk to a trusted adult",
+        "reviewSecuritySteps": "Review your security steps",
+        "youAreInControl": "You are in control",
+        "limitedContext": "Limited context",
+        "domains": {
+          "digital_balance": "Digital balance",
+          "focus_and_distraction": "Focus and distraction",
+          "online_pressure_and_boundaries": "Online pressure and boundaries",
+          "healthy_online_communication": "Healthy online communication",
+          "safe_help_seeking": "Safe help-seeking",
+          "digital_resilience": "Digital resilience"
+        }
+      },
+      "traces": {
+        "badge": "Audit trail",
+        "title": "Agentic execution traces",
+        "description": "Review sanitized CyberGuard execution metadata without prompts, learner private data, tool arguments, or secrets.",
+        "refresh": "Refresh",
+        "filters": "Trace filters",
+        "loading": "Loading recent traces...",
+        "loadingDetail": "Loading trace detail...",
+        "error": "Unable to load traces.",
+        "detailError": "Unable to load trace detail.",
+        "empty": "No traces found.",
+        "tableLabel": "Recent agentic execution traces",
+        "detailLabel": "Agentic trace detail",
+        "detailTitle": "Trace detail",
+        "viewDetails": "View details",
+        "status": "Status",
+        "proposalStatus": "Proposal status",
+        "all": "All",
+        "learner": "Learner reference",
+        "provider": "Provider",
+        "tool": "Tool",
+        "proposal": "Proposal",
+        "wellness": "Wellness",
+        "wellnessPrepared": "Cyber Wellness guidance prepared",
+        "scope": "Scope",
+        "scopeTypes": {
+          "in_scope": "In scope",
+          "casual_allowed": "Casual",
+          "out_of_scope": "Out of scope",
+          "unsafe": "Unsafe",
+          "high_risk": "High risk"
+        },
+        "actions": "Actions",
+        "requestId": "Request ID",
+        "previous": "Previous",
+        "next": "Next",
+        "total": "{{total}} total",
+        "statuses": {
+          "completed": "Completed",
+          "completedWithFallback": "Completed with fallback",
+          "safetyBlocked": "Safety blocked",
+          "failedSafely": "Failed safely"
+        },
+        "proposals": {
+          "pending": "Pending",
+          "completed": "Completed",
+          "cancelled": "Cancelled",
+          "expired": "Expired",
+          "rejected": "Rejected"
         }
       }
     },

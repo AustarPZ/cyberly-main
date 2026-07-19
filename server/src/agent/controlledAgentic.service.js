@@ -65,6 +65,11 @@ function fallback(reason, metadata = {}) {
     toolExecutionCount: 0,
     contextText: null,
     toolResult: null,
+    actionProposal: metadata.actionProposal || null,
+    adaptiveUsed: metadata.adaptiveUsed === true,
+    adaptiveStatus: metadata.adaptiveStatus || null,
+    adaptiveSignalQuality: metadata.adaptiveSignalQuality || null,
+    adaptiveFallbackReason: metadata.adaptiveFallbackReason || null,
   };
 }
 
@@ -90,6 +95,12 @@ function createControlledAgenticService({
     }
 
     let adaptiveSummary = null;
+    let adaptiveAudit = {
+      used: false,
+      status: null,
+      signalQuality: null,
+      fallbackReason: null,
+    };
     if (adaptiveLearningService && shouldUseAdaptiveLearning(userMessage)) {
       const startedAt = Date.now();
       try {
@@ -98,6 +109,12 @@ function createControlledAgenticService({
           locale: context.requestedLocale || 'en',
         });
         adaptiveSummary = buildAdaptiveModelSummary(adaptiveContext);
+        adaptiveAudit = {
+          used: true,
+          status: 'success',
+          signalQuality: adaptiveContext.signalQuality?.overall || 'unknown',
+          fallbackReason: null,
+        };
         safeLog('adaptive_context_built', {
           requestId: context.requestId,
           userId: context.userId,
@@ -106,6 +123,12 @@ function createControlledAgenticService({
           latencyMs: Date.now() - startedAt,
         });
       } catch (error) {
+        adaptiveAudit = {
+          used: false,
+          status: 'fallback',
+          signalQuality: null,
+          fallbackReason: error.code || 'ADAPTIVE_CONTEXT_FAILED',
+        };
         safeLog('adaptive_context_fallback', {
           requestId: context.requestId,
           userId: context.userId,
@@ -148,6 +171,35 @@ function createControlledAgenticService({
       });
     }
 
+    if (planning.decision === 'propose_action' && planning.actionProposal) {
+      safeLog('planner_action_proposal', {
+        requestId: context.requestId,
+        userId: context.userId,
+        eligible: true,
+        provider: planning.provider,
+        model: planning.model,
+        status: 'proposal_only',
+        latencyMs: planning.latencyMs,
+      });
+      return {
+        ...fallback('planner_action_proposal', {
+          agenticEligible: true,
+          plannerProvider: planning.provider,
+          plannerModel: planning.model,
+          plannerLatencyMs: planning.latencyMs,
+          modelRequestCount: 1,
+          actionProposal: planning.actionProposal,
+          adaptiveUsed: adaptiveAudit.used,
+          adaptiveStatus: adaptiveAudit.status,
+          adaptiveSignalQuality: adaptiveAudit.signalQuality,
+          adaptiveFallbackReason: adaptiveAudit.fallbackReason,
+        }),
+        agenticUsed: true,
+        fallbackReason: null,
+        contextText: adaptiveSummary ? buildCombinedContextText(adaptiveSummary, null) : null,
+      };
+    }
+
     if (planning.decision !== 'request_tool' || !planning.toolCall) {
       safeLog('planner_direct', {
         requestId: context.requestId,
@@ -163,6 +215,10 @@ function createControlledAgenticService({
         plannerModel: planning.model,
         plannerLatencyMs: planning.latencyMs,
         modelRequestCount: 1,
+        adaptiveUsed: adaptiveAudit.used,
+        adaptiveStatus: adaptiveAudit.status,
+        adaptiveSignalQuality: adaptiveAudit.signalQuality,
+        adaptiveFallbackReason: adaptiveAudit.fallbackReason,
       });
       if (adaptiveSummary) {
         return {
@@ -200,6 +256,10 @@ function createControlledAgenticService({
         plannerLatencyMs: planning.latencyMs,
         safeErrorCode: toolResult.safeErrorCode,
         modelRequestCount: 1,
+        adaptiveUsed: adaptiveAudit.used,
+        adaptiveStatus: adaptiveAudit.status,
+        adaptiveSignalQuality: adaptiveAudit.signalQuality,
+        adaptiveFallbackReason: adaptiveAudit.fallbackReason,
       });
     }
 
@@ -219,6 +279,10 @@ function createControlledAgenticService({
       toolExecutionCount: 1,
       contextText: buildCombinedContextText(adaptiveSummary, toolResult),
       toolResult,
+      adaptiveUsed: adaptiveAudit.used,
+      adaptiveStatus: adaptiveAudit.status,
+      adaptiveSignalQuality: adaptiveAudit.signalQuality,
+      adaptiveFallbackReason: adaptiveAudit.fallbackReason,
     };
   }
 

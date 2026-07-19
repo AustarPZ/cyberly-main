@@ -85,7 +85,7 @@ function run() {
     learnerContext,
     resources,
     scenarios,
-    query: 'What should I learn next?',
+    query: 'What should I study next?',
     ragSources: [
       {
         title: 'Phishing',
@@ -93,8 +93,10 @@ function run() {
       },
     ],
   });
-  assert.equal(actions[0].type, 'resource');
-  assert.equal(actions[0].target.resourceSlug, 'password-security');
+  assert.equal(actions[0].type, 'scenario');
+  assert.equal(actions[0].target.scenarioSlug, 'password-check');
+  assert.equal(actions[1].type, 'progress');
+  assert.equal(actions.some(action => action.target?.scenarioSlug === 'phishing-done'), false);
 
   actions = buildLearningActions({
     learnerContext: {
@@ -110,7 +112,8 @@ function run() {
     query: 'I completed it, what should I do next?',
   });
   assert.equal(actions.some(action => action.target?.scenarioSlug === 'phishing-check'), false);
-  assert.deepEqual(actionTypes(actions), ['resource', 'scenarios', 'progress']);
+  assert.deepEqual(actionTypes(actions), ['scenario', 'progress', 'resource']);
+  assert.equal(actions[0].target.scenarioSlug, 'password-check');
   assert.equal(actions.length <= 3, true);
 
   console.log('Learning action selection verification passed.');

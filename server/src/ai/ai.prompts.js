@@ -22,6 +22,9 @@ function buildCyberGuardSystemPrompt() {
     'Refuse requests for malware, credential theft, exploitation, evasion, doxxing, social-engineering abuse, or unauthorized access.',
     'Do not ask for passwords, OTPs, private keys, exact addresses, or unnecessary personal data.',
     'Do not fabricate sources, capabilities, or actions. Do not claim you accessed devices, accounts, or external systems.',
+    'When Cyber Wellness guidance is provided, use it as situation-based digital wellbeing support only.',
+    'Do not diagnose mental health, infer emotional traits, assign wellness risk scores, or claim automatic intervention.',
+    'For Cyber Wellness guidance, give practical learner-controlled steps and keep the learner in control.',
     'When reviewed Cyberly sources are provided, use them when relevant and cite only those provided sources by number.',
     'Do not fabricate citations. If reviewed sources are insufficient, say the reviewed Cyberly sources are limited and answer cautiously.',
     'Do not invent hotlines, emergency contacts, laws, official claims, or source details.',
@@ -79,6 +82,11 @@ function buildLearningRouteContext(route = null) {
   ].filter(Boolean).join('\n\n');
 }
 
+function buildCyberWellnessContext(summary = null) {
+  const text = clampText(summary, 1500);
+  return text || null;
+}
+
 function limitConversationMessages(messages, messageLimit, characterLimit) {
   const latest = messages.slice(-messageLimit);
   const selected = [];
@@ -101,6 +109,7 @@ function limitConversationMessages(messages, messageLimit, characterLimit) {
 }
 
 module.exports = {
+  buildCyberWellnessContext,
   buildLearningRouteContext,
   buildRagContext,
   buildCyberGuardSystemPrompt,

@@ -1,4 +1,5 @@
 const MAX_ACTIONS = 3;
+const { isCompletedScenario, selectScenarioCandidates } = require('../scenario/scenarioRecommendation');
 
 const TOPIC_RESOURCE_CATEGORIES = {
   phishing_and_scams: ['Scams'],
@@ -103,9 +104,15 @@ function pickResource(resources, topicCode) {
   return null;
 }
 
-function pickScenario(scenarios, topicCode) {
-  const topicScenarios = scenarios.filter(scenario => scenario.topic_code === topicCode);
-  return topicScenarios.find(scenario => Number(scenario.completed_count || 0) === 0) || null;
+function pickScenario(scenarios, topicCode, recommendedLevel = null) {
+  const [scenario] = selectScenarioCandidates({
+    scenarios,
+    topicCode,
+    recommendedLevel,
+    limit: 1,
+  });
+  if (!scenario || isCompletedScenario(scenario)) return null;
+  return scenario;
 }
 
 function sanitizeTitle(value) {
@@ -262,19 +269,32 @@ function buildLearningActions({ learnerContext = {}, resources = [], scenarios =
   const topicOverride = intent === 'explanation' ? queryTopic(query, ragSources, resources) : null;
   const topicCode = topicOverride || candidateTopic(learnerContext);
   const hasRecommendation = Boolean(learnerContext.currentRecommendation);
+  const recommendedLevel = firstDefined(
+    learnerContext.currentRecommendation?.recommendedLevel,
+    learnerContext.currentRecommendation?.level,
+    learnerContext.learnerLevel?.recommendedLevel
+  );
 
   if (intent === 'explanation' && topicCode) {
     return dedupeAndCap([
-      createScenarioAction(pickScenario(scenarios, topicCode)),
+      createScenarioAction(pickScenario(scenarios, topicCode, recommendedLevel)),
       createProgressAction(hasRecommendation),
       createResourceAction(null),
+    ]);
+  }
+
+  if ((intent === 'next_step' || intent === 'after_completion') && topicCode) {
+    return dedupeAndCap([
+      createScenarioAction(pickScenario(scenarios, topicCode, recommendedLevel)),
+      createProgressAction(hasRecommendation),
+      createResourceAction(pickResource(resources, topicCode)),
     ]);
   }
 
   if (topicCode) {
     return dedupeAndCap([
       createResourceAction(pickResource(resources, topicCode)),
-      createScenarioAction(pickScenario(scenarios, topicCode)),
+      createScenarioAction(pickScenario(scenarios, topicCode, recommendedLevel)),
       createProgressAction(hasRecommendation),
     ]);
   }

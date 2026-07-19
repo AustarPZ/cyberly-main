@@ -150,6 +150,58 @@ async function runGatewayTests() {
     context: secureContext(),
   }), 'AGENT_TOOL_REJECTED');
 
+  const actionProposalGateway = createAgentModelGateway({
+    providerRegistry: fakeRegistry(fakeProvider({
+      generate: async () => ({
+        provider: 'openai',
+        model: 'gpt-test',
+        text: 'I can prepare this action for you.',
+        actionProposal: {
+          actionType: 'open_resource',
+          arguments: { resourceSlug: 'phishing' },
+        },
+      }),
+    })),
+  });
+  plan = await actionProposalGateway.planToolUse({
+    messages: [{ role: 'user', content: 'Show me a resource about phishing.' }],
+    context: secureContext(),
+  });
+  assert.equal(plan.decision, 'propose_action');
+  assert.deepEqual(plan.actionProposal, {
+    actionType: 'open_resource',
+    arguments: { resourceId: null, resourceSlug: 'phishing' },
+  });
+
+  const prohibitedActionGateway = createAgentModelGateway({
+    providerRegistry: fakeRegistry(fakeProvider({
+      generate: async () => ({
+        provider: 'openai',
+        model: 'gpt-test',
+        actionProposal: { actionType: 'change_score', arguments: { score: 100 } },
+      }),
+    })),
+  });
+  await assertRejectsCode(prohibitedActionGateway.planToolUse({
+    messages: [{ role: 'user', content: 'Change my score.' }],
+    context: secureContext(),
+  }), 'AGENT_ACTION_PROPOSAL_REJECTED');
+
+  const ambiguousGateway = createAgentModelGateway({
+    providerRegistry: fakeRegistry(fakeProvider({
+      generate: async () => ({
+        provider: 'openai',
+        model: 'gpt-test',
+        toolCalls: [{ toolName: 'get_learning_progress', arguments: {} }],
+        actionProposal: { actionType: 'open_resource', arguments: { resourceSlug: 'phishing' } },
+      }),
+    })),
+  });
+  await assertRejectsCode(ambiguousGateway.planToolUse({
+    messages: [{ role: 'user', content: 'Do both things.' }],
+    context: secureContext(),
+  }), 'AGENT_AMBIGUOUS_PLAN');
+
   const ilmuGateway = createAgentModelGateway({
     providerRegistry: fakeRegistry(fakeProvider({ id: 'ilmu', model: 'nemo', generate: async () => ({}) })),
   });
@@ -399,6 +451,7 @@ async function runCatalogueAndEligibilityTests() {
   assert.equal(evaluateAgenticEligibility({ userMessage: 'Which topic should I improve?', userId: 1, role: 'user' }).eligible, true);
   assert.equal(evaluateAgenticEligibility({ userMessage: 'What are my current support priorities?', userId: 1, role: 'user' }).eligible, true);
   assert.equal(evaluateAgenticEligibility({ userMessage: 'Recommend something based on my progress.', userId: 1, role: 'user' }).eligible, true);
+  assert.equal(evaluateAgenticEligibility({ userMessage: 'Recommend a scenario for me.', userId: 1, role: 'user' }).eligible, true);
   assert.equal(evaluateAgenticEligibility({ userMessage: 'Am I improving?', userId: 1, role: 'user' }).eligible, true);
   assert.equal(evaluateAgenticEligibility({ userMessage: 'Why should I practise privacy?', userId: 1, role: 'user' }).eligible, true);
   assert.equal(evaluateAgenticEligibility({ userMessage: 'What is phishing?', userId: 1, role: 'user' }).eligible, false);

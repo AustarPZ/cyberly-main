@@ -121,3 +121,27 @@ export function generateChatAssistantReply(conversationId, messageId, payload = 
     "errors.fallback.generateChatReply"
   );
 }
+
+export function createLearnerActionProposal(payload = {}, options = {}) {
+  return chatRequest(
+    "/api/agent/actions/proposals",
+    { method: "POST", body: JSON.stringify(payload), signal: options.signal },
+    "errors.fallback.generic"
+  );
+}
+
+export function confirmLearnerActionProposal(proposalId, confirmationToken, options = {}) {
+  return chatRequest(
+    `/api/agent/actions/proposals/${encodeURIComponent(proposalId)}/confirm`,
+    { method: "POST", body: JSON.stringify({ confirmationToken }), signal: options.signal },
+    "errors.fallback.generic"
+  );
+}
+
+export function cancelLearnerActionProposal(proposalId, options = {}) {
+  return chatRequest(
+    `/api/agent/actions/proposals/${encodeURIComponent(proposalId)}/cancel`,
+    { method: "POST", body: JSON.stringify({}), signal: options.signal },
+    "errors.fallback.generic"
+  );
+}

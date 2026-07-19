@@ -13,6 +13,11 @@ const UNSAFE_INPUT_PATTERNS = [
   /\b(get|grab|obtain|capture|intercept|steal)\b.{0,60}\b(someone[’']?s|another|other)\b.{0,30}\b(otp|one[- ]time password|password|credential|login code)\b/i,
   /\b(exploit|hack into|break into)\b.{0,60}\b(account|server|wifi|website|database)\b/i,
   /\b(dox|doxx|doxxing)\b/i,
+  /\b(kill myself|suicide|self[- ]?harm|hurt myself)\b/i,
+  /\b(immediate danger|emergency|severe abuse)\b/i,
+  /\b(blackmail|sextortion)\b/i,
+  /\b(threatening|credible threat)\b.{0,80}\b(kill|hurt|attack|expose|share my photos|share my images)\b/i,
+  /\b(sexual exploitation|grooming|nude photos|private images)\b/i,
 ];
 
 const UNSAFE_OUTPUT_PATTERNS = [

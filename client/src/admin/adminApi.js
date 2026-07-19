@@ -165,6 +165,7 @@ export async function getAdminAiProviders() {
       purposeAssignments: data.purposeAssignments || {},
       controlledAgenticRuntime: data.controlledAgenticRuntime || null,
       adaptiveLearningRuntime: data.adaptiveLearningRuntime || null,
+      learnerControlledActions: data.learnerControlledActions || null,
     };
   } catch {
     return networkFailure();
@@ -182,6 +183,44 @@ export async function testAdminAiProvider(providerId) {
     const data = await parseJson(response);
     if (!response.ok) return failure(data, "Unable to test AI provider.", response.status);
     return { ok: true, result: data };
+  } catch {
+    return networkFailure();
+  }
+}
+
+export async function listAdminAgenticTraces(filters = {}) {
+  try {
+    const params = new URLSearchParams();
+    for (const [key, value] of Object.entries(filters)) {
+      if (value !== undefined && value !== null && String(value).trim() !== "") {
+        params.set(key, value);
+      }
+    }
+    const response = await fetch(`${API_BASE_URL}/api/admin/ai/traces${params.toString() ? `?${params}` : ""}`, {
+      method: "GET",
+      credentials: "include",
+    });
+    const data = await parseJson(response);
+    if (!response.ok) return failure(data, "Unable to load agentic traces.", response.status);
+    return {
+      ok: true,
+      items: Array.isArray(data.items) ? data.items : [],
+      pagination: data.pagination || {},
+    };
+  } catch {
+    return networkFailure();
+  }
+}
+
+export async function getAdminAgenticTrace(traceId) {
+  try {
+    const response = await fetch(`${API_BASE_URL}/api/admin/ai/traces/${encodeURIComponent(traceId)}`, {
+      method: "GET",
+      credentials: "include",
+    });
+    const data = await parseJson(response);
+    if (!response.ok) return failure(data, "Unable to load agentic trace.", response.status);
+    return { ok: true, trace: data.trace || null };
   } catch {
     return networkFailure();
   }

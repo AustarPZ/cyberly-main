@@ -217,6 +217,7 @@ async function runServiceTests() {
   assert.equal(shouldUseAdaptiveLearning('What should I study next?'), true);
   assert.equal(shouldUseAdaptiveLearning('Which topic should I improve?'), true);
   assert.equal(shouldUseAdaptiveLearning('Am I improving?'), true);
+  assert.equal(shouldUseAdaptiveLearning('Recommend a scenario for me.'), true);
   assert.equal(shouldUseAdaptiveLearning('What is phishing?'), false);
   assert.equal(shouldUseAdaptiveLearning('How can I steal someone password?'), false);
 }

@@ -9,19 +9,29 @@ import { normalizeLocale, profileLanguageToLocale } from "./i18n/languageMapping
 import {
   createChatConversation,
   createChatUserMessage,
+  cancelLearnerActionProposal,
+  confirmLearnerActionProposal,
   deleteChatConversation,
   generateChatAssistantReply,
   getChatConversation,
   listChatConversations,
   renameChatConversation,
+  createLearnerActionProposal,
 } from "./chat/chatApi";
 import {
   attachActionGroupsToMessages,
   attachSourceGroupsToMessages,
-  getScenarioActionSlug,
+  buildProposalPayloadForChatAction,
+  buildRecommendedScenarioNavigation,
+  consumeRecommendedScenarioTarget,
+  dedupeActionsAgainstProposal,
+  isScenarioHighlightMatch,
+  parseScenarioHighlightTargetFromHash,
+  readRecommendedScenarioTarget,
   resolveChatActionTarget,
   resolveChatSourceTarget,
   withMessageActions,
+  withMessageProposal,
   withMessageSources,
 } from "./chat/chatActions";
 import AdminResourcePage from "./admin/AdminResourcePage";
@@ -52,6 +62,22 @@ import {
   shouldGuardAction,
   shouldBlockRouteTransition,
 } from "./navigation/navigationGuardState";
+import {
+  getProgressSections,
+  buildLearningPathSegments,
+  formatLearningPathPoints,
+  mapAssessmentTopicResult,
+  normalizeLearningPathProgress,
+  normalizeActivityComposition,
+  normalizeRecentLearningActivity,
+  PROGRESS_SECTION_IDS,
+} from "./progress/progressSemantics";
+import {
+  buildDashboardHeaderStats,
+  buildResourceHeaderStats,
+  getAchievementDefinitions,
+  getLearningInterestStateKey,
+} from "./product/productSemantics";
 
 // ─── Design tokens ────────────────────────────────────────────────
 /*const COLORS = {
@@ -716,6 +742,74 @@ body {
   color: var(--admin-text-primary);
   font-weight: 700;
   text-align: right;
+}
+.admin-ai-trace-filters,
+.admin-ai-trace-pagination {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.7rem;
+}
+.admin-ai-trace-filters label {
+  display: grid;
+  gap: 0.25rem;
+  min-width: min(220px, 100%);
+  color: var(--admin-text-secondary);
+  font-size: 0.84rem;
+}
+.admin-ai-trace-filters select {
+  min-height: 44px;
+  border: 1px solid var(--admin-border-default, var(--border-subtle));
+  border-radius: 8px;
+  padding: 0.55rem 0.7rem;
+  background: var(--surface-raised);
+  color: var(--admin-text-primary);
+}
+.admin-ai-trace-list {
+  display: grid;
+  gap: 0.45rem;
+  overflow-x: auto;
+}
+.admin-ai-trace-row {
+  display: grid;
+  grid-template-columns: minmax(130px, 0.9fr) minmax(120px, 0.8fr) minmax(110px, 0.8fr) minmax(160px, 1.1fr) minmax(140px, 1fr) minmax(110px, auto);
+  gap: 0.55rem;
+  align-items: center;
+  padding: 0.65rem;
+  border: 1px solid var(--admin-border-subtle, var(--border-subtle));
+  border-radius: 8px;
+  background: var(--surface-raised);
+  min-width: 820px;
+}
+.admin-ai-trace-row.heading {
+  background: transparent;
+  color: var(--admin-text-secondary);
+  font-size: 0.82rem;
+  font-weight: 700;
+}
+.admin-ai-trace-row span {
+  overflow-wrap: anywhere;
+}
+.admin-ai-trace-detail {
+  border: 1px solid var(--admin-border-default, var(--border-subtle));
+  border-radius: 8px;
+  padding: 0.85rem;
+  background: var(--surface-subtle);
+  display: grid;
+  gap: 0.7rem;
+}
+.admin-ai-trace-timeline {
+  display: grid;
+  gap: 0.4rem;
+  padding-left: 1.2rem;
+  margin: 0;
+}
+.admin-ai-trace-timeline li {
+  color: var(--admin-text-secondary);
+}
+.admin-ai-trace-timeline strong {
+  color: var(--admin-text-primary);
+  margin-right: 0.5rem;
 }
 .admin-resource-drawer-backdrop {
   position: fixed; inset: 0; z-index: 220; background: rgba(18, 30, 24, 0.35);
@@ -1402,6 +1496,16 @@ body {
   .admin-ai-runtime-summary dd,
   .admin-ai-runtime-details dd,
   .admin-ai-purpose-list dd { text-align: left; }
+  .admin-ai-trace-list { overflow-x: visible; }
+  .admin-ai-trace-row,
+  .admin-ai-trace-row.heading {
+    min-width: 0;
+    grid-template-columns: 1fr;
+    align-items: stretch;
+  }
+  .admin-ai-trace-row.heading { display: none; }
+  .admin-ai-trace-row .btn-secondary { width: 100%; }
+  .admin-ai-trace-filters label { min-width: 100%; }
   .admin-resource-form-grid,
   .admin-resource-form-grid.three { grid-template-columns: 1fr; }
   .admin-resource-table { min-width: 900px; }
@@ -1680,6 +1784,98 @@ body {
   display: grid; grid-template-columns: minmax(190px, 230px) minmax(0, 1fr); gap: 1.5rem;
 }
 .progress-content { min-width: 0; }
+.activity-composition-card {
+  padding: 1.15rem; margin-bottom: 1.2rem;
+  border-color: rgba(29,158,117,0.16);
+}
+.activity-composition-header {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;
+  margin-bottom: 0.85rem;
+}
+.activity-composition-total {
+  flex: 0 0 auto; color: var(--teal); font-weight: 800; font-size: 0.84rem;
+  background: var(--teal-lt); border: 1px solid rgba(29,158,117,0.18);
+  border-radius: 999px; padding: 0.35rem 0.65rem;
+}
+.activity-composition-bar {
+  display: flex; overflow: hidden; width: 100%; height: 18px;
+  background: #eef2ee; border-radius: 999px; border: 1px solid rgba(0,0,0,0.08);
+}
+.activity-composition-segment {
+  min-width: 2px; height: 100%; border-right: 2px solid rgba(255,255,255,0.75);
+}
+.activity-composition-segment:last-child { border-right: 0; }
+.activity-composition-segment.assessment_topics { background: #1D9E75; }
+.activity-composition-segment.completed_scenarios { background: #2E7D32; }
+.activity-composition-segment.completed_recommendations { background: #C9841D; }
+.activity-composition-segment.learning_events { background: #5C6BC0; }
+.learning-path-card {
+  padding: 1.15rem; margin-bottom: 1.2rem;
+  border-color: rgba(29,158,117,0.18);
+  background: linear-gradient(180deg, #ffffff 0%, #f7fbf9 100%);
+}
+.learning-path-card.compact { margin-bottom: 0; }
+.learning-path-header {
+  display: flex; justify-content: space-between; align-items: flex-start; gap: 1rem;
+  margin-bottom: 0.9rem;
+}
+.learning-path-percent {
+  font-family: 'Space Grotesk', sans-serif; font-size: 2.25rem; font-weight: 700;
+  color: var(--teal); line-height: 1;
+}
+.learning-path-bar {
+  display: flex; overflow: hidden; width: 100%; height: 18px;
+  background: #eef2ee; border-radius: 999px; border: 1px solid rgba(0,0,0,0.08);
+}
+.learning-path-segment {
+  min-width: 2px; height: 100%; border-right: 2px solid rgba(255,255,255,0.75);
+}
+.learning-path-segment:last-child { border-right: 0; }
+.learning-path-segment.assessment { background: #1D9E75; }
+.learning-path-segment.scenarios { background: #2E7D32; }
+.learning-path-segment.engagement { background: #C9841D; }
+.learning-path-segment.remaining { background: #dfe6e2; }
+.learning-path-breakdown {
+  display: grid; grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 0.75rem; margin-top: 1rem;
+}
+.learning-path-component {
+  padding: 0.8rem; border-radius: 10px; background: #fff; border: 1px solid rgba(0,0,0,0.07);
+  min-width: 0;
+}
+.learning-path-component-label { font-weight: 800; color: #27332f; font-size: 0.84rem; }
+.learning-path-component-value { font-family: 'Space Grotesk', sans-serif; color: var(--teal); font-weight: 700; margin-top: 0.25rem; }
+.learning-path-component-meta { font-size: 0.76rem; color: #61716b; margin-top: 0.25rem; line-height: 1.45; }
+.learning-path-disclaimer { margin-top: 0.85rem; color: #61716b; font-size: 0.8rem; line-height: 1.55; }
+.activity-composition-legend {
+  display: grid; grid-template-columns: repeat(auto-fit, minmax(190px, 1fr));
+  gap: 0.65rem; margin-top: 0.9rem;
+}
+.activity-composition-legend-item {
+  display: flex; align-items: flex-start; gap: 0.55rem; min-width: 0;
+  padding: 0.65rem; border-radius: 10px; background: #fafafa; border: 1px solid rgba(0,0,0,0.06);
+}
+.activity-composition-dot {
+  width: 0.72rem; height: 0.72rem; border-radius: 50%; margin-top: 0.16rem; flex: 0 0 auto;
+}
+.activity-composition-dot.assessment_topics { background: #1D9E75; }
+.activity-composition-dot.completed_scenarios { background: #2E7D32; }
+.activity-composition-dot.completed_recommendations { background: #C9841D; }
+.activity-composition-dot.learning_events { background: #5C6BC0; }
+.activity-composition-disclaimer {
+  margin-top: 0.85rem; color: #61716b; font-size: 0.8rem; line-height: 1.55;
+}
+.recent-activity-list {
+  display: grid; gap: 0.55rem; margin-top: 0.7rem;
+}
+.recent-activity-item {
+  display: flex; justify-content: space-between; gap: 1rem; align-items: flex-start;
+  padding: 0.7rem 0; border-bottom: 1px solid rgba(0,0,0,0.07);
+}
+.recent-activity-item:last-child { border-bottom: 0; }
+.assessment-results-grid {
+  display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem;
+}
 .home-how-grid {
   display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.25rem;
   max-width: 930px; margin-inline: auto;
@@ -1708,6 +1904,14 @@ body {
   .home-how-grid { grid-template-columns: 1fr; max-width: 560px; }
 }
 @media (max-width: 560px) {
+  .activity-composition-header { display: block; }
+  .learning-path-header { display: block; }
+  .learning-path-percent { margin-top: 0.7rem; }
+  .learning-path-breakdown { grid-template-columns: 1fr; }
+  .activity-composition-total { display: inline-flex; margin-top: 0.65rem; }
+  .activity-composition-legend { grid-template-columns: 1fr; }
+  .recent-activity-item { display: block; }
+  .assessment-results-grid { grid-template-columns: 1fr; }
   .home-how-grid { gap: 1rem; }
   .home-how-step { gap: 0.85rem; }
 }
@@ -1866,6 +2070,32 @@ body {
   outline: none; box-shadow: 0 0 0 3px rgba(29,158,117,0.16); background: #d4f0e6;
 }
 .chat-action-card-button:disabled { cursor: not-allowed; background: #f2f2f2; color: #777; border-color: rgba(0,0,0,0.12); }
+.chat-action-proposal {
+  grid-column: 1 / -1; border-top: 1px solid var(--border-subtle); padding-top: 0.58rem;
+  display: grid; gap: 0.36rem; color: #405149; font-size: 0.78rem; line-height: 1.45;
+}
+.chat-action-proposal-heading {
+  font-size: 0.68rem; color: #63736d; font-weight: 800; text-transform: uppercase;
+}
+.chat-action-proposal-title { font-size: 0.84rem; color: #202a25; font-weight: 800; overflow-wrap: anywhere; }
+.chat-action-proposal p { margin: 0; overflow-wrap: anywhere; }
+.chat-action-proposal-note { color: #5d6b66; }
+.chat-action-proposal-actions { display: flex; flex-wrap: wrap; gap: 0.46rem; margin-top: 0.15rem; }
+.chat-action-proposal-confirm,
+.chat-action-proposal-cancel {
+  min-height: 40px; border-radius: 8px; padding: 0.46rem 0.72rem;
+  font-size: 0.74rem; font-weight: 800; cursor: pointer;
+}
+.chat-action-proposal-confirm {
+  border: 1px solid rgba(29,158,117,0.28); background: var(--teal); color: #fff;
+}
+.chat-action-proposal-cancel {
+  border: 1px solid var(--border-default); background: var(--surface-raised); color: #44514c;
+}
+.chat-action-proposal-confirm:hover, .chat-action-proposal-confirm:focus-visible,
+.chat-action-proposal-cancel:hover, .chat-action-proposal-cancel:focus-visible {
+  outline: none; box-shadow: 0 0 0 3px rgba(29,158,117,0.16);
+}
 .chat-action-group.compact .chat-action-card {
   grid-template-columns: 1fr; gap: 0.5rem; padding: 0.65rem;
 }
@@ -2091,6 +2321,22 @@ body {
 .scenario-library-card.recommended:focus-within {
   border-color: var(--teal);
   box-shadow: 0 12px 28px rgba(29,158,117,0.22);
+}
+.scenario-library-card.highlighted {
+  border: 2px solid #f2b84b;
+  box-shadow: 0 0 0 4px rgba(242,184,75,0.18), 0 14px 30px rgba(111,76,0,0.14);
+  background: linear-gradient(180deg, #fff9e8 0%, var(--surface-raised) 68%);
+}
+.scenario-library-card.highlighted::before {
+  content: "";
+  position: absolute;
+  inset: 0 0 auto 0;
+  height: 4px;
+  background: linear-gradient(90deg, #f2b84b, var(--teal));
+}
+.scenario-library-card.highlighted:focus {
+  outline: 3px solid rgba(242,184,75,0.45);
+  outline-offset: 3px;
 }
 .scenario-detail-layout {
   display: grid;
@@ -2512,14 +2758,174 @@ function translatedActionLabel(t, labelKey) {
   return t("chat.actions.continueLearning");
 }
 
+function proposalActionButtonLabel(t, proposal, fallback) {
+  const actionType = proposal?.actionType;
+  if (actionType === "open_resource") return t("chat.proposals.openResource");
+  if (actionType === "open_scenario") return t("chat.proposals.viewScenario");
+  if (actionType === "open_recommendation") return t("chat.proposals.viewRecommendation");
+  if (actionType === "mark_recommendation_viewed") return t("chat.proposals.markRecommendationViewed");
+  if (actionType === "mark_recommendation_completed") return t("chat.proposals.markRecommendationCompleted");
+  return fallback || t("chat.proposals.confirm");
+}
+
+function targetForConfirmedProposalResult(result = {}) {
+  return resolveChatActionTarget(result?.target);
+}
+
+function ChatMessageProposal({ proposal: initialProposal }) {
+  const { t } = useTranslation();
+  const { handleChatAction } = useApp();
+  const [proposalState, setProposalState] = useState({
+    status: initialProposal?.status === "pending" ? "ready" : (initialProposal?.status || "idle"),
+    proposal: initialProposal || null,
+    result: null,
+    error: "",
+  });
+  const proposal = proposalState.proposal;
+  if (!initialProposal && !proposal) return null;
+
+  async function confirmProposal() {
+    if (!proposal?.proposalId || !proposal?.confirmationToken) return;
+    setProposalState(current => ({ ...current, status: "processing", error: "" }));
+    const result = await confirmLearnerActionProposal(proposal.proposalId, proposal.confirmationToken);
+    if (!result.ok) {
+      const expired = result.code === "ACTION_PROPOSAL_EXPIRED";
+      setProposalState(current => ({
+        ...current,
+        status: expired ? "expired" : "failed",
+        error: expired ? t("chat.proposals.noLongerAvailable") : (result.error || t("chat.proposals.failed")),
+      }));
+      return;
+    }
+    setProposalState({
+      status: "completed",
+      proposal: result.proposal || { ...proposal, status: "completed" },
+      result: result.result || null,
+      error: "",
+    });
+    const confirmedTarget = targetForConfirmedProposalResult(result.result);
+    if (confirmedTarget) handleChatAction({ target: confirmedTarget });
+  }
+
+  async function cancelProposal() {
+    if (!proposal?.proposalId) return;
+    setProposalState(current => ({ ...current, status: "processing", error: "" }));
+    const result = await cancelLearnerActionProposal(proposal.proposalId);
+    setProposalState({
+      status: result.ok ? "cancelled" : "failed",
+      proposal: result.proposal || proposal,
+      result: null,
+      error: result.ok ? "" : (result.error || t("chat.proposals.failed")),
+    });
+  }
+
+  return (
+    <div className={`chat-action-proposal model-origin ${proposalState.status}`} role={proposalState.status === "failed" ? "alert" : "status"}>
+      <div className="chat-action-proposal-heading">{t("chat.proposals.suggestedAction")}</div>
+      {proposal && (
+        <>
+          <div className="chat-action-proposal-title">{proposal.title || t("chat.proposals.reviewAction")}</div>
+          <p>{proposal.explanation || t("chat.proposals.nothingChanged")}</p>
+          <p className="chat-action-proposal-note">{proposal.consequence || t("chat.proposals.confirmationRequired")}</p>
+          {proposal.requiresConfirmation && (
+            <p className="chat-action-proposal-note">{t("chat.proposals.noScoreProgressChange")}</p>
+          )}
+        </>
+      )}
+      {proposalState.status === "processing" && <p>{t("chat.proposals.processing")}</p>}
+      {proposalState.status === "completed" && <p>{t("chat.proposals.completed")}</p>}
+      {proposalState.status === "cancelled" && <p>{t("chat.proposals.cancelled")}</p>}
+      {proposalState.status === "expired" && <p>{t("chat.proposals.noLongerAvailable")}</p>}
+      {proposalState.error && <p className="field-error">{proposalState.error}</p>}
+      {proposalState.status === "ready" && proposal && (
+        <div className="chat-action-proposal-actions">
+          <button type="button" className="chat-action-proposal-confirm" onClick={confirmProposal}>
+            {proposal.requiresConfirmation ? t("chat.proposals.confirm") : proposalActionButtonLabel(t, proposal)}
+          </button>
+          <button type="button" className="chat-action-proposal-cancel" onClick={cancelProposal}>
+            {t("chat.proposals.cancel")}
+          </button>
+        </div>
+      )}
+      {proposalState.status === "failed" && (
+        <button type="button" className="chat-action-proposal-cancel" onClick={() => setProposalState({ status: "idle", proposal: null, result: null, error: "" })}>
+          {t("chat.proposals.dismiss")}
+        </button>
+      )}
+    </div>
+  );
+}
+
 function ChatActionCard({ action, compact = false }) {
   const { t } = useTranslation();
   const { handleChatAction } = useApp();
+  const [proposalState, setProposalState] = useState({ status: "idle", proposal: null, result: null, error: "" });
   const target = resolveChatActionTarget(action?.target);
   const unavailable = !target;
   const label = translatedActionLabel(t, action?.labelKey);
   const title = action?.title || label;
   const description = compact ? "" : action?.description;
+  const proposalPayload = buildProposalPayloadForChatAction(action);
+  const proposal = proposalState.proposal;
+  const proposalBusy = proposalState.status === "creating" || proposalState.status === "processing";
+
+  async function reviewAction() {
+    if (!target) return;
+    if (!proposalPayload) {
+      handleChatAction({ ...action, target });
+      return;
+    }
+    setProposalState({ status: "creating", proposal: null, result: null, error: "" });
+    const result = await createLearnerActionProposal(proposalPayload);
+    if (!result.ok) {
+      setProposalState({
+        status: "failed",
+        proposal: null,
+        result: null,
+        error: result.error || t("chat.proposals.failed"),
+      });
+      return;
+    }
+    setProposalState({ status: "ready", proposal: result.proposal, result: null, error: "" });
+  }
+
+  async function confirmProposal() {
+    if (!proposal?.proposalId || !proposal?.confirmationToken) return;
+    setProposalState(current => ({ ...current, status: "processing", error: "" }));
+    const result = await confirmLearnerActionProposal(proposal.proposalId, proposal.confirmationToken);
+    if (!result.ok) {
+      const expired = result.code === "ACTION_PROPOSAL_EXPIRED";
+      setProposalState(current => ({
+        ...current,
+        status: expired ? "expired" : "failed",
+        error: expired ? t("chat.proposals.noLongerAvailable") : (result.error || t("chat.proposals.failed")),
+      }));
+      return;
+    }
+    setProposalState({
+      status: "completed",
+      proposal: result.proposal || { ...proposal, status: "completed" },
+      result: result.result || null,
+      error: "",
+    });
+    const confirmedTarget = resolveChatActionTarget(result.result?.target);
+    if (confirmedTarget) handleChatAction({ target: confirmedTarget });
+  }
+
+  async function cancelProposal() {
+    if (!proposal?.proposalId) {
+      setProposalState({ status: "cancelled", proposal: null, result: null, error: "" });
+      return;
+    }
+    setProposalState(current => ({ ...current, status: "processing", error: "" }));
+    const result = await cancelLearnerActionProposal(proposal.proposalId);
+    setProposalState({
+      status: result.ok ? "cancelled" : "failed",
+      proposal: result.proposal || proposal,
+      result: null,
+      error: result.ok ? "" : (result.error || t("chat.proposals.failed")),
+    });
+  }
 
   return (
     <div className={`chat-action-card${unavailable ? " unavailable" : ""}`}>
@@ -2531,14 +2937,49 @@ function ChatActionCard({ action, compact = false }) {
       <button
         type="button"
         className="chat-action-card-button"
-        onClick={() => target && handleChatAction({ ...action, target })}
-        disabled={unavailable}
+        onClick={reviewAction}
+        disabled={unavailable || proposalBusy}
         aria-label={unavailable
           ? t("chat.actionCards.unavailable")
           : t("chat.actionCards.openAction", { title })}
       >
-        {unavailable ? t("chat.actionCards.unavailable") : label}
+        {proposalState.status === "creating" ? t("chat.proposals.processing") : (unavailable ? t("chat.actionCards.unavailable") : label)}
       </button>
+      {proposalState.status !== "idle" && proposalPayload && (
+        <div className={`chat-action-proposal ${proposalState.status}`} role={proposalState.status === "failed" ? "alert" : "status"}>
+          <div className="chat-action-proposal-heading">{t("chat.proposals.suggestedAction")}</div>
+          {proposal && (
+            <>
+              <div className="chat-action-proposal-title">{proposal.title || t("chat.proposals.reviewAction")}</div>
+              <p>{proposal.explanation || t("chat.proposals.nothingChanged")}</p>
+              <p className="chat-action-proposal-note">{proposal.consequence || t("chat.proposals.confirmationRequired")}</p>
+              {proposal.requiresConfirmation && (
+                <p className="chat-action-proposal-note">{t("chat.proposals.noScoreProgressChange")}</p>
+              )}
+            </>
+          )}
+          {!proposal && proposalState.status === "creating" && <p>{t("chat.proposals.processing")}</p>}
+          {proposalState.status === "completed" && <p>{t("chat.proposals.completed")}</p>}
+          {proposalState.status === "cancelled" && <p>{t("chat.proposals.cancelled")}</p>}
+          {proposalState.status === "expired" && <p>{t("chat.proposals.noLongerAvailable")}</p>}
+          {proposalState.error && <p className="field-error">{proposalState.error}</p>}
+          {proposalState.status === "ready" && proposal && (
+            <div className="chat-action-proposal-actions">
+              <button type="button" className="chat-action-proposal-confirm" onClick={confirmProposal}>
+                {proposal.requiresConfirmation ? t("chat.proposals.confirm") : proposalActionButtonLabel(t, proposal, label)}
+              </button>
+              <button type="button" className="chat-action-proposal-cancel" onClick={cancelProposal}>
+                {t("chat.proposals.cancel")}
+              </button>
+            </div>
+          )}
+          {proposalState.status === "failed" && (
+            <button type="button" className="chat-action-proposal-cancel" onClick={() => setProposalState({ status: "idle", proposal: null, result: null, error: "" })}>
+              {t("chat.proposals.dismiss")}
+            </button>
+          )}
+        </div>
+      )}
     </div>
   );
 }
@@ -2948,9 +3389,12 @@ function ChatProvider({ user, children }) {
 
     const conversation = mapServerConversation(result.conversation);
     const userMessage = mapServerMessage(result.userMessage);
-    const assistantMessage = withMessageSources(
-      withMessageActions(mapServerMessage(result.assistantMessage), result.actions || []),
-      result.sources || []
+    const assistantMessage = withMessageProposal(
+      withMessageSources(
+        withMessageActions(mapServerMessage(result.assistantMessage), result.actions || []),
+        result.sources || []
+      ),
+      result.proposal || null
     );
 
     setConversations(current => {
@@ -3671,6 +4115,152 @@ function scenarioResultLabel(level) {
 
 function topicLabel(topicCode, fallback) {
   return PROGRESS_TOPIC_META[topicCode]?.label || fallback || "Recommended topic";
+}
+
+const ACTIVITY_SEGMENT_ICONS = {
+  assessment_topics: "◇",
+  completed_scenarios: "✓",
+  completed_recommendations: "→",
+  learning_events: "•",
+};
+
+function activitySegmentLabelKey(segmentId) {
+  return `progress.activityComposition.segments.${segmentId}`;
+}
+
+function activitySegmentCountKey(segmentId) {
+  return `progress.activityComposition.segmentCounts.${segmentId}`;
+}
+
+function recentActivityLabelKey(type) {
+  return `progress.recentActivity.types.${type}`;
+}
+
+function learningPathSegmentLabelKey(segmentId) {
+  return `progress.learningPath.segments.${segmentId}`;
+}
+
+function learningPathComponentLabelKey(componentId) {
+  return `progress.learningPath.components.${componentId}`;
+}
+
+function learningPathStatusMessageKey(componentId, status) {
+  if (componentId === "assessment" && status === "not_completed") return "progress.learningPath.noAssessment";
+  if (componentId === "scenarios" && status === "no_eligible_scenarios") return "progress.learningPath.noEligibleScenarios";
+  if (componentId === "engagement" && status === "none_completed") return "progress.learningPath.noCompletedRecommendations";
+  return null;
+}
+
+function LearningPathProgressPanel({ value, t, compact = false, onViewJourney }) {
+  const progress = normalizeLearningPathProgress(value);
+  const segments = buildLearningPathSegments(progress);
+  const components = [
+    {
+      id: "assessment",
+      data: progress.assessment,
+      meta: progress.assessment.totalQuestions > 0
+        ? t("progress.learningPath.assessmentCount", {
+          correct: progress.assessment.correctAnswers,
+          total: progress.assessment.totalQuestions,
+        })
+        : t("progress.learningPath.noAssessment"),
+    },
+    {
+      id: "scenarios",
+      data: progress.scenarios,
+      meta: progress.scenarios.totalEligible > 0
+        ? t("progress.learningPath.scenarioCount", {
+          completed: progress.scenarios.completedUnique,
+          total: progress.scenarios.totalEligible,
+        })
+        : t("progress.learningPath.noEligibleScenarios"),
+    },
+    {
+      id: "engagement",
+      data: progress.engagement,
+      meta: progress.engagement.completedRecommendations > 0
+        ? t("progress.learningPath.recommendationCount", {
+          count: progress.engagement.completedRecommendations,
+        })
+        : t("progress.learningPath.noCompletedRecommendations"),
+    },
+  ];
+  const reachedCore = progress.displayedPercent >= 100;
+
+  return (
+    <div className={`card learning-path-card${compact ? " compact" : ""}`}>
+      <div className="learning-path-header">
+        <div>
+          <p className="section-title" style={{ fontSize: compact ? "1rem" : "1.1rem", marginBottom: "0.25rem" }}>
+            {t("progress.learningPath.title")}
+          </p>
+          <p className="section-sub" style={{ marginBottom: 0 }}>
+            {reachedCore ? t("progress.learningPath.coreReached") : t("progress.learningPath.shortDescription")}
+          </p>
+        </div>
+        <div className="learning-path-percent" aria-label={t("progress.learningPath.percentAria", { percent: progress.displayedPercent })}>
+          {progress.displayedPercent}%
+        </div>
+      </div>
+      <div
+        className="learning-path-bar"
+        role="img"
+        aria-label={t("progress.learningPath.barAriaLabel", { percent: progress.displayedPercent })}
+      >
+        {segments.map(segment => (
+          <span
+            key={segment.id}
+            className={`learning-path-segment ${segment.id}`}
+            style={{ width: `${segment.width}%` }}
+            title={t(learningPathSegmentLabelKey(segment.id), { defaultValue: segment.id })}
+          />
+        ))}
+      </div>
+      {!compact && (
+        <>
+          <div className="learning-path-breakdown" aria-label={t("progress.learningPath.breakdownTitle")}>
+            <div style={{ gridColumn: "1 / -1", fontWeight: 800, color: "#27332f", fontSize: "0.9rem" }}>
+              {t("progress.learningPath.breakdownTitle")}
+            </div>
+            {components.map(component => {
+              const statusKey = learningPathStatusMessageKey(component.id, component.data.status);
+              return (
+                <div key={component.id} className="learning-path-component">
+                  <div className="learning-path-component-label">
+                    {t(learningPathComponentLabelKey(component.id))}
+                  </div>
+                  <div className="learning-path-component-value">
+                    {t("progress.learningPath.pointsOutOf", {
+                      earned: formatLearningPathPoints(component.data.earnedPoints),
+                      maximum: formatLearningPathPoints(component.data.maximumPoints),
+                    })}
+                  </div>
+                  <div className="learning-path-component-meta">
+                    {statusKey ? t(statusKey) : component.meta}
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+          <div className="learning-path-disclaimer">
+            {t("progress.learningPath.disclaimer")}
+          </div>
+        </>
+      )}
+      {compact && (
+        <>
+          <div className="learning-path-disclaimer">
+            {t("progress.learningPath.shortDisclaimer")}
+          </div>
+          {onViewJourney && (
+            <button onClick={onViewJourney} style={{ marginTop: "0.75rem", background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1rem", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
+              {t("progress.learningPath.viewJourney")}
+            </button>
+          )}
+        </>
+      )}
+    </div>
+  );
 }
 
 // ─────────────────────────────────────────────────────────────────
@@ -5051,8 +5641,8 @@ function HomePage() {
 const DASHBOARD_SECTIONS = [
   { id: "dashboard-overview", labelKey: "dashboard.sectionNav.overview" },
   { id: "dashboard-learning-profile", labelKey: "dashboard.sectionNav.learningProfile" },
-  { id: "dashboard-initial-assessment", labelKey: "dashboard.sectionNav.initialAssessment" },
   { id: "dashboard-measured-progress", labelKey: "dashboard.sectionNav.measuredProgress" },
+  { id: "dashboard-initial-assessment", labelKey: "dashboard.sectionNav.initialAssessment" },
   { id: "dashboard-recommended-next-step", labelKey: "dashboard.sectionNav.recommendedNextStep" },
   { id: "dashboard-scenario-practice", labelKey: "dashboard.sectionNav.scenarioPractice" },
   { id: "dashboard-topic-mastery", labelKey: "dashboard.sectionNav.topicMastery" },
@@ -5061,17 +5651,12 @@ const DASHBOARD_SECTIONS = [
 ];
 
 const PROGRESS_SECTIONS = [
-  { id: "progress-snapshot", labelKey: "progress.sectionNav.snapshot" },
-  { id: "progress-mastery", labelKey: "progress.sectionNav.mastery" },
-  { id: "progress-assessment-topics", labelKey: "progress.sectionNav.assessmentTopics", optional: "assessmentTopics" },
-  { id: "progress-recommendation", labelKey: "progress.sectionNav.recommendation", optional: "recommendation" },
-  { id: "progress-learning-topics", labelKey: "progress.sectionNav.learningTopics" },
-  { id: "progress-badges", labelKey: "progress.sectionNav.badges" },
+  ...getProgressSections({ hasAssessmentResults: true, hasRecommendation: true }),
 ];
 
 function DashboardPage() {
   const { t, i18n: activeI18n } = useTranslation();
-  const { user, go, openRecommendedResource } = useApp();
+  const { user, go, openRecommendedResource, openScenarioTarget } = useApp();
   const { conversations, selectConversation, initialLoading: chatHistoryLoading } = useChat();
   const assessmentLocale = normalizeLocale(activeI18n.language);
   const [tipIndex] = useState(() => Math.floor(Math.random() * 4));
@@ -5079,9 +5664,11 @@ function DashboardPage() {
   const [progressState, setProgressState] = useState({ loading: true, progress: null });
   const [recommendationState, setRecommendationState] = useState({ loading: true, recommendation: null });
   const [scenarioState, setScenarioState] = useState({ loading: true, recommended: [], dashboard: null });
+  const [resourceCatalogState, setResourceCatalogState] = useState({ loading: true, resources: [] });
   const [activeSection, setActiveSection] = useState("dashboard-overview");
+  const dashboardAssessmentResults = (progressState.progress?.assessmentTopicResults || []).map(mapAssessmentTopicResult);
   const hasLearningProfileSection = Boolean(user?.helpTopics?.length);
-  const hasTopicMasterySection = Boolean(progressState.progress?.topics?.length);
+  const hasTopicMasterySection = Boolean(dashboardAssessmentResults.length);
   const dashboardSections = DASHBOARD_SECTIONS.filter(section => (
     (section.id !== "dashboard-learning-profile" || hasLearningProfileSection) &&
     (section.id !== "dashboard-topic-mastery" || hasTopicMasterySection)
@@ -5153,6 +5740,18 @@ function DashboardPage() {
   useEffect(() => {
     let active = true;
     if (!user) return () => { active = false; };
+    dbGetResources(assessmentLocale).then(result => {
+      if (!active) return;
+      setResourceCatalogState(result.ok
+        ? { loading: false, resources: result.resources || [] }
+        : { loading: false, resources: [], error: result.error });
+    });
+    return () => { active = false; };
+  }, [user, assessmentLocale]);
+
+  useEffect(() => {
+    let active = true;
+    if (!user) return () => { active = false; };
     Promise.all([dbGetProgress(), dbGetCurrentRecommendation(assessmentLocale)]).then(([progressResult, recommendationResult]) => {
       if (!active) return;
       setProgressState(progressResult.ok
@@ -5169,11 +5768,11 @@ function DashboardPage() {
 
   const nick  = user.aiNickname || user.name;
   const group = getAgeGroup(user.age);
-  const summary = progressState.progress?.summary;
-  const topicsMeasured = progressState.progress?.topics || [];
+  const dashboardLearningPathProgress = progressState.progress?.learningPathProgress;
   const recommendation = recommendationState.recommendation;
   const recommendedScenario = scenarioState.recommended?.[0];
   const scenarioDashboard = scenarioState.dashboard;
+  const dashboardHeaderStats = buildDashboardHeaderStats(resourceCatalogState.resources);
   const translatedAgeGroup = t(`settings.ageGroups.${group.key}`,{defaultValue: group.label});
   const preferredLanguageValue = user.profile?.preferredLanguage || "";
   const familiarityValue = user.profile?.familiarityLevel || "";
@@ -5190,7 +5789,7 @@ function DashboardPage() {
       await dbMarkRecommendationViewed(recommendation.id, assessmentLocale);
     }
     if (recommendedScenario) {
-      go("scenarios");
+      openScenarioTarget(recommendedScenario, "dashboard");
     } else if (recommendation?.topicCode) {
       openRecommendedResource(recommendation.topicCode);
     } else {
@@ -5318,14 +5917,10 @@ function DashboardPage() {
             </p>
           </div>
           <div style={{ display: "flex", gap: "0.75rem" }}>
-            {[
-              { val: "9", label: "dashboard.stats.topics" },
-              { val: "3", label: "dashboard.stats.languages" },
-              { val: "AI", label: "dashboard.stats.powered" },
-            ].map(stat => (
+            {dashboardHeaderStats.map(stat => (
               <div key={stat.labelKey} style={{ background: "rgba(255,255,255,0.12)", borderRadius: 12, padding: "0.75rem 1rem", textAlign: "center", minWidth: 64 }}>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.2rem" }}>{stat.val}</div>
-                <div style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.6)" }}>{t(stat.label)}</div>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.2rem" }}>{resourceCatalogState.loading && stat.labelKey === "dashboard.stats.learningTopics" ? "…" : stat.value}</div>
+                <div style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.6)" }}>{t(stat.labelKey)}</div>
               </div>
             ))}
           </div>
@@ -5374,6 +5969,28 @@ function DashboardPage() {
           </div>
         )}
 
+        <div id="dashboard-measured-progress" className="dashboard-anchor" style={{ marginBottom: "2rem" }}>
+          {progressState.loading ? (
+            <div className="card learning-path-card compact">
+              <PageState message={t("dashboard.progress.loading")} />
+            </div>
+          ) : dashboardLearningPathProgress ? (
+            <LearningPathProgressPanel
+              value={dashboardLearningPathProgress}
+              t={t}
+              compact
+              onViewJourney={() => go("progress")}
+            />
+          ) : (
+            <div className="card learning-path-card compact">
+              <PageState type="empty" message={t("dashboard.progress.empty")} />
+              <button onClick={() => go("progress")} style={{ marginTop: "0.75rem", background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1rem", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
+                {t("dashboard.progress.viewJourney")}
+              </button>
+            </div>
+          )}
+        </div>
+
         <div id="dashboard-initial-assessment" className="card dashboard-anchor" style={{ marginBottom: "2rem", background: "#fff8e1", border: "1px solid #ffe082", display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
           <div style={{ flex: 1, minWidth: 220 }}>
             <div style={{ fontWeight: 700, color: "#e65100", marginBottom: "0.25rem" }}>
@@ -5386,7 +6003,7 @@ function DashboardPage() {
             <div style={{ fontSize: "0.86rem", color: "#5f4a1d", lineHeight: 1.6 }}>
               {assessmentStatus.loading && t("dashboard.assessment.checking")}
               {!assessmentStatus.loading && assessmentStatus.status === "completed" && (
-                <> {t("dashboard.assessment.measuredLevel")} {": "} <strong> {t( `levels.${assessmentStatus.result?.attempt?.measuredLevel}`, { defaultValue: assessmentStatus.result?.attempt?.measuredLevel } )} </strong> {" · "} {t("dashboard.assessment.score")} {": "} <strong> { assessmentStatus.result?.attempt?.totalScore } / { assessmentStatus.result?.attempt?.maximumScore} </strong></>
+                <>{t("dashboard.assessment.completedDescription")}</>
               )}
               {!assessmentStatus.loading && assessmentStatus.status === "in_progress" && t("dashboard.assessment.resumeDescription")}
               {!assessmentStatus.loading && assessmentStatus.status !== "completed" && assessmentStatus.status !== "in_progress" && t("dashboard.assessment.pendingDescription")}
@@ -5398,28 +6015,6 @@ function DashboardPage() {
         </div>
 
         <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
-          <div id="dashboard-measured-progress" className="card dashboard-anchor" style={{ background: "#fff", border: "1px solid rgba(0,0,0,0.07)" }}>
-            <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.35rem" }}>{t("dashboard.progress.title")}</div>
-            {progressState.loading ? (
-              <PageState message={t("dashboard.progress.loading")} />
-            ) : summary?.exists ? (
-              <>
-                <div style={{ display: "flex", alignItems: "flex-end", gap: "0.45rem", marginBottom: "0.65rem" }}>
-                  <span style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "2rem", fontWeight: 700, color: "#1a1a18" }}>{summary.overallMasteryPercentage}%</span>
-                  <span style={{ fontSize: "0.82rem", color: "#666", paddingBottom: "0.35rem" }}>{t( `levels.${summary.measuredLevel}`,{ defaultValue: levelLabel(summary.measuredLevel)})}</span>
-                </div>
-                <div style={{ background: "#edf3ef", borderRadius: 99, height: 10, overflow: "hidden", marginBottom: "0.7rem" }}>
-                  <div style={{ width: `${summary.overallMasteryPercentage}%`, height: "100%", background: "var(--teal)", borderRadius: 99 }} />
-                </div>
-                <div style={{ fontSize: "0.8rem", color: "#666" }}>
-                  {t("dashboard.progress.summary", { count: summary.completedTopicCount })}
-                </div>
-              </>
-            ) : (
-              <PageState type="empty" message={t("dashboard.progress.empty")} />
-            )}
-          </div>
-
           <div id="dashboard-recommended-next-step" className="card dashboard-anchor" style={{ background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.18)" }}>
             <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.35rem" }}>{t("dashboard.recommendation.title")}</div>
             {recommendationState.loading ? (
@@ -5481,7 +6076,7 @@ function DashboardPage() {
                 <div style={{ fontSize: "0.82rem", color: "#445", lineHeight: 1.55, marginBottom: "0.8rem" }}>
                   {t( `topics.${recommendedScenario.topicCode}`,{ defaultValue: topicLabel( recommendedScenario.topicCode)})} · {t( `levels.${recommendedScenario.difficulty}`, { defaultValue: levelLabel( recommendedScenario.difficulty)})} · {t("dashboard.scenarios.minutes", {count: recommendedScenario.estimatedMinutes})}
                 </div>
-                <button onClick={() => go("scenarios")} style={{ background: "#2E7D32", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1rem", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
+                <button onClick={() => recommendedScenario ? openScenarioTarget(recommendedScenario, "dashboard") : go("scenarios")} style={{ background: "#2E7D32", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1rem", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
                   {t("dashboard.recommendation.practiceScenario")}
                 </button>
               </>
@@ -5491,23 +6086,26 @@ function DashboardPage() {
           </div>
         </div>
 
-        {topicsMeasured.length > 0 && (
+        {dashboardAssessmentResults.length > 0 && (
           <div id="dashboard-topic-mastery" className="dashboard-anchor" style={{ marginBottom: "2rem" }}>
             <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap" }}>
               <p className="section-title" style={{ fontSize: "1.1rem", margin: 0 }}>{t("dashboard.topicMastery.title")}</p>
               <button onClick={() => go("progress")} style={{ background: "transparent", color: "var(--teal)", border: "none", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>{t("dashboard.topicMastery.viewProgress")}</button>
             </div>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(220px, 1fr))", gap: "0.75rem" }}>
-              {topicsMeasured.map(topic => (
+            <div className="assessment-results-grid">
+              {dashboardAssessmentResults.map(topic => (
                 <div key={topic.topicCode} className="card" style={{ padding: "1rem" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.55rem" }}>
                     <span style={{ fontWeight: 700, fontSize: "0.86rem" }}>{PROGRESS_TOPIC_META[topic.topicCode]?.icon} {t(`topics.${topic.topicCode}`,{defaultValue: topicLabel(topic.topicCode, topic.topicLabel)})}</span>
-                    <span style={{ color: "var(--teal)", fontWeight: 700, fontSize: "0.82rem" }}>{topic.masteryPercentage}%</span>
+                    <span style={{ color: "var(--teal)", fontWeight: 700, fontSize: "0.82rem" }}>
+                      {t("progress.assessmentResults.correctOutOfTotal", { correct: topic.correctCount, total: topic.totalCount })}
+                    </span>
                   </div>
-                  <div style={{ background: "#edf3ef", borderRadius: 99, height: 8, overflow: "hidden" }}>
-                    <div style={{ width: `${topic.masteryPercentage}%`, height: "100%", background: "var(--teal)", borderRadius: 99 }} />
+                  <div style={{ fontSize: "0.74rem", color: "#777", marginTop: "0.45rem" }}>
+                    {t("progress.assessmentResults.assessmentResult", {
+                      level: t(`levels.${topic.resultLevel}`, { defaultValue: levelLabel(topic.resultLevel) }),
+                    })} · {t("progress.assessmentResults.source")}
                   </div>
-                  <div style={{ fontSize: "0.74rem", color: "#777", marginTop: "0.45rem" }}>{t( `levels.${topic.currentLevel}`,{ defaultValue: levelLabel(topic.currentLevel)})}</div>
                 </div>
               ))}
             </div>
@@ -5661,7 +6259,8 @@ function ChatMessageList({ className = "chat-messages", emptyCompact = false }) 
                 {message.role === "ai" && (
                   <>
                     <ChatSourceGroup sources={message.sources || []} compact={emptyCompact} />
-                    <ChatActionGroup actions={message.actions || []} compact={emptyCompact} />
+                    <ChatMessageProposal proposal={message.proposal || null} />
+                    <ChatActionGroup actions={dedupeActionsAgainstProposal(message.actions || [], message.proposal || null)} compact={emptyCompact} />
                   </>
                 )}
                 {generation?.status === "generating" && (
@@ -5832,6 +6431,7 @@ function ResourcesPage() {
   const filtered = filter === "All"
     ? resourceState.resources
     : resourceState.resources.filter(resource => resource.categoryCode === filter);
+  const resourceHeaderStats = buildResourceHeaderStats(resourceState.resources);
   const focusedCategory = resourceFocusTopic ? PROGRESS_TOPIC_META[resourceFocusTopic]?.category : null;
   const categoryLabel = category => t(`resources.categories.${category}`, { defaultValue: category });
 
@@ -5892,14 +6492,16 @@ function ResourcesPage() {
             {t("resources.description")}
           </p>
           <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
-            {[
-              { val: String(resourceState.resources.length || 9), labelKey: "resources.stats.topicsCovered" },
-              { val: "100%", labelKey: "resources.stats.freeToRead" },
-              { val: "MY", labelKey: "resources.stats.malaysiaFocused" },
-            ].map(s => (
+            {resourceHeaderStats.map(s => (
               <div key={s.labelKey} style={{ background: "rgba(255,255,255,0.08)", borderRadius: 10, padding: "0.6rem 1.2rem", textAlign: "center" }}>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.2rem", color: "var(--teal)" }}>{s.val}</div>
-                <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.5)" }}>{t(s.labelKey)}</div>
+                {s.singleLine ? (
+                  <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.02rem", color: "var(--teal)" }}>{t(s.labelKey)}</div>
+                ) : (
+                  <>
+                    <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.2rem", color: "var(--teal)" }}>{resourceState.loading && s.labelKey !== "resources.stats.malaysiaFocused" ? "…" : s.value}</div>
+                    <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.5)" }}>{t(s.labelKey)}</div>
+                  </>
+                )}
               </div>
             ))}
           </div>
@@ -6607,6 +7209,8 @@ function ScenariosPage() {
     requestGuardedAction,
     registerActivityGuard,
     pendingScenarioTarget,
+    acceptedHash,
+    requestHashNavigation,
     clearPendingScenarioTarget,
   } = useApp();
   const scenarioLocale = normalizeLocale(activeI18n.language);
@@ -6617,7 +7221,39 @@ function ScenariosPage() {
   const [decisionFeedback, setDecisionFeedback] = useState(null);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
+  const [highlightedScenarioTarget, setHighlightedScenarioTarget] = useState(null);
   const scenarioIntroRef = useRef(null);
+  const scenarioCardRefs = useRef(new Map());
+  const lastScrolledHighlightRef = useRef("");
+  const highlightedScenarioSlug = highlightedScenarioTarget?.scenarioSlug || highlightedScenarioTarget?.slug || null;
+  const highlightedScenarioId = highlightedScenarioTarget?.scenarioId || highlightedScenarioTarget?.id || null;
+
+  function clearHighlightedScenario() {
+    setHighlightedScenarioTarget(null);
+    lastScrolledHighlightRef.current = "";
+  }
+
+  function clearHighlightForScenario(scenario = {}) {
+    setHighlightedScenarioTarget(current => (
+      isScenarioHighlightMatch(current, scenario) ? null : current
+    ));
+    if (isScenarioHighlightMatch(highlightedScenarioTarget, scenario)) {
+      lastScrolledHighlightRef.current = "";
+    }
+  }
+
+  async function refreshScenarioLibrary() {
+    const [scenarioResult, recommendedResult] = await Promise.all([
+      dbGetScenarios({ topicCode: filters.topicCode, difficulty: filters.difficulty }, scenarioLocale),
+      dbGetRecommendedScenarios(scenarioLocale),
+    ]);
+    setLibrary({
+      loading: false,
+      scenarios: scenarioResult.ok ? scenarioResult.scenarios : [],
+      recommended: recommendedResult.ok ? recommendedResult.scenarios : [],
+      error: scenarioResult.ok ? null : scenarioResult.error,
+    });
+  }
 
   useEffect(() => {
     let active = true;
@@ -6676,41 +7312,82 @@ function ScenariosPage() {
   }, [view.mode, view.attempt, registerActivityGuard, t]);
 
   useEffect(() => {
-    if (!user || !pendingScenarioTarget || library.loading) return;
-    if (!pendingScenarioTarget.scenarioSlug && (filters.topicCode || filters.difficulty)) {
-      setFilters({ topicCode: "", difficulty: "" });
-      return;
-    }
-    const scenarioSlug = getScenarioActionSlug(pendingScenarioTarget, library.scenarios);
-    if (!scenarioSlug) {
-      clearPendingScenarioTarget();
+    const hashScenarioTarget = parseScenarioHighlightTargetFromHash(acceptedHash);
+    if (!user) return;
+    if (hashScenarioTarget) {
+      buildRecommendedScenarioNavigation(hashScenarioTarget, "legacy");
+      requestHashNavigation("#/scenarios", { replace: true });
       return;
     }
 
-    let active = true;
-    setBusy(true);
+    const storedScenarioTarget = readRecommendedScenarioTarget();
+    const targetScenario = pendingScenarioTarget || storedScenarioTarget;
+    if (!targetScenario || library.loading) return;
+
+    const targetSlug = targetScenario.scenarioSlug || targetScenario.slug || null;
+    const targetId = targetScenario.scenarioId || targetScenario.id || null;
+
+    const scenarioMatch = library.scenarios.find(scenario => (
+      (targetSlug && scenario.slug === targetSlug)
+      || (targetId && Number(scenario.id) === Number(targetId))
+    ));
+    const scenarioSlug = scenarioMatch?.slug || null;
+    if (!scenarioSlug && (filters.topicCode || filters.difficulty)) {
+      setFilters({ topicCode: "", difficulty: "" });
+      return;
+    }
+    if (!scenarioSlug) {
+      setHighlightedScenarioTarget(null);
+      setError(t("scenarios.library.targetUnavailable"));
+      if (pendingScenarioTarget) clearPendingScenarioTarget();
+      consumeRecommendedScenarioTarget();
+      return;
+    }
+
     setError(null);
-    dbGetScenario(scenarioSlug, scenarioLocale).then(result => {
-      if (!active) return;
-      setBusy(false);
-      if (result.ok) {
-        setView({ mode: "intro", scenario: result.scenario, firstStep: result.firstStep, locale: result.locale });
-      } else {
-        setError(result.error);
-      }
-      clearPendingScenarioTarget();
-    });
-    return () => { active = false; };
+    setView(current => current.mode === "library" ? current : { mode: "library" });
+    setHighlightedScenarioTarget({ scenarioSlug, source: targetScenario.source || "unknown" });
+    consumeRecommendedScenarioTarget();
+    if (pendingScenarioTarget) clearPendingScenarioTarget();
   }, [
     user,
     pendingScenarioTarget,
+    acceptedHash,
     library.loading,
     library.scenarios,
     filters.topicCode,
     filters.difficulty,
-    scenarioLocale,
+    requestHashNavigation,
     clearPendingScenarioTarget,
+    t,
   ]);
+
+  useEffect(() => {
+    if (!highlightedScenarioSlug || view.mode !== "library" || library.loading) return;
+    const key = highlightedScenarioSlug;
+    if (lastScrolledHighlightRef.current === key) return;
+    const element = scenarioCardRefs.current.get(highlightedScenarioSlug);
+    if (!element) return;
+    lastScrolledHighlightRef.current = key;
+    element.scrollIntoView({ behavior: "smooth", block: "center" });
+    window.setTimeout(() => element.focus?.({ preventScroll: true }), 0);
+  }, [highlightedScenarioSlug, acceptedHash, view.mode, library.loading]);
+
+  useEffect(() => {
+    if ((!highlightedScenarioSlug && !highlightedScenarioId) || library.loading) return;
+    const highlightedScenario = library.scenarios.find(scenario => isScenarioHighlightMatch({
+      scenarioSlug: highlightedScenarioSlug,
+      scenarioId: highlightedScenarioId,
+    }, scenario));
+    if (!highlightedScenario) {
+      clearHighlightedScenario();
+      return;
+    }
+    const hasCanonicalRecommendation = (library.recommended || []).some(scenario => Number(scenario.id) === Number(highlightedScenario.id));
+    if ((library.recommended || []).length > 0 && !hasCanonicalRecommendation) {
+      clearHighlightedScenario();
+    }
+  }, [highlightedScenarioSlug, highlightedScenarioId, library.loading, library.scenarios, library.recommended]);
 
   useEffect(() => {
     if (view.mode !== "intro") return;
@@ -6722,6 +7399,7 @@ function ScenariosPage() {
   const recommendedIds = new Set((library.recommended || []).map(item => item.id));
 
   async function openIntro(slug) {
+    clearHighlightForScenario({ slug });
     setBusy(true);
     setError(null);
     const result = await dbGetScenario(slug, scenarioLocale);
@@ -6731,6 +7409,7 @@ function ScenariosPage() {
   }
 
   async function startScenario(slug) {
+    clearHighlightForScenario({ slug });
     setBusy(true);
     setError(null);
     const result = await dbStartScenario(slug, scenarioLocale);
@@ -6742,6 +7421,8 @@ function ScenariosPage() {
   }
 
   async function openAttempt(attemptId) {
+    const scenario = library.scenarios.find(item => Number(item.latestAttempt?.id) === Number(attemptId));
+    clearHighlightForScenario(scenario);
     setBusy(true);
     setError(null);
     const result = await dbGetScenarioAttempt(attemptId, scenarioLocale);
@@ -6805,12 +7486,14 @@ function ScenariosPage() {
 
   async function completeScenario() {
     if (busy) return;
+    clearHighlightForScenario(view.scenario);
     setBusy(true);
     setError(null);
     const result = await dbCompleteScenario(view.attempt.id, scenarioLocale);
     setBusy(false);
     if (!result.ok) return setError(result.error);
     syncCompletedScenarioInLibrary(result.result);
+    await refreshScenarioLibrary();
     setView({ mode: "result", ...result.result });
   }
 
@@ -6889,19 +7572,25 @@ function ScenariosPage() {
             {library.scenarios.map(scenario => {
               const latest = scenario.latestAttempt;
               const isRecommended = recommendedIds.has(scenario.id);
+              const isHighlighted = highlightedScenarioTarget?.scenarioSlug === scenario.slug;
               return (
                 <div
                   key={scenario.id}
-                  className={`card scenario-library-card${isRecommended ? " recommended" : ""}`}
+                  ref={element => {
+                    if (element) scenarioCardRefs.current.set(scenario.slug, element);
+                    else scenarioCardRefs.current.delete(scenario.slug);
+                  }}
+                  tabIndex={isHighlighted ? -1 : undefined}
+                  className={`card scenario-library-card${isRecommended ? " recommended" : ""}${isHighlighted ? " highlighted" : ""}`}
                 >
                   <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.65rem" }}>
                     <span style={{ color: "#2E7D32", fontWeight: 700, fontSize: "0.78rem" }}>{t(`topics.${scenario.topicCode}`, { defaultValue: topicLabel(scenario.topicCode) })}</span>
-                    {isRecommended && (
+                    {(isHighlighted || isRecommended) && (
                       <span className="scenario-recommended-badge">
                         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
                           <path d="M12 3.6l2.35 4.76 5.25.76-3.8 3.7.9 5.23L12 15.58l-4.7 2.47.9-5.23-3.8-3.7 5.25-.76L12 3.6z" />
                         </svg>
-                        <span>{t("scenarios.library.recommended")}</span>
+                        <span>{isHighlighted ? t("scenarios.library.recommendedNext") : t("scenarios.library.recommended")}</span>
                       </span>
                     )}
                   </div>
@@ -8000,6 +8689,7 @@ function ProgressPage() {
     user,
     go,
     openRecommendedResource,
+    openScenarioTarget,
     pendingProgressSection,
     clearPendingProgressSection,
   } = useApp();
@@ -8008,7 +8698,7 @@ function ProgressPage() {
   const [recommendationState, setRecommendationState] = useState({ loading: true, recommendation: null });
   const [recommendationCompleting, setRecommendationCompleting] = useState(false);
   const [recommendationCompleteSaved, setRecommendationCompleteSaved] = useState(false);
-  const [activeProgressSection, setActiveProgressSection] = useState("progress-snapshot");
+  const [activeProgressSection, setActiveProgressSection] = useState(PROGRESS_SECTION_IDS.OVERVIEW);
 
   useEffect(() => {
     let active = true;
@@ -8031,23 +8721,26 @@ function ProgressPage() {
     return () => window.clearTimeout(timeout);
   }, [recommendationCompleteSaved]);
 
-  const hasMeasuredTopicSections = Boolean(progressState.progress?.topics?.length);
+  const assessmentTopicResults = (progressState.progress?.assessmentTopicResults || []).map(mapAssessmentTopicResult);
+  const activityComposition = normalizeActivityComposition(progressState.progress?.activityComposition);
+  const recentLearningActivity = normalizeRecentLearningActivity(progressState.progress?.recentLearningActivity);
+  const hasAssessmentResultsSection = Boolean(assessmentTopicResults.length);
   const hasRecommendationSection = Boolean(recommendationState.recommendation);
   const progressSections = PROGRESS_SECTIONS.filter(section => (
-    (section.optional !== "assessmentTopics" || hasMeasuredTopicSections) &&
+    (section.optional !== "assessmentResults" || hasAssessmentResultsSection) &&
     (section.optional !== "recommendation" || hasRecommendationSection)
   ));
 
   useEffect(() => {
     const visibleSectionIds = PROGRESS_SECTIONS
       .filter(section => (
-        (section.optional !== "assessmentTopics" || hasMeasuredTopicSections) &&
+        (section.optional !== "assessmentResults" || hasAssessmentResultsSection) &&
         (section.optional !== "recommendation" || hasRecommendationSection)
       ))
       .map(section => section.id);
 
     if (!visibleSectionIds.includes(activeProgressSection)) {
-      setActiveProgressSection(visibleSectionIds[0] || "progress-snapshot");
+      setActiveProgressSection(visibleSectionIds[0] || PROGRESS_SECTION_IDS.OVERVIEW);
     }
 
     const sections = visibleSectionIds
@@ -8071,7 +8764,7 @@ function ProgressPage() {
 
     sections.forEach(section => observer.observe(section));
     return () => observer.disconnect();
-  }, [activeProgressSection, hasMeasuredTopicSections, hasRecommendationSection]);
+  }, [activeProgressSection, hasAssessmentResultsSection, hasRecommendationSection]);
 
   useEffect(() => {
     if (!pendingProgressSection) return;
@@ -8121,19 +8814,16 @@ function ProgressPage() {
   const allTopics = HELP_OPTIONS;
 
   const summary = progressState.progress?.summary;
-  const measuredTopics = progressState.progress?.topics || [];
+  const learningPathProgress = progressState.progress?.learningPathProgress;
   const recommendation = recommendationState.recommendation;
-  const measuredLevel = t(`levels.${summary?.measuredLevel}`, { defaultValue: levelLabel(summary?.measuredLevel) });
-  const measuredValue = summary?.overallMasteryPercentage || 0;
+  const activitySegments = activityComposition.segments;
 
-  const badges = [
-    { icon: "🛡", labelKey: "progress.badges.joined", earned: true  },
-    { icon: "💬", labelKey: "progress.badges.chatPreview", earned: true  },
-    { icon: "📚", labelKey: "progress.badges.exploredResources", earned: topics.length > 0 },
-    { icon: "🎯", labelKey: "progress.badges.setGoals", earned: topics.length > 0 },
-    { icon: "🌐", labelKey: "progress.badges.multilingual", earned: languageValue && languageValue !== "english" },
-    { icon: "🏆", labelKey: "progress.badges.measuredBaseline", earned: Boolean(summary?.exists) },
-  ];
+  const achievements = getAchievementDefinitions({
+    hasJoined: true,
+    hasHelpTopics: topics.length > 0,
+    hasMultipleLanguages: languageValue && languageValue !== "english",
+    hasAssessmentBaseline: Boolean(summary?.exists),
+  });
 
   async function completeRecommendation() {
     if (!recommendation?.id || recommendationCompleting) return;
@@ -8142,6 +8832,10 @@ function ProgressPage() {
     setRecommendationCompleting(false);
     if (result.ok) {
       setRecommendationState({ loading: false, recommendation: result.recommendation });
+      const progressResult = await dbGetProgress();
+      setProgressState(progressResult.ok
+        ? { loading: false, progress: progressResult }
+        : { loading: false, progress: null, error: progressResult.error });
       setRecommendationCompleteSaved(true);
     }
   }
@@ -8163,7 +8857,7 @@ function ProgressPage() {
             {t("progress.heroTitle", { name: nick })}
           </h1>
           <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.9rem" }}>
-            {summary?.exists ? t("progress.measuredLevelSummary", { level: measuredLevel }) : t("progress.profileFamiliaritySummary", { level: profileLevel })} · {lang} · {style}
+            {summary?.exists ? t("progress.baselineSummary", { count: assessmentTopicResults.length }) : t("progress.profileFamiliaritySummary", { level: profileLevel })} · {lang} · {style}
           </p>
         </div>
       </div>
@@ -8189,72 +8883,127 @@ function ProgressPage() {
         <main className="progress-content">
           <PageBackButton style={{ marginBottom: "2rem" }} />
 
-        {/* Profile snapshot */}
-        <div id="progress-snapshot" className="progress-anchor" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "1rem", marginBottom: "2.5rem" }}>
-          {[
-            { icon: "🎓", labelKey: "progress.snapshot.measuredLevel", value: progressState.loading ? t("common.loading") : measuredLevel },
-            { icon: "🌐", labelKey: "progress.snapshot.language", value: lang },
-            { icon: "📖", labelKey: "progress.snapshot.style",    value: style },
-            { icon: "🎯", labelKey: "progress.snapshot.topics",   value: t("progress.selectedTopics", { count: topics.length }) },
-          ].map(s => (
-            <div key={s.labelKey} className="card" style={{ textAlign: "center", padding: "1.25rem 1rem" }}>
-              <div style={{ fontSize: "1.5rem", marginBottom: "0.35rem" }}>{s.icon}</div>
-              <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1rem", color: "var(--teal)", marginBottom: "0.2rem" }}>{s.value}</div>
-              <div style={{ fontSize: "0.75rem", color: "#888" }}>{t(s.labelKey)}</div>
+        <div id={PROGRESS_SECTION_IDS.OVERVIEW} className="progress-anchor" style={{ marginBottom: "2.5rem" }}>
+          {progressState.loading ? (
+            <div className="card learning-path-card">
+              <PageState message={t("common.loading")} />
             </div>
-          ))}
-        </div>
+          ) : (
+            <LearningPathProgressPanel value={learningPathProgress} t={t} />
+          )}
 
-        {/* Skill level bar */}
-        <div id="progress-mastery" className="progress-anchor" style={{ marginBottom: "2.5rem" }}>
-          <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("progress.mastery.title")}</p>
-          <p className="section-sub" style={{ marginBottom: "1rem" }}>{t("progress.mastery.description")}</p>
-          <div className="card" style={{ padding: "1.5rem" }}>
+          <div className="card activity-composition-card">
+            <div className="activity-composition-header">
+              <div>
+                <p className="section-title" style={{ fontSize: "1.1rem", marginBottom: "0.25rem" }}>
+                  {t("progress.activityComposition.title")}
+                </p>
+                <p className="section-sub" style={{ marginBottom: 0 }}>
+                  {t("progress.activityComposition.description")}
+                </p>
+              </div>
+              {activityComposition.totalRecordedActivities > 0 && (
+                <div className="activity-composition-total">
+                  {t("progress.activityComposition.recordedActivitiesCount", { count: activityComposition.totalRecordedActivities })}
+                </div>
+              )}
+            </div>
             {progressState.loading ? (
-              <div style={{ fontSize: "0.86rem", color: "#666" }}>{t("progress.mastery.loading")}</div>
-            ) : summary?.exists ? (
+              <PageState message={t("common.loading")} />
+            ) : activitySegments.length > 0 ? (
               <>
-                <div style={{ display: "flex", justifyContent: "space-between", marginBottom: "0.5rem" }}>
-                  <span style={{ fontSize: "0.85rem", fontWeight: 600 }}>{measuredLevel}</span>
-                  <span style={{ fontSize: "0.85rem", color: "#888" }}>{measuredValue}%</span>
-                </div>
-                <div style={{ background: "#eee", borderRadius: 99, height: 10, overflow: "hidden" }}>
-                  <div style={{ background: "var(--teal)", width: `${measuredValue}%`, height: "100%", borderRadius: 99, transition: "width 0.6s ease" }} />
-                </div>
-                <div style={{ display: "flex", justifyContent: "space-between", marginTop: "0.5rem" }}>
-                  {["beginner", "developing", "intermediate", "advanced"].map(l => (
-                    <span key={l} style={{ fontSize: "0.72rem", color: t(`levels.${l}`) === measuredLevel ? "var(--teal)" : "#bbb", fontWeight: t(`levels.${l}`) === measuredLevel ? 700 : 400 }}>{t(`levels.${l}`)}</span>
+                <div
+                  className="activity-composition-bar"
+                  role="img"
+                  aria-label={t("progress.activityComposition.barAriaLabel")}
+                >
+                  {activitySegments.map(segment => (
+                    <span
+                      key={segment.id}
+                      className={`activity-composition-segment ${segment.id}`}
+                      style={{ width: `${segment.sharePercentage}%` }}
+                      title={t("progress.activityComposition.segmentShare", {
+                        label: t(activitySegmentLabelKey(segment.id), { defaultValue: segment.label }),
+                        share: segment.sharePercentage,
+                        count: segment.count,
+                      })}
+                    />
                   ))}
                 </div>
+                <div className="activity-composition-legend" aria-label={t("progress.activityComposition.legendLabel")}>
+                  {activitySegments.map(segment => (
+                    <div key={segment.id} className="activity-composition-legend-item">
+                      <span className={`activity-composition-dot ${segment.id}`} aria-hidden="true" />
+                      <div style={{ minWidth: 0 }}>
+                        <div style={{ fontWeight: 800, fontSize: "0.86rem", color: "#26312d" }}>
+                          <span aria-hidden="true" style={{ marginRight: "0.35rem" }}>{ACTIVITY_SEGMENT_ICONS[segment.id] || "•"}</span>
+                          {t(activitySegmentLabelKey(segment.id), { defaultValue: segment.label })}
+                        </div>
+                        <div style={{ fontSize: "0.78rem", color: "#61716b", lineHeight: 1.45 }}>
+                          {t(activitySegmentCountKey(segment.id), {
+                            count: segment.count,
+                            defaultValue: segment.displayValue,
+                          })} · {t("progress.activityComposition.shareOfActivity", { share: segment.sharePercentage })}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+                {activitySegments.length === 1 && (
+                  <div className="activity-composition-disclaimer">
+                    {t("progress.activityComposition.singleCategory", {
+                      label: t(activitySegmentLabelKey(activitySegments[0].id), { defaultValue: activitySegments[0].label }),
+                    })}
+                  </div>
+                )}
               </>
             ) : (
-              <div style={{ fontSize: "0.86rem", color: "#666", lineHeight: 1.6 }}>
-                {t("progress.mastery.empty")}
-                <button onClick={() => go("assessment")} style={{ display: "block", marginTop: "0.85rem", background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>{t("dashboard.startAssessment")}</button>
-              </div>
+              <PageState type="empty" message={t("progress.activityComposition.empty")} />
             )}
+            <div className="activity-composition-disclaimer">
+              {activitySegments.length === 1 && activitySegments[0].id === "assessment_topics"
+                ? `${t("progress.activityComposition.assessmentOnlyNote")} `
+                : ""}
+              {t("progress.activityComposition.explanation")} {t("progress.activityComposition.disclaimer")}
+            </div>
+          </div>
+
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "1rem" }}>
+            {[
+              { icon: "🎓", labelKey: "progress.snapshot.assessmentStatus", value: progressState.loading ? t("common.loading") : (summary?.exists ? t("progress.snapshot.baselineAvailable") : t("progress.snapshot.noBaseline")) },
+              { icon: "🌐", labelKey: "progress.snapshot.language", value: lang },
+              { icon: "📖", labelKey: "progress.snapshot.style",    value: style },
+              { icon: "🎯", labelKey: "progress.snapshot.topics",   value: t("progress.selectedTopics", { count: topics.length }) },
+            ].map(s => (
+              <div key={s.labelKey} className="card" style={{ textAlign: "center", padding: "1.25rem 1rem" }}>
+                <div style={{ fontSize: "1.5rem", marginBottom: "0.35rem" }}>{s.icon}</div>
+                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1rem", color: "var(--teal)", marginBottom: "0.2rem" }}>{s.value}</div>
+                <div style={{ fontSize: "0.75rem", color: "#888" }}>{t(s.labelKey)}</div>
+              </div>
+            ))}
           </div>
         </div>
 
-        {measuredTopics.length > 0 && (
-          <div id="progress-assessment-topics" className="progress-anchor" style={{ marginBottom: "2.5rem" }}>
-            <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("progress.assessmentTopics.title")}</p>
-            <p className="section-sub" style={{ marginBottom: "1rem" }}>{t("progress.assessmentTopics.description")}</p>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(240px, 1fr))", gap: "1rem" }}>
-              {measuredTopics.map(topic => (
+        {assessmentTopicResults.length > 0 && (
+          <div id={PROGRESS_SECTION_IDS.ASSESSMENT_RESULTS} className="progress-anchor" style={{ marginBottom: "2.5rem" }}>
+            <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("progress.assessmentResults.title")}</p>
+            <p className="section-sub" style={{ marginBottom: "1rem" }}>{t("progress.assessmentResults.description")}</p>
+            <div className="assessment-results-grid">
+              {assessmentTopicResults.map(topic => (
                 <div key={topic.topicCode} className="card">
                   <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem", alignItems: "flex-start", marginBottom: "0.65rem" }}>
                     <div>
                       <div style={{ fontSize: "1.25rem", marginBottom: "0.25rem" }}>{PROGRESS_TOPIC_META[topic.topicCode]?.icon || "📘"}</div>
                       <div style={{ fontWeight: 700, fontSize: "0.92rem" }}>{t(`topics.${topic.topicCode}`, { defaultValue: topicLabel(topic.topicCode, topic.topicLabel) })}</div>
                     </div>
-                    <div style={{ color: "var(--teal)", fontWeight: 800 }}>{topic.masteryPercentage}%</div>
-                  </div>
-                  <div style={{ background: "#edf3ef", borderRadius: 99, height: 9, overflow: "hidden", marginBottom: "0.55rem" }}>
-                    <div style={{ width: `${topic.masteryPercentage}%`, background: "var(--teal)", height: "100%", borderRadius: 99 }} />
+                    <div style={{ color: "var(--teal)", fontWeight: 800 }}>
+                      {t("progress.assessmentResults.correctOutOfTotal", { correct: topic.correctCount, total: topic.totalCount })}
+                    </div>
                   </div>
                   <div style={{ fontSize: "0.78rem", color: "#666" }}>
-                    {t(`levels.${topic.currentLevel}`, { defaultValue: levelLabel(topic.currentLevel) })} · {t("progress.assessmentTopics.source")}
+                    {t("progress.assessmentResults.assessmentResult", {
+                      level: t(`levels.${topic.resultLevel}`, { defaultValue: levelLabel(topic.resultLevel) }),
+                    })} · {t("progress.assessmentResults.source")}
                   </div>
                 </div>
               ))}
@@ -8265,9 +9014,12 @@ function ProgressPage() {
         {recommendation && (
           <div id="progress-recommendation" className="card progress-anchor" style={{ marginBottom: "2.5rem", background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)" }}>
             {recommendationCompleteSaved && <SuccessFeedback message={t("progress.recommendation.completedSaved")} />}
-            <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.3rem" }}>{t("progress.recommendation.title")}</div>
+            <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.3rem" }}>{t("progress.currentFocus.title")}</div>
             <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.05rem", marginBottom: "0.4rem" }}>
               {recommendation.topicCode ? t(`topics.${recommendation.topicCode}`, { defaultValue: topicLabel(recommendation.topicCode, recommendation.topicLabel) }) : t("dashboard.recommendation.initialAssessment")}
+            </div>
+            <div style={{ fontSize: "0.78rem", color: "#496157", lineHeight: 1.5, marginBottom: "0.55rem" }}>
+              {t("progress.currentFocus.basedOn")} · {t("progress.currentFocus.suggestedNextStep")}
             </div>
             <div style={{ fontSize: "0.86rem", color: "#3e5149", lineHeight: 1.6, marginBottom: "1rem" }}>
               {recommendation.reasonText}
@@ -8277,7 +9029,7 @@ function ProgressPage() {
                 {recommendation.topicCode ? t("dashboard.recommendation.readResource") : t("dashboard.recommendation.startAssessment")}
               </button>
               {recommendation.topicCode && (
-                <button onClick={() => go("scenarios")} style={{ background: "#2E7D32", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>
+                <button onClick={() => recommendation.target ? openScenarioTarget(recommendation.target, "progress") : go("scenarios")} style={{ background: "#2E7D32", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>
                   {t("dashboard.recommendation.practiceScenario")}
                 </button>
               )}
@@ -8290,10 +9042,50 @@ function ProgressPage() {
           </div>
         )}
 
-        {/* Topics of interest */}
-        <div id="progress-learning-topics" className="progress-anchor" style={{ marginBottom: "2.5rem" }}>
-          <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("progress.learningTopics.title")}</p>
-          <p className="section-sub" style={{ marginBottom: "1rem" }}>{t("progress.learningTopics.description")}</p>
+        {/* Learning activity and topics */}
+        <div id={PROGRESS_SECTION_IDS.LEARNING_ACTIVITY} className="progress-anchor" style={{ marginBottom: "2.5rem" }}>
+          <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("progress.learningActivity.title")}</p>
+          <p className="section-sub" style={{ marginBottom: "1rem" }}>{t("progress.learningActivity.description")}</p>
+          <div className="card" style={{ marginBottom: "1rem", padding: "1rem" }}>
+            <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.35rem" }}>
+              {t("progress.recentActivity.title")}
+            </div>
+            <div style={{ fontSize: "0.82rem", color: "#666", lineHeight: 1.6 }}>
+              {t("progress.recentActivity.description")}
+            </div>
+            {recentLearningActivity.length > 0 ? (
+              <div className="recent-activity-list">
+                {recentLearningActivity.map((activity, index) => (
+                  <div key={`${activity.type}-${activity.occurredAt}-${index}`} className="recent-activity-item">
+                    <div>
+                      <div style={{ fontWeight: 700, fontSize: "0.84rem", color: "#27332f" }}>
+                        {t(recentActivityLabelKey(activity.type), { defaultValue: activity.label })}
+                      </div>
+                      {activity.topicCode && (
+                        <div style={{ fontSize: "0.76rem", color: "#69756f", marginTop: "0.15rem" }}>
+                          {t(`topics.${activity.topicCode}`, { defaultValue: topicLabel(activity.topicCode) })}
+                        </div>
+                      )}
+                    </div>
+                    <time style={{ fontSize: "0.76rem", color: "#7c8882" }} dateTime={activity.occurredAt}>
+                      {new Intl.DateTimeFormat(progressLocale, { month: "short", day: "numeric" }).format(new Date(activity.occurredAt))}
+                    </time>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <PageState type="empty" message={t("progress.recentActivity.empty")} />
+            )}
+          </div>
+
+          <div style={{ marginBottom: "0.85rem" }}>
+            <div style={{ fontWeight: 700, color: "#24322e", marginBottom: "0.25rem" }}>
+              {t("progress.learningInterests.title")}
+            </div>
+            <div style={{ fontSize: "0.82rem", color: "#666", lineHeight: 1.6 }}>
+              {t("progress.learningInterests.description")}
+            </div>
+          </div>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "0.75rem" }}>
             {allTopics.map(topicOption => {
               const active = topics.includes(topicOption.value);
@@ -8305,22 +9097,27 @@ function ProgressPage() {
                   display: "flex", alignItems: "center", gap: "0.6rem",
                 }}>
                   <span style={{ fontSize: "1rem" }}>{active ? "✅" : "⬜"}</span>
-                  <span style={{ fontSize: "0.85rem", fontWeight: active ? 600 : 400, color: active ? "var(--teal)" : "#888" }}>{t(`profileOptions.helpTopics.${topicOption.value}`, { defaultValue: topicOption.label })}</span>
+                  <span style={{ fontSize: "0.85rem", fontWeight: active ? 600 : 400, color: active ? "var(--teal)" : "#888" }}>
+                    {t(`profileOptions.helpTopics.${topicOption.value}`, { defaultValue: topicOption.label })}
+                    <span style={{ display: "block", marginTop: "0.12rem", fontSize: "0.72rem", color: active ? "#357a63" : "#888", fontWeight: 700 }}>
+                      {t(getLearningInterestStateKey(active))}
+                    </span>
+                  </span>
                 </div>
               );
             })}
           </div>
           <button onClick={() => go("resources")} style={{ marginTop: "1rem", background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.25rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>
-            {t("progress.learningTopics.exploreAll")}
+            {t("progress.learningActivity.exploreAll")}
           </button>
         </div>
 
-        {/* Badges */}
-        <div id="progress-badges" className="progress-anchor">
-          <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("progress.badges.title")}</p>
-          <p className="section-sub" style={{ marginBottom: "1rem" }}>{t("progress.badges.description")}</p>
+        {/* Achievements */}
+        <div id={PROGRESS_SECTION_IDS.BADGES} className="progress-anchor">
+          <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("progress.achievements.title")}</p>
+          <p className="section-sub" style={{ marginBottom: "1rem" }}>{t("progress.achievements.description")}</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "1rem" }}>
-            {badges.map(b => (
+            {achievements.map(b => (
               <div key={b.labelKey} className="card" style={{
                 textAlign: "center", padding: "1.25rem 0.75rem",
                 opacity: b.earned ? 1 : 0.4,
@@ -8328,7 +9125,7 @@ function ProgressPage() {
               }}>
                 <div style={{ fontSize: "2rem", marginBottom: "0.4rem" }}>{b.icon}</div>
                 <div style={{ fontSize: "0.78rem", fontWeight: 600, color: b.earned ? "#1a1a18" : "#aaa" }}>{t(b.labelKey)}</div>
-                {b.earned && <div style={{ fontSize: "0.68rem", color: "var(--teal)", marginTop: "0.25rem", fontWeight: 600 }}>{t("progress.badges.earned")}</div>}
+                {b.earned && <div style={{ fontSize: "0.68rem", color: "var(--teal)", marginTop: "0.25rem", fontWeight: 600 }}>{t("progress.achievements.earned")}</div>}
               </div>
             ))}
           </div>
@@ -9790,6 +10587,11 @@ export default function App() {
   }, [acceptHashRoute, commitHashRoute, user]);
 
   useEffect(() => {
+    if (typeof window === "undefined") return;
+    window.scrollTo({ top: 0, behavior: "auto" });
+  }, [page]);
+
+  useEffect(() => {
     if (!activityGuard) return undefined;
     function handleBeforeUnload(event) {
       event.preventDefault();
@@ -9887,6 +10689,15 @@ export default function App() {
     setPendingResourceTarget(null);
     go("resources");
   }
+  function openScenarioTarget(target = {}, source = "cyberguard") {
+    const safeTarget = resolveChatActionTarget({ page: "scenarios", ...target });
+    const scenarioTarget = {
+      scenarioId: safeTarget?.scenarioId ? Number(safeTarget.scenarioId) : null,
+      scenarioSlug: safeTarget?.scenarioSlug || null,
+    };
+    setPendingScenarioTarget(null);
+    requestHashNavigation(buildRecommendedScenarioNavigation(scenarioTarget, source));
+  }
   function openAuth(mode = "login") {
     setAuthMode(mode);
     setResourceFocusTopic(null);
@@ -9981,11 +10792,7 @@ export default function App() {
     }
 
     if (target.page === "scenarios") {
-      setPendingScenarioTarget({
-        scenarioId: target.scenarioId ? Number(target.scenarioId) : null,
-        scenarioSlug: target.scenarioSlug || null,
-      });
-      go("scenarios");
+      openScenarioTarget(target);
       return true;
     }
 
@@ -10067,11 +10874,13 @@ export default function App() {
     pendingScenarioTarget,
     pendingProgressSection,
     openRecommendedResource,
+    openScenarioTarget,
     clearResourceFocus: () => setResourceFocusTopic(null),
     clearPendingResourceTarget: () => setPendingResourceTarget(null),
     clearPendingScenarioTarget: () => setPendingScenarioTarget(null),
     clearPendingProgressSection: () => setPendingProgressSection(null),
     handleChatAction,
+    acceptedHash,
     registerActivityGuard,
     requestHashNavigation,
     completeGuardedActivity,
