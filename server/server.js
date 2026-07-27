@@ -50,7 +50,6 @@ const { createAgenticTraceRepository } = require('./src/agent/audit/agenticTrace
 const { createAgenticTraceService } = require('./src/agent/audit/agenticTrace.service');
 const { createCyberWellnessService } = require('./src/wellness/cyberWellness.service');
 const { createAdminRouter } = require('./src/admin/admin.routes');
-const { createRequireAdmin } = require('./src/admin/admin.middleware');
 const { ERROR_CODES } = require('./src/errors/errorCodes');
 
 const app = express();
@@ -355,59 +354,6 @@ app.post('/api/auth/logout', async (req, res, next) => {
             secure: sessionCookieSecure,
         });
         res.json({ ok: true });
-    } catch (error) {
-        next(error);
-    }
-});
-
-app.get('/api/admin/ping', createRequireAdmin(pool), (_req, res) => {
-    res.json({ ok: true });
-});
-
-// Legacy routes are retained temporarily but use password hashes only.
-app.post('/api/register', async (req, res, next) => {
-    try {
-        const email = normalizeEmail(req.body.email);
-        const displayName = String(req.body.username || '').trim();
-        const password = String(req.body.password || '');
-        const age = Number(req.body.age);
-        const ageGroup = getAgeGroup(age);
-        const passwordHash = await bcrypt.hash(password, 10);
-
-        await pool.query(
-            `INSERT INTO users (username, email, display_name, age, age_group, password_hash, role, account_status)
-             VALUES (?, ?, ?, ?, ?, ?, 'user', 'active')`,
-            [displayName, email, displayName, age, ageGroup, passwordHash]
-        );
-        res.status(201).json({ message: 'User registered successfully.' });
-    } catch (error) {
-        next(error);
-    }
-});
-
-app.post('/api/login', async (req, res, next) => {
-    try {
-        const username = String(req.body.username || '').trim();
-        const password = String(req.body.password || '');
-        const [rows] = await pool.query('SELECT * FROM users WHERE username = ? LIMIT 1', [username]);
-
-        if (rows.length === 0) {
-            return res.status(401).json({
-                code: ERROR_CODES.AUTH_LEGACY_INVALID_CREDENTIALS,
-                message: 'Invalid username or password.',
-            });
-        }
-
-        const user = rows[0];
-        const isMatch = await bcrypt.compare(password, user.password_hash);
-        if (!isMatch) {
-            return res.status(401).json({
-                code: ERROR_CODES.AUTH_LEGACY_INVALID_CREDENTIALS,
-                message: 'Invalid username or password.',
-            });
-        }
-
-        res.json({ user: buildSafeUser(user) });
     } catch (error) {
         next(error);
     }

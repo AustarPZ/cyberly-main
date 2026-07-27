@@ -1,12 +1,12 @@
 # Cyberly
 
-Cyberly is an AI-powered cyber wellness toolkit prototype for Malaysian teenagers, with a broader general-user mode for other age groups.
+Cyberly is an AI-powered cyber wellness toolkit for Malaysian teenagers, with a broader general-user mode for other age groups.
 
 ## Project Structure
 
-- `client/` is the official frontend and should be used for all new frontend work.
+- `client/` is the official and only frontend.
 - `server/` is the Express backend.
-- `src/` and root `public/` are a legacy React frontend and must not be extended.
+- `docs/production/` contains production-oriented architecture, deployment, and configuration documentation.
 - `cyberly` is the default local MySQL development database. The old `cyberwell` name is deprecated and should not be used for new setup, migrations, or tests.
 
 ## Local Requirements
@@ -104,15 +104,15 @@ For a public MVP deployment using a Render Static Site, Render Web Service, and 
 
 Deployment uses the official `client/` frontend and `server/` backend. Do not put secrets in frontend environment variables.
 
-## Authentication Foundation
+## Authentication And Learning APIs
 
-Phase 1B.1 implements server-side authentication with MySQL-backed sessions:
+Cyberly uses server-side authentication with MySQL-backed sessions:
 
 - Registration: `POST /api/auth/register`
 - Login: `POST /api/auth/login`
 - Restore current session: `GET /api/auth/me`
 - Logout: `POST /api/auth/logout`
-- Admin authorization check: `GET /api/admin/ping`
+- Admin authorization check: `GET /api/admin/status`
 - Learner profile read/update: `GET /api/profile`, `PUT /api/profile`
 - Initial assessment: `GET /api/assessments/initial`, `POST /api/assessments/initial/attempts`
 - Assessment attempts: `GET /api/assessment-attempts/:attemptId`, `PUT /api/assessment-attempts/:attemptId/answers`, `POST /api/assessment-attempts/:attemptId/submit`
@@ -170,26 +170,30 @@ This creates a temporary `cyberly_migration_test_*` database, runs the full migr
 
 To reset a local development database safely, first confirm the database name is not shared or production data, then use a new database name in `server\.env` or manually back up before dropping anything.
 
-## Baseline Notes
+## Production Documentation
+
+Current production-oriented documentation lives in `docs/production/`:
+
+- `docs/production/architecture/system-overview.md`
+- `docs/production/deployment/current-deployment.md`
+- `docs/production/deployment/deployment-roadmap.md`
+- `docs/production/configuration/environment-variables.md`
+
+These documents describe the current implementation and clearly separate planned production hardening work.
+
+## Implementation Notes
 
 - The official frontend is `client/`.
-- The root React app is legacy and retained only for reference.
-- `client/src/App.jsx` has been aligned with the newer `v6_App.jsx` UI reference while replacing mock auth with backend auth calls.
-- The generated root `node_modules/` folder was removed to prevent Create React App from resolving duplicate ESLint plugins across root and `client/`.
-- `client/` production build has been verified successfully.
-- `server/.env` loads locally without committing or printing secrets.
 - The backend uses `cyberly` as the default MySQL database name.
-- The `users`, `sessions`, `learner_profiles`, and assessment tables are now under migration management while preserving legacy `username` and `password` columns temporarily.
+- The `users`, `sessions`, `learner_profiles`, and assessment tables are under migration management while preserving legacy `username` and `password` columns temporarily.
 - Progress and recommendation tables are under migration management through `007_create_progress_and_recommendations.sql`.
 - Scenario definitions, steps, attempts, decisions, and scenario progress events are under migration management through `008_create_scenario_engine.sql`.
 - Frontend registration calls `POST /api/auth/register`; login calls `POST /api/auth/login`.
 - Frontend startup calls `GET /api/auth/me` to restore an existing session, and logout calls `POST /api/auth/logout`.
 - Seven-step onboarding preferences are persisted with `PUT /api/profile` and restored through `GET /api/auth/me`.
-- Profile editing is available for learner-profile fields. Display name and age editing are deferred to a future account settings endpoint.
-- The initial assessment is available after onboarding, can be done later, resumes saved answers, and preserves the first completed result.
-- AI provider calls will later be routed through the backend.
+- CyberGuard AI provider calls are routed through the backend.
 - Browser-side direct AI provider calls are disabled.
-- No AI is used for assessment questions, scenario content, scoring, feedback, progress tracking, or recommendations.
+- Assessment questions, scenario content, scoring, feedback, progress tracking, and recommendations remain deterministic backend/product logic.
 
 ## Verification
 

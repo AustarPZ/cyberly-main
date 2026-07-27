@@ -2118,7 +2118,6 @@
       "AUTH_EMAIL_ALREADY_REGISTERED": "这个电子邮箱已注册账号。",
       "AUTH_FORBIDDEN": "你没有权限进入这个页面。",
       "AUTH_INVALID_CREDENTIALS": "电子邮箱或密码不正确。",
-      "AUTH_LEGACY_INVALID_CREDENTIALS": "用户名或密码不正确。",
       "AUTH_LOGIN_FIELDS_REQUIRED": "需要填写电子邮箱和密码。",
       "AUTH_RATE_LIMITED": "验证尝试次数太多。请稍后再试。",
       "AUTH_REGISTRATION_INVALID": "请检查你的注册资料。",

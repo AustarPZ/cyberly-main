@@ -166,7 +166,16 @@ async function run() {
 
     await waitForHealth(child);
 
-    let result = await request('POST', '/api/auth/register', {
+    let result = await request('POST', '/api/register', {});
+    assert.equal(result.response.status, 404);
+
+    result = await request('POST', '/api/login', {});
+    assert.equal(result.response.status, 404);
+
+    result = await request('GET', '/api/admin/ping');
+    assert.equal(result.response.status, 404);
+
+    result = await request('POST', '/api/auth/register', {
       email: TEST_EMAIL,
       displayName: TEST_DISPLAY_NAME,
       password: TEST_PASSWORD,
@@ -208,7 +217,7 @@ async function run() {
     cookieHeader = result.cookieHeader || cookieHeader;
 
     result = await request('GET', '/api/admin/ping', undefined, cookieHeader);
-    assert.equal(result.response.status, 403);
+    assert.equal(result.response.status, 404);
 
     result = await request('GET', '/api/admin/status');
     assert.equal(result.response.status, 401);
@@ -249,6 +258,9 @@ async function run() {
     assert.equal(Object.prototype.hasOwnProperty.call(result.json, 'passwordHash'), false);
     assert.equal(Object.prototype.hasOwnProperty.call(result.json, 'session'), false);
     assert.equal(Object.prototype.hasOwnProperty.call(result.json, 'apiKey'), false);
+
+    result = await request('GET', '/api/admin/ping', undefined, cookieHeader);
+    assert.equal(result.response.status, 404);
 
     result = await request('GET', '/api/admin/resources/review?role=user', undefined, cookieHeader);
     assert.equal(result.response.status, 200);

@@ -2,223 +2,150 @@
 
 ## Current Database
 
-- Database name: `cyberly`
-- Database engine: MySQL 8.0 local development server
+- Standard database name: `cyberly`
+- Database engine: MySQL
+- Local target: MySQL 8.0
+- Managed deployment target: managed MySQL, including Aiven for MySQL when configured through environment variables
 - ORM: none
 
 No real credentials are documented in this repository.
 
-`cyberly` is the standard database name for current development and fresh-clone setup. The older local `cyberwell` name is deprecated and should not be used.
+The older local `cyberwell` database name is deprecated and should not be used.
 
 ## Migration Approach
 
-The project uses versioned SQL migration files in `server/migrations/` and a Node.js runner at `server/scripts/migrate.js`.
+Schema changes are managed through versioned SQL files in `server/migrations/` and the Node runner at `server/scripts/migrate.js`.
 
-Applied migrations are recorded in the `schema_migrations` table:
+Applied migrations are recorded in `schema_migrations`:
 
 - `migration_id`
 - `filename`
 - `applied_at`
 
-The runner loads `server/.env` locally, discovers `.sql` files in deterministic filename order, skips already-applied migrations, and stops on first failure.
+Rollback is not implemented. Production database changes require a verified backup and restore plan before migrations are applied.
 
-## Commands
+## Core Tables
 
-Check migration status:
+Current schema areas include:
 
-```bash
-cd server
-npm run migrate:status
-```
+- `users`
+- `sessions`
+- `learner_profiles`
+- assessment definitions, questions, attempts, answers, topic scores, and translations
+- learner topic progress, learner progress summary, and learner recommendations
+- scenario definitions, steps, attempts, decisions, progress events, publication metadata, and translations
+- resource articles, translations, timestamps, and review/RAG metadata
+- chat conversations, messages, generations, action cards, and persisted sources
+- RAG documents and chunks
+- Agentic execution traces
 
-Apply pending migrations:
+## Users Table
 
-```bash
-cd server
-npm run migrate
-```
+Current account columns include:
 
-## Users Table Design
+- `id`
+- `email`
+- `display_name`
+- `age`
+- `age_group`
+- `password_hash`
+- `role`
+- `account_status`
+- `created_at`
+- `updated_at`
 
-Target columns now present:
-
-- `id`: unsigned auto-increment primary key
-- `email`: `varchar(255)`, not null, unique
-- `display_name`: `varchar(100)`, not null
-- `age`: unsigned integer-compatible type, not null
-- `age_group`: `child`, `teen`, `young_adult`, or `adult`
-- `password_hash`: `varchar(255)`, not null
-- `role`: `user` or `admin`, default `user`
-- `account_status`: `active` or `disabled`, default `active`
-- `created_at`: timestamp
-- `updated_at`: timestamp
-
-Temporary legacy compatibility columns:
+Temporary legacy compatibility columns remain:
 
 - `username`
 - `password`
 
-These are retained while legacy source remains in the project. Current `/api/auth/*` routes do not store plaintext passwords and do not depend on legacy password values.
+Current `/api/auth/*` routes use email/password authentication and bcrypt hashes. Legacy `/api/register` and `/api/login` have been removed, so `username` and `password` remain only as temporary schema compatibility columns until the Phase 1C.2 migration cleanup.
 
-## Sessions Table Design
+Compatibility triggers also remain for user defaults and age-group updates. They should be reviewed with the legacy column cleanup.
 
-Phase 1B.1 adds a `sessions` table for server-side authentication sessions:
+## Sessions
 
-- `sid`: session identifier primary key
-- `expires`: session expiry timestamp
-- `data`: JSON session payload
+The `sessions` table stores server-side session data for `express-session`:
 
-The application stores only minimal session data: `userId` and `role`.
+- `sid`
+- `expires`
+- `data`
 
-## Learner Profiles Table Design
+The application session payload stores only `userId` and `role`.
 
-Phase 1B.2 adds `learner_profiles` with one row per user:
+## Learner Profiles
 
-- `id`: unsigned auto-increment primary key
-- `user_id`: unique foreign key to `users.id`
-- `ai_nickname`: optional display nickname for learning interactions
-- `education_level`: `form_1`, `form_2`, `form_3`, `form_4`, `form_5`, `other`, or `prefer_not_to_say`
-- `preferred_language`: `english`, `bahasa_melayu`, `chinese`, or `mixed`
-- `familiarity_level`: `beginner`, `intermediate`, or `advanced`
-- `help_topics`: validated JSON array with up to three approved topic identifiers
-- `learning_style`: `step_by_step`, `short_explanations`, or `quizzes_and_challenges`
-- `onboarding_completed`: boolean completion flag
-- `onboarding_completed_at`: timestamp set the first time onboarding is completed
-- `profile_last_confirmed_at`: timestamp updated when the profile is confirmed or saved
-- `created_at`, `updated_at`
+`learner_profiles` stores one profile per user and uses `ON DELETE CASCADE`.
 
-`learner_profiles.user_id` uses `ON DELETE CASCADE` so deleting a user also deletes that user's learner preferences and avoids orphaned personal data.
+It stores learner preferences and onboarding state such as AI nickname, education level, preferred language, familiarity level, help topics, learning style, onboarding completion, and profile confirmation timestamps.
 
-The table does not store assessment results, recommendation state, chat history, or inferred learning ability.
+It does not store passwords, chat history, assessment answers, or inferred ability scores.
 
-## Initial Assessment Tables
+## Assessment
 
-Phase 1C.1 adds:
+Assessment tables store fixed versioned assessment content, attempts, selected answers, and topic scores.
 
-- `assessment_definitions`: versioned assessment metadata. Version 1 of `initial-cyber-wellness-v1` is published with 12 questions.
-- `assessment_questions`: fixed question bank with topic, options JSON, correct option, explanation, difficulty, display order, and status.
-- `assessment_attempts`: user-owned attempt records with status, score, percentage, measured level, and timestamps.
-- `assessment_answers`: one selected option per question per attempt. Correctness and awarded score are calculated by the backend.
-- `assessment_topic_scores`: topic-level correct count, total count, and percentage per completed attempt.
+Assessment scoring is deterministic and backend-calculated. Correct answers and explanations are not exposed before submission.
 
-Assessment attempt rows cascade when a user is deleted. Answers and topic scores cascade when an attempt is deleted. Assessment definitions and questions use restrictive deletion rules so completed baseline records are not silently broken.
+## Progress and Recommendations
 
-Measured levels:
+Progress tables store:
 
-- `0-39`: beginner
-- `40-69`: developing
-- `70-84`: intermediate
-- `85-100`: advanced
+- topic progress per user/topic;
+- one overall progress summary per user;
+- learner recommendation history.
 
-Measured level is not stored in `users` or `learner_profiles`.
-
-## Progress And Recommendation Tables
-
-Phase 1C.2 adds:
-
-- `learner_topic_progress`: one row per user and assessment topic. Stores the current measured level, mastery percentage, source type, optional source reference, activity count, and last activity timestamp.
-- `learner_progress_summary`: one row per user. Stores overall mastery percentage, measured level, completed topic count, total activity count, and last progress timestamp.
-- `learner_recommendations`: recommendation history. Stores the recommendation type, topic, recommended level, reason code/text, source, status, and viewed/completed timestamps.
-
-All three tables cascade when the owning user is deleted.
-
-`learner_topic_progress` uses a unique `(user_id, topic_code)` key so re-syncing the initial assessment updates the existing four topic rows instead of duplicating them.
-
-Recommendation history is preserved. When a new recommendation is generated, active or viewed recommendations for that user become `superseded`; the latest active row is the current recommendation.
-
-Current progress source types:
+Supported progress source types in migration `007_create_progress_and_recommendations.sql` include:
 
 - `initial_assessment`
 - `learning_activity`
 - `scenario`
 - `admin_adjustment`
 
-The current implementation writes `initial_assessment` only. Learning activity, scenario, and admin adjustment writes are reserved for later phases.
+Recommendation source types also include `assessment_pending`.
 
-Current recommendation statuses:
+The current implementation writes initial-assessment progress and scenario progress. Scenario completion applies progress idempotently through `scenario_progress_events`, and recommendation refresh logic can use scenario completion state.
 
-- `active`
-- `viewed`
-- `completed`
-- `superseded`
+Resource completion tracking is not implemented.
 
-Recommendation rules are deterministic:
+## Scenario Engine
 
-- Topic mastery uses the same thresholds as assessment measured levels.
-- The recommended topic is the lowest scoring topic.
-- Ties use this fixed order: phishing and scams, password/account security, privacy/personal information, misinformation/deepfakes.
-- If no completed assessment exists, the recommendation asks the learner to complete the initial assessment.
+Scenario tables store definitions, steps, attempts, final decisions, and progress events.
 
-Age, age group, education level, and self-reported familiarity are not used as ability measures.
+`scenario_progress_events.scenario_attempt_id` is unique so scenario completion can apply progress at most once per attempt.
 
-## Scenario Engine Tables
+Scenario attempts and progress events cascade when a user is deleted. Scenario definitions are protected from deletion when historical learner attempts depend on them.
 
-Phase 1D.1 adds:
+## Resources and RAG
 
-- `scenario_definitions`: fixed approved scenario metadata with slug, topic, difficulty, version, status, estimated minutes, and total step count.
-- `scenario_steps`: ordered step prompts and option JSON.
-- `scenario_attempts`: user-owned attempt state with current step, score, percentage, result level, and timestamps.
-- `scenario_decisions`: one final selected option per attempt and step.
-- `scenario_progress_events`: one progress-application marker per completed scenario attempt.
+Resource content is stored in:
 
-Scenario statuses:
+- `resource_articles`
+- `resource_article_translations`
 
-- `draft`
-- `published`
-- `archived`
+Resource review/RAG governance metadata includes fields such as review status, RAG readiness, source metadata, Malaysia guidance flag, sensitive topic flag, source replacement flag, and review notes.
 
-Attempt statuses:
+RAG tables are:
 
-- `in_progress`
-- `completed`
-- `abandoned`
+- `rag_documents`
+- `rag_chunks`
 
-Scenario result levels:
+Chat source snapshots are stored in `chat_message_sources` so historical citations can remain available even if source content changes later.
 
-- `needs_review`
-- `developing`
-- `proficient`
-- `strong`
+## Roles and Admin
 
-The seed bank contains exactly eight published scenarios, two per cyber wellness topic. Each seeded scenario currently has three ordered steps.
+Current roles are:
 
-`scenario_progress_events.scenario_attempt_id` is unique so scenario completion can update mastery at most once per attempt.
+- `user`
+- `admin`
 
-Scenario attempts and progress events cascade when a user is deleted. Scenario definitions use restrictive relationships for attempts so historical results are not silently broken.
+Public registration creates `user` accounts only. Admin access is checked server-side by Admin middleware and user role.
 
-## Age-Group Rules
+## Legacy Cleanup Schedule
 
-- `1-12`: `child`
-- `13-17`: `teen`
-- `18-24`: `young_adult`
-- `25-120`: `adult`
+The following schema cleanup must wait for a later phase:
 
-The database includes an age range check for `age BETWEEN 1 AND 120`. Application-layer validation is still required.
-
-Age and age group must not be used as the main measure of learning ability. Adaptive difficulty should be based on assessment performance and learner mastery.
-
-## Role Rules
-
-- Public registration creates `user` accounts only.
-- Public admin self-registration is prohibited.
-- The first admin will later be created through a secure seed or setup process.
-- Additional admins may only be created by an authorised admin.
-
-## Account Status Rules
-
-- `active`: account can be used.
-- `disabled`: account should be blocked by future authentication middleware.
-
-Authentication middleware blocks missing sessions. Role middleware currently protects `/api/admin/ping` and can be reused for future admin APIs.
-
-## Legacy Compatibility Decisions
-
-The existing manually-created `users` table contained zero rows when migrations were introduced. It already had `id`, `username`, `age`, `password`, `email`, `role`, and timestamps.
-
-The migration keeps `username` and `password` temporarily because legacy source remains in the project. It adds `display_name`, `password_hash`, `age_group`, and `account_status` for the email/password authentication schema.
-
-Compatibility triggers populate safe defaults from legacy fields during inserts and update `age_group` when age changes. The current trigger no longer copies legacy password values into `password_hash`.
-
-## Rollback Limitation
-
-Rollback is not implemented yet. Production database changes require a verified backup before applying migrations.
+- keep legacy `/api/register` and `/api/login` removed;
+- verify no runtime source depends on `users.username`;
+- verify no runtime source depends on `users.password`;
+- add a tested migration to remove legacy compatibility columns, indexes, and trigger behavior if still appropriate.

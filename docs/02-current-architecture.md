@@ -1,134 +1,87 @@
 # Current Architecture
 
-## Structure
+This document summarizes the current implementation. The detailed production source of truth is `docs/production/architecture/system-overview.md`.
+
+## Repository Structure
 
 - `client/`: official React frontend.
-- `server/`: Express backend with MySQL access through `mysql2`.
-- `server/migrations/`: versioned SQL migrations.
-- `server/scripts/migrate.js`: migration runner and status checker.
-- `server/scripts/test-auth.js`: Phase 1B.1 authentication verification script.
-- `server/scripts/test-profile.js`: Phase 1B.2 learner-profile persistence and authorization verification script.
-- `server/scripts/test-assessment.js`: Phase 1C.1 initial assessment verification script.
-- `server/scripts/test-progress.js`: Phase 1C.2 progress and recommendation verification script.
-- `server/src/database/`: database pool, migration helpers, and age-group utility.
-- `server/src/auth/`: authentication validation, route guards, and MySQL session-store adapter.
-- `server/src/profile/`: learner-profile routes, service, repository, validation, and response mapping.
-- `server/src/assessment/`: assessment routes, service, repository, validation, scoring, and response mapping.
-- `server/src/progress/`: progress routes, service, repository, deterministic recommendation rules, and response mapping.
-- `server/src/scenario/`: scenario routes, service, repository, scoring, validation, and response mapping.
-- `src/` and root `public/`: legacy React frontend retained for reference only.
-- MySQL database: `cyberly`.
+- `server/`: official Express/Node backend.
+- `server/migrations/`: numbered MySQL migrations.
+- `server/scripts/`: migration, ingestion, diagnostic, and focused verification scripts.
+- `docs/production/`: production-oriented architecture, deployment, and configuration documentation.
 
-`cyberly` is the standard project database name. The older local `cyberwell` name is deprecated and should not be used for setup, migrations, tests, or future documentation.
+The legacy root `src/`, root `public/`, and root `logo.svg` were removed during production cleanup. New frontend work belongs in `client/`.
 
-## Official Frontend Decision
+## Runtime Entry Points
 
-`client/` is the official frontend for all new work.
+- Frontend entry: `client/src/index.js`
+- Frontend app: `client/src/App.jsx`
+- Backend entry: `server/server.js`
+- Database configuration: `server/src/database/pool.js`
 
-## Legacy Root Frontend
+## Backend Runtime
 
-The root React app is legacy. It must not be extended, but it has not been deleted.
+`server/server.js` wires the current backend services and mounted routes:
 
-The generated root `node_modules/` folder was removed during baseline repair because Create React App was resolving the React ESLint plugin from both root dependencies and `client/` dependencies. Root source files and package files remain intact.
+- authentication and MySQL-backed sessions;
+- learner profile and account APIs;
+- initial assessment APIs;
+- progress and recommendation APIs;
+- scenario APIs and scenario attempt/result APIs;
+- resource APIs;
+- CyberGuard chat and AI generation APIs;
+- RAG services;
+- Controlled Agentic AI and learner-controlled action proposals;
+- Admin APIs.
 
-## Current Entry Points
+The backend exposes `GET /api/health` for database connectivity health.
 
-- Official frontend: `client/src/index.js`
-- Official frontend app: `client/src/App.jsx`
-- Backend: `server/server.js`
+## Frontend Runtime
 
-## Current MySQL Configuration
+The official frontend in `client/` handles:
 
-The backend currently attempts to connect to:
+- public pages, login, registration, onboarding, dashboard, profile, progress, resources, scenarios, CyberGuard chat, and Admin screens;
+- localized English, Malay, and Simplified Chinese UI strings;
+- compact RAG source display and deterministic action-card rendering;
+- Admin Resource and Scenario management surfaces.
 
-- host: `localhost`
-- user: `root`
-- database: `cyberly`
-- password: loaded from `process.env.DB_PASSWORD`
+The frontend uses `REACT_APP_API_BASE_URL` for the backend API origin and sends session-backed requests with `credentials: include`.
 
-Fresh local setup should use `server/.env.example` with `DB_NAME=cyberly`, then run `npm --prefix server run db:ensure` and `npm --prefix server run migrate`.
+## Database
 
-## Current Integration Gaps
+The standard database name is `cyberly`. The older `cyberwell` name is deprecated.
 
-- Learner profile fields are persisted in `learner_profiles`.
-- Live AI calls are disabled until a backend gateway exists.
-- Migration tooling now exists for backend database changes.
-- Admin portal UI and admin-user provisioning are not implemented.
-- Resource learning content is still static frontend data.
-- Progress records and the current recommendation are now generated from completed initial assessment topic scores.
-- Scenario attempts and decisions are now stored in MySQL. Completed scenarios update progress once through scenario progress events.
+MySQL stores:
 
-## Verified Connection Status
+- users and sessions;
+- learner profiles;
+- assessment definitions, attempts, answers, scores, and translations;
+- learner progress and recommendations;
+- scenario definitions, steps, attempts, decisions, progress events, publication metadata, and translations;
+- resources, translations, and review metadata;
+- chat conversations, messages, generations, action cards, and persisted sources;
+- RAG documents and chunks;
+- Agentic execution traces.
 
-Server startup was verified after local `server/.env` was created. Dotenv loads environment variables without exposing values, Express starts on port `5000`, and MySQL connects successfully.
+## CyberGuard, RAG, and Agentic AI
 
-Read-only verification should use `SELECT DATABASE()` to confirm the selected database is `cyberly` for fresh local setup.
+CyberGuard is implemented through the backend AI gateway. Provider keys and provider calls remain backend-only.
 
-## Verified Frontend Build Status
+The current generation flow includes safety/scope checks, learner context, RAG retrieval from reviewed Resource content, optional controlled Agentic context, provider generation, output validation, assistant-message persistence, source persistence, action-card persistence, and Agentic trace updates.
 
-The official `client/` production build completes successfully after removing generated root dependencies. No blocking build errors remain.
+RAG is Resource-backed in the current MVP. Sources are persisted as citation metadata and are separate from action cards.
 
-The official frontend now follows the newer `v6_App.jsx` UI reference for the landing page, seven-step onboarding, login, dashboard, progress page, resources, and chatbot presentation. Mock authentication and direct browser AI-provider calls from the reference were not preserved.
+Controlled Agentic AI is backend-orchestrated. At most one controlled tool/proposal path is used per eligible response, and learner-write proposals require explicit confirmation.
 
-Frontend authentication calls:
+## Resources and Admin
 
-- `POST /api/auth/register`
-- `POST /api/auth/login`
-- `GET /api/auth/me`
-- `POST /api/auth/logout`
-- `GET /api/profile`
-- `PUT /api/profile`
-- `GET /api/assessments/initial`
-- `POST /api/assessments/initial/attempts`
-- `GET /api/assessment-attempts/:attemptId`
-- `PUT /api/assessment-attempts/:attemptId/answers`
-- `POST /api/assessment-attempts/:attemptId/submit`
-- `GET /api/assessments/initial/result`
-- `GET /api/assessments/initial/status`
-- `GET /api/progress`
-- `POST /api/progress/sync-initial-assessment`
-- `GET /api/recommendations/current`
-- `POST /api/recommendations/:id/viewed`
-- `POST /api/recommendations/:id/completed`
-- `GET /api/scenarios`
-- `GET /api/scenarios/recommended`
-- `GET /api/scenarios/dashboard`
-- `GET /api/scenarios/:slug`
-- `POST /api/scenarios/:slug/attempts`
-- `GET /api/scenario-attempts/:attemptId`
-- `PUT /api/scenario-attempts/:attemptId/decisions`
-- `POST /api/scenario-attempts/:attemptId/complete`
-- `GET /api/scenario-attempts/:attemptId/result`
+Resources are stored in MySQL through `resource_articles` and `resource_article_translations`, not as static frontend-only content. Admin Resource workflows can manage metadata/content states and synchronize Resource content with RAG governance paths.
 
-Backend authentication uses MySQL-backed `express-session` cookies. Session data is intentionally minimal: `userId` and `role`. Cookies are HTTP-only, default to `sameSite=lax` locally, can use `SESSION_COOKIE_SAMESITE=none` for separate production frontend/backend domains, and become secure in production.
+The Admin Console and protected Admin APIs are implemented. Admin access uses server-side role checks and must not expose secrets, password hashes, raw prompts, or private learner data.
 
-Public registration always creates `role=user`. The `/api/admin/ping` endpoint verifies that role-based middleware is in place for future admin routes.
+## Current Known Boundaries
 
-Learner-profile onboarding fields are saved after registration using `PUT /api/profile`. `GET /api/auth/me` returns both the safe user and normalized profile so refresh restores the dashboard state without storing profile payloads in the session.
-
-## Migration Status
-
-The lightweight SQL migration system is installed. Applied migrations:
-
-- `001_create_schema_migrations.sql`
-- `002_align_users_table.sql`
-- `003_preserve_legacy_users_compatibility.sql`
-- `004_harden_users_and_create_sessions.sql`
-- `005_create_learner_profiles.sql`
-- `006_create_initial_assessment_system.sql`
-- `007_create_progress_and_recommendations.sql`
-- `008_create_scenario_engine.sql`
-
-The `users` table is aligned for email/password authentication. Legacy `username` and `password` columns remain nullable for compatibility with old source, but current `/api/auth/*` routes use `email`, `display_name`, `age`, `age_group`, `password_hash`, `role`, and `account_status`.
-
-The `sessions` table stores server-side session state and expiry timestamps.
-
-The `learner_profiles` table stores one profile per user with a cascading foreign key to `users.id`.
-
-The assessment tables store versioned assessment definitions, fixed published questions, attempts, answers, topic scores, and deterministic measured ability levels. Correct answers and explanations are hidden until submission.
-
-The progress tables store one topic-progress row per user/topic, one summary row per user, and recommendation history. Current recommendations are deterministic and based on measured topic scores only; they do not use age, age group, education level, or self-reported familiarity as ability measures.
-
-The scenario tables store a fixed published scenario bank, in-progress/completed attempts, final decisions, and idempotent scenario progress events. Scenario feedback is hidden until a decision is submitted.
-
-Commit `23cd62f` contains both Phase 1B.1 authentication completion and Phase 1B.2 learner-profile persistence.
+- Legacy compatibility endpoints `/api/register` and `/api/login` have been removed. Current authentication uses only `/api/auth/*`.
+- Legacy `users.username` and `users.password` columns remain temporarily in the schema and are scheduled for Phase 1C.2 removal after migration smoke tests.
+- Migration rollback is not implemented.
+- Learner-controlled action proposals are currently short-lived and in memory.

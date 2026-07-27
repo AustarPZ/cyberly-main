@@ -1,63 +1,55 @@
 # Implementation Roadmap
 
-1. Baseline
-   - Confirm `client/` as official frontend.
-   - Keep root React app as legacy.
-   - Verify frontend build and backend startup status.
-   - Add project documentation and environment templates.
+This roadmap reflects the current product state and the beginning of production cleanup.
 
-2. Database Migration Management
-   - Completed foundation: migration tooling, `schema_migrations`, and aligned `users` schema.
-   - Future work: rollback strategy and production backup workflow.
+## Completed Foundation
 
-3. Authentication Repair
-   - Completed foundation: frontend calls `/api/auth/register` and `/api/auth/login`.
-   - Completed foundation: login uses email and password.
-   - Completed foundation: persistent MySQL-backed server sessions.
-   - Completed foundation: session restore, logout, auth guards, role guard, and focused auth verification.
+- Official frontend is `client/`.
+- Official backend is `server/`.
+- Legacy root React app has been removed.
+- MySQL migration runner and `schema_migrations` tracking are implemented.
+- Fresh database setup uses `cyberly`.
+- Authentication uses email/password, bcrypt, server-side sessions, and safe user responses.
+- Learner profiles are persisted through Profile APIs.
+- Initial assessment is implemented with deterministic backend scoring.
+- Progress, recommendations, learning-path progress, and scenario progress events are implemented.
+- Scenario engine is implemented with attempts, decisions, results, progress sync, and Admin Scenario management.
+- Resource APIs, Resource review metadata, Admin Resource workflows, and RAG synchronization paths are implemented.
+- CyberGuard backend AI gateway, persistence, RAG sources, compact citation UI, action cards, and retry handling are implemented.
+- Controlled Agentic AI and learner-controlled action proposals are implemented with confirmation boundaries.
+- Admin Console, Admin protected APIs, AI provider diagnostics, and Agentic trace visibility exist.
+- Render-oriented deployment documentation exists.
 
-4. Learner Profile Persistence
-   - Completed foundation: one learner profile per user.
-   - Completed foundation: seven-step onboarding saves education level, language, familiarity, help topics, learning style, and AI nickname.
-   - Completed foundation: profile restore after refresh and later login.
-   - Future work: account settings for display name and age editing.
+## Current Cleanup
 
-5. Assessment System
-   - Completed foundation: fixed 12-question Initial Cyber Wellness Assessment.
-   - Completed foundation: backend scoring, measured level, topic scores, in-progress resume, and completed result restore.
-   - Future work: post-test questionnaires, controlled retakes, admin/research reset, and richer assessment analytics.
+- Remove legacy and academic-only repository areas.
+- Reconcile older documentation with the current runtime.
+- Keep `client/`, `server/`, migrations, AI/RAG/Agentic logic, Admin logic, and database schema stable during cleanup.
+- Avoid production data changes until application references are verified.
 
-6. Progress And Recommendation
-   - Completed foundation: topic progress, learner progress summary, recommendation history, and current recommendation APIs.
-   - Completed foundation: deterministic recommendations from initial assessment topic scores.
-   - Future work: update mastery from learning activities, scenario attempts, and admin/research adjustments.
+## Production Hardening
 
-7. Scenario Engine
-   - Completed foundation: eight fixed published scenarios, attempts, final decisions, immediate feedback, deterministic scoring, result restore, and progress sync.
-   - Future work: richer branching, more scenario versions, admin content approval, controlled content experiments, and post-scenario reflection.
+- Legacy `/api/register` and `/api/login` have been removed; keep current authentication on `/api/auth/*`.
+- Remove legacy `users.username` and `users.password` columns in Phase 1C.2 after migration smoke tests.
+- Add migration rollback/backup guidance for production.
+- Review npm audit findings and upgrade packages in a dedicated dependency-hardening phase.
+- Replace in-memory-only rate limiting with production-ready rate limiting where needed.
+- Decide how learner-controlled action proposals should work in multi-instance deployment.
+- Define production logging policy for AI, Admin, and security events.
 
-8. AI Gateway
-   - Move provider calls server-side.
-   - Add ILMU, OpenAI, and optional Gemini provider adapters.
+## Testing and Evaluation
 
-9. Chatbot
-   - Persist chat sessions and messages.
-   - Apply safety and localisation rules.
+- Expand automated frontend coverage around critical learner and Admin flows.
+- Add production smoke tests for CORS, cookies, login/session restore, Admin access, database SSL, CyberGuard, RAG sources, and learner-controlled proposals.
+- Run formal accessibility checks.
+- Run formal security testing.
+- Run AI safety, RAG grounding, multilingual, and performance evaluation.
+- Validate mobile Safari cross-origin session behavior.
 
-10. Agentic Learning Orchestrator
-   - Add workflow state, learning goals, next-step planning, and recommendation handoff.
+## October Public-Pilot Preparation
 
-11. Admin Portal
-   - Add secure admin provisioning and management views.
-   - Reuse the existing role-check middleware for protected admin APIs.
-
-12. AI Usage And Cost Monitoring
-   - Track provider, model, tokens or units, latency, and estimated cost.
-
-13. Experiment Export
-   - Add CSV research exports.
-   - Add JSON technical/debug exports.
-
-14. Testing And Deployment
-   - Add unit, integration, and end-to-end tests.
-   - Add production deployment configuration and operational checks.
+- Finalize production provider strategy for OpenAI, Gemini, and ILMU.
+- Finalize Admin governance responsibilities and review process.
+- Verify Malaysia-specific guidance sources before publishing authoritative reporting/contact guidance.
+- Confirm backups, migration process, monitoring, and incident response.
+- Prepare public-pilot onboarding, support, and feedback channels.

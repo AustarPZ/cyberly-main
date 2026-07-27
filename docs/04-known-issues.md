@@ -1,27 +1,37 @@
 # Known Issues
 
-- Duplicate frontend apps exist.
-- `client/` is official, while the root React app is legacy.
-- Resolved Phase 1B.1 issue: frontend/backend authentication now uses `/api/auth/register`, `/api/auth/login`, `/api/auth/me`, and `/api/auth/logout`.
-- Resolved Phase 1B.1 issue: MySQL-backed server sessions now provide persistent authentication.
-- Resolved Phase 1B.1 issue: backend route protection exists through `requireAuth` and `requireRole`.
-- Resolved Phase 1B.1 issue: direct browser AI-provider calls are disabled.
-- Resolved baseline issue: a lightweight SQL migration system now exists.
-- A focused backend auth verification script exists, but broad unit, frontend, and end-to-end test coverage is still missing.
-- Resource article content is hard-coded in the frontend.
-- Resolved Phase 1C.2 issue: measured progress records and current recommendations are now stored in MySQL and exposed through authenticated APIs.
-- No admin portal exists.
-- Admin provisioning is not implemented; `/api/admin/ping` only verifies role protection.
-- Accessibility risks exist around icon-heavy controls, state-only navigation, and limited ARIA/focus handling.
-- Maintainability risks exist because most frontend logic and styling live in a single large `App.jsx` file.
-- Resolved baseline issue: `client/` production build was blocked by an ESLint plugin conflict between root and client dependency trees. The generated root `node_modules/` folder was removed, and the normal `client/` build now completes.
-- Resolved baseline issue: backend MySQL connection previously failed when no `server/.env` password was loaded. Local `server/.env` now loads, and the backend defaults to the configured `cyberly` database.
-- Current build warning: Create React App reports a Node `fs.F_OK` deprecation warning during production build.
-- Migration rollback is not implemented yet.
-- Resolved Phase 1B.2 issue: learner-profile onboarding fields are now persisted and restored.
-- Account-field editing for display name and age is deferred.
-- Chatbot UI is present, but live AI replies are disabled until the backend AI Gateway is implemented.
-- Retakes, admin/research reset, post-test questionnaires, and learning-activity mastery updates are not implemented yet.
-- Resolved Phase 1D.1 issue: scenario activities are now implemented with fixed content, deterministic scoring, immediate post-decision feedback, resume support, and idempotent progress updates.
-- Recommendations are deterministic and rule-based. They currently use assessment and completed-scenario mastery; resource viewing does not update mastery.
-- Scenario content approval is migration-seeded only. No admin content workflow exists yet.
+This list contains current unresolved issues only. Resolved early-phase items have been removed from this document.
+
+## Maintainability
+
+- `client/src/App.jsx` remains large and owns many page, routing, state, fetch, and layout responsibilities. This should be refactored gradually after production cleanup stabilizes.
+- Frontend API base URL handling is duplicated between `client/src/App.jsx`, `client/src/chat/chatApi.js`, and `client/src/admin/adminApi.js`.
+
+## Production Operations
+
+- Migration rollback is not implemented. Production database changes require verified backup and restore procedures.
+- Authentication rate limiting is in-memory and focused on auth endpoints. It is not distributed across instances and does not yet cover all public AI/action surfaces.
+- Learner-controlled Agentic action proposals are short-lived and stored in memory, so pending proposals do not survive backend restart or multi-instance deployment.
+- Cross-origin session behavior still needs manual validation on deployed browser combinations, especially mobile Safari.
+- Current npm audit output reports high-severity vulnerabilities. This cleanup phase did not run `npm audit fix` or upgrade packages.
+
+## Compatibility Debt
+
+- Legacy compatibility endpoints `/api/register` and `/api/login` have been removed. Current authentication uses only `/api/auth/*`.
+- Legacy `users.username` and `users.password` columns and related schema compatibility behavior remain temporarily. They should be removed only in Phase 1C.2 with a tested schema migration.
+
+## Testing and Validation
+
+- Formal accessibility validation is incomplete.
+- Formal security testing is incomplete.
+- Formal user acceptance testing for the public pilot is incomplete.
+- Formal AI safety and refusal evaluation is incomplete.
+- Formal RAG source-quality and citation-quality evaluation is incomplete.
+- Formal multilingual QA for English, Malay, and Simplified Chinese is incomplete.
+- Formal performance/load testing is incomplete.
+
+## Product Gaps
+
+- Resource completion tracking is not implemented.
+- Some Admin governance workflows still need production hardening, including fine-grained roles, audit policy, and review/publish governance.
+- Malaysia-specific guidance requires official reviewed sources and a governance process before it should be treated as authoritative emergency/reporting guidance.

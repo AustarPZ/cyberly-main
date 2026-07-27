@@ -9,6 +9,8 @@ node_modules/
 
 # testing
 /coverage
+__pycache__/
+*.pyc
 
 # production
 /build
@@ -18,6 +20,8 @@ dist/
 
 # misc
 .DS_Store
+.tmp/
+.codex-run-logs/
 .env
 .env.local
 .env.development.local

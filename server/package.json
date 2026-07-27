@@ -4,7 +4,8 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
+    "test": "node scripts/test-safe-backend.js",
+    "test:migration-foundation-unit": "node scripts/test-migration-foundation-unit.js",
     "test:account": "node scripts/test-account.js",
     "test:auth": "node scripts/test-auth.js",
     "test:profile": "node scripts/test-profile.js",

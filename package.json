@@ -2,42 +2,14 @@
   "name": "cyber-site",
   "version": "0.1.0",
   "private": true,
-  "dependencies": {
-    "@testing-library/dom": "^10.4.1",
-    "@testing-library/jest-dom": "^6.9.1",
-    "@testing-library/react": "^16.3.2",
-    "@testing-library/user-event": "^13.5.0",
-    "react": "^19.2.7",
-    "react-dom": "^19.2.7",
-    "react-scripts": "5.0.1",
-    "web-vitals": "^2.1.4"
-  },
   "scripts": {
-  "dev": "concurrently -k -n SERVER,CLIENT -c auto \"npm run dev:server\" \"npm run dev:client\"",
-  "dev:server": "npm --prefix server start",
-  "dev:client": "npm --prefix client start",
-  "build": "npm --prefix client run build",
-  "db:ensure": "npm --prefix server run db:ensure",
-  "migrate": "npm --prefix server run migrate",
-  "migrate:status": "npm --prefix server run migrate:status"
-  },
-  "eslintConfig": {
-    "extends": [
-      "react-app",
-      "react-app/jest"
-    ]
-  },
-  "browserslist": {
-    "production": [
-      ">0.2%",
-      "not dead",
-      "not op_mini all"
-    ],
-    "development": [
-      "last 1 chrome version",
-      "last 1 firefox version",
-      "last 1 safari version"
-    ]
+    "dev": "concurrently -k -n SERVER,CLIENT -c auto \"npm run dev:server\" \"npm run dev:client\"",
+    "dev:server": "npm --prefix server start",
+    "dev:client": "npm --prefix client start",
+    "build": "npm --prefix client run build",
+    "db:ensure": "npm --prefix server run db:ensure",
+    "migrate": "npm --prefix server run migrate",
+    "migrate:status": "npm --prefix server run migrate:status"
   },
   "devDependencies": {
     "concurrently": "^10.0.3"

@@ -7,6 +7,7 @@ import {
   getAdminAgenticTrace,
   listAdminAgenticTraces,
   getAdminScenarioLifecycle,
+  getAdminStatus,
   getAdminResourceLifecycle,
   listAdminScenarios,
   permanentlyDeleteAdminScenario,
@@ -51,6 +52,22 @@ describe("admin API lifecycle adapter", () => {
     expect(result.ok).toBe(false);
     expect(result.status).toBe(404);
     expect(result.error).toContain("(404)");
+  });
+
+  test("admin status adapter uses the protected status endpoint", async () => {
+    global.fetch.mockResolvedValue(jsonResponse(200, {
+      ok: true,
+      role: "admin",
+    }));
+
+    const result = await getAdminStatus();
+
+    expect(result.ok).toBe(true);
+    expect(result.status.role).toBe("admin");
+    expect(global.fetch).toHaveBeenCalledWith("http://localhost:5000/api/admin/status", {
+      method: "GET",
+      credentials: "include",
+    });
   });
 
   test("resource publish, unpublish, archive, restore, and delete use explicit endpoints", async () => {

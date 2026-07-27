@@ -2118,7 +2118,6 @@
       "AUTH_EMAIL_ALREADY_REGISTERED": "Akaun dengan e-mel ini sudah wujud.",
       "AUTH_FORBIDDEN": "Anda tidak mempunyai akses ke halaman ini.",
       "AUTH_INVALID_CREDENTIALS": "E-mel atau kata laluan tidak sah.",
-      "AUTH_LEGACY_INVALID_CREDENTIALS": "Nama pengguna atau kata laluan tidak sah.",
       "AUTH_LOGIN_FIELDS_REQUIRED": "E-mel dan kata laluan diperlukan.",
       "AUTH_RATE_LIMITED": "Terlalu banyak cubaan pengesahan. Sila cuba lagi kemudian.",
       "AUTH_REGISTRATION_INVALID": "Sila semak butiran pendaftaran anda.",

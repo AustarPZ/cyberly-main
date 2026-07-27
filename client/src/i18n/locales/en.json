@@ -2118,7 +2118,6 @@
       "AUTH_EMAIL_ALREADY_REGISTERED": "An account with this email already exists.",
       "AUTH_FORBIDDEN": "You do not have access to this page.",
       "AUTH_INVALID_CREDENTIALS": "Invalid email or password.",
-      "AUTH_LEGACY_INVALID_CREDENTIALS": "Invalid username or password.",
       "AUTH_LOGIN_FIELDS_REQUIRED": "Email and password are required.",
       "AUTH_RATE_LIMITED": "Too many authentication attempts. Please try again later.",
       "AUTH_REGISTRATION_INVALID": "Please check your registration details.",

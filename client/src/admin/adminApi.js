@@ -1,4 +1,4 @@
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
+import { apiFetch, parseApiJson } from "../api/apiClient";
 
 function failure(data = {}, fallback = "Request failed.", status = null) {
   const message = data.message || data.code || fallback;
@@ -24,7 +24,21 @@ function networkFailure() {
 }
 
 async function parseJson(response) {
-  return response.json().catch(() => ({}));
+  return parseApiJson(response);
+}
+
+export async function getAdminStatus() {
+  try {
+    const response = await apiFetch("/api/admin/status", {
+      method: "GET",
+      credentials: "include",
+    });
+    const data = await parseJson(response);
+    if (!response.ok) return failure(data, "Unable to verify admin access.", response.status);
+    return { ok: true, status: data };
+  } catch {
+    return networkFailure();
+  }
 }
 
 export async function listAdminResources(filters = {}) {
@@ -35,7 +49,7 @@ export async function listAdminResources(filters = {}) {
         params.set(key, value);
       }
     }
-    const response = await fetch(`${API_BASE_URL}/api/admin/resources${params.toString() ? `?${params}` : ""}`, {
+    const response = await apiFetch(`/api/admin/resources${params.toString() ? `?${params}` : ""}`, {
       method: "GET",
       credentials: "include",
     });
@@ -54,7 +68,7 @@ export async function listAdminResources(filters = {}) {
 
 export async function getAdminResource(resourceId) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/resources/${resourceId}`, {
+    const response = await apiFetch(`/api/admin/resources/${resourceId}`, {
       method: "GET",
       credentials: "include",
     });
@@ -68,7 +82,7 @@ export async function getAdminResource(resourceId) {
 
 export async function getAdminResourceLifecycle(resourceId) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/resources/${resourceId}/lifecycle`, {
+    const response = await apiFetch(`/api/admin/resources/${resourceId}/lifecycle`, {
       method: "GET",
       credentials: "include",
     });
@@ -82,7 +96,7 @@ export async function getAdminResourceLifecycle(resourceId) {
 
 export async function archiveAdminResource(resourceId) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/resources/${resourceId}/archive`, {
+    const response = await apiFetch(`/api/admin/resources/${resourceId}/archive`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -102,7 +116,7 @@ export async function archiveAdminResource(resourceId) {
 
 export async function restoreAdminResource(resourceId) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/resources/${resourceId}/restore`, {
+    const response = await apiFetch(`/api/admin/resources/${resourceId}/restore`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -122,7 +136,7 @@ export async function restoreAdminResource(resourceId) {
 
 async function postResourceLifecycle(resourceId, action, fallback) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/resources/${resourceId}/${action}`, {
+    const response = await apiFetch(`/api/admin/resources/${resourceId}/${action}`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -152,7 +166,7 @@ export function unpublishAdminResource(resourceId) {
 
 export async function getAdminAiProviders() {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/ai/providers`, {
+    const response = await apiFetch(`/api/admin/ai/providers`, {
       method: "GET",
       credentials: "include",
     });
@@ -174,7 +188,7 @@ export async function getAdminAiProviders() {
 
 export async function testAdminAiProvider(providerId) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/ai/providers/${encodeURIComponent(providerId)}/test`, {
+    const response = await apiFetch(`/api/admin/ai/providers/${encodeURIComponent(providerId)}/test`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -196,7 +210,7 @@ export async function listAdminAgenticTraces(filters = {}) {
         params.set(key, value);
       }
     }
-    const response = await fetch(`${API_BASE_URL}/api/admin/ai/traces${params.toString() ? `?${params}` : ""}`, {
+    const response = await apiFetch(`/api/admin/ai/traces${params.toString() ? `?${params}` : ""}`, {
       method: "GET",
       credentials: "include",
     });
@@ -214,7 +228,7 @@ export async function listAdminAgenticTraces(filters = {}) {
 
 export async function getAdminAgenticTrace(traceId) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/ai/traces/${encodeURIComponent(traceId)}`, {
+    const response = await apiFetch(`/api/admin/ai/traces/${encodeURIComponent(traceId)}`, {
       method: "GET",
       credentials: "include",
     });
@@ -228,7 +242,7 @@ export async function getAdminAgenticTrace(traceId) {
 
 export async function permanentlyDeleteAdminResource(resourceId, confirmationSlug) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/resources/${resourceId}`, {
+    const response = await apiFetch(`/api/admin/resources/${resourceId}`, {
       method: "DELETE",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -258,7 +272,7 @@ export async function permanentlyDeleteAdminResource(resourceId, confirmationSlu
 
 export async function updateAdminResourceGovernance(resourceId, payload) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/resources/${resourceId}/governance`, {
+    const response = await apiFetch(`/api/admin/resources/${resourceId}/governance`, {
       method: "PATCH",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -278,7 +292,7 @@ export async function updateAdminResourceGovernance(resourceId, payload) {
 
 export async function getAdminResourceOptions() {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/resources/options`, {
+    const response = await apiFetch(`/api/admin/resources/options`, {
       method: "GET",
       credentials: "include",
     });
@@ -299,7 +313,7 @@ export async function getAdminResourceOptions() {
 
 export async function createAdminResource(payload) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/resources`, {
+    const response = await apiFetch(`/api/admin/resources`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -319,7 +333,7 @@ export async function createAdminResource(payload) {
 
 export async function getAdminResourceMetadata(resourceId) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/resources/${resourceId}/metadata`, {
+    const response = await apiFetch(`/api/admin/resources/${resourceId}/metadata`, {
       method: "GET",
       credentials: "include",
     });
@@ -333,7 +347,7 @@ export async function getAdminResourceMetadata(resourceId) {
 
 export async function updateAdminResourceMetadata(resourceId, payload) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/resources/${resourceId}/metadata`, {
+    const response = await apiFetch(`/api/admin/resources/${resourceId}/metadata`, {
       method: "PATCH",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -349,7 +363,7 @@ export async function updateAdminResourceMetadata(resourceId, payload) {
 
 export async function getAdminResourceContent(resourceId) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/resources/${resourceId}/content`, {
+    const response = await apiFetch(`/api/admin/resources/${resourceId}/content`, {
       method: "GET",
       credentials: "include",
     });
@@ -367,7 +381,7 @@ export async function getAdminResourceContent(resourceId) {
 
 export async function updateAdminResourceContent(resourceId, payload) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/resources/${resourceId}/content`, {
+    const response = await apiFetch(`/api/admin/resources/${resourceId}/content`, {
       method: "PATCH",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -394,7 +408,7 @@ export async function listAdminScenarios(filters = {}) {
         params.set(key, value);
       }
     }
-    const response = await fetch(`${API_BASE_URL}/api/admin/scenarios${params.toString() ? `?${params}` : ""}`, {
+    const response = await apiFetch(`/api/admin/scenarios${params.toString() ? `?${params}` : ""}`, {
       method: "GET",
       credentials: "include",
     });
@@ -413,7 +427,7 @@ export async function listAdminScenarios(filters = {}) {
 
 export async function getAdminScenario(scenarioId) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/scenarios/${scenarioId}`, {
+    const response = await apiFetch(`/api/admin/scenarios/${scenarioId}`, {
       method: "GET",
       credentials: "include",
     });
@@ -427,7 +441,7 @@ export async function getAdminScenario(scenarioId) {
 
 export async function getAdminScenarioLifecycle(scenarioId) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/scenarios/${scenarioId}/lifecycle`, {
+    const response = await apiFetch(`/api/admin/scenarios/${scenarioId}/lifecycle`, {
       method: "GET",
       credentials: "include",
     });
@@ -441,7 +455,7 @@ export async function getAdminScenarioLifecycle(scenarioId) {
 
 export async function getAdminScenarioOptions() {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/scenarios/options`, {
+    const response = await apiFetch(`/api/admin/scenarios/options`, {
       method: "GET",
       credentials: "include",
     });
@@ -460,7 +474,7 @@ export async function getAdminScenarioOptions() {
 
 export async function createAdminScenario(payload) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/scenarios`, {
+    const response = await apiFetch(`/api/admin/scenarios`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -476,7 +490,7 @@ export async function createAdminScenario(payload) {
 
 export async function updateAdminScenarioMetadata(scenarioId, payload) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/scenarios/${scenarioId}/metadata`, {
+    const response = await apiFetch(`/api/admin/scenarios/${scenarioId}/metadata`, {
       method: "PATCH",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -492,7 +506,7 @@ export async function updateAdminScenarioMetadata(scenarioId, payload) {
 
 export async function updateAdminScenarioSteps(scenarioId, payload) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/scenarios/${scenarioId}/steps`, {
+    const response = await apiFetch(`/api/admin/scenarios/${scenarioId}/steps`, {
       method: "PUT",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -508,7 +522,7 @@ export async function updateAdminScenarioSteps(scenarioId, payload) {
 
 export async function updateAdminScenarioTranslation(scenarioId, locale, payload) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/scenarios/${scenarioId}/translations/${encodeURIComponent(locale)}`, {
+    const response = await apiFetch(`/api/admin/scenarios/${scenarioId}/translations/${encodeURIComponent(locale)}`, {
       method: "PATCH",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -524,7 +538,7 @@ export async function updateAdminScenarioTranslation(scenarioId, locale, payload
 
 async function postScenarioLifecycle(scenarioId, action, fallback) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/scenarios/${scenarioId}/${action}`, {
+    const response = await apiFetch(`/api/admin/scenarios/${scenarioId}/${action}`, {
       method: "POST",
       credentials: "include",
       headers: { "Content-Type": "application/json" },
@@ -556,7 +570,7 @@ export function restoreAdminScenario(scenarioId) {
 
 export async function permanentlyDeleteAdminScenario(scenarioId, confirmationSlug) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/scenarios/${scenarioId}`, {
+    const response = await apiFetch(`/api/admin/scenarios/${scenarioId}`, {
       method: "DELETE",
       credentials: "include",
       headers: { "Content-Type": "application/json" },

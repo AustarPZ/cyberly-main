@@ -1,6 +1,10 @@
 import i18n from "../i18n";
-
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
+import { apiFetch, parseApiJson } from "../api/apiClient";
+import {
+  cancelActionProposal,
+  confirmActionProposal,
+  createActionProposal,
+} from "../api/agentApi";
 
 function localizedApiError(result = {}, fallbackKey = "errors.fallback.generic") {
   if (result.code) {
@@ -46,19 +50,32 @@ function networkFailure(fallbackKey = "errors.fallback.network", fallbackErrors 
 
 async function chatRequest(path, options = {}, fallbackKey) {
   try {
-    const response = await fetch(`${API_BASE_URL}${path}`, {
-      credentials: "include",
+    const response = await apiFetch(path, {
       ...options,
       headers: {
         ...(options.body ? { "Content-Type": "application/json" } : {}),
         ...(options.headers || {}),
       },
     });
-    const data = await response.json().catch(() => ({}));
+    const data = await parseApiJson(response);
     if (!response.ok) return apiFailure(data, fallbackKey);
     return { ok: true, ...data };
   } catch (error) {
     if (error?.name === "AbortError") {
+      return { ok: false, aborted: true, code: "REQUEST_ABORTED", error: "" };
+    }
+    return networkFailure(fallbackKey);
+  }
+}
+
+async function actionProposalRequest(request, fallbackKey) {
+  try {
+    const result = await request();
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, fallbackKey);
+    return { ok: true, ...data };
+  } catch (error) {
+    if (error?.cause?.name === "AbortError" || error?.name === "AbortError") {
       return { ok: false, aborted: true, code: "REQUEST_ABORTED", error: "" };
     }
     return networkFailure(fallbackKey);
@@ -123,25 +140,22 @@ export function generateChatAssistantReply(conversationId, messageId, payload = 
 }
 
 export function createLearnerActionProposal(payload = {}, options = {}) {
-  return chatRequest(
-    "/api/agent/actions/proposals",
-    { method: "POST", body: JSON.stringify(payload), signal: options.signal },
+  return actionProposalRequest(
+    () => createActionProposal(payload, options),
     "errors.fallback.generic"
   );
 }
 
 export function confirmLearnerActionProposal(proposalId, confirmationToken, options = {}) {
-  return chatRequest(
-    `/api/agent/actions/proposals/${encodeURIComponent(proposalId)}/confirm`,
-    { method: "POST", body: JSON.stringify({ confirmationToken }), signal: options.signal },
+  return actionProposalRequest(
+    () => confirmActionProposal(proposalId, { confirmationToken }, options),
     "errors.fallback.generic"
   );
 }
 
 export function cancelLearnerActionProposal(proposalId, options = {}) {
-  return chatRequest(
-    `/api/agent/actions/proposals/${encodeURIComponent(proposalId)}/cancel`,
-    { method: "POST", body: JSON.stringify({}), signal: options.signal },
+  return actionProposalRequest(
+    () => cancelActionProposal(proposalId, {}, options),
     "errors.fallback.generic"
   );
 }

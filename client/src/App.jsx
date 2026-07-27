@@ -7,6 +7,39 @@ import profileMappings from "./profileMappings";
 import i18n, { STORAGE_KEY as UI_LANGUAGE_STORAGE_KEY, getStoredUiLanguage} from "./i18n";
 import { normalizeLocale, profileLanguageToLocale } from "./i18n/languageMappings";
 import {
+  login as loginAccount,
+  logout as logoutSession,
+  register as registerAccount,
+  restoreSession,
+} from "./api/authApi";
+import { saveAccount as saveAccountRequest } from "./api/accountApi";
+import { saveProfile as saveProfileRequest } from "./api/profileApi";
+import {
+  createInitialAssessmentAttempt,
+  getInitialAssessment,
+  getInitialAssessmentStatus,
+  saveAssessmentAnswer,
+  submitAssessmentAttempt,
+} from "./api/assessmentApi";
+import { getProgress } from "./api/progressApi";
+import {
+  getCurrentRecommendation,
+  markRecommendationCompleted,
+  markRecommendationViewed,
+} from "./api/recommendationApi";
+import {
+  completeScenarioAttempt,
+  getRecommendedScenarios,
+  getScenarioAttempt,
+  getScenarioAttemptResult,
+  getScenarioBySlug,
+  getScenarioDashboard,
+  listScenarios,
+  saveScenarioDecision,
+  startScenarioAttempt,
+} from "./api/scenarioApi";
+import { listResources } from "./api/resourceApi";
+import {
   createChatConversation,
   createChatUserMessage,
   cancelLearnerActionProposal,
@@ -42,6 +75,7 @@ import AdminScenarioEditorPage from "./admin/AdminScenarioEditorPage";
 import AdminScenarioPage from "./admin/AdminScenarioPage";
 import AdminAiProvidersPage from "./admin/AdminAiProvidersPage";
 import AdminWorkspace from "./admin/AdminWorkspace";
+import { getAdminStatus } from "./admin/adminApi";
 import { buildAdminHash, parseAdminRoute } from "./admin/adminRouteState";
 import {
   ADMIN_SECTIONS,
@@ -2405,7 +2439,6 @@ function useApp() { return useContext(AppCtx); }
 const ChatCtx = createContext(null);
 function useChat() { return useContext(ChatCtx); }
 
-const API_BASE_URL = process.env.REACT_APP_API_BASE_URL || "http://localhost:5000";
 const CHAT_STORAGE_PREFIX = "cyberly.chat.v1";
 const CHAT_ACTIVE_STORAGE_PREFIX = "cyberly.chat.activeConversation.v1";
 const CHAT_NOTICE_STORAGE_PREFIX = "cyberly.chat.backendMigrationNotice.v1";
@@ -3681,23 +3714,10 @@ function networkFailure(fallbackKey = "errors.fallback.network", fallbackErrors 
 // Returns { ok: true } or { ok: false, error: string, code?: string }
 async function dbRegister(account) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/register`, {
-      method: 'POST',
-      credentials: 'include',
-      headers: {
-        'Content-Type': 'application/json',
-      },
-      body: JSON.stringify({
-        email: account.email,
-        displayName: account.displayName,
-        password: account.password,
-        age: account.age,
-      })
-    });
+    const result = await registerAccount(account);
+    const data = result.data || {};
 
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) return apiFailure(data, "errors.fallback.register");
+    if (!result.ok) return apiFailure(data, "errors.fallback.register");
 
     return { ok: true, user: data.user, profile: data.profile };
 
@@ -3709,15 +3729,9 @@ async function dbRegister(account) {
 
 async function dbLogin(email, password) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/login`, {
-      method: "POST",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ email, password }),
-    });
-
-    const data = await response.json();
-    if (!response.ok) return apiFailure(data, "errors.fallback.signIn");
+    const result = await loginAccount(email, password);
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.signIn");
 
     return { ok: true, user: data.user, profile: data.profile };
   } catch {
@@ -3727,12 +3741,9 @@ async function dbLogin(email, password) {
 
 async function dbMe() {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/auth/me`, {
-      method: "GET",
-      credentials: "include",
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.session");
+    const result = await restoreSession();
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.session");
     return { ok: true, user: data.user, profile: data.profile };
   } catch {
     return networkFailure("errors.fallback.session");
@@ -3741,12 +3752,9 @@ async function dbMe() {
 
 async function dbAdminStatus() {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/admin/status`, {
-      method: "GET",
-      credentials: "include",
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.generic");
+    const result = await getAdminStatus();
+    const data = result.status || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.generic");
     return { ok: true, status: data };
   } catch {
     return networkFailure("errors.fallback.network");
@@ -3755,14 +3763,9 @@ async function dbAdminStatus() {
 
 async function dbSaveProfile(profile) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/profile`, {
-      method: "PUT",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify(profile),
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.saveProfile");
+    const result = await saveProfileRequest(profile);
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.saveProfile");
     return { ok: true, profile: data.profile };
   } catch {
     return networkFailure("errors.fallback.saveProfile");
@@ -3771,21 +3774,10 @@ async function dbSaveProfile(profile) {
 
 async function dbSaveAccount(account) {
   try {
-    const response = await fetch(
-      `${API_BASE_URL}/api/account`,
-      {
-        method: "PUT",
-        credentials: "include",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(account),
-      }
-    );
+    const result = await saveAccountRequest(account);
+    const data = result.data || {};
 
-    const data = await response.json().catch(() => ({}));
-
-    if (!response.ok) return apiFailure(data, "errors.fallback.saveAccount");
+    if (!result.ok) return apiFailure(data, "errors.fallback.saveAccount");
 
     return {
       ok: true,
@@ -3796,18 +3788,11 @@ async function dbSaveAccount(account) {
   }
 }
 
-function localeQuery(locale) {
-  return `locale=${encodeURIComponent(normalizeLocale(locale))}`;
-}
-
 async function dbGetInitialAssessment(locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/assessments/initial?${localeQuery(locale)}`, {
-      method: "GET",
-      credentials: "include",
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.loadAssessment");
+    const result = await getInitialAssessment({ locale: normalizeLocale(locale) });
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.loadAssessment");
     return { ok: true, ...data };
   } catch {
     return networkFailure("errors.fallback.loadAssessment");
@@ -3816,12 +3801,9 @@ async function dbGetInitialAssessment(locale) {
 
 async function dbGetAssessmentStatus(locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/assessments/initial/status?${localeQuery(locale)}`, {
-      method: "GET",
-      credentials: "include",
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.loadAssessmentStatus");
+    const result = await getInitialAssessmentStatus({ locale: normalizeLocale(locale) });
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.loadAssessmentStatus");
     return { ok: true, ...data };
   } catch {
     return networkFailure("errors.fallback.loadAssessmentStatus");
@@ -3830,12 +3812,9 @@ async function dbGetAssessmentStatus(locale) {
 
 async function dbStartInitialAttempt(locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/assessments/initial/attempts?${localeQuery(locale)}`, {
-      method: "POST",
-      credentials: "include",
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.startAssessment");
+    const result = await createInitialAssessmentAttempt({ locale: normalizeLocale(locale) });
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.startAssessment");
     return { ok: true, ...data };
   } catch {
     return networkFailure("errors.fallback.startAssessment");
@@ -3844,14 +3823,9 @@ async function dbStartInitialAttempt(locale) {
 
 async function dbSaveAssessmentAnswer(attemptId, questionId, selectedOptionKey) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/assessment-attempts/${attemptId}/answers`, {
-      method: "PUT",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ questionId, selectedOptionKey }),
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.saveAssessmentAnswer");
+    const result = await saveAssessmentAnswer(attemptId, { questionId, selectedOptionKey });
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.saveAssessmentAnswer");
     return { ok: true, ...data };
   } catch {
     return networkFailure("errors.fallback.saveAssessmentAnswer");
@@ -3860,12 +3834,9 @@ async function dbSaveAssessmentAnswer(attemptId, questionId, selectedOptionKey) 
 
 async function dbSubmitAssessment(attemptId, locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/assessment-attempts/${attemptId}/submit?${localeQuery(locale)}`, {
-      method: "POST",
-      credentials: "include",
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.submitAssessment");
+    const result = await submitAssessmentAttempt(attemptId, { locale: normalizeLocale(locale) });
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.submitAssessment");
     return { ok: true, result: data };
   } catch {
     return networkFailure("errors.fallback.submitAssessment");
@@ -3874,12 +3845,9 @@ async function dbSubmitAssessment(attemptId, locale) {
 
 async function dbGetProgress() {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/progress`, {
-      method: "GET",
-      credentials: "include",
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.loadProgress");
+    const result = await getProgress();
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.loadProgress");
     return { ok: true, ...data };
   } catch {
     return networkFailure("errors.fallback.loadProgress");
@@ -3888,12 +3856,9 @@ async function dbGetProgress() {
 
 async function dbGetCurrentRecommendation(locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/recommendations/current?${localeQuery(locale)}`, {
-      method: "GET",
-      credentials: "include",
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.loadRecommendation");
+    const result = await getCurrentRecommendation({ locale: normalizeLocale(locale) });
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.loadRecommendation");
     return { ok: true, ...data };
   } catch {
     return networkFailure("errors.fallback.loadRecommendation");
@@ -3902,12 +3867,9 @@ async function dbGetCurrentRecommendation(locale) {
 
 async function dbMarkRecommendationViewed(id, locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/recommendations/${id}/viewed?${localeQuery(locale)}`, {
-      method: "POST",
-      credentials: "include",
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.updateRecommendation");
+    const result = await markRecommendationViewed(id, { locale: normalizeLocale(locale) });
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.updateRecommendation");
     return { ok: true, ...data };
   } catch {
     return networkFailure("errors.fallback.updateRecommendation");
@@ -3916,12 +3878,9 @@ async function dbMarkRecommendationViewed(id, locale) {
 
 async function dbMarkRecommendationCompleted(id, locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/recommendations/${id}/completed?${localeQuery(locale)}`, {
-      method: "POST",
-      credentials: "include",
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.completeRecommendation");
+    const result = await markRecommendationCompleted(id, { locale: normalizeLocale(locale) });
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.completeRecommendation");
     return { ok: true, ...data };
   } catch {
     return networkFailure("errors.fallback.completeRecommendation");
@@ -3930,16 +3889,13 @@ async function dbMarkRecommendationCompleted(id, locale) {
 
 async function dbGetScenarios(filters = {}, locale) {
   try {
-    const params = new URLSearchParams();
-    if (filters.topicCode) params.set("topicCode", filters.topicCode);
-    if (filters.difficulty) params.set("difficulty", filters.difficulty);
-    params.set("locale", normalizeLocale(locale));
-    const response = await fetch(`${API_BASE_URL}/api/scenarios${params.toString() ? `?${params}` : ""}`, {
-      method: "GET",
-      credentials: "include",
+    const result = await listScenarios({
+      topicCode: filters.topicCode,
+      difficulty: filters.difficulty,
+      locale: normalizeLocale(locale),
     });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.loadScenarios");
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.loadScenarios");
     return { ok: true, ...data };
   } catch {
     return networkFailure("errors.fallback.loadScenarios");
@@ -3948,12 +3904,9 @@ async function dbGetScenarios(filters = {}, locale) {
 
 async function dbGetScenario(slug, locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/scenarios/${slug}?${localeQuery(locale)}`, {
-      method: "GET",
-      credentials: "include",
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.loadScenario");
+    const result = await getScenarioBySlug(slug, { locale: normalizeLocale(locale) });
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.loadScenario");
     return { ok: true, ...data };
   } catch {
     return networkFailure("errors.fallback.loadScenario");
@@ -3962,12 +3915,9 @@ async function dbGetScenario(slug, locale) {
 
 async function dbStartScenario(slug, locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/scenarios/${slug}/attempts?${localeQuery(locale)}`, {
-      method: "POST",
-      credentials: "include",
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.startScenario");
+    const result = await startScenarioAttempt(slug, { locale: normalizeLocale(locale) });
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.startScenario");
     return { ok: true, ...data };
   } catch {
     return networkFailure("errors.fallback.startScenario");
@@ -3976,12 +3926,9 @@ async function dbStartScenario(slug, locale) {
 
 async function dbGetScenarioAttempt(attemptId, locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/scenario-attempts/${attemptId}?${localeQuery(locale)}`, {
-      method: "GET",
-      credentials: "include",
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.restoreScenario");
+    const result = await getScenarioAttempt(attemptId, { locale: normalizeLocale(locale) });
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.restoreScenario");
     return { ok: true, ...data };
   } catch {
     return networkFailure("errors.fallback.restoreScenario");
@@ -3990,14 +3937,9 @@ async function dbGetScenarioAttempt(attemptId, locale) {
 
 async function dbSaveScenarioDecision(attemptId, stepId, selectedOptionKey, locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/scenario-attempts/${attemptId}/decisions?${localeQuery(locale)}`, {
-      method: "PUT",
-      credentials: "include",
-      headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ stepId, selectedOptionKey }),
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.saveScenarioDecision");
+    const result = await saveScenarioDecision(attemptId, { stepId, selectedOptionKey }, { locale: normalizeLocale(locale) });
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.saveScenarioDecision");
     return { ok: true, ...data };
   } catch {
     return networkFailure("errors.fallback.saveScenarioDecision");
@@ -4006,12 +3948,9 @@ async function dbSaveScenarioDecision(attemptId, stepId, selectedOptionKey, loca
 
 async function dbCompleteScenario(attemptId, locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/scenario-attempts/${attemptId}/complete?${localeQuery(locale)}`, {
-      method: "POST",
-      credentials: "include",
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.completeScenario");
+    const result = await completeScenarioAttempt(attemptId, { locale: normalizeLocale(locale) });
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.completeScenario");
     return { ok: true, result: data };
   } catch {
     return networkFailure("errors.fallback.completeScenario");
@@ -4020,12 +3959,9 @@ async function dbCompleteScenario(attemptId, locale) {
 
 async function dbGetScenarioResult(attemptId, locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/scenario-attempts/${attemptId}/result?${localeQuery(locale)}`, {
-      method: "GET",
-      credentials: "include",
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.loadScenarioResult");
+    const result = await getScenarioAttemptResult(attemptId, { locale: normalizeLocale(locale) });
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.loadScenarioResult");
     return { ok: true, result: data };
   } catch {
     return networkFailure("errors.fallback.loadScenarioResult");
@@ -4034,12 +3970,9 @@ async function dbGetScenarioResult(attemptId, locale) {
 
 async function dbGetRecommendedScenarios(locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/scenarios/recommended?${localeQuery(locale)}`, {
-      method: "GET",
-      credentials: "include",
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.loadRecommendedScenarios");
+    const result = await getRecommendedScenarios({ locale: normalizeLocale(locale) });
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.loadRecommendedScenarios");
     return { ok: true, ...data };
   } catch {
     return networkFailure("errors.fallback.loadRecommendedScenarios");
@@ -4048,12 +3981,9 @@ async function dbGetRecommendedScenarios(locale) {
 
 async function dbGetScenarioDashboard(locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/scenarios/dashboard?${localeQuery(locale)}`, {
-      method: "GET",
-      credentials: "include",
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.loadScenarioActivity");
+    const result = await getScenarioDashboard({ locale: normalizeLocale(locale) });
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.loadScenarioActivity");
     return { ok: true, ...data };
   } catch {
     return networkFailure("errors.fallback.loadScenarioActivity");
@@ -4062,12 +3992,9 @@ async function dbGetScenarioDashboard(locale) {
 
 async function dbGetResources(locale) {
   try {
-    const response = await fetch(`${API_BASE_URL}/api/resources?${localeQuery(locale)}`, {
-      method: "GET",
-      credentials: "include",
-    });
-    const data = await response.json().catch(() => ({}));
-    if (!response.ok) return apiFailure(data, "errors.fallback.loadResources");
+    const result = await listResources({ locale: normalizeLocale(locale) });
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.loadResources");
     return { ok: true, ...data };
   } catch {
     return networkFailure("errors.fallback.loadResources");
@@ -4076,10 +4003,7 @@ async function dbGetResources(locale) {
 
 async function dbLogout() {
   try {
-    await fetch(`${API_BASE_URL}/api/auth/logout`, {
-      method: "POST",
-      credentials: "include",
-    });
+    await logoutSession();
   } catch {
     // Local state still clears even if the network request fails.
   }
