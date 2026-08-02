@@ -276,7 +276,7 @@
     },
     "cyberGuard": {
       "title": "CyberGuard AI",
-      "description": "Pratonton antara muka sembang. Respons AI secara langsung akan menggunakan AI Gateway bahagian belakang dalam fasa akan datang.",
+      "description": "Mulakan sembang CyberGuard daripada papan pemuka anda atau buka halaman sembang penuh.",
       "badge": "Pratonton profil tersimpan"
     }
   },
@@ -851,15 +851,15 @@
   },
   "agent": {
     "title": "CyberGuard AI",
-    "welcome": "Hai {{name}}! Antara muka sembang CyberGuard sudah tersedia, tetapi respons AI secara langsung akan diaktifkan selepas fasa AI Gateway bahagian belakang.",
+    "welcome": "Hai {{name}}! CyberGuard sedia menyokong pembelajaran kesejahteraan siber yang fokus.",
     "thinking": "CyberGuard sedang berfikir...",
     "placeholder": "Tanya tentang keselamatan siber...",
     "send": "Hantar"
   },
   "chat": {
     "title": "Pembantu Kesihatan Siber",
-    "welcome": "Hai {{name}}! UI sembang ini sudah tersedia, tetapi respons CyberGuard secara langsung akan diaktifkan selepas fasa AI Gateway bahagian belakang.",
-    "disabledReply": "Sembang CyberGuard sudah tersedia secara visual, tetapi respons AI langsung dinyahaktifkan sehingga fasa AI Gateway bahagian belakang. Mesej anda hanya disimpan dalam sesi halaman ini buat masa ini.",
+    "welcome": "Hai {{name}}! CyberGuard sedia menyokong pembelajaran kesejahteraan siber yang fokus.",
+    "disabledReply": "CyberGuard tidak dapat menyediakan balasan sekarang. Mesej anda kekal dalam perbualan ini supaya anda boleh mencuba semula dengan selamat.",
     "guest": "Tetamu",
     "signInPrompt": "Log masuk untuk melihat pratonton antara muka sembang CyberGuard dengan profil sesi anda.",
     "signInCta": "Log masuk / Daftar",
@@ -870,8 +870,35 @@
     "send": "Hantar",
     "page": {
       "title": "Chatbot AI",
-      "description": "Gunakan CyberGuard AI sebagai rakan pembelajaran yang fokus. Respons AI langsung akan disambungkan semasa fasa AI Gateway.",
+      "description": "Gunakan CyberGuard AI sebagai rakan pembelajaran yang fokus untuk langkah seterusnya yang lebih selamat.",
       "chatAreaLabel": "Perbualan sembang aktif"
+    },
+    "pilot": {
+      "header": {
+        "kicker": "CyberGuard",
+        "title": "CyberGuard",
+        "description": "Tanya soalan kesejahteraan siber yang fokus, semak langkah seterusnya yang lebih selamat, dan terus belajar mengikut rentak anda.",
+        "currentConversation": "Sembang semasa"
+      },
+      "notice": {
+        "title": "Panduan dibantu AI",
+        "description": "CyberGuard mungkin membuat kesilapan. Semak maklumat penting dengan sumber yang dipercayai atau orang dewasa yang dipercayai. Tindakan yang dikawal oleh pelajar masih memerlukan pengesahan anda."
+      },
+      "empty": {
+        "title": "Mulakan dengan soalan keselamatan siber",
+        "description": "Minta CyberGuard membantu anda memahami mesej mencurigakan, pilihan akaun yang lebih selamat, privasi, atau maklumat yang anda lihat dalam talian."
+      },
+      "quickPrompts": {
+        "groupLabel": "Cadangan mula cepat CyberGuard",
+        "spotSuspiciousMessage": "Bagaimana saya tahu jika sesuatu mesej mungkin penipuan?",
+        "strengthenAccountSafety": "Apa yang boleh saya buat untuk menjadikan akaun saya lebih selamat?",
+        "protectPersonalInformation": "Bagaimana saya boleh melindungi privasi dalam talian dan data peribadi saya?",
+        "checkOnlineInformation": "Bagaimana saya boleh menyemak sama ada maklumat dalam talian ialah maklumat palsu?"
+      },
+      "composer": {
+        "label": "Mesej CyberGuard",
+        "guidance": "Semak dan sunting mesej anda sebelum menghantar. CyberGuard tidak akan bertindak tanpa pengesahan anda."
+      }
     },
     "actions": {
       "fullPage": "Halaman Penuh",
@@ -896,7 +923,12 @@
       "delete": "Padam",
       "deleting": "Sedang memadam...",
       "renameConversation": "Namakan semula perbualan",
-      "deleteConversation": "Padam perbualan"
+      "deleteConversation": "Padam perbualan",
+      "pinConversation": "Semat perbualan",
+      "unpinConversation": "Nyahsemat perbualan",
+      "archiveConversation": "Arkibkan perbualan",
+      "unarchiveConversation": "Nyaharkibkan perbualan",
+      "exportConversation": "Eksport perbualan"
     },
     "conversation": {
       "newTitle": "Sembang baharu"
@@ -905,8 +937,28 @@
       "title": "Sejarah perbualan",
       "description": "Disimpan dengan selamat ke akaun anda.",
       "ariaLabel": "Sejarah perbualan",
+      "viewSwitchLabel": "Paparan senarai sembang",
+      "views": {
+        "chats": "Sembang",
+        "archived": "Diarkibkan"
+      },
+      "searchLabel": "Cari perbualan",
+      "searchPlaceholder": "Cari tajuk perbualan",
+      "clearSearch": "Kosongkan carian perbualan",
+      "noSearchResults": "Tiada perbualan sepadan dengan carian anda.",
+      "noArchivedSearchResults": "Tiada perbualan diarkibkan sepadan dengan carian anda.",
+      "groups": {
+        "pinned": "Disemat",
+        "today": "Hari ini",
+        "yesterday": "Semalam",
+        "earlier": "Lebih awal",
+        "expand": "Kembangkan perbualan {{group}}",
+        "collapse": "Runtuhkan perbualan {{group}}"
+      },
       "emptyTitle": "Belum ada perbualan",
       "emptyDescription": "Mulakan sembang dan sejarah akaun selamat anda akan muncul di sini.",
+      "emptyArchivedTitle": "Tiada perbualan diarkibkan",
+      "emptyArchivedDescription": "Sembang yang diarkibkan akan muncul di sini selepas anda mengalihkannya keluar daripada sejarah utama.",
       "lastUpdated": "Dikemas kini {{time}}",
       "unknownTime": "Masa tidak diketahui",
       "noActive": "Belum ada perbualan aktif"
@@ -988,6 +1040,17 @@
       "title": "Padam perbualan?",
       "description": "Padam “{{title}}”? Ini membuang perbualan daripada akaun anda."
     },
+    "export": {
+      "title": "Eksport perbualan",
+      "description": "Muat turun perbualan yang sedang dimuatkan daripada pelayar ini. Tiada data akaun diubah.",
+      "formatLabel": "Format",
+      "confirm": "Eksport",
+      "error": "Tidak dapat mengeksport perbualan ini.",
+      "formats": {
+        "markdown": "Markdown (.md)",
+        "text": "Teks biasa (.txt)"
+      }
+    },
     "empty": {
       "title": "Tanya CyberGuard apa-apa sahaja",
       "description": "Mulakan dengan soalan tentang penipuan, privasi, kata laluan, maklumat palsu atau pilihan selamat dalam talian.",
@@ -1021,7 +1084,7 @@
   },
   "footer": {
     "builtWithCare": "Dibina dengan teliti",
-    "description": "Pendidikan kesihatan siber untuk semua · AI Gateway akan hadir dalam fasa kemudian."
+    "description": "Pendidikan kesihatan siber untuk semua."
   },
   "app": {
     "loadingTitle": "Memuatkan Cyberly...",
@@ -2125,10 +2188,15 @@
       "AI_ASSISTANT_PERSISTENCE_FAILED": "CyberGuard tidak dapat menyimpan balasan. Cuba lagi.",
       "AI_GENERATION_ALREADY_COMPLETED": "CyberGuard sudah menyediakan balasan ini.",
       "AI_GENERATION_IN_PROGRESS": "CyberGuard sedang menyediakan balasan.",
+      "AI_AUTH_FAILED": "CyberGuard tidak dapat menyambung kepada perkhidmatan AI buat masa ini.",
+      "AI_CONTEXT_LIMIT": "Perbualan ini terlalu panjang untuk balasan baharu. Mulakan sembang baharu atau pendekkan soalan anda.",
       "AI_INVALID_RESPONSE": "CyberGuard tidak dapat menyediakan balasan yang selamat. Cuba ubah cara soalan anda.",
       "AI_NOT_CONFIGURED": "CyberGuard belum dikonfigurasikan.",
+      "AI_OUTPUT_BLOCKED": "CyberGuard tidak dapat memaparkan balasan itu dengan selamat.",
       "AI_PROVIDER_UNAVAILABLE": "CyberGuard tidak tersedia buat sementara waktu. Cuba lagi sebentar lagi.",
+      "AI_REQUEST_FAILED": "CyberGuard tidak dapat menghantar permintaan ini. Sila cuba lagi.",
       "AI_RATE_LIMITED": "Terlalu banyak permintaan. Tunggu sebentar sebelum cuba lagi.",
+      "AI_RUNTIME_DISABLED": "Balasan CyberGuard dinyahaktifkan buat sementara waktu.",
       "AI_TIMEOUT": "Balasan mengambil masa terlalu lama. Cuba lagi.",
       "AI_UNSAFE_REQUEST": "CyberGuard tidak boleh membantu permintaan itu, tetapi boleh menerangkan alternatif yang selamat dan defensif.",
       "CHAT_CONVERSATION_NOT_FOUND": "Kami tidak dapat mencari perbualan sembang ini.",

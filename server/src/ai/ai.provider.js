@@ -23,22 +23,22 @@ function createAiProvider(config) {
     },
   });
 
-  function selectedProvider() {
-    return registry.resolveForPurpose('cyberguard_chat');
+  function selectedProvider(options = {}) {
+    return registry.resolveForPurpose('cyberguard_chat', options);
   }
 
   return {
     get id() {
-      return selectedProvider().id;
+      return selectedProvider({ allowRuntimeUnavailable: true }).id;
     },
     get model() {
-      return selectedProvider().model;
+      return selectedProvider({ allowRuntimeUnavailable: true }).model;
     },
     get configured() {
-      return selectedProvider().configured;
+      return selectedProvider({ allowRuntimeUnavailable: true }).configured;
     },
     get capabilities() {
-      return selectedProvider().capabilities;
+      return selectedProvider({ allowRuntimeUnavailable: true }).capabilities;
     },
     generateReply(request) {
       return selectedProvider().generateReply

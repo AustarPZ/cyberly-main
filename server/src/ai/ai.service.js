@@ -13,6 +13,7 @@ const {
 const { buildLearnerContext } = require('./ai.learnerContext');
 const { buildLearningActions } = require('./ai.learningActions');
 const { isUnsafeUserRequest, validateProviderOutput } = require('./ai.safety');
+const { isProviderFailureCode, normalizeProviderFailure } = require('./ai.errors');
 const { detectRoutePlanningIntent, extractRoutePlanningInput } = require('../agent/agent.planning');
 const { normalizeProposalBody } = require('../agent/actions/actionValidation');
 const { buildCyberWellnessModelSummary } = require('../wellness/cyberWellness.explanations');
@@ -286,13 +287,6 @@ function mapGeneration(row) {
     updatedAt: row.updated_at ? new Date(row.updated_at).toISOString() : null,
     completedAt: row.completed_at ? new Date(row.completed_at).toISOString() : null,
   };
-}
-
-function normalizeProviderFailure(error) {
-  if (error?.code === 'AI_PROVIDER_TIMEOUT' || error?.code === ERROR_CODES.AI_TIMEOUT) return httpError(503, ERROR_CODES.AI_TIMEOUT, 'AI provider timed out.');
-  if (error?.code === ERROR_CODES.AI_RATE_LIMITED) return httpError(429, ERROR_CODES.AI_RATE_LIMITED, 'AI provider is rate limited.');
-  if (error?.code === 'AI_PROVIDER_NOT_CONFIGURED' || error?.code === ERROR_CODES.AI_NOT_CONFIGURED) return httpError(503, ERROR_CODES.AI_NOT_CONFIGURED, 'AI provider is not configured.');
-  return httpError(503, ERROR_CODES.AI_PROVIDER_UNAVAILABLE, 'AI provider is unavailable.');
 }
 
 function buildAgenticAudit(agenticPlanning = {}) {
@@ -737,11 +731,15 @@ function createAiService(repository, provider, config, options = {}) {
       const validation = validateProviderOutput(providerResult.content);
       const durationMs = Date.now() - startedAt;
       if (!validation.ok) {
-        await repository.markGenerationFailed(generation.id, ERROR_CODES.AI_INVALID_RESPONSE, durationMs);
+        const code = validation.reason === 'unsafe_output' || validation.reason === 'secret_request'
+          ? ERROR_CODES.AI_OUTPUT_BLOCKED
+          : ERROR_CODES.AI_INVALID_RESPONSE;
+        const normalized = normalizeProviderFailure({ code });
+        await repository.markGenerationFailed(generation.id, normalized.code, durationMs);
         if (agenticTraceService && trace?.traceId) {
-          await agenticTraceService.markFailedSafely(trace.traceId, ERROR_CODES.AI_INVALID_RESPONSE, 'invalid_provider_output').catch(() => {});
+          await agenticTraceService.markFailedSafely(trace.traceId, normalized.code, validation.reason || 'invalid_provider_output').catch(() => {});
         }
-        throw httpError(503, ERROR_CODES.AI_INVALID_RESPONSE, 'AI provider returned an invalid response.');
+        throw httpError(normalized.status, normalized.code, normalized.message);
       }
 
       const usage = {
@@ -858,6 +856,14 @@ function createAiService(repository, provider, config, options = {}) {
       };
     } catch (error) {
       const durationMs = Date.now() - startedAt;
+      if (isProviderFailureCode(error?.code)) {
+        const normalized = normalizeProviderFailure(error);
+        await repository.markGenerationFailed(generation.id, normalized.code, durationMs).catch(() => {});
+        if (agenticTraceService && trace?.traceId) {
+          await agenticTraceService.markFailedSafely(trace.traceId, normalized.code, normalized.publicReason || 'provider_failure').catch(() => {});
+        }
+        throw httpError(normalized.status, normalized.code, normalized.message);
+      }
       if (error.code && error.status && error.code.startsWith('AI_')) {
         if (![ERROR_CODES.AI_INVALID_RESPONSE, ERROR_CODES.AI_ASSISTANT_PERSISTENCE_FAILED].includes(error.code)) {
           await repository.markGenerationFailed(generation.id, error.code, durationMs).catch(() => {});
@@ -872,7 +878,7 @@ function createAiService(repository, provider, config, options = {}) {
       if (agenticTraceService && trace?.traceId) {
         await agenticTraceService.markFailedSafely(trace.traceId, normalized.code, 'provider_failure').catch(() => {});
       }
-      throw normalized;
+      throw httpError(normalized.status, normalized.code, normalized.message);
     } finally {
       if (userLockAcquired) activeUsers.delete(userId);
     }

@@ -21,6 +21,19 @@ const CYBER_TERMS = [
   'privasi', 'data peribadi', 'maklumat palsu', 'deepfake', 'kesejahteraan digital',
 ];
 
+const CORE_CYBER_TERMS = [
+  'cyber', 'cybersecurity', 'cyber security', 'online safety', 'digital safety', 'digital wellness',
+  'cyber wellness', 'phishing', 'scam', 'fraud', 'password', 'passkey', 'otp', '2fa',
+  'two-factor', 'mfa', 'malware', 'virus', 'misinformation', 'fake news', 'deepfake',
+  'doxxing', 'cyberbullying', 'bully', 'social engineering', 'suspicious link',
+  'notification', 'screen time', 'digital balance', 'online pressure', 'group chat',
+  'personal photo', 'report harmful',
+  '网络', '网路', '钓鱼', '诈骗', '密码', '账号', '账户', '隐私', '个人资料', '个人数据',
+  '错误信息', '深度伪造', '网络安全', '网络健康',
+  'keselamatan siber', 'siber', 'phishing', 'penipuan', 'kata laluan', 'akaun',
+  'privasi', 'data peribadi', 'maklumat palsu', 'deepfake', 'kesejahteraan digital',
+];
+
 const CASUAL_TERMS = [
   'hello', 'hi', 'hey', 'thanks', 'thank you', 'who are you', 'what can you help',
   '你好', '谢谢', '你是谁', '你可以帮', 'hai', 'helo', 'terima kasih', 'siapa awak',
@@ -32,7 +45,8 @@ const OUT_OF_SCOPE_TERMS = [
   'travel itinerary', 'cook', 'cooking', 'cooking recipe', 'cooking lesson', 'dinner',
   'movie', 'movie recommendation', 'workout', 'write a love poem',
   'teach me python', 'javascript tutorial', 'stock trading', 'investment advice',
-  'accounting', 'economics homework',
+  'accounting', 'economics homework', 'bank stock', 'cryptocurrency', 'loan interest',
+  'credit card', 'interest rates', 'economics essay', 'savings accounts', 'stock trading platform',
   '数学', '历史作文', '化学', '旅行计划', '食谱', '教我编程',
   'matematik', 'karangan sejarah', 'kimia', 'jadual percutian', 'resipi', 'perakaunan',
 ];
@@ -92,6 +106,26 @@ function hasContextualLearningGuidanceIntent(text) {
   );
 }
 
+function hasSuspiciousMessageCyberIntent(text) {
+  return (
+    /\b(suspicious|fake|scam|fraud|phishing)\b.{0,32}\b(sms|text|message|link)\b/i.test(text) ||
+    /\b(sms|text|message|link)\b.{0,32}\b(suspicious|fake|scam|fraud|phishing)\b/i.test(text) ||
+    /\b(bank|banking|delivery|company)\b.{0,48}\b(sms|text|message|link)\b.{0,48}\b(fake|suspicious|scam|fraud|phishing|otp|click|safe)\b/i.test(text) ||
+    /\b(fake|suspicious|scam|fraud|phishing)\b.{0,48}\b(bank|banking|delivery|company)\b.{0,48}\b(sms|text|message|link)\b/i.test(text) ||
+    /\b(message|sms|text)\b.{0,40}\b(pretending|asks?|asking|requesting|requires?)\b.{0,40}\b(bank|otp|code|link|payment)\b/i.test(text) ||
+    /\b(otp|one-time password|verification code)\b.{0,32}\b(sms|text|message|code)\b/i.test(text) ||
+    /\b(sms|text|message|code)\b.{0,32}\b(otp|one-time password|verification code)\b/i.test(text) ||
+    /\bmy bank\b.{0,48}\b(suspicious|link|click|safe|otp|sms|text|message)\b/i.test(text) ||
+    /\bscammers?\b.{0,40}\b(otp|code|sms|text|message|link)\b/i.test(text) ||
+    /\bmesej\b.{0,32}\b(bank|palsu|mencurigakan|penipuan|otp|pautan)\b/i.test(text) ||
+    /\bsms\b.{0,32}\b(mencurigakan|penipuan|otp|pautan|selamat)\b/i.test(text) ||
+    /\bpautan\b.{0,24}\b(mencurigakan|sms|selamat)\b/i.test(text) ||
+    /假.{0,8}银行.{0,8}(短信|信息|消息)/.test(text) ||
+    /(可疑|诈骗).{0,8}(短信|信息|消息|链接)/.test(text) ||
+    /(短信|信息|消息).{0,12}(诈骗|验证码|可疑链接|可疑|安全吗|安全)/.test(text)
+  );
+}
+
 function classifyCyberGuardScope(message) {
   const text = normalizeMessage(message);
   if (!text) {
@@ -103,9 +137,11 @@ function classifyCyberGuardScope(message) {
   }
 
   const cyberRelated = includesAny(text, CYBER_TERMS);
+  const coreCyberRelated = includesAny(text, CORE_CYBER_TERMS);
   const outOfScope = includesAny(text, OUT_OF_SCOPE_TERMS);
   const mixedLearning = includesAny(text, MIXED_LEARNING_TERMS);
   const contextualLearningGuidance = hasContextualLearningGuidanceIntent(text);
+  const suspiciousMessageCyberIntent = hasSuspiciousMessageCyberIntent(text);
 
   if (includesAny(text, CASUAL_TERMS) && text.length <= 120 && !contextualLearningGuidance && !outOfScope) {
     return {
@@ -115,7 +151,15 @@ function classifyCyberGuardScope(message) {
     };
   }
 
-  if (cyberRelated) {
+  if (outOfScope && !coreCyberRelated && !suspiciousMessageCyberIntent) {
+    return {
+      type: CYBER_GUARD_SCOPE_TYPES.OUT_OF_SCOPE,
+      allowed: false,
+      reasonCode: 'unrelated_academic_or_general_subject',
+    };
+  }
+
+  if (cyberRelated || suspiciousMessageCyberIntent) {
     return {
       type: CYBER_GUARD_SCOPE_TYPES.IN_SCOPE,
       allowed: true,

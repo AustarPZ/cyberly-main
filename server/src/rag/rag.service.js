@@ -1,5 +1,6 @@
 const { normalizeLocale } = require('../i18n/locale');
 const { buildResourceChunks } = require('./rag.chunker');
+const { createRagQueryIntent, enrichRagQuery } = require('./ragQueryIntent');
 const { evaluateResourceRagEligibility } = require('../resource/resource.governance');
 
 const DEFAULT_RETRIEVAL_LIMIT = 4;
@@ -8,6 +9,66 @@ function validateQuery(query) {
   const text = String(query || '').trim();
   if (!text) throw new Error('RAG query is required.');
   return text;
+}
+
+function resourceKey(item) {
+  return item?.resourceSlug ||
+    item?.internalTarget?.resourceSlug ||
+    (item?.documentId ? `document:${item.documentId}` : null) ||
+    item?.sourceUrl ||
+    (item?.title ? `title:${String(item.title).trim().toLowerCase()}` : null);
+}
+
+function isPreferredResource(item, intent) {
+  const slugs = new Set(intent?.preferredResourceSlugs || []);
+  const slug = item?.resourceSlug || item?.internalTarget?.resourceSlug;
+  return Boolean(slug && slugs.has(slug));
+}
+
+function passesRelevanceGuard(item, intent) {
+  if (!item) return false;
+  if (intent?.intent !== 'phishing_and_scams') return true;
+  if (item.categoryCode !== 'Scams') return false;
+  if (isPreferredResource(item, intent)) return Number(item.score || 0) >= 1;
+  return Number(item.score || 0) >= Number(intent.minimumScore || 0);
+}
+
+function dedupeResources(items, intent, limit) {
+  const orderedItems = intent?.intent === 'phishing_and_scams'
+    ? [...items].sort((left, right) => {
+      const preferred = intent.preferredResourceSlugs || [];
+      const leftSlug = left?.resourceSlug || left?.internalTarget?.resourceSlug;
+      const rightSlug = right?.resourceSlug || right?.internalTarget?.resourceSlug;
+      const leftIndex = preferred.includes(leftSlug) ? preferred.indexOf(leftSlug) : preferred.length;
+      const rightIndex = preferred.includes(rightSlug) ? preferred.indexOf(rightSlug) : preferred.length;
+      if (leftIndex !== rightIndex) return leftIndex - rightIndex;
+      return Number(right?.score || 0) - Number(left?.score || 0);
+    })
+    : items;
+  const seen = new Set();
+  const deduped = [];
+  for (const item of orderedItems) {
+    if (!passesRelevanceGuard(item, intent)) continue;
+    const key = resourceKey(item);
+    if (key && seen.has(key)) continue;
+    if (key) seen.add(key);
+    deduped.push(item);
+    if (deduped.length >= limit) break;
+  }
+  return deduped;
+}
+
+function mergeLocaleResults(primary, fallback, intent, limit) {
+  const seen = new Set(primary.map(resourceKey).filter(Boolean));
+  const merged = [...primary];
+  for (const item of dedupeResources(fallback, intent, limit)) {
+    const key = resourceKey(item);
+    if (key && seen.has(key)) continue;
+    if (key) seen.add(key);
+    merged.push(item);
+    if (merged.length >= limit) break;
+  }
+  return merged;
 }
 
 function createRagService(repository) {
@@ -142,12 +203,13 @@ function createRagService(repository) {
     return repository.withTransaction(run);
   }
 
-  async function retrieveForLocale({ query, locale, topicCode, categoryCode, limit }) {
+  async function retrieveForLocale({ query, locale, topicCode, categoryCode, categoryCodes, limit }) {
     return repository.searchChunks({
       query,
       locale,
       topicCode,
       categoryCode,
+      categoryCodes,
       limit,
     });
   }
@@ -158,35 +220,36 @@ function createRagService(repository) {
     const limit = Number.isInteger(Number(input.limit))
       ? Math.min(Math.max(Number(input.limit), 1), 8)
       : DEFAULT_RETRIEVAL_LIMIT;
+    const intent = input.intent || createRagQueryIntent(query);
+    const retrievalQuery = input.retrievalQuery || enrichRagQuery(query, intent);
+    const candidateLimit = Math.min(Math.max(limit * 4, limit), 8);
+    const categoryCodes = Array.isArray(input.categoryCodes) && input.categoryCodes.length
+      ? input.categoryCodes
+      : intent.categoryCodes || [];
 
     const primary = await retrieveForLocale({
-      query,
+      query: retrievalQuery,
       locale,
       topicCode: input.topicCode || null,
       categoryCode: input.categoryCode || null,
-      limit,
+      categoryCodes,
+      limit: candidateLimit,
     });
+    const primaryDeduped = dedupeResources(primary, intent, limit);
 
-    if (locale === 'en' || primary.length >= limit) {
-      return primary.slice(0, limit);
+    if (locale === 'en' || !intent.allowEnglishFallback || primaryDeduped.length >= limit) {
+      return primaryDeduped.slice(0, limit);
     }
 
     const fallback = await retrieveForLocale({
-      query,
+      query: retrievalQuery,
       locale: 'en',
       topicCode: input.topicCode || null,
       categoryCode: input.categoryCode || null,
-      limit: limit - primary.length,
+      categoryCodes,
+      limit: candidateLimit,
     });
-    const seen = new Set(primary.map(item => item.chunkId));
-    const merged = [...primary];
-    for (const item of fallback) {
-      if (seen.has(item.chunkId)) continue;
-      seen.add(item.chunkId);
-      merged.push(item);
-      if (merged.length >= limit) break;
-    }
-    return merged;
+    return mergeLocaleResults(primaryDeduped, fallback, intent, limit);
   }
 
   return {

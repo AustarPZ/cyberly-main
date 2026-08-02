@@ -276,7 +276,7 @@
     },
     "cyberGuard": {
       "title": "CyberGuard AI",
-      "description": "预览聊天界面。实时 AI 回复将在后续阶段通过后端 AI Gateway 提供。",
+      "description": "你可以从仪表板开始 CyberGuard 聊天，或打开完整聊天页面。",
       "badge": "已保存资料预览"
     }
   },
@@ -851,15 +851,15 @@
   },
   "agent": {
     "title": "CyberGuard AI",
-    "welcome": "嗨，{{name}}！CyberGuard 聊天界面已准备好，但实时 AI 回复将在后端 AI Gateway 阶段启用。",
+    "welcome": "嗨，{{name}}！CyberGuard 可以支持聚焦的网络健康学习。",
     "thinking": "CyberGuard 正在思考...",
     "placeholder": "询问网络安全问题...",
     "send": "发送"
   },
   "chat": {
     "title": "网络健康助手",
-    "welcome": "嗨，{{name}}！这个聊天界面已准备好，但实时 CyberGuard 回复将在后端 AI Gateway 阶段启用。",
-    "disabledReply": "CyberGuard 聊天界面已准备好，但实时 AI 回复要等到后端 AI Gateway 阶段才会启用。你的消息目前只保存在这个页面会话中。",
+    "welcome": "嗨，{{name}}！CyberGuard 可以支持聚焦的网络健康学习。",
+    "disabledReply": "CyberGuard 现在无法准备回复。你的消息会保留在此对话中，方便你安全重试。",
     "guest": "访客",
     "signInPrompt": "登录后可使用你的会话资料预览 CyberGuard 聊天界面。",
     "signInCta": "登录 / 注册",
@@ -870,8 +870,35 @@
     "send": "发送",
     "page": {
       "title": "AI 聊天助手",
-      "description": "把 CyberGuard AI 当作专注的学习伙伴使用。实时 AI 回复会在 AI Gateway 阶段连接。",
+      "description": "把 CyberGuard AI 当作专注的学习伙伴，帮助你选择更安全的下一步。",
       "chatAreaLabel": "当前聊天对话"
+    },
+    "pilot": {
+      "header": {
+        "kicker": "CyberGuard",
+        "title": "CyberGuard",
+        "description": "提出聚焦的网络健康问题，查看更安全的下一步，并按照自己的节奏继续学习。",
+        "currentConversation": "当前聊天"
+      },
+      "notice": {
+        "title": "AI 辅助指导",
+        "description": "CyberGuard 可能会出错。请用可信来源或向可信任的成年人核对重要信息。由学习者控制的操作仍需要你确认。"
+      },
+      "empty": {
+        "title": "先提出一个网络安全问题",
+        "description": "你可以请 CyberGuard 帮你理解可疑消息、更安全的账户选择、隐私，或你在网上看到的信息。"
+      },
+      "quickPrompts": {
+        "groupLabel": "CyberGuard 快速开始提示",
+        "spotSuspiciousMessage": "我怎样判断一条消息可能是诈骗？",
+        "strengthenAccountSafety": "我可以怎样让账户更安全？",
+        "protectPersonalInformation": "我怎样保护网络隐私和个人数据？",
+        "checkOnlineInformation": "我怎样检查网上信息是否是错误信息？"
+      },
+      "composer": {
+        "label": "给 CyberGuard 发送消息",
+        "guidance": "发送前请先检查并编辑你的消息。没有你的确认，CyberGuard 不会执行操作。"
+      }
     },
     "actions": {
       "fullPage": "完整页面",
@@ -896,7 +923,12 @@
       "delete": "删除",
       "deleting": "正在删除...",
       "renameConversation": "重命名对话",
-      "deleteConversation": "删除对话"
+      "deleteConversation": "删除对话",
+      "pinConversation": "置顶对话",
+      "unpinConversation": "取消置顶对话",
+      "archiveConversation": "归档对话",
+      "unarchiveConversation": "取消归档对话",
+      "exportConversation": "导出对话"
     },
     "conversation": {
       "newTitle": "新聊天"
@@ -905,8 +937,28 @@
       "title": "对话历史",
       "description": "已安全保存到你的账号。",
       "ariaLabel": "对话历史",
+      "viewSwitchLabel": "聊天列表视图",
+      "views": {
+        "chats": "聊天",
+        "archived": "已归档"
+      },
+      "searchLabel": "搜索对话",
+      "searchPlaceholder": "搜索对话标题",
+      "clearSearch": "清除对话搜索",
+      "noSearchResults": "没有对话与你的搜索匹配。",
+      "noArchivedSearchResults": "没有已归档对话与你的搜索匹配。",
+      "groups": {
+        "pinned": "已置顶",
+        "today": "今天",
+        "yesterday": "昨天",
+        "earlier": "更早",
+        "expand": "展开{{group}}对话",
+        "collapse": "折叠{{group}}对话"
+      },
       "emptyTitle": "还没有对话",
       "emptyDescription": "开始聊天后，你的安全账号历史会显示在这里。",
+      "emptyArchivedTitle": "没有已归档对话",
+      "emptyArchivedDescription": "当你把聊天移出主要历史记录后，已归档聊天会显示在这里。",
       "lastUpdated": "最后更新 {{time}}",
       "unknownTime": "未知时间",
       "noActive": "还没有当前对话"
@@ -988,6 +1040,17 @@
       "title": "删除对话？",
       "description": "删除“{{title}}”？这会从你的账号中移除此对话。"
     },
+    "export": {
+      "title": "导出对话",
+      "description": "从此浏览器下载当前已加载的对话。账号数据不会被更改。",
+      "formatLabel": "格式",
+      "confirm": "导出",
+      "error": "无法导出此对话。",
+      "formats": {
+        "markdown": "Markdown (.md)",
+        "text": "纯文本 (.txt)"
+      }
+    },
     "empty": {
       "title": "向 CyberGuard 提问",
       "description": "可以先询问诈骗、隐私、密码、错误信息，或安全上网选择。",
@@ -1021,7 +1084,7 @@
   },
   "footer": {
     "builtWithCare": "用心构建",
-    "description": "面向所有人的网络健康教育 · AI Gateway 将在后续阶段推出。"
+    "description": "面向所有人的网络健康教育。"
   },
   "app": {
     "loadingTitle": "正在加载 Cyberly...",
@@ -2125,10 +2188,15 @@
       "AI_ASSISTANT_PERSISTENCE_FAILED": "CyberGuard 无法保存回复。请再试一次。",
       "AI_GENERATION_ALREADY_COMPLETED": "CyberGuard 已经准备好这条回复。",
       "AI_GENERATION_IN_PROGRESS": "CyberGuard 正在准备回复。",
+      "AI_AUTH_FAILED": "CyberGuard 目前无法连接到 AI 服务。",
+      "AI_CONTEXT_LIMIT": "这段对话太长，无法生成新的回复。请开始新聊天，或缩短你的问题。",
       "AI_INVALID_RESPONSE": "CyberGuard 无法准备安全回复。请换一种问法。",
       "AI_NOT_CONFIGURED": "CyberGuard 尚未配置。",
+      "AI_OUTPUT_BLOCKED": "CyberGuard 无法安全显示该回复。",
       "AI_PROVIDER_UNAVAILABLE": "CyberGuard 暂时不可用。请稍后再试。",
+      "AI_REQUEST_FAILED": "CyberGuard 无法发送这次请求。请再试一次。",
       "AI_RATE_LIMITED": "请求过多。请稍等片刻再试。",
+      "AI_RUNTIME_DISABLED": "CyberGuard 回复暂时已停用。",
       "AI_TIMEOUT": "回复耗时太久。请再试一次。",
       "AI_UNSAFE_REQUEST": "CyberGuard 不能帮助完成该请求，但可以解释安全和防御性的替代做法。",
       "CHAT_CONVERSATION_NOT_FOUND": "找不到这个聊天对话。",

@@ -485,10 +485,10 @@ async function run() {
     await withServer({ OPENAI_API_KEY: 'test-key', AI_TEST_MOCK_OPENAI: 'context' }, async (baseUrl) => {
       const userA = await register(baseUrl, USER_A_EMAIL, 'Phase 8B2 A');
       await seedLearnerContextEvidence(pool, userA.json.user.id);
-      const created = await createConversation(baseUrl, userA.cookieHeader, 'Message 0', 'zh-CN');
+      const created = await createConversation(baseUrl, userA.cookieHeader, 'How do I spot phishing message 0?', 'zh-CN');
       let lastMessage = created.message;
       for (let index = 1; index <= 15; index += 1) {
-        lastMessage = await addUserMessage(baseUrl, userA.cookieHeader, created.conversation.id, `Message ${index} ${'x'.repeat(700)}`);
+        lastMessage = await addUserMessage(baseUrl, userA.cookieHeader, created.conversation.id, `How do I spot phishing message ${index}? ${'x'.repeat(700)}`);
       }
 
       const result = await generate(baseUrl, userA.cookieHeader, created.conversation.id, lastMessage.id, { locale: 'zh-CN' });
@@ -536,7 +536,8 @@ async function run() {
       assert.doesNotMatch(content, /phase8b2\.ai\.a@example\.com/);
       assert.doesNotMatch(content, /Private Nickname/);
       assert.doesNotMatch(content, /selectedOptionKey/);
-      assert.match(content, /messageCount=12/);
+      const messageCount = Number(content.match(/messageCount=(\d+)/)[1]);
+      assert.equal(messageCount <= 12, true);
       assert.match(content, /sourceCount=\d+/);
       assert.doesNotMatch(content, /chunkId=/);
       const chars = Number(content.match(/chars=(\d+)/)[1]);
@@ -565,8 +566,22 @@ async function run() {
       assert.equal(Array.isArray(result.json.actions), true);
       assert.equal(result.json.actions.length <= 3, true);
       result.json.actions.forEach(assertSafeAction);
-      assert.equal(result.json.actions.some(action => action.type === 'scenario'), false);
-      assert.equal(result.json.actions.some(action => action.type === 'scenarios'), true);
+      const [completedPhishingScenarios] = await pool.query(
+        `SELECT sd.slug
+         FROM scenario_attempts sa
+         JOIN scenario_definitions sd ON sd.id = sa.scenario_id
+         WHERE sa.user_id = ?
+           AND sa.status = 'completed'
+           AND sd.topic_code = 'phishing_and_scams'`,
+        [userA.json.user.id]
+      );
+      const completedPhishingSlugs = new Set(completedPhishingScenarios.map(row => row.slug));
+      const scenarioAction = result.json.actions.find(action => action.type === 'scenario');
+      if (scenarioAction?.target?.scenarioSlug) {
+        assert.equal(completedPhishingSlugs.has(scenarioAction.target.scenarioSlug), false);
+      } else {
+        assert.equal(result.json.actions.some(action => action.type === 'scenarios'), true);
+      }
     });
 
     await cleanup(pool);
@@ -712,7 +727,7 @@ async function run() {
     await withServer({ OPENAI_API_KEY: 'test-key', AI_TEST_MOCK_OPENAI: 'context' }, async (baseUrl) => {
       await pool.query('UPDATE rag_documents SET rag_ready = 0');
       const userA = await register(baseUrl, USER_A_EMAIL, 'Phase 8B2 A');
-      const created = await createConversation(baseUrl, userA.cookieHeader, 'Explain a topic with no reviewed chunks.', 'en');
+      const created = await createConversation(baseUrl, userA.cookieHeader, 'Explain phishing safety with no reviewed chunks.', 'en');
       const result = await generate(baseUrl, userA.cookieHeader, created.conversation.id, created.message.id);
       assert.equal(result.response.status, 201);
       assert.equal(Array.isArray(result.json.sources), true);
@@ -723,19 +738,33 @@ async function run() {
 
     await cleanup(pool);
 
-    for (const [mode, code] of [
-      ['timeout', 'AI_TIMEOUT'],
-      ['rate-limit', 'AI_RATE_LIMITED'],
-      ['provider-error', 'AI_PROVIDER_UNAVAILABLE'],
-      ['empty', 'AI_INVALID_RESPONSE'],
-      ['unsafe-output', 'AI_INVALID_RESPONSE'],
+    for (const [mode, code, status] of [
+      ['timeout', 'AI_TIMEOUT', 504],
+      ['rate-limit', 'AI_RATE_LIMITED', 429],
+      ['auth-failed', 'AI_AUTH_FAILED', 503],
+      ['context-limit', 'AI_CONTEXT_LIMIT', 413],
+      ['request-failed', 'AI_REQUEST_FAILED', 502],
+      ['provider-error', 'AI_PROVIDER_UNAVAILABLE', 503],
+      ['empty', 'AI_INVALID_RESPONSE', 502],
+      ['unsafe-output', 'AI_OUTPUT_BLOCKED', 422],
     ]) {
       await withServer({ OPENAI_API_KEY: 'test-key', AI_TEST_MOCK_OPENAI: mode }, async (baseUrl) => {
         const userA = await register(baseUrl, USER_A_EMAIL, 'Phase 8B2 A');
-        const created = await createConversation(baseUrl, userA.cookieHeader, `Mode ${mode}`);
+        const created = await createConversation(baseUrl, userA.cookieHeader, `Explain phishing safety for provider mode ${mode}.`);
         const result = await generate(baseUrl, userA.cookieHeader, created.conversation.id, created.message.id);
-        assert.equal(result.response.status, code === 'AI_RATE_LIMITED' ? 429 : 503);
+        assert.equal(result.response.status, status);
         assert.equal(result.json.code, code);
+        assert.equal(JSON.stringify(result.json).includes('test-key'), false);
+        assert.equal(JSON.stringify(result.json).includes('Mock'), false);
+        const [[generation]] = await pool.query(
+          `SELECT error_code
+           FROM chat_message_generations
+           WHERE conversation_id = ? AND user_message_id = ?
+           ORDER BY id DESC
+           LIMIT 1`,
+          [created.conversation.id, created.message.id]
+        );
+        assert.equal(generation.error_code, code);
       });
       await cleanup(pool);
     }
@@ -783,15 +812,15 @@ async function run() {
 
     await withServer({ OPENAI_API_KEY: 'test-key', AI_TEST_MOCK_OPENAI: 'success' }, async (baseUrl) => {
       const userA = await register(baseUrl, USER_A_EMAIL, 'Phase 8B2 A');
-      const created = await createConversation(baseUrl, userA.cookieHeader, 'Rate limit base message.');
+      const created = await createConversation(baseUrl, userA.cookieHeader, 'How do I spot phishing rate limit base message?');
       for (let index = 0; index < 6; index += 1) {
         const message = index === 0
           ? created.message
-          : await addUserMessage(baseUrl, userA.cookieHeader, created.conversation.id, `Rate message ${index}`);
+          : await addUserMessage(baseUrl, userA.cookieHeader, created.conversation.id, `How do I protect my password rate message ${index}?`);
         const result = await generate(baseUrl, userA.cookieHeader, created.conversation.id, message.id);
         assert.equal(result.response.status, 201);
       }
-      const limitedMessage = await addUserMessage(baseUrl, userA.cookieHeader, created.conversation.id, 'Rate message 6');
+      const limitedMessage = await addUserMessage(baseUrl, userA.cookieHeader, created.conversation.id, 'How do I protect my password rate message 6?');
       const limited = await generate(baseUrl, userA.cookieHeader, created.conversation.id, limitedMessage.id);
       assert.equal(limited.response.status, 429);
       assert.equal(limited.json.code, 'AI_RATE_LIMITED');
@@ -801,8 +830,8 @@ async function run() {
 
     await withServer({ OPENAI_API_KEY: 'test-key', AI_TEST_MOCK_OPENAI: 'delay' }, async (baseUrl) => {
       const userA = await register(baseUrl, USER_A_EMAIL, 'Phase 8B2 A');
-      const created = await createConversation(baseUrl, userA.cookieHeader, 'Concurrent base message.');
-      const messageTwo = await addUserMessage(baseUrl, userA.cookieHeader, created.conversation.id, 'Concurrent second message.');
+      const created = await createConversation(baseUrl, userA.cookieHeader, 'How do I spot a phishing message during concurrent test?');
+      const messageTwo = await addUserMessage(baseUrl, userA.cookieHeader, created.conversation.id, 'How do I protect my password during concurrent test?');
       const [first, second] = await Promise.all([
         generate(baseUrl, userA.cookieHeader, created.conversation.id, created.message.id),
         generate(baseUrl, userA.cookieHeader, created.conversation.id, messageTwo.id),

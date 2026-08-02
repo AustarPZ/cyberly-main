@@ -2,6 +2,11 @@ const assert = require('node:assert/strict');
 const { createPool } = require('../src/database/pool');
 const { createRagRepository } = require('../src/rag/rag.repository');
 const { createRagService } = require('../src/rag/rag.service');
+const {
+  MAX_ENRICHED_QUERY_LENGTH,
+  createRagQueryIntent,
+  enrichRagQuery,
+} = require('../src/rag/ragQueryIntent');
 
 async function tableExists(pool, tableName) {
   const [rows] = await pool.query(
@@ -32,6 +37,8 @@ async function cleanup(pool) {
 async function insertResource(pool, {
   slug,
   status = 'published',
+  reviewStatus = 'approved',
+  ragReady = true,
   categoryCode = 'Scams',
   locale = 'en',
   title,
@@ -41,9 +48,9 @@ async function insertResource(pool, {
   sourceUrl = 'https://example.test/reviewed',
 }) {
   const [resourceResult] = await pool.query(
-    `INSERT INTO resource_articles (slug, category_code, source_url, display_order, status)
-     VALUES (?, ?, ?, 999, ?)`,
-    [slug, categoryCode, sourceUrl, status]
+    `INSERT INTO resource_articles (slug, category_code, source_url, display_order, status, review_status, rag_ready)
+     VALUES (?, ?, ?, 999, ?, ?, ?)`,
+    [slug, categoryCode, sourceUrl, status, reviewStatus, ragReady ? 1 : 0]
   );
   await pool.query(
     `INSERT INTO resource_article_translations (
@@ -53,6 +60,68 @@ async function insertResource(pool, {
     [resourceResult.insertId, locale, title, summary, body, sourceLabel]
   );
   return resourceResult.insertId;
+}
+
+function sourceKey(chunk) {
+  return chunk.internalTarget?.resourceSlug || chunk.documentId || chunk.sourceUrl || chunk.title;
+}
+
+function assertUniqueResources(results) {
+  const keys = results.map(sourceKey).filter(Boolean);
+  assert.equal(new Set(keys).size, keys.length);
+}
+
+function assertNoWeakScamSources(results) {
+  const weakSlugs = new Set([
+    'misinformation-fake-news',
+    'ai-generated-content',
+    'deepfakes',
+    'privacy-personal-data',
+    'cyberbullying',
+    'password-security',
+    'digital-citizenship',
+  ]);
+  for (const result of results) {
+    assert.equal(weakSlugs.has(result.internalTarget?.resourceSlug), false);
+  }
+}
+
+function assertRelevantScamResults(results, options = {}) {
+  assert.equal(results.length <= 4, true);
+  assertUniqueResources(results);
+  assertNoWeakScamSources(results);
+  if (results.length) {
+    const firstSlug = results[0].internalTarget?.resourceSlug;
+    assert.equal(['phishing', 'online-scams', 'rag-test-phishing', 'rag-test-online-scams', 'rag-test-ms'].includes(firstSlug), true);
+    if (
+      results.some(item => item.internalTarget?.resourceSlug === 'phishing' && (!options.preferredLocale || item.locale === options.preferredLocale)) &&
+      (!options.preferredLocale || results[0].locale === options.preferredLocale)
+    ) {
+      assert.equal(firstSlug, 'phishing');
+    }
+  }
+}
+
+function assertScamIntent(query) {
+  const intent = createRagQueryIntent(query);
+  assert.equal(intent.intent, 'phishing_and_scams');
+  assert.deepEqual(intent.categoryCodes, ['Scams']);
+  assert.equal(intent.preferredResourceSlugs.includes('phishing'), true);
+  assert.equal(intent.preferredResourceSlugs.includes('online-scams'), true);
+  return intent;
+}
+
+function assertEnrichedScamQuery(query, expectedTerms = []) {
+  const original = String(query);
+  const intent = assertScamIntent(query);
+  const enriched = enrichRagQuery(original, intent);
+  assert.equal(original, String(query));
+  assert.equal(enriched.startsWith(original.trim()), true);
+  assert.equal(enriched.length <= MAX_ENRICHED_QUERY_LENGTH, true);
+  for (const term of expectedTerms) {
+    assert.equal(enriched.toLowerCase().includes(term.toLowerCase()), true);
+  }
+  return enriched;
 }
 
 function assertSafeChunk(chunk) {
@@ -82,11 +151,30 @@ async function run() {
     assert.equal(await tableExists(pool, 'rag_documents'), true);
     assert.equal(await tableExists(pool, 'rag_chunks'), true);
 
+    assertEnrichedScamQuery('fake banking message', ['phishing', 'scam', 'sms', 'otp']);
+    assertEnrichedScamQuery('suspicious SMS scam', ['phishing', 'otp']);
+    assertEnrichedScamQuery('bank message asking for OTP', ['phishing', 'scam']);
+    assertEnrichedScamQuery('phishing link in SMS', ['scam', 'otp']);
+    assertEnrichedScamQuery('mesej bank palsu', ['phishing', 'scam', 'pautan']);
+    assertEnrichedScamQuery('SMS mencurigakan', ['phishing', 'otp']);
+    assertEnrichedScamQuery('假银行短信', ['phishing', 'scam', '钓鱼', '验证码']);
+    assertEnrichedScamQuery('可疑短信', ['phishing', 'scam', '银行', '钓鱼']);
+    assert.equal(createRagQueryIntent('Is this fake news?').intent, 'generic_cyber_wellness');
+    const longQuery = `${'fake banking message '.repeat(40)}OTP`;
+    assert.equal(enrichRagQuery(longQuery).length <= MAX_ENRICHED_QUERY_LENGTH, true);
+
     await insertResource(pool, {
       slug: 'rag-test-phishing',
       title: 'Phishing red flags',
       summary: 'Learn how to spot suspicious links and urgent messages.',
-      body: 'A phishing scam often uses urgency, strange links, requests for OTPs, or payment pressure.',
+      body: 'A phishing scam often uses urgency, fake banking messages, suspicious SMS, strange links, requests for OTPs, malicious links, impersonation, or payment pressure.',
+      sourceLabel: 'Cyberly Reviewed Resource',
+    });
+    await insertResource(pool, {
+      slug: 'rag-test-online-scams',
+      title: 'Online scam warnings',
+      summary: 'Learn how to check fake bank SMS, delivery text scams, and suspicious payment messages.',
+      body: 'Scammers may impersonate a bank, delivery company, or trusted service. Treat OTP requests, urgent links, and payment pressure in SMS messages as warning signs.',
       sourceLabel: 'Cyberly Reviewed Resource',
     });
     await insertResource(pool, {
@@ -194,6 +282,39 @@ async function run() {
     });
     assert.equal(categoryResults.length > 0, true);
     categoryResults.forEach(assertSafeChunk);
+
+    for (const query of [
+      'fake banking message',
+      'suspicious SMS scam',
+      'bank message asking for OTP',
+      'phishing link in SMS',
+      'fake delivery text message',
+    ]) {
+      results = await service.retrieveReviewedChunks({ query, locale: 'en', limit: 4 });
+      assertRelevantScamResults(results, { preferredLocale: 'en' });
+    }
+
+    for (const query of [
+      'mesej bank palsu',
+      'SMS mencurigakan',
+      'mesej meminta OTP',
+      'pautan penipuan dalam SMS',
+    ]) {
+      results = await service.retrieveReviewedChunks({ query, locale: 'ms', limit: 4 });
+      assertRelevantScamResults(results, { preferredLocale: 'ms' });
+      assert.equal(results.some(item => item.locale === 'ms'), true);
+    }
+
+    for (const query of [
+      '假银行短信',
+      '可疑短信',
+      '短信要求验证码',
+      '短信中的钓鱼链接',
+    ]) {
+      results = await service.retrieveReviewedChunks({ query, locale: 'zh-CN', limit: 4 });
+      assertRelevantScamResults(results, { preferredLocale: 'zh-CN' });
+      assert.equal(results.length > 0, true);
+    }
 
     console.log('RAG foundation verification passed.');
   } finally {

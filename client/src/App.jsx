@@ -3,6 +3,16 @@ import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
 import { useTranslation } from "react-i18next";
 import remarkGfm from "remark-gfm";
+import "./design-system/tokens/cyberlyAurora.css";
+import "./cyberguard/cyberguardLayout.css";
+import CyberGuardWorkspaceHeader from "./cyberguard/CyberGuardWorkspaceHeader";
+import CyberGuardAiNotice from "./cyberguard/CyberGuardAiNotice";
+import CyberGuardChatShell from "./cyberguard/CyberGuardChatShell";
+import CyberGuardEmptyState from "./cyberguard/CyberGuardEmptyState";
+import CyberGuardQuickPrompts from "./cyberguard/CyberGuardQuickPrompts";
+import CyberGuardComposerFrame from "./cyberguard/CyberGuardComposerFrame";
+import CyberGuardAssistantMessage from "./cyberguard/CyberGuardAssistantMessage";
+import Button from "./design-system/primitives/Button";
 import profileMappings from "./profileMappings";
 import i18n, { STORAGE_KEY as UI_LANGUAGE_STORAGE_KEY, getStoredUiLanguage} from "./i18n";
 import { normalizeLocale, profileLanguageToLocale } from "./i18n/languageMappings";
@@ -51,6 +61,30 @@ import {
   renameChatConversation,
   createLearnerActionProposal,
 } from "./chat/chatApi";
+import {
+  buildAutomaticConversationTitle,
+  isDefaultConversationTitle,
+  MAX_CONVERSATION_TITLE_LENGTH,
+  normalizeConversationTitle,
+  shouldApplyAutomaticConversationTitleResult,
+  shouldRequestAutomaticConversationTitle,
+} from "./chat/chatTitle";
+import {
+  partitionPinnedConversations,
+  readPinnedConversationIds,
+  togglePinnedConversationId,
+  writePinnedConversationIds,
+} from "./chat/chatPinning";
+import {
+  partitionArchivedConversations,
+  readArchivedConversationIds,
+  toggleArchivedConversationId,
+  writeArchivedConversationIds,
+} from "./chat/chatArchiving";
+import {
+  downloadConversationExport,
+  hasExportableMessages,
+} from "./chat/chatExport";
 import {
   attachActionGroupsToMessages,
   attachSourceGroupsToMessages,
@@ -185,6 +219,12 @@ body {
   box-shadow: 0 2px 12px rgba(24, 45, 35, 0.06);
   display: flex; align-items: center; gap: 1.25rem;
   padding: 0 1.5rem;
+}
+.navbar.cyberguard-nav-flow {
+  position: static;
+  height: auto;
+  min-height: var(--nav-h);
+  flex-wrap: wrap;
 }
 .nav-logo {
   display: flex; align-items: center; justify-content: center;
@@ -356,6 +396,13 @@ body {
 
 /* ── Layout ── */
 .page-wrap { margin-top: var(--nav-h); min-height: calc(100vh - var(--nav-h)); }
+.page-wrap.cyberguard-page-wrap {
+  margin-top: 0;
+  min-height: calc(100vh - var(--nav-h));
+  min-height: calc(100dvh - var(--nav-h));
+  height: auto;
+  overflow: visible;
+}
 
 /* ── Sections ── */
 .section { max-width: 1000px; margin: 0 auto; padding: 3rem 1.5rem; }
@@ -2006,8 +2053,8 @@ body {
 .chat-header-button:hover, .chat-header-button:focus-visible { outline: none; box-shadow: 0 0 0 3px rgba(255,255,255,0.24); background: rgba(255,255,255,0.18); }
 .chat-messages { min-height: 280px; height: 320px; overflow-y: auto; padding: 0.85rem; display: flex; flex-direction: column; gap: 0.6rem; }
 .chat-bubble { max-width: 85%; padding: 0.55rem 0.85rem; border-radius: 12px; font-size: 0.82rem; line-height: 1.5; }
-.chat-bubble.user { align-self: flex-end; background: var(--teal); color: #fff; border-bottom-right-radius: 3px; }
-.chat-bubble.ai { align-self: flex-start; background: var(--gray-lt); border-bottom-left-radius: 3px; }
+.chat-bubble.user { align-self: flex-end; background: var(--teal); color: #fff; border-bottom-right-radius: 3px; white-space: pre-wrap; overflow-wrap: anywhere; }
+.chat-bubble.ai { align-self: flex-start; background: var(--gray-lt); border-bottom-left-radius: 3px; overflow-wrap: anywhere; }
 .chat-bubble.ai.loading { opacity: 0.6; font-style: italic; }
 .chat-markdown { overflow-wrap: anywhere; word-break: normal; line-height: 1.55; }
 .chat-markdown > *:first-child { margin-top: 0; }
@@ -2207,22 +2254,6 @@ body {
   .chat-action-card { grid-template-columns: 1fr; }
   .chat-action-card-button { width: 100%; white-space: normal; }
 }
-.ai-chat-shell {
-  max-width: 1440px; margin: 0 auto; padding: 1.25rem 1.5rem 1.5rem;
-  height: calc(100vh - var(--nav-h) - 3rem);
-  height: calc(100dvh - var(--nav-h) - 3rem);
-  min-height: 600px;
-  display: grid; grid-template-columns: minmax(260px, 300px) minmax(0, 1fr); gap: 1.25rem;
-  overflow: hidden;
-}
-.ai-chat-shell.sidebar-collapsed { grid-template-columns: 68px minmax(0, 1fr); }
-.ai-chat-sidebar, .ai-chat-main {
-  background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 14px;
-  box-shadow: var(--shadow-card);
-  min-height: 0;
-}
-.ai-chat-sidebar { padding: 1rem; align-self: stretch; display: flex; flex-direction: column; overflow: hidden; }
-.ai-chat-sidebar.collapsed { padding: 0.65rem; align-items: center; }
 .ai-chat-sidebar-header { display: flex; justify-content: space-between; align-items: center; gap: 0.75rem; margin-bottom: 0.85rem; }
 .ai-chat-sidebar-title-block { min-width: 0; }
 .ai-chat-sidebar-actions { display: flex; align-items: center; gap: 0.45rem; flex: 0 0 auto; }
@@ -2235,7 +2266,6 @@ body {
 .ai-chat-icon-button:hover, .ai-chat-icon-button:focus-visible {
   outline: none; background: var(--teal-lt); box-shadow: 0 0 0 3px rgba(29,158,117,0.16);
 }
-.ai-chat-mobile-actions { display: none; }
 .ai-chat-list { display: grid; align-content: start; gap: 0.45rem; min-height: 0; overflow-y: auto; overflow-x: hidden; padding-right: 0.15rem; }
 .ai-chat-list-item {
   position: relative; display: grid; grid-template-columns: minmax(0, 1fr) 40px; gap: 0.35rem;
@@ -2282,12 +2312,7 @@ body {
 .ai-chat-rename-input:focus { outline: none; border-color: var(--teal); box-shadow: 0 0 0 3px rgba(29,158,117,0.12); }
 .ai-chat-list-title { font-weight: 800; font-size: 0.88rem; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .ai-chat-list-time { margin-top: 0.2rem; font-size: 0.72rem; color: #77827d; }
-.ai-chat-main { min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
 .ai-chat-main-header { flex: 0 0 auto; padding: 1rem 1.1rem; border-bottom: 1px solid var(--border-subtle); }
-.ai-chat-full-messages { flex: 1 1 auto; min-height: 0; overflow-y: auto; padding: 1.25rem; display: flex; flex-direction: column; gap: 0.75rem; background: var(--surface-muted); }
-.ai-chat-full-messages .chat-empty { margin: auto auto 1.25rem; max-width: 420px; padding: 1rem 1.1rem; }
-.ai-chat-full-messages .chat-bubble { max-width: min(680px, 88%); font-size: 0.92rem; }
-.ai-chat-drawer-layer { display: none; }
 .chat-migration-notice { margin-bottom: 0.85rem; }
 .dashboard-ai-preview {
   background: var(--surface-raised); border: 1px solid rgba(29,158,117,0.22); border-radius: 14px;
@@ -2295,35 +2320,6 @@ body {
 }
 .dashboard-ai-preview-text { color: #52615b; font-size: 0.88rem; line-height: 1.6; margin: 0.65rem 0 1rem; }
 @media (max-width: 820px) {
-  .ai-chat-shell {
-    display: grid; grid-template-columns: 1fr; padding: 1rem; height: auto;
-    min-height: 0; overflow: visible;
-  }
-  .ai-chat-shell.sidebar-collapsed { grid-template-columns: 1fr; }
-  .ai-chat-sidebar { display: none; }
-  .ai-chat-mobile-actions { display: block; flex: 0 0 auto; width: 100%; }
-  .ai-chat-mobile-actions .btn-ghost { width: 100%; justify-content: center; }
-  .ai-chat-main {
-    height: min(620px, calc(100vh - var(--nav-h) - 5rem));
-    height: min(620px, calc(100dvh - var(--nav-h) - 5rem));
-    min-height: 420px;
-  }
-  .ai-chat-drawer-layer { display: block; position: fixed; inset: 0; z-index: 250; }
-  .ai-chat-drawer-backdrop {
-    position: absolute; inset: 0; border: none; background: rgba(0,0,0,0.36); cursor: pointer;
-  }
-  .ai-chat-drawer {
-    position: absolute; inset: 0 auto 0 0; width: min(340px, calc(100vw - 2.5rem));
-    background: var(--surface-raised); border: none; border-radius: 0 14px 14px 0;
-    box-shadow: 12px 0 32px rgba(0,0,0,0.18); padding: 1rem;
-    display: flex; flex-direction: column; min-width: 0; overflow: hidden;
-  }
-  .ai-chat-drawer:focus { outline: none; }
-  .ai-chat-drawer-top {
-    display: flex; justify-content: space-between; align-items: center; gap: 0.75rem;
-    margin-bottom: 0.85rem; flex: 0 0 auto;
-  }
-  .ai-chat-drawer .ai-chat-list { max-height: none; }
   .scenario-detail-layout { grid-template-columns: 1fr; }
   .scenario-detail-back-rail { justify-content: flex-start; }
   .chat-panel { left: 1rem; right: 1rem; width: auto; }
@@ -2442,7 +2438,6 @@ function useChat() { return useContext(ChatCtx); }
 const CHAT_STORAGE_PREFIX = "cyberly.chat.v1";
 const CHAT_ACTIVE_STORAGE_PREFIX = "cyberly.chat.activeConversation.v1";
 const CHAT_NOTICE_STORAGE_PREFIX = "cyberly.chat.backendMigrationNotice.v1";
-const MAX_CONVERSATION_TITLE_LENGTH = 80;
 const CHAT_GENERATION_POLL_INTERVAL_MS = 2000;
 const CHAT_GENERATION_POLL_MAX_MS = 30000;
 const PUBLIC_PAGES = new Set(["home", "resources", "about", "login"]);
@@ -2579,6 +2574,122 @@ function ConfirmationDialog({
   );
 }
 
+function ExportConversationDialog({
+  title,
+  description,
+  conversationTitle,
+  formatLabel,
+  format,
+  setFormat,
+  cancelLabel,
+  exportLabel,
+  markdownLabel,
+  textLabel,
+  disabled,
+  error = "",
+  returnFocusHandled = false,
+  onCancel,
+  onExport,
+}) {
+  const markdownRef = useRef(null);
+  const textRef = useRef(null);
+  const cancelRef = useRef(null);
+  const exportRef = useRef(null);
+
+  useEffect(() => {
+    const previousFocus = document.activeElement;
+    markdownRef.current?.focus();
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape") {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        onCancel();
+        return;
+      }
+      if (event.key !== "Tab") return;
+
+      const focusable = [markdownRef.current, textRef.current, cancelRef.current, exportRef.current]
+        .filter(element => element && !element.disabled);
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+
+      if (event.shiftKey && document.activeElement === first) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && document.activeElement === last) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown, true);
+    return () => {
+      document.removeEventListener("keydown", handleKeyDown, true);
+      if (!returnFocusHandled && previousFocus && typeof previousFocus.focus === "function") {
+        window.setTimeout(() => previousFocus.focus(), 0);
+      }
+    };
+  }, [onCancel, returnFocusHandled]);
+
+  const dialog = (
+    <div className="logout-modal-backdrop cyberguard-export-dialog-layer" role="presentation" onMouseDown={event => {
+      if (event.target === event.currentTarget) onCancel();
+    }}>
+      <div
+        className="logout-modal ai-chat-export-dialog"
+        role="dialog"
+        aria-modal="true"
+        aria-labelledby="chat-export-dialog-title"
+        aria-describedby="chat-export-dialog-description"
+      >
+        <h2 id="chat-export-dialog-title">{title}</h2>
+        <p id="chat-export-dialog-description">{description}</p>
+        <div className="ai-chat-export-conversation-title">{conversationTitle}</div>
+        <fieldset className="ai-chat-export-format">
+          <legend>{formatLabel}</legend>
+          <label>
+            <input
+              ref={markdownRef}
+              type="radio"
+              name="chat-export-format"
+              value="markdown"
+              checked={format === "markdown"}
+              onChange={() => setFormat("markdown")}
+            />
+            {markdownLabel}
+          </label>
+          <label>
+            <input
+              ref={textRef}
+              type="radio"
+              name="chat-export-format"
+              value="text"
+              checked={format === "text"}
+              onChange={() => setFormat("text")}
+            />
+            {textLabel}
+          </label>
+        </fieldset>
+        {error && <p className="field-error" role="alert">{error}</p>}
+        <div className="logout-modal-actions">
+          <button type="button" className="modal-cancel" ref={cancelRef} onClick={onCancel}>
+            {cancelLabel}
+          </button>
+          <button type="button" className="modal-cancel" ref={exportRef} onClick={onExport} disabled={disabled}>
+            {exportLabel}
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  if (typeof document === "undefined") return dialog;
+  return createPortal(dialog, document.body);
+}
+
 function prefersReducedMotion() {
   return typeof window !== "undefined" &&
     window.matchMedia?.("(prefers-reduced-motion: reduce)")?.matches;
@@ -2678,10 +2789,6 @@ function writeChatSidebarCollapsed(userId, collapsed) {
   }
 }
 
-function normalizeConversationTitle(title) {
-  return title.trim().replace(/\s+/g, " ");
-}
-
 function mapServerConversation(conversation) {
   return {
     id: Number(conversation.id),
@@ -2715,14 +2822,31 @@ function mapServerMessagesWithActions(messages = [], actionGroups = [], sourceGr
 
 const SAFE_AI_GENERATION_ERROR_CODES = new Set([
   "AI_NOT_CONFIGURED",
+  "AI_RUNTIME_DISABLED",
+  "AI_AUTH_FAILED",
   "AI_PROVIDER_UNAVAILABLE",
   "AI_TIMEOUT",
   "AI_RATE_LIMITED",
+  "AI_CONTEXT_LIMIT",
+  "AI_REQUEST_FAILED",
   "AI_UNSAFE_REQUEST",
   "AI_INVALID_RESPONSE",
+  "AI_OUTPUT_BLOCKED",
   "AI_GENERATION_IN_PROGRESS",
   "AI_ASSISTANT_PERSISTENCE_FAILED",
 ]);
+
+const RETRYABLE_AI_GENERATION_ERROR_CODES = new Set([
+  "AI_PROVIDER_UNAVAILABLE",
+  "AI_TIMEOUT",
+  "AI_RATE_LIMITED",
+  "AI_REQUEST_FAILED",
+  "AI_INVALID_RESPONSE",
+]);
+
+function isRetryableGenerationError(code) {
+  return RETRYABLE_AI_GENERATION_ERROR_CODES.has(code);
+}
 
 function localizedGenerationError(code) {
   if (SAFE_AI_GENERATION_ERROR_CODES.has(code)) {
@@ -2754,6 +2878,7 @@ function recoveredGenerationState(generations = [], messages = []) {
         status: "failed",
         errorCode: SAFE_AI_GENERATION_ERROR_CODES.has(generation.errorCode) ? generation.errorCode : null,
         error: localizedGenerationError(generation.errorCode),
+        retryable: isRetryableGenerationError(generation.errorCode),
       };
     }
     return acc;
@@ -3096,13 +3221,14 @@ function ChatSourceItem({ source }) {
   );
 }
 
-function ChatSourceGroup({ sources = [], compact = false }) {
+function ChatSourceGroup({ sources = [], compact = false, idScope = "" }) {
   const { t } = useTranslation();
   const [expanded, setExpanded] = useState(false);
   const visibleSources = Array.isArray(sources) ? sources : [];
   if (!visibleSources.length) return null;
   const count = visibleSources.length;
-  const groupId = `chat-sources-${visibleSources.map(source => source.id).join("-")}`;
+  const groupIdSuffix = visibleSources.map(source => source.id).join("-");
+  const groupId = idScope ? `chat-sources-${idScope}-${groupIdSuffix}` : `chat-sources-${groupIdSuffix}`;
 
   return (
     <section className={`chat-source-group${compact ? " compact" : ""}`} aria-label={t("chat.sources.groupLabel")}>
@@ -3179,6 +3305,7 @@ function ChatProvider({ user, children }) {
   const userIdRef = useRef(null);
   const activeConversationIdRef = useRef(null);
   const conversationsRef = useRef([]);
+  const automaticTitleRequestsRef = useRef(new Set());
   const generationPollTimeoutRef = useRef(null);
   const userId = user?.id;
 
@@ -3281,6 +3408,7 @@ function ChatProvider({ user, children }) {
     userIdRef.current = userId || null;
     listRequestRef.current += 1;
     detailRequestRef.current += 1;
+    automaticTitleRequestsRef.current.clear();
 
     if (!userId) {
       setConversations([]);
@@ -3427,8 +3555,9 @@ function ChatProvider({ user, children }) {
     if (!result.ok) {
       setGenerationState(userMessageId, {
         status: "failed",
-        errorCode: result.code || null,
+        errorCode: SAFE_AI_GENERATION_ERROR_CODES.has(result.code) ? result.code : null,
         error: result.error || i18n.t("chat.generation.failedDescription"),
+        retryable: isRetryableGenerationError(result.code),
       });
       return { ok: false, error: result.error, code: result.code };
     }
@@ -3455,6 +3584,56 @@ function ChatProvider({ user, children }) {
     return { ok: true, assistantMessage };
   }
 
+  async function maybeApplyAutomaticConversationTitle({
+    conversationId,
+    messageContent,
+    requestUserId,
+    fallbackConversation,
+    firstLearnerMessageId,
+  }) {
+    const automaticTitle = buildAutomaticConversationTitle(
+      messageContent,
+      MAX_CONVERSATION_TITLE_LENGTH
+    );
+    if (!conversationId || !automaticTitle || !requestUserId) return;
+    const requestKey = `${Number(conversationId)}:${firstLearnerMessageId || "first-message"}`;
+    if (automaticTitleRequestsRef.current.has(requestKey)) return;
+
+    const currentConversation = conversationsRef.current.find(
+      conversation => conversation.id === conversationId
+    ) || fallbackConversation;
+    if (!shouldRequestAutomaticConversationTitle({
+      conversation: currentConversation,
+      candidateTitle: automaticTitle,
+    })) return;
+
+    const titleAtRequestStart = currentConversation.title;
+    automaticTitleRequestsRef.current.add(requestKey);
+
+    try {
+      const result = await renameChatConversation(conversationId, automaticTitle);
+      if (!result.ok || !result.conversation) return;
+
+      const mapped = mapServerConversation(result.conversation);
+      setConversations(current => current.map(conversation => {
+        if (conversation.id !== mapped.id) return conversation;
+        if (!shouldApplyAutomaticConversationTitleResult({
+          currentConversation: conversation,
+          requestedConversationId: conversationId,
+          titleAtRequestStart,
+          returnedConversation: mapped,
+          currentUserId: userIdRef.current,
+          requestUserId,
+        })) {
+          return conversation;
+        }
+        return mapped;
+      }));
+    } finally {
+      automaticTitleRequestsRef.current.delete(requestKey);
+    }
+  }
+
   function createConversation() {
     if (!userId) return null;
     setActiveConversationId(null);
@@ -3473,6 +3652,7 @@ function ChatProvider({ user, children }) {
   async function startDashboardConversation(firstMessage) {
     const clean = String(firstMessage || "").trim();
     if (!clean || syncing || generationActive || !userIdRef.current) return { ok: false };
+    const requestUserId = userIdRef.current;
     setSyncing(true);
     setMutationError("");
 
@@ -3481,7 +3661,7 @@ function ChatProvider({ user, children }) {
       locale: normalizeLocale(i18n.language),
     });
 
-    if (!userIdRef.current) return { ok: false };
+    if (userIdRef.current !== requestUserId) return { ok: false };
     setSyncing(false);
 
     if (!result.ok) {
@@ -3496,6 +3676,15 @@ function ChatProvider({ user, children }) {
     setActiveMessages(messages);
     writeSavedActiveConversationId(userIdRef.current, conversation.id);
     const firstUserMessage = messages.find(message => message.role === "user");
+    if (firstUserMessage && isDefaultConversationTitle(conversation.title)) {
+      maybeApplyAutomaticConversationTitle({
+        conversationId: conversation.id,
+        messageContent: firstUserMessage.content || firstUserMessage.text,
+        requestUserId,
+        fallbackConversation: conversation,
+        firstLearnerMessageId: firstUserMessage.id,
+      });
+    }
     if (firstUserMessage) {
       generateReply(conversation.id, firstUserMessage.id);
     }
@@ -3558,6 +3747,13 @@ function ChatProvider({ user, children }) {
   async function sendMessage(text) {
     const clean = text.trim();
     if (!clean || sending || syncing || generationActive || !userIdRef.current) return { ok: false };
+    const requestUserId = userIdRef.current;
+    const shouldAutoTitleAfterFirstMessage = Boolean(
+      activeConversation &&
+      Number(activeConversation.messageCount || 0) === 0 &&
+      activeMessages.filter(message => message.role === "user").length === 0 &&
+      isDefaultConversationTitle(activeConversation.title)
+    );
 
     setSending(true);
     setMutationError("");
@@ -3584,6 +3780,14 @@ function ChatProvider({ user, children }) {
     const conversation = mapServerConversation(result.conversation);
     setActiveMessages(current => [...current, message]);
     setConversations(current => [conversation, ...current.filter(item => item.id !== conversation.id)]);
+    if (shouldAutoTitleAfterFirstMessage && isDefaultConversationTitle(conversation.title)) {
+      maybeApplyAutomaticConversationTitle({
+        conversationId: conversation.id,
+        messageContent: message.content || message.text,
+        requestUserId,
+        firstLearnerMessageId: message.id,
+      });
+    }
     generateReply(conversation.id, message.id);
     return { ok: true, message };
   }
@@ -6093,9 +6297,10 @@ function DashboardPage() {
   );
 }
 
-function ChatMessageList({ className = "chat-messages", emptyCompact = false }) {
+function ChatMessageList({ className = "chat-messages", emptyCompact = false, emptyState = null }) {
   const { t } = useTranslation();
   const {
+    activeConversationId,
     messages,
     sending,
     generating,
@@ -6108,16 +6313,35 @@ function ChatMessageList({ className = "chat-messages", emptyCompact = false }) 
   } = useChat();
   const endRef = useRef(null);
   const shouldAutoScrollRef = useRef(false);
+  const previousEmptyConversationKeyRef = useRef(null);
 
   useEffect(() => {
-    if (!shouldAutoScrollRef.current) return;
     const container = endRef.current?.parentElement;
+    const emptyConversationKey = activeConversationId || "__no-active-conversation__";
+    if (
+      container &&
+      !initialLoading &&
+      !conversationLoading &&
+      !conversationError &&
+      messages.length === 0 &&
+      previousEmptyConversationKeyRef.current !== emptyConversationKey
+    ) {
+      container.scrollTop = 0;
+      shouldAutoScrollRef.current = false;
+      previousEmptyConversationKeyRef.current = emptyConversationKey;
+      return;
+    }
+    if (messages.length > 0) {
+      previousEmptyConversationKeyRef.current = null;
+    }
+    if (!shouldAutoScrollRef.current) return;
     if (!container) return;
     const visibleMessages = messages.filter(message => message.role !== "system");
     const lastMessage = visibleMessages[visibleMessages.length - 1];
     const behavior = prefersReducedMotion() ? "auto" : "smooth";
     if (lastMessage?.role === "ai") {
-      const target = container.querySelector(`[data-chat-message-id="${lastMessage.id}"]`);
+      const answerTarget = container.querySelector(`[data-testid="chat-message-answer-${lastMessage.id}"]`);
+      const target = answerTarget || container.querySelector(`[data-chat-message-id="${lastMessage.id}"]`);
       if (!target) {
         container.scrollTo({ top: container.scrollHeight, behavior });
         return;
@@ -6133,7 +6357,17 @@ function ChatMessageList({ className = "chat-messages", emptyCompact = false }) 
       top: container.scrollHeight,
       behavior,
     });
-  }, [messages, messages.length, sending, generating, generationByMessageId]);
+  }, [
+    activeConversationId,
+    initialLoading,
+    conversationLoading,
+    conversationError,
+    messages,
+    messages.length,
+    sending,
+    generating,
+    generationByMessageId,
+  ]);
 
   useEffect(() => {
     shouldAutoScrollRef.current = true;
@@ -6160,33 +6394,54 @@ function ChatMessageList({ className = "chat-messages", emptyCompact = false }) 
           onAction={retryConversation}
         />
       ) : messages.length === 0 ? (
+        emptyState || (
         <div className="chat-empty">
           <div className="chat-empty-title">{t("chat.empty.title")}</div>
           <div>{emptyCompact ? t("chat.empty.shortDescription") : t("chat.empty.description")}</div>
         </div>
+        )
       ) : (
         <>
           {messages.filter(message => message.role !== "system").map(message => {
             const generation = message.role === "user" ? generationByMessageId[message.id] : null;
+            const messageSources = message.sources || [];
+            const messageProposal = message.proposal || null;
+            const messageActions = message.role === "ai"
+              ? dedupeActionsAgainstProposal(message.actions || [], messageProposal)
+              : [];
             return (
               <Fragment key={message.id}>
-                <div
-                  className={`chat-bubble ${message.role}`}
-                  data-chat-message-id={message.id}
-                  style={message.role === "ai" ? { overflowWrap: "anywhere" } : { whiteSpace: "pre-wrap", overflowWrap: "anywhere" }}
-                >
-                  {message.role === "ai" ? (
-                    <div className="chat-markdown">
-                      <ChatMarkdown>{message.text}</ChatMarkdown>
-                    </div>
-                  ) : message.text}
-                </div>
-                {message.role === "ai" && (
-                  <>
-                    <ChatSourceGroup sources={message.sources || []} compact={emptyCompact} />
-                    <ChatMessageProposal proposal={message.proposal || null} />
-                    <ChatActionGroup actions={dedupeActionsAgainstProposal(message.actions || [], message.proposal || null)} compact={emptyCompact} />
-                  </>
+                {message.role === "ai" ? (
+                  <CyberGuardAssistantMessage
+                    messageId={message.id}
+                    label={t("chat.accessibility.assistantMessage", { id: message.id, defaultValue: "CyberGuard assistant reply" })}
+                    answer={(
+                      <div
+                        className="chat-bubble ai"
+                        data-chat-message-id={message.id}
+                      >
+                        <div className="chat-markdown">
+                          <ChatMarkdown>{message.text}</ChatMarkdown>
+                        </div>
+                      </div>
+                    )}
+                    sources={messageSources.length ? (
+                      <ChatSourceGroup sources={messageSources} compact={emptyCompact} idScope={message.id} />
+                    ) : null}
+                    proposal={messageProposal ? (
+                      <ChatMessageProposal proposal={messageProposal} />
+                    ) : null}
+                    actions={messageActions.length ? (
+                      <ChatActionGroup actions={messageActions} compact={emptyCompact} />
+                    ) : null}
+                  />
+                ) : (
+                  <div
+                    className="chat-bubble user"
+                    data-chat-message-id={message.id}
+                  >
+                    {message.text}
+                  </div>
                 )}
                 {generation?.status === "generating" && (
                   <div className="chat-status-notice generating" role="status" aria-live="polite">
@@ -6199,15 +6454,17 @@ function ChatMessageList({ className = "chat-messages", emptyCompact = false }) 
                     <div>
                       <strong>{t("chat.generation.failedTitle")}</strong>
                       <div>{generation.error || t("chat.generation.failedDescription")}</div>
-                      <button
-                        type="button"
-                        className="chat-generation-retry"
-                        onClick={() => retryGeneration(message.conversationId, message.id)}
-                        disabled={generating}
-                        aria-label={t("chat.accessibility.retryGeneration")}
-                      >
-                        {t("chat.generation.retry")}
-                      </button>
+                      {generation.retryable && (
+                        <button
+                          type="button"
+                          className="chat-generation-retry"
+                          onClick={() => retryGeneration(message.conversationId, message.id)}
+                          disabled={generating}
+                          aria-label={t("chat.accessibility.retryGeneration")}
+                        >
+                          {t("chat.generation.retry")}
+                        </button>
+                      )}
                     </div>
                   </div>
                 )}
@@ -6222,13 +6479,30 @@ function ChatMessageList({ className = "chat-messages", emptyCompact = false }) 
   );
 }
 
-function ChatComposer({ compact = false }) {
+function ChatComposer({
+  compact = false,
+  draftRequest = null,
+  onDraftAccepted,
+  useComposerFrame = false,
+  composerLabel = "",
+  composerGuidance = "",
+}) {
   const { t } = useTranslation();
   const { sendMessage, sending, syncing, generating, conversationLoading, mutationError } = useChat();
   const [input, setInput] = useState("");
   const inputRef = useRef(null);
+  const lastDraftRequestIdRef = useRef(null);
 
-  async function send() {
+  useEffect(() => {
+    if (!draftRequest?.requestId) return;
+    if (lastDraftRequestIdRef.current === draftRequest.requestId) return;
+    lastDraftRequestIdRef.current = draftRequest.requestId;
+    setInput(draftRequest.text || "");
+    onDraftAccepted?.(draftRequest.requestId);
+  }, [draftRequest, onDraftAccepted]);
+
+  async function send(event) {
+    event?.preventDefault?.();
     const text = input.trim();
     if (!text || sending || syncing || generating || conversationLoading) return;
     const result = await sendMessage(text);
@@ -6239,26 +6513,66 @@ function ChatComposer({ compact = false }) {
     }
   }
 
+  const interactionDisabled = sending || syncing || generating || conversationLoading;
+  const busy = sending || syncing || generating;
+  const statusText = sending || syncing
+    ? t("chat.sending")
+    : generating
+      ? t("chat.generation.preparingShort")
+      : "";
+  const textarea = (
+    <textarea
+      ref={inputRef}
+      className="chat-input"
+      rows={compact ? 1 : 2}
+      placeholder={t("chat.placeholder")}
+      value={input}
+      aria-label={t("chat.accessibility.composer")}
+      onChange={event => setInput(event.target.value)}
+      onKeyDown={event => {
+        if (event.key === "Enter" && !event.shiftKey) {
+          event.preventDefault();
+          send();
+        }
+      }}
+      disabled={interactionDisabled}
+    />
+  );
+
+  if (useComposerFrame) {
+    return (
+      <div className="chat-composer-wrap">
+        <CyberGuardComposerFrame
+          label={composerLabel || t("chat.pilot.composer.label")}
+          guidance={composerGuidance || t("chat.pilot.composer.guidance")}
+          status={statusText}
+          loading={busy}
+          onSubmit={send}
+          input={textarea}
+          submitControl={(
+            <Button
+              className="chat-send"
+              type="submit"
+              variant="primary"
+              loading={sending || syncing}
+              loadingLabel={t("chat.sending")}
+              disabled={interactionDisabled || !input.trim()}
+              aria-label={t("chat.accessibility.send")}
+            >
+              {generating ? t("chat.generation.preparingShort") : t("chat.send")}
+            </Button>
+          )}
+        />
+        {mutationError && <div className="field-error chat-composer-error" role="alert">{mutationError}</div>}
+      </div>
+    );
+  }
+
   return (
     <div className="chat-composer-wrap">
       <div className="chat-input-row">
-        <textarea
-          ref={inputRef}
-          className="chat-input"
-          rows={compact ? 1 : 2}
-          placeholder={t("chat.placeholder")}
-          value={input}
-          aria-label={t("chat.accessibility.composer")}
-          onChange={event => setInput(event.target.value)}
-          onKeyDown={event => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              send();
-            }
-          }}
-          disabled={sending || syncing || generating || conversationLoading}
-        />
-        <button className="chat-send" onClick={send} disabled={sending || syncing || generating || conversationLoading || !input.trim()} aria-label={t("chat.accessibility.send")}>
+        {textarea}
+        <button className="chat-send" onClick={send} disabled={interactionDisabled || !input.trim()} aria-label={t("chat.accessibility.send")}>
           {sending || syncing ? (compact ? "…" : t("chat.sending")) : generating ? (compact ? "…" : t("chat.generation.preparingShort")) : compact ? "↑" : t("chat.send")}
         </button>
       </div>
@@ -9075,15 +9389,64 @@ function formatChatUpdatedAt(value, t) {
   }
 }
 
+const CHAT_HISTORY_GROUPS = [
+  { key: "today", labelKey: "chat.history.groups.today" },
+  { key: "yesterday", labelKey: "chat.history.groups.yesterday" },
+  { key: "earlier", labelKey: "chat.history.groups.earlier" },
+];
+
+function localDayStart(date) {
+  return new Date(date.getFullYear(), date.getMonth(), date.getDate()).getTime();
+}
+
+function getChatHistoryGroupKey(conversation, now) {
+  const value = conversation?.updatedAt;
+  if (!value) return "earlier";
+  const timestamp = new Date(value);
+  const timestampMs = timestamp.getTime();
+  if (Number.isNaN(timestampMs)) return "earlier";
+
+  const todayStart = localDayStart(now);
+  const tomorrowStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1).getTime();
+  const yesterdayStart = new Date(now.getFullYear(), now.getMonth(), now.getDate() - 1).getTime();
+
+  if (timestampMs >= todayStart && timestampMs < tomorrowStart) return "today";
+  if (timestampMs >= yesterdayStart && timestampMs < todayStart) return "yesterday";
+  return "earlier";
+}
+
+function groupChatHistoryConversations(conversations, now) {
+  const grouped = {
+    today: [],
+    yesterday: [],
+    earlier: [],
+  };
+
+  conversations.forEach(conversation => {
+    grouped[getChatHistoryGroupKey(conversation, now)].push(conversation);
+  });
+
+  return CHAT_HISTORY_GROUPS
+    .map(group => ({ ...group, conversations: grouped[group.key] }))
+    .filter(group => group.conversations.length > 0);
+}
+
 function ConversationHistoryItem({
   conversation,
   active,
+  pinned,
+  archived = false,
   onSelect,
+  onTogglePin,
+  onToggleArchive,
   onRename,
   onDelete,
+  onExport,
+  exportable = false,
   mutating,
   openMenu,
   setOpenMenu,
+  menuPortalDisabled = false,
 }) {
   const { t } = useTranslation();
   const [renaming, setRenaming] = useState(false);
@@ -9115,7 +9478,7 @@ function ConversationHistoryItem({
       if (!trigger) return;
       const rect = trigger.getBoundingClientRect();
       const menuWidth = 168;
-      const menuHeight = 96;
+      const menuHeight = archived ? 128 : 208;
       const gap = 6;
       const margin = 8;
       const viewportWidth = window.innerWidth || document.documentElement.clientWidth;
@@ -9156,7 +9519,7 @@ function ConversationHistoryItem({
       window.removeEventListener("resize", updateMenuPosition);
       window.removeEventListener("scroll", updateMenuPosition, true);
     };
-  }, [conversation.id, openMenu, setOpenMenu]);
+  }, [archived, conversation.id, openMenu, setOpenMenu]);
 
   function restoreItemFocus() {
     window.setTimeout(() => {
@@ -9272,7 +9635,7 @@ function ConversationHistoryItem({
           ⋯
         </button>
       </div>
-      {openMenu === conversation.id && menuPosition && typeof document !== "undefined" && createPortal(
+      {!menuPortalDisabled && openMenu === conversation.id && menuPosition && typeof document !== "undefined" && createPortal(
         <div
           ref={menuRef}
           className="ai-chat-menu"
@@ -9280,14 +9643,45 @@ function ConversationHistoryItem({
           role="menu"
           style={{ top: menuPosition.top, left: menuPosition.left }}
           aria-label={t("chat.accessibility.conversationMenu", { title: conversation.title })}
+          onMouseDown={event => event.stopPropagation()}
         >
+          {!archived && (
+            <>
+              <button type="button" className="ai-chat-menu-item" role="menuitem" disabled={mutating} onClick={event => {
+                event.stopPropagation();
+                setOpenMenu(null);
+                setRenaming(true);
+              }}>
+                {t("chat.actions.rename")}
+              </button>
+              <button type="button" className="ai-chat-menu-item" role="menuitem" disabled={mutating} onClick={event => {
+                event.stopPropagation();
+                setOpenMenu(null);
+                onTogglePin(conversation.id);
+                restoreItemFocus();
+              }}>
+                {t(pinned ? "chat.actions.unpinConversation" : "chat.actions.pinConversation")}
+              </button>
+            </>
+          )}
           <button type="button" className="ai-chat-menu-item" role="menuitem" disabled={mutating} onClick={event => {
             event.stopPropagation();
             setOpenMenu(null);
-            setRenaming(true);
+            onToggleArchive(conversation.id);
+            restoreItemFocus();
           }}>
-            {t("chat.actions.rename")}
+            {t(archived ? "chat.actions.unarchiveConversation" : "chat.actions.archiveConversation")}
           </button>
+          {active && onExport && (
+            <button type="button" className="ai-chat-menu-item" role="menuitem" disabled={mutating || !exportable} onClick={event => {
+              event.stopPropagation();
+              if (!exportable) return;
+              setOpenMenu(null);
+              onExport(conversation, menuButtonRef.current);
+            }}>
+              {t("chat.actions.exportConversation")}
+            </button>
+          )}
           <button type="button" className="ai-chat-menu-item danger" role="menuitem" disabled={mutating} onClick={event => {
             event.stopPropagation();
             setOpenMenu(null);
@@ -9445,6 +9839,12 @@ function AIChatPage() {
     conversations,
     activeConversation,
     activeConversationId,
+    messages,
+    sending,
+    syncing,
+    generating,
+    conversationLoading,
+    conversationError,
     createConversation,
     selectConversation,
     renameConversation,
@@ -9454,23 +9854,66 @@ function AIChatPage() {
     retry,
     mutationError,
     mutatingConversationId,
+    generationByMessageId,
     legacyNoticeVisible,
     dismissLegacyNotice,
   } = useChat();
   const [openMenu, setOpenMenu] = useState(null);
   const [deleteTarget, setDeleteTarget] = useState(null);
   const [deleteError, setDeleteError] = useState("");
+  const [exportTarget, setExportTarget] = useState(null);
+  const [exportFormat, setExportFormat] = useState("markdown");
+  const [exportError, setExportError] = useState("");
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => readChatSidebarCollapsed(user?.id));
   const [historyDrawerOpen, setHistoryDrawerOpen] = useState(false);
+  const [historySearch, setHistorySearch] = useState("");
+  const [historyView, setHistoryView] = useState("chats");
+  const [collapsedHistoryGroups, setCollapsedHistoryGroups] = useState({});
+  const [pinnedConversationIds, setPinnedConversationIds] = useState(() => readPinnedConversationIds(user?.id));
+  const [archivedConversationIds, setArchivedConversationIds] = useState(() => readArchivedConversationIds(user?.id));
+  const [historyUsesDrawer, setHistoryUsesDrawer] = useState(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return false;
+    return window.matchMedia("(max-width: 820px)").matches;
+  });
+  const [composerDraftRequest, setComposerDraftRequest] = useState(null);
   const deleteReturnFocusRef = useRef(null);
+  const exportReturnFocusRef = useRef(null);
   const newChatButtonRef = useRef(null);
   const historyDrawerTriggerRef = useRef(null);
   const historyDrawerRef = useRef(null);
   const historyListId = "ai-chat-history-panel";
   const historyDrawerId = "ai-chat-history-drawer";
+  const quickPrompts = useMemo(() => [
+    {
+      id: "spot-suspicious-message",
+      label: t("chat.pilot.quickPrompts.spotSuspiciousMessage"),
+    },
+    {
+      id: "strengthen-account-safety",
+      label: t("chat.pilot.quickPrompts.strengthenAccountSafety"),
+    },
+    {
+      id: "protect-personal-information",
+      label: t("chat.pilot.quickPrompts.protectPersonalInformation"),
+    },
+    {
+      id: "check-online-information",
+      label: t("chat.pilot.quickPrompts.checkOnlineInformation"),
+    },
+  ], [t]);
 
   useEffect(() => {
     setSidebarCollapsed(readChatSidebarCollapsed(user?.id));
+  }, [user?.id]);
+
+  useEffect(() => {
+    setPinnedConversationIds(readPinnedConversationIds(user?.id));
+  }, [user?.id]);
+
+  useEffect(() => {
+    setArchivedConversationIds(readArchivedConversationIds(user?.id));
+    setHistoryView("chats");
+    setHistorySearch("");
   }, [user?.id]);
 
   useEffect(() => {
@@ -9478,16 +9921,43 @@ function AIChatPage() {
   }, [sidebarCollapsed, user?.id]);
 
   useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return undefined;
+    const query = window.matchMedia("(max-width: 820px)");
+    const syncHistoryMode = event => {
+      setHistoryUsesDrawer(Boolean(event.matches));
+    };
+    setHistoryUsesDrawer(Boolean(query.matches));
+    if (typeof query.addEventListener === "function") {
+      query.addEventListener("change", syncHistoryMode);
+      return () => query.removeEventListener("change", syncHistoryMode);
+    }
+    query.addListener(syncHistoryMode);
+    return () => query.removeListener(syncHistoryMode);
+  }, []);
+
+  useEffect(() => {
     if (!historyDrawerOpen) return undefined;
     function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        setHistoryDrawerOpen(false);
-        window.setTimeout(() => historyDrawerTriggerRef.current?.focus(), 0);
+      if (event.key !== "Escape" || event.defaultPrevented) return;
+      if (exportTarget || openMenu) return;
+      if (historySearch) {
+        event.preventDefault();
+        event.stopPropagation();
+        event.stopImmediatePropagation?.();
+        setHistorySearch("");
+        window.setTimeout(() => document.getElementById("ai-chat-history-search-drawer")?.focus(), 0);
+        return;
       }
+      setHistoryDrawerOpen(false);
+      window.setTimeout(() => historyDrawerTriggerRef.current?.focus(), 0);
     }
     document.addEventListener("keydown", handleKeyDown);
-    window.setTimeout(() => historyDrawerRef.current?.focus(), 0);
     return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [exportTarget, historyDrawerOpen, historySearch, openMenu]);
+
+  useEffect(() => {
+    if (!historyDrawerOpen) return;
+    window.setTimeout(() => historyDrawerRef.current?.focus(), 0);
   }, [historyDrawerOpen]);
 
   if (!user) { go("login"); return null; }
@@ -9502,6 +9972,14 @@ function AIChatPage() {
     setOpenMenu(null);
   }
 
+  function handleWorkspaceHistoryAction() {
+    if (historyUsesDrawer) {
+      openHistoryDrawer();
+      return;
+    }
+    toggleSidebarCollapsed();
+  }
+
   function closeHistoryDrawer() {
     setHistoryDrawerOpen(false);
     window.setTimeout(() => historyDrawerTriggerRef.current?.focus(), 0);
@@ -9513,8 +9991,73 @@ function AIChatPage() {
   }
 
   function handleCreateConversation() {
+    setHistorySearch("");
+    setHistoryView("chats");
     createConversation();
     setHistoryDrawerOpen(false);
+  }
+
+  function clearHistorySearch() {
+    setHistorySearch("");
+  }
+
+  function handleHistorySearchKeyDown(event) {
+    if (event.key !== "Escape" || !historySearch) return;
+    event.preventDefault();
+    event.stopPropagation();
+    event.nativeEvent?.stopImmediatePropagation?.();
+    clearHistorySearch();
+  }
+
+  function toggleHistoryGroup(groupKey) {
+    setCollapsedHistoryGroups(previous => ({
+      ...previous,
+      [groupKey]: !previous[groupKey],
+    }));
+  }
+
+  function toggleConversationPinned(conversationId) {
+    const visibleConversationIds = new Set(conversations.map(conversation => Number(conversation.id)));
+    setPinnedConversationIds(current => (
+      writePinnedConversationIds(
+        user?.id,
+        togglePinnedConversationId(
+          current.filter(id => visibleConversationIds.has(Number(id))),
+          conversationId
+        )
+      )
+    ));
+  }
+
+  function toggleConversationArchived(conversationId) {
+    const visibleConversationIds = new Set(conversations.map(conversation => Number(conversation.id)));
+    const wasArchived = archivedConversationIds.includes(Number(conversationId));
+    setArchivedConversationIds(current => {
+      return writeArchivedConversationIds(
+        user?.id,
+        toggleArchivedConversationId(
+          current.filter(id => visibleConversationIds.has(Number(id))),
+          conversationId
+        )
+      );
+    });
+    if (wasArchived) {
+      setHistoryView("chats");
+      setHistorySearch("");
+    }
+  }
+
+  function setConversationHistoryView(nextView) {
+    setHistoryView(nextView);
+    setHistorySearch("");
+  }
+
+  function handleQuickPromptSelect(prompt) {
+    if (sending || syncing || generating || conversationLoading) return;
+    setComposerDraftRequest({
+      requestId: `${prompt.id}-${Date.now()}`,
+      text: prompt.label,
+    });
   }
 
   function requestDeleteConversation(conversation, returnFocusElement) {
@@ -9523,9 +10066,38 @@ function AIChatPage() {
     setDeleteTarget(conversation);
   }
 
+  function requestExportConversation(conversation, returnFocusElement) {
+    exportReturnFocusRef.current = returnFocusElement;
+    setExportFormat("markdown");
+    setExportError("");
+    setExportTarget(conversation);
+  }
+
   function closeDeleteDialog() {
     setDeleteTarget(null);
     window.setTimeout(() => deleteReturnFocusRef.current?.focus(), 0);
+  }
+
+  function closeExportDialog() {
+    setExportTarget(null);
+    setExportError("");
+    window.setTimeout(() => exportReturnFocusRef.current?.focus(), 0);
+  }
+
+  function confirmExportConversation() {
+    if (!exportTarget || !hasExportableMessages(messages)) return;
+    try {
+      downloadConversationExport({
+        conversation: exportTarget,
+        messages,
+        format: exportFormat,
+        locale: normalizeLocale(i18n.language),
+        generationByMessageId,
+      });
+      closeExportDialog();
+    } catch {
+      setExportError(t("chat.export.error"));
+    }
   }
 
   async function confirmDeleteConversation() {
@@ -9535,6 +10107,18 @@ function AIChatPage() {
       setDeleteError(t("chat.errors.unableToDelete"));
       return;
     }
+    setPinnedConversationIds(current => (
+      writePinnedConversationIds(
+        user?.id,
+        current.filter(id => id !== Number(deleteTarget.id))
+      )
+    ));
+    setArchivedConversationIds(current => (
+      writeArchivedConversationIds(
+        user?.id,
+        current.filter(id => id !== Number(deleteTarget.id))
+      )
+    ));
     setDeleteTarget(null);
     window.setTimeout(() => {
       if (returnFocusElement?.isConnected) {
@@ -9545,7 +10129,41 @@ function AIChatPage() {
     }, 0);
   }
 
+  const activeConversationExportable = hasExportableMessages(messages);
+
   function renderHistoryContent({ compact = false, drawer = false } = {}) {
+    const archivedView = historyView === "archived";
+    const normalizedHistorySearch = historySearch.trim().toLocaleLowerCase();
+    const searchActive = Boolean(normalizedHistorySearch);
+    const { archivedConversations, activeConversations } = partitionArchivedConversations(
+      conversations,
+      archivedConversationIds
+    );
+    const viewConversations = archivedView ? archivedConversations : activeConversations;
+    const visibleConversations = normalizedHistorySearch
+      ? viewConversations.filter(conversation =>
+        String(conversation.title || "").toLocaleLowerCase().includes(normalizedHistorySearch)
+      )
+      : viewConversations;
+    const groupedConversations = archivedView
+      ? []
+      : (() => {
+          const { pinnedConversations, unpinnedConversations } = partitionPinnedConversations(
+            visibleConversations,
+            pinnedConversationIds
+          );
+          return [
+            ...(pinnedConversations.length > 0
+              ? [{
+                  key: "pinned",
+                  labelKey: "chat.history.groups.pinned",
+                  conversations: pinnedConversations,
+                }]
+              : []),
+            ...groupChatHistoryConversations(unpinnedConversations, new Date()),
+          ];
+        })();
+
     if (compact) {
       return (
         <div className="ai-chat-sidebar-rail-actions">
@@ -9600,6 +10218,57 @@ function AIChatPage() {
             </button>
           </div>
         </div>
+        {!error && !initialLoading && conversations.length > 0 && (
+          <div className="ai-chat-history-view-switch" role="group" aria-label={t("chat.history.viewSwitchLabel")}>
+            <button
+              type="button"
+              className={`ai-chat-history-view-button${!archivedView ? " active" : ""}`}
+              aria-pressed={!archivedView}
+              onClick={() => setConversationHistoryView("chats")}
+            >
+              {t("chat.history.views.chats")}
+            </button>
+            <button
+              type="button"
+              className={`ai-chat-history-view-button${archivedView ? " active" : ""}`}
+              aria-pressed={archivedView}
+              onClick={() => setConversationHistoryView("archived")}
+            >
+              {t("chat.history.views.archived")}
+            </button>
+          </div>
+        )}
+        {!error && !initialLoading && conversations.length > 0 && (
+          <div className="ai-chat-history-search" role="search">
+            <label
+              className="ai-chat-history-search-label"
+              htmlFor={`ai-chat-history-search-${drawer ? "drawer" : "sidebar"}`}
+            >
+              {t("chat.history.searchLabel")}
+            </label>
+            <div className="ai-chat-history-search-row">
+              <input
+                id={`ai-chat-history-search-${drawer ? "drawer" : "sidebar"}`}
+                className="ai-chat-history-search-input"
+                type="search"
+                value={historySearch}
+                placeholder={t("chat.history.searchPlaceholder")}
+                onChange={event => setHistorySearch(event.target.value)}
+                onKeyDown={handleHistorySearchKeyDown}
+              />
+              {historySearch && (
+                <button
+                  type="button"
+                  className="ai-chat-history-search-clear"
+                  onClick={clearHistorySearch}
+                  aria-label={t("chat.history.clearSearch")}
+                >
+                  ×
+                </button>
+              )}
+            </div>
+          </div>
+        )}
         {legacyNoticeVisible && (
           <PageState
             type="empty"
@@ -9621,20 +10290,99 @@ function AIChatPage() {
           <PageState type="loading" title={t("chat.loading.conversations")} message={t("chat.loading.pleaseWait")} />
         ) : conversations.length === 0 ? (
           <PageState type="empty" title={t("chat.history.emptyTitle")} message={t("chat.history.emptyDescription")} />
-        ) : (
+        ) : viewConversations.length === 0 ? (
+          <PageState
+            type="empty"
+            title={archivedView ? t("chat.history.emptyArchivedTitle") : t("chat.history.emptyTitle")}
+            message={archivedView ? t("chat.history.emptyArchivedDescription") : t("chat.history.emptyDescription")}
+          />
+        ) : visibleConversations.length === 0 ? (
+          <div className="ai-chat-history-no-results" role="status">
+            {t(archivedView ? "chat.history.noArchivedSearchResults" : "chat.history.noSearchResults")}
+          </div>
+        ) : archivedView ? (
           <div className="ai-chat-list" role="list">
-            {conversations.map(conversation => (
+            {visibleConversations.map(conversation => (
               <ConversationHistoryItem
                 key={conversation.id}
                 conversation={conversation}
                 active={conversation.id === activeConversationId}
+                pinned={pinnedConversationIds.includes(Number(conversation.id))}
+                archived
                 onSelect={handleSelectConversation}
+                onTogglePin={toggleConversationPinned}
+                onToggleArchive={toggleConversationArchived}
                 onRename={renameConversation}
                 onDelete={requestDeleteConversation}
+                onExport={requestExportConversation}
+                exportable={conversation.id === activeConversationId && activeConversationExportable}
                 mutating={mutatingConversationId === conversation.id}
                 openMenu={openMenu}
                 setOpenMenu={setOpenMenu}
+                menuPortalDisabled={historyDrawerOpen && !drawer}
               />
+            ))}
+          </div>
+        ) : (
+          <div className="ai-chat-list" role="list">
+            {groupedConversations.map(group => (
+              <section className="ai-chat-history-group" key={group.key}>
+                {(() => {
+                  const groupLabel = t(group.labelKey);
+                  const groupHeadingId = `ai-chat-history-${drawer ? "drawer" : "sidebar"}-${group.key}-heading`;
+                  const groupListId = `ai-chat-history-${drawer ? "drawer" : "sidebar"}-${group.key}-items`;
+                  const groupExpanded = searchActive || !collapsedHistoryGroups[group.key];
+                  return (
+                    <>
+                      <div className="ai-chat-history-group-header">
+                        <h3 id={groupHeadingId} className="ai-chat-history-group-heading">{groupLabel}</h3>
+                        <button
+                          type="button"
+                          className="ai-chat-history-group-control"
+                          aria-expanded={groupExpanded}
+                          aria-controls={groupListId}
+                          aria-label={t(
+                            groupExpanded ? "chat.history.groups.collapse" : "chat.history.groups.expand",
+                            { group: groupLabel }
+                          )}
+                          onClick={() => toggleHistoryGroup(group.key)}
+                        >
+                          <span
+                            className={`ai-chat-history-group-chevron${groupExpanded ? " is-expanded" : ""}`}
+                            aria-hidden="true"
+                          />
+                        </button>
+                      </div>
+                      <div
+                        id={groupListId}
+                        className={`ai-chat-history-group-list${groupExpanded ? "" : " is-collapsed"}`}
+                        aria-labelledby={groupHeadingId}
+                      >
+                        {groupExpanded && group.conversations.map(conversation => (
+                          <ConversationHistoryItem
+                            key={conversation.id}
+                            conversation={conversation}
+                            active={conversation.id === activeConversationId}
+                            pinned={pinnedConversationIds.includes(Number(conversation.id))}
+                            archived={false}
+                            onSelect={handleSelectConversation}
+                            onTogglePin={toggleConversationPinned}
+                            onToggleArchive={toggleConversationArchived}
+                            onRename={renameConversation}
+                            onDelete={requestDeleteConversation}
+                            onExport={requestExportConversation}
+                            exportable={conversation.id === activeConversationId && activeConversationExportable}
+                            mutating={mutatingConversationId === conversation.id}
+                            openMenu={openMenu}
+                            setOpenMenu={setOpenMenu}
+                            menuPortalDisabled={historyDrawerOpen && !drawer}
+                          />
+                        ))}
+                      </div>
+                    </>
+                  );
+                })()}
+              </section>
             ))}
           </div>
         )}
@@ -9643,60 +10391,94 @@ function AIChatPage() {
     );
   }
 
+  const activeConversationTitle = activeConversation?.title || t("chat.conversation.newTitle");
+  const activeConversationMeta = activeConversation
+    ? t("chat.history.lastUpdated", { time: formatChatUpdatedAt(activeConversation.updatedAt, t) })
+    : t("chat.history.noActive");
+  const showFullPageEmptyState = Boolean(
+    !initialLoading &&
+    !conversationLoading &&
+    !conversationError &&
+    messages.length === 0
+  );
+  const quickPromptSelectionDisabled = sending || syncing || generating || conversationLoading;
+  const fullPageEmptyState = showFullPageEmptyState ? (
+    <CyberGuardEmptyState
+      title={t("chat.pilot.empty.title")}
+      description={t("chat.pilot.empty.description")}
+      prompts={(
+        <CyberGuardQuickPrompts
+          label={t("chat.pilot.quickPrompts.groupLabel")}
+          prompts={quickPrompts}
+          disabled={quickPromptSelectionDisabled}
+          onSelectPrompt={handleQuickPromptSelect}
+        />
+      )}
+    />
+  ) : null;
+
   return (
-    <div>
-      <div style={{ background: "linear-gradient(135deg, #1a2e1a 0%, #2d4a2d 100%)", padding: "2.5rem 1.5rem", color: "#fff" }}>
-        <div style={{ maxWidth: 1180, margin: "0 auto" }}>
-          <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.55)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em", marginBottom: "0.4rem" }}>
-            {t("nav.aiChat")}
-          </div>
-          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.5rem, 3vw, 2.2rem)", marginBottom: "0.4rem" }}>
-            {t("chat.page.title")}
-          </h1>
-          <p style={{ color: "rgba(255,255,255,0.68)", maxWidth: 680, lineHeight: 1.65 }}>
-            {t("chat.page.description")}
-          </p>
-        </div>
-      </div>
+    <div className="cyberguard-theme cyberguard-page">
+      <CyberGuardWorkspaceHeader
+        title={t("chat.pilot.header.title")}
+        description={t("chat.pilot.header.description")}
+        conversationLabel={t("chat.pilot.header.currentConversation")}
+        conversationTitle={activeConversationTitle}
+        updatedLabel={activeConversationMeta}
+        historyLabel={historyUsesDrawer
+          ? t("chat.accessibility.openHistory")
+          : sidebarCollapsed
+            ? t("chat.accessibility.expandHistory")
+            : t("chat.accessibility.collapseHistory")}
+        newChatLabel={t("chat.actions.newChat")}
+        onOpenHistory={handleWorkspaceHistoryAction}
+        onNewChat={handleCreateConversation}
+        historyButtonRef={historyDrawerTriggerRef}
+        historyControls={historyUsesDrawer ? historyDrawerId : historyListId}
+        historyExpanded={historyUsesDrawer ? historyDrawerOpen : !sidebarCollapsed}
+        newChatDisabled={initialLoading}
+      />
+      <CyberGuardAiNotice
+        title={t("chat.pilot.notice.title")}
+        description={t("chat.pilot.notice.description")}
+      />
 
-      <div className={`ai-chat-shell${sidebarCollapsed ? " sidebar-collapsed" : ""}`}>
-        <aside id={historyListId} className={`ai-chat-sidebar${sidebarCollapsed ? " collapsed" : ""}`} aria-label={t("chat.history.ariaLabel")}>
-          {renderHistoryContent({ compact: sidebarCollapsed })}
-        </aside>
-
-        <section className="ai-chat-main" aria-label={t("chat.page.chatAreaLabel")}>
-          <div className="ai-chat-main-header">
-            <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
-              <div className="ai-chat-mobile-actions">
-                <button
-                  type="button"
-                  className="btn-ghost"
-                  ref={historyDrawerTriggerRef}
-                  onClick={openHistoryDrawer}
-                  aria-label={t("chat.accessibility.openHistory")}
-                  aria-expanded={historyDrawerOpen}
-                  aria-controls={historyDrawerId}
-                >
-                  {t("chat.actions.openHistory")}
-                </button>
-              </div>
-              <div style={{ minWidth: 0, flex: "1 1 auto" }}>
-                <div style={{ fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                  {activeConversation?.title || t("chat.conversation.newTitle")}
-                </div>
-                <div style={{ color: "#77827d", fontSize: "0.8rem", marginTop: "0.15rem" }}>
-                  {activeConversation ? t("chat.history.lastUpdated", { time: formatChatUpdatedAt(activeConversation.updatedAt, t) }) : t("chat.history.noActive")}
+      <CyberGuardChatShell
+        sidebarCollapsed={sidebarCollapsed}
+        sidebar={
+          <aside id={historyListId} className={`ai-chat-sidebar${sidebarCollapsed ? " collapsed" : ""}`} aria-label={t("chat.history.ariaLabel")}>
+            {renderHistoryContent({ compact: sidebarCollapsed })}
+          </aside>
+        }
+        conversation={
+          <section className="ai-chat-main" aria-label={t("chat.page.chatAreaLabel")}>
+            <div className="ai-chat-main-header">
+              <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
+                <div style={{ minWidth: 0, flex: "1 1 auto" }}>
+                  <div style={{ fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
+                    {activeConversationTitle}
+                  </div>
+                  <div style={{ color: "#77827d", fontSize: "0.8rem", marginTop: "0.15rem" }}>
+                    {activeConversationMeta}
+                  </div>
                 </div>
               </div>
-              <button className="btn-ghost" onClick={handleCreateConversation} aria-label={t("chat.accessibility.newChat")}>
-                {t("chat.actions.newChat")}
-              </button>
             </div>
-          </div>
-          <ChatMessageList className="ai-chat-full-messages" />
-          <ChatComposer />
-        </section>
-      </div>
+            <ChatMessageList
+              className="ai-chat-full-messages cyberguard-chat-shell-messages"
+              emptyState={fullPageEmptyState}
+            />
+            <div className="cyberguard-chat-shell-composer">
+              <ChatComposer
+                draftRequest={composerDraftRequest}
+                useComposerFrame
+                composerLabel={t("chat.pilot.composer.label")}
+                composerGuidance={t("chat.pilot.composer.guidance")}
+              />
+            </div>
+          </section>
+        }
+      />
       {historyDrawerOpen && (
         <div className="ai-chat-drawer-layer">
           <button
@@ -9708,6 +10490,7 @@ function AIChatPage() {
           <aside
             id={historyDrawerId}
             className="ai-chat-drawer"
+            role="dialog"
             ref={historyDrawerRef}
             tabIndex={-1}
             aria-label={t("chat.history.ariaLabel")}
@@ -9736,6 +10519,25 @@ function AIChatPage() {
           onCancel={closeDeleteDialog}
           onConfirm={confirmDeleteConversation}
           danger
+        />
+      )}
+      {exportTarget && (
+        <ExportConversationDialog
+          title={t("chat.export.title")}
+          description={t("chat.export.description")}
+          conversationTitle={exportTarget.title}
+          formatLabel={t("chat.export.formatLabel")}
+          format={exportFormat}
+          setFormat={setExportFormat}
+          cancelLabel={t("common.cancel")}
+          exportLabel={t("chat.export.confirm")}
+          markdownLabel={t("chat.export.formats.markdown")}
+          textLabel={t("chat.export.formats.text")}
+          disabled={!activeConversationExportable}
+          error={exportError}
+          returnFocusHandled={Boolean(exportReturnFocusRef.current)}
+          onCancel={closeExportDialog}
+          onExport={confirmExportConversation}
         />
       )}
       {deleteTarget && deleteError && (
@@ -10279,7 +11081,7 @@ function Navbar({ page }) {
   }
 
   return (
-    <nav className="navbar">
+    <nav className={`navbar${page === "ai-chat" ? " cyberguard-nav-flow" : ""}`}>
       <button
         type="button"
         className="nav-logo"
@@ -10833,7 +11635,7 @@ export default function App() {
       <ChatProvider user={user}>
         <style>{globalStyle}</style>
         <Navbar page={page} />
-        <main className="page-wrap">
+        <main className={`page-wrap${page === "ai-chat" ? " cyberguard-page-wrap" : ""}`}>
           {checkingSession ? (
             <div className="section">
               <p className="section-title">{t("app.loadingTitle")}</p>
@@ -10841,7 +11643,7 @@ export default function App() {
             </div>
           ) : (PAGES[page] ?? <HomePage />)}
         </main>
-        <Footer />
+        {page !== "ai-chat" && <Footer />}
         {!checkingSession && page !== "ai-chat" && <ChatWidget />}
         {pendingNavigation && (pendingNavigation.guard || activityGuard) && (
           <ConfirmationDialog

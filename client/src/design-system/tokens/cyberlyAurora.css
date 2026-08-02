@@ -1,0 +1,31 @@
+.cyberguard-theme {
+  --cyberly-indigo-600: #5356D9;
+  --cyberly-mint-500: #25BFA2;
+  --cyberly-coral-500: #FF6F61;
+  --cyberly-gold-500: #F5B942;
+
+  --cyberly-page-bg: #F7F8FC;
+  --cyberly-surface-primary: #FFFFFF;
+  --cyberly-surface-secondary: #F0F2F8;
+  --cyberly-text-primary: #202438;
+  --cyberly-text-secondary: #5E6478;
+  --cyberly-border-soft: #E2E5EE;
+
+  --cyberly-success: #168A63;
+  --cyberly-warning: #C77A12;
+  --cyberly-error: #D64550;
+  --cyberly-info: #2878C8;
+
+  --cyberly-focus-ring:
+    0 0 0 3px
+    color-mix(in srgb, var(--cyberly-indigo-600) 22%, transparent);
+
+  --cyberly-radius-control: 10px;
+  --cyberly-radius-panel: 16px;
+  --cyberly-space-page-gutter: clamp(1rem, 2.5vw, 1.5rem);
+  --cyberly-chat-message-max: 680px;
+  --cyberly-chat-drawer-width: 340px;
+  --cyberly-motion-fast: 160ms;
+  --cyberly-motion-panel: 220ms;
+}
+

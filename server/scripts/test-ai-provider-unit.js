@@ -11,6 +11,9 @@ const {
   normalizeProviderError,
 } = require('../src/ai/providers/aiProvider.errors');
 const {
+  normalizeProviderFailure,
+} = require('../src/ai/ai.errors');
+const {
   normalizeToolDeclarations,
   normalizeReturnedToolCalls,
 } = require('../src/ai/providers/aiProvider.tools');
@@ -184,6 +187,25 @@ async function run() {
     }),
   }).code, 'AI_RATE_LIMITED');
   assert.equal(normalizeProviderError({ status: 400, message: 'context length' }).code, 'AI_CONTEXT_LIMIT');
+
+  const serviceErrorCases = [
+    [createProviderError('AI_PROVIDER_NOT_CONFIGURED', 'missing OPENAI_API_KEY sk-test-openai', 503), 'AI_NOT_CONFIGURED', 503, false],
+    [createProviderError('AI_AUTH_FAILED', 'invalid key sk-test-openai', 401), 'AI_AUTH_FAILED', 503, false],
+    [createProviderError('AI_RATE_LIMITED', 'quota reached', 429), 'AI_RATE_LIMITED', 429, true],
+    [createProviderError('AI_PROVIDER_TIMEOUT', 'timeout', 503), 'AI_TIMEOUT', 504, true],
+    [createProviderError('AI_CONTEXT_LIMIT', 'context length exceeded', 400), 'AI_CONTEXT_LIMIT', 413, false],
+    [createProviderError('AI_REQUEST_FAILED', 'raw request failed', 400), 'AI_REQUEST_FAILED', 502, true],
+    [createProviderError('AI_PROVIDER_UNAVAILABLE', 'service unavailable', 503), 'AI_PROVIDER_UNAVAILABLE', 503, true],
+    [createProviderError('AI_INVALID_RESPONSE', 'bad output', 503), 'AI_INVALID_RESPONSE', 502, true],
+  ];
+  for (const [error, code, status, retryable] of serviceErrorCases) {
+    const normalized = normalizeProviderFailure(error);
+    assert.equal(normalized.code, code);
+    assert.equal(normalized.status, status);
+    assert.equal(normalized.retryable, retryable);
+    assert.equal(JSON.stringify(normalized).includes('sk-test-openai'), false);
+    assert.equal(JSON.stringify(normalized).includes('raw request failed'), false);
+  }
 
   const selection = createProviderSelectionPolicy({ AI_DEFAULT_PROVIDER: 'openai', AI_PROVIDER_CYBERGUARD: 'gemini' });
   assert.equal(selection.providerForPurpose('cyberguard_chat'), 'gemini');

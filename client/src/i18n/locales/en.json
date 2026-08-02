@@ -276,7 +276,7 @@
     },
     "cyberGuard": {
       "title": "CyberGuard AI",
-      "description": "Preview the chat interface. Live AI replies will use the backend AI Gateway in a later phase.",
+      "description": "Start a CyberGuard chat from your dashboard or open the full chat page.",
       "badge": "Saved profile preview"
     }
   },
@@ -851,15 +851,15 @@
   },
   "agent": {
     "title": "CyberGuard AI",
-    "welcome": "Hi {{name}}! CyberGuard's chat interface is ready, but live AI replies will be enabled after the backend AI Gateway phase.",
+    "welcome": "Hi {{name}}! CyberGuard is ready to support focused cyber-wellness learning.",
     "thinking": "CyberGuard is thinking...",
     "placeholder": "Ask about cybersecurity...",
     "send": "Send"
   },
   "chat": {
     "title": "Cyber Wellness Assistant",
-    "welcome": "Hi {{name}}! This chat UI is ready, but live CyberGuard replies will be enabled after the backend AI Gateway phase.",
-    "disabledReply": "CyberGuard chat is ready visually, but live AI replies are disabled until the backend AI Gateway phase. Your message is kept only in this page session for now.",
+    "welcome": "Hi {{name}}! CyberGuard is ready to support focused cyber-wellness learning.",
+    "disabledReply": "CyberGuard could not prepare a reply right now. Your message remains in this conversation so you can retry safely.",
     "guest": "Guest",
     "signInPrompt": "Sign in to preview the CyberGuard chat interface with your session profile.",
     "signInCta": "Sign in / Sign up",
@@ -870,8 +870,35 @@
     "send": "Send",
     "page": {
       "title": "AI Chatbot",
-      "description": "Use CyberGuard AI as a focused learning companion. Live AI replies will connect during the AI Gateway phase.",
+      "description": "Use CyberGuard AI as a focused learning companion for safer next steps.",
       "chatAreaLabel": "Active chat conversation"
+    },
+    "pilot": {
+      "header": {
+        "kicker": "CyberGuard",
+        "title": "CyberGuard",
+        "description": "Ask focused cyber-wellness questions, review safer next steps, and keep learning at your pace.",
+        "currentConversation": "Current chat"
+      },
+      "notice": {
+        "title": "AI-supported guidance",
+        "description": "CyberGuard may make mistakes. Check important information with trusted sources or a trusted adult. Learner-controlled actions still require your confirmation."
+      },
+      "empty": {
+        "title": "Start with a cyber-safety question",
+        "description": "Ask CyberGuard to help you understand suspicious messages, safer account choices, privacy, or information you see online."
+      },
+      "quickPrompts": {
+        "groupLabel": "Quick-start CyberGuard prompts",
+        "spotSuspiciousMessage": "How can I tell if a message might be a scam?",
+        "strengthenAccountSafety": "What can I do to make my account safer?",
+        "protectPersonalInformation": "How can I protect my online privacy and personal data?",
+        "checkOnlineInformation": "How can I check whether online information is misinformation?"
+      },
+      "composer": {
+        "label": "Message CyberGuard",
+        "guidance": "Review and edit your message before sending. CyberGuard will not act without your confirmation."
+      }
     },
     "actions": {
       "fullPage": "Full Page",
@@ -896,7 +923,12 @@
       "delete": "Delete",
       "deleting": "Deleting...",
       "renameConversation": "Rename conversation",
-      "deleteConversation": "Delete conversation"
+      "deleteConversation": "Delete conversation",
+      "pinConversation": "Pin conversation",
+      "unpinConversation": "Unpin conversation",
+      "archiveConversation": "Archive conversation",
+      "unarchiveConversation": "Unarchive conversation",
+      "exportConversation": "Export conversation"
     },
     "conversation": {
       "newTitle": "New chat"
@@ -905,8 +937,28 @@
       "title": "Conversation history",
       "description": "Saved securely to your account.",
       "ariaLabel": "Conversation history",
+      "viewSwitchLabel": "Chat list view",
+      "views": {
+        "chats": "Chats",
+        "archived": "Archived"
+      },
+      "searchLabel": "Search conversations",
+      "searchPlaceholder": "Search conversation titles",
+      "clearSearch": "Clear conversation search",
+      "noSearchResults": "No conversations match your search.",
+      "noArchivedSearchResults": "No archived conversations match your search.",
+      "groups": {
+        "pinned": "Pinned",
+        "today": "Today",
+        "yesterday": "Yesterday",
+        "earlier": "Earlier",
+        "expand": "Expand {{group}} conversations",
+        "collapse": "Collapse {{group}} conversations"
+      },
       "emptyTitle": "No conversations yet",
       "emptyDescription": "Start a chat and your secure account history will appear here.",
+      "emptyArchivedTitle": "No archived conversations",
+      "emptyArchivedDescription": "Archived chats will appear here when you move them out of your main history.",
       "lastUpdated": "Last updated {{time}}",
       "unknownTime": "Unknown time",
       "noActive": "No active conversation yet"
@@ -988,6 +1040,17 @@
       "title": "Delete conversation?",
       "description": "Delete “{{title}}”? This removes the conversation from your account."
     },
+    "export": {
+      "title": "Export conversation",
+      "description": "Download the currently loaded conversation from this browser. No account data is changed.",
+      "formatLabel": "Format",
+      "confirm": "Export",
+      "error": "Unable to export this conversation.",
+      "formats": {
+        "markdown": "Markdown (.md)",
+        "text": "Plain text (.txt)"
+      }
+    },
     "empty": {
       "title": "Ask CyberGuard anything",
       "description": "Start with a question about scams, privacy, passwords, misinformation, or safe online choices.",
@@ -1021,7 +1084,7 @@
   },
   "footer": {
     "builtWithCare": "Built with care",
-    "description": "Cyber wellness education for everyone · AI Gateway coming in a later phase."
+    "description": "Cyber wellness education for everyone."
   },
   "app": {
     "loadingTitle": "Loading Cyberly...",
@@ -2125,10 +2188,15 @@
       "AI_ASSISTANT_PERSISTENCE_FAILED": "CyberGuard could not save the reply. Try again.",
       "AI_GENERATION_ALREADY_COMPLETED": "CyberGuard already prepared this reply.",
       "AI_GENERATION_IN_PROGRESS": "CyberGuard is already preparing a reply.",
+      "AI_AUTH_FAILED": "CyberGuard cannot connect to its AI service right now.",
+      "AI_CONTEXT_LIMIT": "This conversation is too long for a new response. Start a new chat or shorten your question.",
       "AI_INVALID_RESPONSE": "CyberGuard could not prepare a safe reply. Try rephrasing the question.",
       "AI_NOT_CONFIGURED": "CyberGuard is not configured yet.",
+      "AI_OUTPUT_BLOCKED": "CyberGuard could not safely show that response.",
       "AI_PROVIDER_UNAVAILABLE": "CyberGuard is temporarily unavailable. Try again shortly.",
+      "AI_REQUEST_FAILED": "CyberGuard could not send this request. Please try again.",
       "AI_RATE_LIMITED": "Too many requests. Wait briefly before trying again.",
+      "AI_RUNTIME_DISABLED": "CyberGuard responses are temporarily disabled.",
       "AI_TIMEOUT": "The reply took too long. Try again.",
       "AI_UNSAFE_REQUEST": "CyberGuard cannot help with that request, but it can explain safe and defensive alternatives.",
       "CHAT_CONVERSATION_NOT_FOUND": "We could not find this chat conversation.",

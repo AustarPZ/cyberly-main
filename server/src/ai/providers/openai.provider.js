@@ -69,6 +69,8 @@ async function mockGenerate(config, request) {
   if (mode === 'timeout') throw createProviderError(PROVIDER_ERROR_CODES.AI_PROVIDER_TIMEOUT, 'Mock timeout.', 503);
   if (mode === 'rate-limit') throw createProviderError(PROVIDER_ERROR_CODES.AI_RATE_LIMITED, 'Mock rate limit.', 429);
   if (mode === 'auth-failed') throw createProviderError(PROVIDER_ERROR_CODES.AI_AUTH_FAILED, 'Mock auth failure.', 401);
+  if (mode === 'context-limit') throw createProviderError(PROVIDER_ERROR_CODES.AI_CONTEXT_LIMIT, 'Mock context length failure.', 400);
+  if (mode === 'request-failed') throw createProviderError(PROVIDER_ERROR_CODES.AI_REQUEST_FAILED, 'Mock request failure.', 400);
   if (mode === 'provider-error') throw createProviderError(PROVIDER_ERROR_CODES.AI_PROVIDER_UNAVAILABLE, 'Mock provider error.', 503);
   if (mode === 'empty') {
     return { providerRequestId: 'mock-empty', content: '', inputTokens: 12, outputTokens: 0 };

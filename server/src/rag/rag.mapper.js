@@ -22,14 +22,17 @@ function snippetFromText(value) {
 
 function mapRetrievedChunk(row) {
   if (!row) return null;
+  const internalTarget = safeInternalTarget(parseJson(row.internal_target_json));
   return {
     chunkId: Number(row.chunk_id),
     documentId: Number(row.document_id),
     title: row.title,
+    categoryCode: row.category_code || null,
+    resourceSlug: internalTarget?.resourceSlug || null,
     sourceLabel: row.source_label || null,
     sourceOrganisation: row.source_organisation || null,
     sourceUrl: row.source_url || null,
-    internalTarget: safeInternalTarget(parseJson(row.internal_target_json)),
+    internalTarget,
     locale: row.locale,
     snippet: snippetFromText(row.chunk_text),
     score: toNumber(row.score),

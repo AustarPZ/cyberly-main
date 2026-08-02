@@ -2,7 +2,7 @@
 
 This folder contains production-oriented documentation for the current Cyberly implementation.
 
-Cyberly is an AI-powered cyber wellness toolkit for Malaysian teenagers. The production project currently consists of:
+Cyberly is an AI-supported cyber wellness learning companion for Malaysian teenagers aged 13-17. The production project currently consists of:
 
 - `client/`: the official React frontend.
 - `server/`: the official Express/Node backend.
@@ -13,6 +13,7 @@ The root `src/` and root `public/` legacy React application have been removed fr
 ## Documentation Map
 
 - `architecture-specification/`: proposed target production architecture and ADR register. This is not fully implemented and remains subject to current-system audit.
+- `product-experience/`: proposed and approved Public Beta 0.9 product-experience foundation. The CyberGuard pilot document now includes the Public Beta 0.9 freeze baseline and handoff evidence; other experience documents remain target design guidance unless they include separate implementation evidence.
 - `audits/current-system/`: repository-derived current implementation inventory. This records current facts from migrations, runtime code, services, repositories, tests, and documentation without live database verification.
 - `gap-analysis/`: production gap, risk, dependency, priority, and release-blocker register comparing the target architecture with the current implementation inventory.
 - `architecture/system-overview.md`: current runtime architecture and major subsystems.

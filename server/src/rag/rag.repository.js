@@ -381,7 +381,13 @@ function createRagRepository(pool) {
     ];
     const conditionParams = [RETRIEVABLE_STATUS, APPROVED_REVIEW_STATUS, 'resource', locale];
 
-    if (options.categoryCode) {
+    const categoryCodes = Array.isArray(options.categoryCodes)
+      ? options.categoryCodes.filter(Boolean)
+      : [];
+    if (categoryCodes.length) {
+      conditions.push('rd.category_code IN (?)');
+      conditionParams.push(categoryCodes);
+    } else if (options.categoryCode) {
       conditions.push('rd.category_code = ?');
       conditionParams.push(options.categoryCode);
     }
@@ -420,6 +426,7 @@ function createRagRepository(pool) {
       `SELECT rc.id AS chunk_id,
               rc.document_id,
               rd.title,
+              rd.category_code,
               rd.source_label,
               rd.source_organisation,
               rd.source_url,
