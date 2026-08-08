@@ -780,3 +780,49 @@ No SMTP password, Gmail App Password, raw token, sensitive provider configuratio
 `AUTHENTICATION V1 EMAIL VERIFICATION FEATURE - FROZEN`.
 
 The certified behaviour must not receive further feature development before Public Beta unless a regression, security defect, or release-blocking UX defect is confirmed. Forgot Password, Forgot Email/account recovery, Parent/Guardian Email Binding, Guardian Confirmation, and broader Account Security/Recovery are separate future scopes.
+
+## AH. PB-ACCEPT-1 - Full Learner Journey Owner Runtime Acceptance
+
+`PB-ACCEPT-1A ENGLISH DESKTOP - PASSED`.
+
+`PB-ACCEPT-1B MOBILE - PASSED`.
+
+`PB-ACCEPT-1C BAHASA MELAYU - PASSED`.
+
+`PB-ACCEPT-1D SIMPLIFIED CHINESE - PASSED`.
+
+`PB-ACCEPT-1 FULL LEARNER JOURNEY - PASSED`.
+
+The owner completed the full English desktop learner journey. Mobile acceptance passed after the `PB-FIX-1-M01` Scenario responsive correction. Bahasa Melayu and Simplified Chinese smoke acceptance passed across the key learner surfaces.
+
+### Certified Learner Journey
+
+The bounded owner runtime acceptance covers:
+
+Register -> Email Verification -> Onboarding -> Initial Assessment -> Dashboard -> Recommended Resource -> Scenario Learning -> Progress -> CyberGuard -> Logout -> Login -> Persistence / Refresh Recovery.
+
+This acceptance certifies a coherent first-time learner journey, registration entry, email-verification integration, onboarding, assessment, dashboard use, learning-resource access, Scenario learning, progress update, CyberGuard use, logout and login, learner-state persistence, refresh recovery, desktop usability, mobile usability, and key-flow usability in Bahasa Melayu and Simplified Chinese.
+
+### PB-FIX-1-M01 - Scenario Practice Mobile Confirmation Layout
+
+**Defect:** The Scenario Practice confirmation/detail page collapsed into an unreadably narrow content column on mobile.
+
+**Severity:** HIGH and mobile release-blocking.
+
+**Root cause:** The mobile `.scenario-detail-layout` declaration appeared before the desktop three-column declaration. Because the selectors had equal specificity, the later desktop grid overrode the mobile layout at narrow widths.
+
+**Correction:** The desktop grid was preserved, the layout was made shrink-safe, and the mobile override was placed after the desktop declaration with a `minmax(0, 1fr)` single-column grid and full available width. No font shrinking, clipping, scaling, forced character breaking, or overflow-hiding workaround was used.
+
+**Automated acceptance:** PASSED.
+
+**Owner runtime acceptance:** PASSED at 430 x 932, 390 x 844, 360 x 640, and 320px width/reflow. The owner also completed a Scenario through its result and Progress update after the correction with no functional regression.
+
+`PB-FIX-1-M01 OWNER MOBILE RETEST - PASSED`.
+
+`PB-FIX-1-M01 - ACCEPTED`.
+
+`PB-FIX-1-M01 - CLOSED`.
+
+### Acceptance Boundary
+
+This is bounded Public Beta owner runtime acceptance. It does not claim formal penetration testing, production deployment certification, coverage of every browser or device, exhaustive accessibility certification, exhaustive locale or content proofreading, or load and performance certification. Deployment, runtime operations, and release certification remain separate work.

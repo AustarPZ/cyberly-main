@@ -2387,8 +2387,6 @@ body {
 }
 .dashboard-ai-preview-text { color: #52615b; font-size: 0.88rem; line-height: 1.6; margin: 0.65rem 0 1rem; }
 @media (max-width: 820px) {
-  .scenario-detail-layout { grid-template-columns: 1fr; }
-  .scenario-detail-back-rail { justify-content: flex-start; }
   .chat-panel { left: 1rem; right: 1rem; width: auto; }
 }
 @media (max-width: 430px) {
@@ -2453,9 +2451,17 @@ body {
   grid-template-columns: minmax(120px, 1fr) minmax(0, 900px) minmax(120px, 1fr);
   gap: 1rem;
   align-items: start;
+  min-width: 0;
 }
 .scenario-detail-back-rail { display: flex; justify-content: flex-end; }
 .scenario-detail-main { min-width: 0; }
+@media (max-width: 820px) {
+  .scenario-detail-layout {
+    grid-template-columns: minmax(0, 1fr);
+    width: 100%;
+  }
+  .scenario-detail-back-rail { justify-content: flex-start; }
+}
 .scenario-recommended-badge {
   display: inline-flex;
   align-items: center;
