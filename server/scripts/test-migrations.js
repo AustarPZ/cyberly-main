@@ -89,6 +89,7 @@ async function assertFreshSchema(connection) {
     'rag_documents',
     'rag_chunks',
     'agentic_execution_traces',
+    'account_verification_tokens',
   ];
 
   for (const table of expectedTables) {
@@ -105,6 +106,8 @@ async function assertFreshSchema(connection) {
     'age_group',
     'role',
     'account_status',
+    'email_verified_at',
+    'email_verification_sent_at',
   ];
 
   for (const column of expectedUserColumns) {
@@ -140,6 +143,26 @@ async function assertFreshSchema(connection) {
   await assertExists(
     'migration 026 recorded',
     migrationRecorded(connection, '026_create_agentic_execution_traces.sql')
+  );
+  await assertExists(
+    'verification token user foreign key',
+    foreignKeyExists(connection, 'account_verification_tokens', 'fk_account_verification_tokens_user')
+  );
+  await assertExists(
+    'verification token hash uniqueness',
+    indexExists(connection, 'account_verification_tokens', 'uq_account_verification_tokens_hash')
+  );
+  await assertExists(
+    'verification token user/type index',
+    indexExists(connection, 'account_verification_tokens', 'idx_account_verification_tokens_user_type')
+  );
+  await assertExists(
+    'verification token expiry index',
+    indexExists(connection, 'account_verification_tokens', 'idx_account_verification_tokens_expires')
+  );
+  await assertExists(
+    'migration 027 recorded',
+    migrationRecorded(connection, '027_add_email_verification_foundation.sql')
   );
 
   const migrationFiles = listMigrationFilesThrough();

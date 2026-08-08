@@ -23,7 +23,21 @@ export function restoreSession() {
   return apiRequest("/api/auth/me", { method: "GET" });
 }
 
+export function refreshCurrentUser() {
+  return restoreSession();
+}
+
+export function verifyEmail(token) {
+  return apiRequest("/api/auth/verify-email", {
+    method: "POST",
+    body: { token },
+  });
+}
+
+export function resendVerificationEmail() {
+  return apiRequest("/api/auth/resend-verification-email", { method: "POST" });
+}
+
 export function logout() {
   return apiRequest("/api/auth/logout", { method: "POST" });
 }
-

@@ -718,3 +718,65 @@ This acceptance preserves the Public Beta 0.9 certified baseline, all accepted P
 - P9 accepted behaviour: unchanged.
 - P10-2 accepted status: recorded.
 - Backend, API contracts, database schema, providers, RAG, Agentic AI, CSS, locales, search, grouping, collapse behaviour, and Composer visuals were not changed by the acceptance-record update.
+
+## AG. AUTH-EV Email Verification - Final Acceptance
+
+**Status date:** August 8, 2026.
+
+This record closes the AUTH-EV implementation series and certifies the current Authentication V1 email-verification behaviour. It does not approve account-recovery or guardian workflows.
+
+- `AUTH-EV DATABASE/TOKEN FOUNDATION - ACCEPTED`.
+- `AUTH-EV AUTH/API INTEGRATION - ACCEPTED`.
+- `AUTH-EV CYBERGUARD VERIFIED-EMAIL GATE - ACCEPTED`.
+- `AUTH-EV FRONTEND UX - ACCEPTED`.
+- `AUTH-EV SMTP TRANSPORT - ACCEPTED`.
+- `AUTH-EV FAILURE HANDLING - ACCEPTED`.
+- `AUTH-EV EMAIL MASKING - ACCEPTED`.
+- `AUTH-EV TOKEN URL PRIVACY - ACCEPTED`.
+- `AUTH-EV RESULT RELOAD PERSISTENCE - ACCEPTED`.
+- `AUTH-EV DIFFERENT-ACCOUNT SESSION SAFETY - ACCEPTED`.
+- `AUTH-EV AUTOMATED VERIFICATION - PASSED`.
+- `AUTH-EV OWNER EMAIL DELIVERY VERIFICATION - PASSED`.
+- `AUTH-EV OWNER BROWSER RUNTIME VERIFICATION - PASSED`.
+- `AUTH-EV FINAL ACCEPTANCE - PASSED`.
+
+### Owner Runtime Evidence
+
+- A real Gmail verification message was received using environment-configured SMTP.
+- A valid link successfully verified its account, and the expected masked email prefix was displayed.
+- The same-account success result survived browser reload.
+- Reusing a consumed link produced the neutral already-verified result, which also survived reload.
+- Account B remained the active authenticated session while an Account A verification link was processed.
+- The different-account notice survived reload without changing Account B's verification state.
+- A fresh tokenless `#/verify-email` route remained invalid.
+- The raw verification token was removed from the browser URL after capture.
+
+No SMTP password, Gmail App Password, raw token, sensitive provider configuration, or complete owner verification URL is recorded here.
+
+### Certified Behaviour Snapshot
+
+**Registration.** A newly registered account starts unverified. Registration succeeds independently of email-delivery success and returns only safe delivery/verification metadata.
+
+**Verification.** Verification tokens are persisted as hashes; raw tokens are not stored. Tokens support expiry, revocation, one-time use, and revocation of older active tokens when a newer token is issued. A valid token verifies the account. A consumed token returns a neutral already-verified success. Verification does not create or switch an authenticated session.
+
+**Resend.** Resend requires an authenticated session. The server derives the target user and email, enforces cooldown, and returns safe failure metadata. Failed delivery does not establish a false successful-delivery cooldown.
+
+**CyberGuard gate.** Unverified learners may read existing conversation history. New generation, reply generation, and retry are blocked until verification; a verified session unlocks these operations.
+
+**Frontend.** The certified interface includes the verification reminder, masked email display, result page, token removal from the URL, and five-minute privacy-limited same-tab `sessionStorage` presentation persistence. Persisted presentation state contains no token, email, or user ID. A direct tokenless route remains invalid, and processing another account's link does not replace the active session.
+
+**SMTP.** The transport supports disabled, deterministic test-success/test-fail, and SMTP modes. Gmail-compatible SMTP is configured only through backend runtime environment variables. Public responses do not expose transport credentials or provider diagnostic payloads.
+
+### Non-Blocking Human-Review Notes
+
+- The current verification email is intentionally simple and may receive separate visual-branding work later.
+- The existing CRA `fs.F_OK` deprecation warning is unrelated to AUTH-EV acceptance.
+- Existing JSDOM network and asynchronous `act(...)` console noise is unrelated where the certified suites pass.
+- DB-backed verification scripts require correctly configured local MySQL credentials.
+- SMTP and Gmail App Password setup remains environment-specific and must stay outside the repository.
+
+### Feature Freeze
+
+`AUTHENTICATION V1 EMAIL VERIFICATION FEATURE - FROZEN`.
+
+The certified behaviour must not receive further feature development before Public Beta unless a regression, security defect, or release-blocking UX defect is confirmed. Forgot Password, Forgot Email/account recovery, Parent/Guardian Email Binding, Guardian Confirmation, and broader Account Security/Recovery are separate future scopes.

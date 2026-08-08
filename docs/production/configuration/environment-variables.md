@@ -16,7 +16,21 @@ Only public, non-secret values should be exposed to the frontend.
 |---|---|---|
 | `PORT` | Backend listen port. Hosting platforms may provide this. | No |
 | `CLIENT_ORIGIN` | Allowed frontend origin for credentialed CORS. | No |
+| `CLIENT_BASE_URL` | Public frontend base URL used to build email verification links. | No |
 | `NODE_ENV` | Runtime mode. Use `production` for production hosting. | No |
+
+## Email Verification
+
+| Variable | Purpose | Secret |
+|---|---|---|
+| `EMAIL_TRANSPORT` | Email transport mode. Use `disabled` for local/no-op, `test-success` or `test-fail` for deterministic tests, and `smtp` for real delivery. | No |
+| `EMAIL_FROM_NAME` | Display name used in verification email sender. | No |
+| `EMAIL_FROM_ADDRESS` | Sender email address used by SMTP. | No |
+| `SMTP_HOST` | SMTP host. | No |
+| `SMTP_PORT` | SMTP port, commonly `465` for implicit TLS or `587` for STARTTLS. | No |
+| `SMTP_SECURE` | `true` for implicit TLS, `false` for STARTTLS/plain upgrade depending on provider. | No |
+| `SMTP_USER` | SMTP account username. | Yes |
+| `SMTP_PASSWORD` | SMTP account password or app password. | Yes |
 
 ## Database
 
@@ -79,4 +93,3 @@ Only public, non-secret values should be exposed to the frontend.
 | `AI_GENERATION_STALE_MS` | Stale generation recovery window. | No |
 | `AI_DAILY_BUDGET_USD` | Optional estimated daily AI budget cap. | No |
 | `ACTION_PROPOSAL_TTL_SECONDS` | Learner-controlled action proposal expiry. | No |
-

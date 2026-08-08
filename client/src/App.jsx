@@ -16,10 +16,18 @@ import Button from "./design-system/primitives/Button";
 import profileMappings from "./profileMappings";
 import i18n, { STORAGE_KEY as UI_LANGUAGE_STORAGE_KEY, getStoredUiLanguage} from "./i18n";
 import { normalizeLocale, profileLanguageToLocale } from "./i18n/languageMappings";
+import { maskEmailAddress } from "./utils/maskEmailAddress";
+import {
+  clearEmailVerificationResult,
+  loadEmailVerificationResult,
+  saveEmailVerificationResult,
+} from "./utils/emailVerificationResultStorage";
 import {
   login as loginAccount,
   logout as logoutSession,
   register as registerAccount,
+  resendVerificationEmail,
+  verifyEmail,
   restoreSession,
 } from "./api/authApi";
 import { saveAccount as saveAccountRequest } from "./api/accountApi";
@@ -2232,6 +2240,65 @@ body {
 .chat-composer-wrap { border-top: 1px solid rgba(0,0,0,0.07); }
 .chat-composer-wrap .chat-input-row { border-top: none; }
 .chat-composer-error { margin: 0 0.75rem 0.65rem; }
+.chat-verification-lock {
+  margin: 0.35rem 0.75rem 0.65rem;
+  color: #51615b;
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+.email-verification-reminder {
+  max-width: 1120px;
+  margin: 1rem auto;
+  padding: 1rem;
+  border: 1px solid rgba(29, 158, 117, 0.22);
+  border-radius: 12px;
+  background: #f4fffb;
+  box-shadow: 0 10px 28px rgba(13, 59, 47, 0.08);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 1rem;
+  align-items: center;
+}
+.email-verification-reminder.compact {
+  margin: 0.75rem auto;
+}
+.email-verification-reminder h2 {
+  margin: 0 0 0.25rem;
+  color: var(--teal);
+  font-size: 1rem;
+}
+.email-verification-reminder p {
+  margin: 0;
+  color: #51615b;
+  line-height: 1.5;
+}
+.email-verification-email {
+  margin-top: 0.35rem !important;
+  font-weight: 700;
+}
+.email-verification-actions {
+  display: flex;
+  gap: 0.6rem;
+  flex-wrap: wrap;
+  align-items: center;
+}
+.email-verification-status {
+  grid-column: 1 / -1;
+  color: #51615b;
+  font-size: 0.86rem;
+}
+.email-verification-page {
+  max-width: 760px;
+}
+.email-verification-page h1:focus {
+  outline: 3px solid var(--teal);
+  outline-offset: 4px;
+}
+@media (max-width: 720px) {
+  .email-verification-reminder {
+    grid-template-columns: 1fr;
+  }
+}
 .chat-login-prompt { padding: 1.25rem; text-align: center; color: #666; font-size: 0.85rem; }
 .chat-login-prompt button { margin-top: 0.75rem; background: var(--teal); color: #fff; border: none; border-radius: 8px; padding: 0.5rem 1.25rem; cursor: pointer; font-size: 0.875rem; }
 .dashboard-chat-launcher { margin-bottom: 0.5rem; }
@@ -2442,7 +2509,9 @@ const CHAT_GENERATION_POLL_INTERVAL_MS = 2000;
 const CHAT_GENERATION_POLL_MAX_MS = 30000;
 const PUBLIC_PAGES = new Set(["home", "resources", "about", "login"]);
 const PROTECTED_PAGES = new Set(["dashboard", "assessment", "scenarios", "progress", "profile", "ai-chat", "admin"]);
+const VERIFICATION_PAGES = new Set(["verify-email"]);
 const VALID_PAGES = new Set([...PUBLIC_PAGES, ...PROTECTED_PAGES]);
+VERIFICATION_PAGES.forEach(page => VALID_PAGES.add(page));
 
 const {
   EDUCATION_LEVELS,
@@ -3308,6 +3377,7 @@ function ChatProvider({ user, children }) {
   const automaticTitleRequestsRef = useRef(new Set());
   const generationPollTimeoutRef = useRef(null);
   const userId = user?.id;
+  const emailVerificationRequired = Boolean(user && !user.emailVerified);
 
   useEffect(() => {
     activeConversationIdRef.current = activeConversationId;
@@ -3540,6 +3610,10 @@ function ChatProvider({ user, children }) {
     const conversationId = Number(conversationIdInput);
     const userMessageId = Number(userMessageIdInput);
     if (!conversationId || !userMessageId || !userIdRef.current) return { ok: false };
+    if (emailVerificationRequired) {
+      setMutationError(i18n.t("auth.emailVerification.cyberGuardLock"));
+      return { ok: false, code: "EMAIL_VERIFICATION_REQUIRED", error: i18n.t("auth.emailVerification.cyberGuardLock") };
+    }
     if (generationActive || generationByMessageId[userMessageId]?.status === "generating") return { ok: false };
 
     const requestUserId = userIdRef.current;
@@ -3652,6 +3726,10 @@ function ChatProvider({ user, children }) {
   async function startDashboardConversation(firstMessage) {
     const clean = String(firstMessage || "").trim();
     if (!clean || syncing || generationActive || !userIdRef.current) return { ok: false };
+    if (emailVerificationRequired) {
+      setMutationError(i18n.t("auth.emailVerification.cyberGuardLock"));
+      return { ok: false, code: "EMAIL_VERIFICATION_REQUIRED", error: i18n.t("auth.emailVerification.cyberGuardLock") };
+    }
     const requestUserId = userIdRef.current;
     setSyncing(true);
     setMutationError("");
@@ -3747,6 +3825,10 @@ function ChatProvider({ user, children }) {
   async function sendMessage(text) {
     const clean = text.trim();
     if (!clean || sending || syncing || generationActive || !userIdRef.current) return { ok: false };
+    if (emailVerificationRequired) {
+      setMutationError(i18n.t("auth.emailVerification.cyberGuardLock"));
+      return { ok: false, code: "EMAIL_VERIFICATION_REQUIRED", error: i18n.t("auth.emailVerification.cyberGuardLock") };
+    }
     const requestUserId = userIdRef.current;
     const shouldAutoTitleAfterFirstMessage = Boolean(
       activeConversation &&
@@ -3817,6 +3899,7 @@ function ChatProvider({ user, children }) {
     error,
     conversationError,
     mutationError,
+    emailVerificationRequired,
     legacyNoticeVisible,
     disabledAssistantNotice: activeMessages.length > 0,
     createConversation,
@@ -3858,6 +3941,7 @@ function normalizeProfile(profileData) {
 
 function normalizeSessionUser(userData, profileData) {
   const learnerProfile = normalizeProfile(profileData || userData?.profile || userData?.learnerProfile);
+  const hasEmailVerified = Object.hasOwn(userData || {}, "emailVerified");
   return {
     ...userData,
     profile: learnerProfile,
@@ -3872,6 +3956,9 @@ function normalizeSessionUser(userData, profileData) {
     educationLevel: labelFor(EDUCATION_LEVELS, learnerProfile.educationLevel),
     learnerProfilePersisted: learnerProfile.exists,
     onboardingCompleted: learnerProfile.onboardingCompleted,
+    emailVerified: hasEmailVerified ? Boolean(userData.emailVerified) : false,
+    emailVerifiedAt: userData?.emailVerifiedAt || null,
+    emailVerificationNotice: userData?.emailVerificationNotice || null,
   };
 }
 
@@ -3890,11 +3977,14 @@ function localizedApiError(t, result = {}, fallbackKey = "errors.fallback.generi
 }
 
 function apiFailure(data = {}, fallbackKey = "errors.fallback.generic", fallbackErrors = {}) {
+  const errorData = data.error && typeof data.error === "object" ? data.error : data;
   const result = {
     ok: false,
-    code: data.code,
-    message: data.message,
+    code: errorData.code,
+    message: errorData.message,
     errors: data.errors || fallbackErrors,
+    retryAfterSeconds: data.retryAfterSeconds,
+    canResend: data.canResend,
   };
   return {
     ...result,
@@ -3923,7 +4013,7 @@ async function dbRegister(account) {
 
     if (!result.ok) return apiFailure(data, "errors.fallback.register");
 
-    return { ok: true, user: data.user, profile: data.profile };
+    return { ok: true, user: data.user, profile: data.profile, verification: data.verification || null };
 
   } catch (error) {
     console.error("Registration error:", error);
@@ -5105,8 +5195,11 @@ function RegisterPage({ onSwitch }) {
           return;
         }
 
-        accountUser = result.user;
-        setRegisteredUser(result.user);
+        accountUser = {
+          ...result.user,
+          emailVerificationNotice: result.verification || null,
+        };
+        setRegisteredUser(accountUser);
       }
 
       const profileResult =
@@ -6310,6 +6403,7 @@ function ChatMessageList({ className = "chat-messages", emptyCompact = false, em
     retryConversation,
     generationByMessageId,
     retryGeneration,
+    emailVerificationRequired,
   } = useChat();
   const endRef = useRef(null);
   const shouldAutoScrollRef = useRef(false);
@@ -6459,7 +6553,7 @@ function ChatMessageList({ className = "chat-messages", emptyCompact = false, em
                           type="button"
                           className="chat-generation-retry"
                           onClick={() => retryGeneration(message.conversationId, message.id)}
-                          disabled={generating}
+                          disabled={generating || emailVerificationRequired}
                           aria-label={t("chat.accessibility.retryGeneration")}
                         >
                           {t("chat.generation.retry")}
@@ -6488,7 +6582,7 @@ function ChatComposer({
   composerGuidance = "",
 }) {
   const { t } = useTranslation();
-  const { sendMessage, sending, syncing, generating, conversationLoading, mutationError } = useChat();
+  const { sendMessage, sending, syncing, generating, conversationLoading, mutationError, emailVerificationRequired } = useChat();
   const [input, setInput] = useState("");
   const inputRef = useRef(null);
   const lastDraftRequestIdRef = useRef(null);
@@ -6504,7 +6598,7 @@ function ChatComposer({
   async function send(event) {
     event?.preventDefault?.();
     const text = input.trim();
-    if (!text || sending || syncing || generating || conversationLoading) return;
+    if (!text || sending || syncing || generating || conversationLoading || emailVerificationRequired) return;
     const result = await sendMessage(text);
     if (result?.ok) {
       setInput("");
@@ -6513,7 +6607,7 @@ function ChatComposer({
     }
   }
 
-  const interactionDisabled = sending || syncing || generating || conversationLoading;
+  const interactionDisabled = sending || syncing || generating || conversationLoading || emailVerificationRequired;
   const busy = sending || syncing || generating;
   const statusText = sending || syncing
     ? t("chat.sending")
@@ -6563,6 +6657,11 @@ function ChatComposer({
             </Button>
           )}
         />
+        {emailVerificationRequired && (
+          <div className="chat-verification-lock" role="status">
+            {t("auth.emailVerification.cyberGuardLock")}
+          </div>
+        )}
         {mutationError && <div className="field-error chat-composer-error" role="alert">{mutationError}</div>}
       </div>
     );
@@ -6576,6 +6675,11 @@ function ChatComposer({
           {sending || syncing ? (compact ? "…" : t("chat.sending")) : generating ? (compact ? "…" : t("chat.generation.preparingShort")) : compact ? "↑" : t("chat.send")}
         </button>
       </div>
+      {emailVerificationRequired && (
+        <div className="chat-verification-lock" role="status">
+          {t("auth.emailVerification.cyberGuardLock")}
+        </div>
+      )}
       {mutationError && <div className="field-error chat-composer-error" role="alert">{mutationError}</div>}
     </div>
   );
@@ -6584,14 +6688,14 @@ function ChatComposer({
 function DashboardChatPreview() {
   const { t } = useTranslation();
   const { go } = useApp();
-  const { startDashboardConversation, syncing, generating, mutationError } = useChat();
+  const { startDashboardConversation, syncing, generating, mutationError, emailVerificationRequired } = useChat();
   const [input, setInput] = useState("");
   const [launching, setLaunching] = useState(false);
   const [launcherError, setLauncherError] = useState("");
 
   async function submitLauncher() {
     const clean = input.trim();
-    if (!clean || launching || syncing || generating) return;
+    if (!clean || launching || syncing || generating || emailVerificationRequired) return;
     setLaunching(true);
     setLauncherError("");
     const result = await startDashboardConversation(clean);
@@ -6625,12 +6729,17 @@ function DashboardChatPreview() {
               submitLauncher();
             }
           }}
-          disabled={launching || syncing || generating}
+          disabled={emailVerificationRequired || launching || syncing || generating}
         />
-        <button className="chat-send" onClick={submitLauncher} disabled={launching || syncing || generating || !input.trim()} aria-label={t("chat.accessibility.send")}>
+        <button className="chat-send" onClick={submitLauncher} disabled={emailVerificationRequired || launching || syncing || generating || !input.trim()} aria-label={t("chat.accessibility.send")}>
           {launching || syncing ? t("chat.sending") : t("chat.send")}
         </button>
       </div>
+      {emailVerificationRequired && (
+        <div className="chat-verification-lock" role="status">
+          {t("auth.emailVerification.cyberGuardLock")}
+        </div>
+      )}
       {(launcherError || mutationError) && (
         <div className="field-error chat-composer-error" role="alert">
           {launcherError || mutationError}
@@ -9389,6 +9498,292 @@ function formatChatUpdatedAt(value, t) {
   }
 }
 
+function EmailVerificationReminder({ compact = false }) {
+  const { t } = useTranslation();
+  const { user, refreshCurrentUserState } = useApp();
+  const [status, setStatus] = useState("idle");
+  const [message, setMessage] = useState("");
+  const [retryAfter, setRetryAfter] = useState(0);
+  const timerRef = useRef(null);
+  const latestUserIdRef = useRef(user?.id || null);
+
+  useEffect(() => () => {
+    if (timerRef.current) window.clearInterval(timerRef.current);
+  }, []);
+
+  useEffect(() => {
+    latestUserIdRef.current = user?.id || null;
+  }, [user?.id]);
+
+  useEffect(() => {
+    setStatus("idle");
+    const notice = user?.emailVerificationNotice;
+    if (!notice || user?.emailVerified) {
+      setMessage("");
+    } else if (notice.emailTransportDisabled) {
+      setMessage(t("auth.emailVerification.deliveryDisabled"));
+    } else if (notice.emailSent) {
+      setMessage(t("auth.emailVerification.resendSuccess"));
+    } else if (notice.emailSendFailed) {
+      setMessage(t("auth.emailVerification.sendFailure"));
+    } else {
+      setMessage("");
+    }
+    setRetryAfter(0);
+    if (timerRef.current) {
+      window.clearInterval(timerRef.current);
+      timerRef.current = null;
+    }
+  }, [t, user?.id, user?.emailVerified, user?.emailVerificationNotice]);
+
+  function startCooldown(seconds) {
+    const safeSeconds = Math.max(0, Number(seconds) || 0);
+    setRetryAfter(safeSeconds);
+    if (timerRef.current) window.clearInterval(timerRef.current);
+    if (!safeSeconds) return;
+    timerRef.current = window.setInterval(() => {
+      setRetryAfter(current => {
+        if (current <= 1) {
+          window.clearInterval(timerRef.current);
+          timerRef.current = null;
+          return 0;
+        }
+        return current - 1;
+      });
+    }, 1000);
+  }
+
+  async function resend() {
+    if (status === "sending") return;
+    const requestUserId = user?.id;
+    setStatus("sending");
+    setMessage("");
+    const result = await dbResendVerificationEmail();
+    if (requestUserId !== latestUserIdRef.current) return;
+    if (!result.ok) {
+      if (result.code === "EMAIL_VERIFICATION_RESEND_COOLDOWN") {
+        setStatus("cooldown");
+        startCooldown(result.retryAfterSeconds);
+        setMessage(t("auth.emailVerification.cooldown", { seconds: result.retryAfterSeconds || 0 }));
+      } else {
+        setStatus("failed");
+        setMessage(t("auth.emailVerification.sendFailure"));
+      }
+      return;
+    }
+    if (result.alreadyVerified) {
+      setStatus("alreadyVerified");
+      await refreshCurrentUserState?.();
+      return;
+    }
+    if (result.emailSendFailed) {
+      setStatus("failed");
+      setMessage(t("auth.emailVerification.sendFailure"));
+      startCooldown(0);
+      return;
+    }
+    setStatus("sent");
+    startCooldown(result.cooldownSeconds);
+    setMessage(result.emailTransportDisabled
+      ? t("auth.emailVerification.deliveryDisabled")
+      : t("auth.emailVerification.resendSuccess"));
+  }
+
+  async function refresh() {
+    if (status === "refreshing") return;
+    setStatus("refreshing");
+    const refreshed = await refreshCurrentUserState?.();
+    if (refreshed?.user?.emailVerified) {
+      setMessage("");
+      return;
+    }
+    setStatus("stillUnverified");
+    setMessage(t("auth.emailVerification.stillUnverified"));
+  }
+
+  if (!user || user.emailVerified) return null;
+
+  return (
+    <aside className={`email-verification-reminder${compact ? " compact" : ""}`} aria-labelledby="email-verification-reminder-title">
+      <div>
+        <h2 id="email-verification-reminder-title">{t("auth.emailVerification.bannerTitle")}</h2>
+        <p>{t("auth.emailVerification.bannerDescription")}</p>
+        {user.email && <p className="email-verification-email">{maskEmailAddress(user.email)}</p>}
+      </div>
+      <div className="email-verification-actions">
+        <Button type="button" variant="secondary" onClick={resend} disabled={status === "sending" || retryAfter > 0}>
+          {status === "sending"
+            ? t("auth.emailVerification.sending")
+            : retryAfter > 0
+              ? t("auth.emailVerification.waitSeconds", { seconds: retryAfter })
+              : t("auth.emailVerification.resend")}
+        </Button>
+        <Button type="button" variant="primary" onClick={refresh} disabled={status === "refreshing"}>
+          {status === "refreshing" ? t("auth.emailVerification.refreshing") : t("auth.emailVerification.refreshStatus")}
+        </Button>
+      </div>
+      {message && <p className="email-verification-status" role={status === "failed" ? "alert" : "status"} aria-live={status === "failed" ? "assertive" : "polite"}>{message}</p>}
+    </aside>
+  );
+}
+
+function EmailVerificationPage() {
+  const { t } = useTranslation();
+  const { user, go, refreshCurrentUserState, applyVerifiedEmailResult } = useApp();
+  const headingRef = useRef(null);
+  const currentUserIdRef = useRef(user?.id || null);
+  const refreshCurrentUserStateRef = useRef(refreshCurrentUserState);
+  const applyVerifiedEmailResultRef = useRef(applyVerifiedEmailResult);
+  const verificationTokenRef = useRef(undefined);
+  const verificationRequestRef = useRef(null);
+  const [state, setState] = useState({
+    status: "verifying",
+    code: null,
+    verifiedUser: null,
+    differentAccount: false,
+  });
+
+  if (verificationTokenRef.current === undefined) {
+    const hash = String(window.location.hash || "");
+    const query = hash.includes("?") ? hash.slice(hash.indexOf("?")) : "";
+    verificationTokenRef.current = new URLSearchParams(query).get("token") || "";
+  }
+
+  useEffect(() => {
+    currentUserIdRef.current = user?.id || null;
+    refreshCurrentUserStateRef.current = refreshCurrentUserState;
+    applyVerifiedEmailResultRef.current = applyVerifiedEmailResult;
+  }, [applyVerifiedEmailResult, refreshCurrentUserState, user?.id]);
+
+  useEffect(() => {
+    let active = true;
+    const token = verificationTokenRef.current;
+    window.history.replaceState({ ...(window.history.state || {}) }, "", "#/verify-email");
+    if (!token) {
+      const restoredResult = loadEmailVerificationResult();
+      if (restoredResult) {
+        setState({
+          status: restoredResult.status === "already_verified" ? "alreadyVerified" : "success",
+          code: null,
+          verifiedUser: null,
+          differentAccount: restoredResult.differentAccount,
+        });
+      } else {
+        setState({
+          status: "invalid",
+          code: "EMAIL_VERIFICATION_TOKEN_REQUIRED",
+          verifiedUser: null,
+          differentAccount: false,
+        });
+      }
+      return () => { active = false; };
+    }
+    clearEmailVerificationResult();
+    setState({ status: "verifying", code: null, verifiedUser: null, differentAccount: false });
+    if (!verificationRequestRef.current) {
+      verificationRequestRef.current = dbVerifyEmail(token);
+    }
+    verificationRequestRef.current.then(async result => {
+      if (!active) return;
+      if (result.ok) {
+        const verifiedUser = result.user || null;
+        const differentAccount = Boolean(
+          currentUserIdRef.current && verifiedUser?.id && verifiedUser.id !== currentUserIdRef.current
+        );
+        saveEmailVerificationResult({
+          status: result.alreadyVerified ? "already_verified" : "verified",
+          differentAccount,
+        });
+        setState({
+          status: result.alreadyVerified ? "alreadyVerified" : "success",
+          code: null,
+          verifiedUser,
+          differentAccount,
+        });
+        applyVerifiedEmailResultRef.current?.(verifiedUser);
+        if (currentUserIdRef.current && verifiedUser?.id === currentUserIdRef.current) {
+          await refreshCurrentUserStateRef.current?.();
+        }
+        return;
+      }
+      clearEmailVerificationResult();
+      const code = result.code || "EMAIL_VERIFICATION_TOKEN_INVALID";
+      if (code === "EMAIL_VERIFICATION_TOKEN_EXPIRED") {
+        setState({ status: "expired", code, verifiedUser: null, differentAccount: false });
+      } else if (code === "EMAIL_VERIFICATION_TOKEN_REVOKED") {
+        setState({ status: "revoked", code, verifiedUser: null, differentAccount: false });
+      } else {
+        setState({ status: "invalid", code, verifiedUser: null, differentAccount: false });
+      }
+    });
+    return () => { active = false; };
+  }, []);
+
+  useEffect(() => {
+    if (state.status !== "verifying") {
+      window.setTimeout(() => headingRef.current?.focus(), 0);
+    }
+  }, [state.status]);
+
+  const titleKey = {
+    verifying: "auth.emailVerification.verifying",
+    success: "auth.emailVerification.successTitle",
+    alreadyVerified: "auth.emailVerification.alreadyVerifiedTitle",
+    expired: "auth.emailVerification.expiredTitle",
+    revoked: "auth.emailVerification.revokedTitle",
+    invalid: "auth.emailVerification.invalidTitle",
+  }[state.status] || "auth.emailVerification.invalidTitle";
+  const descriptionKey = {
+    verifying: "auth.emailVerification.verifyingDescription",
+    success: "auth.emailVerification.successDescription",
+    alreadyVerified: "auth.emailVerification.alreadyVerifiedDescription",
+    expired: "auth.emailVerification.expiredDescription",
+    revoked: "auth.emailVerification.revokedDescription",
+    invalid: "auth.emailVerification.invalidDescription",
+  }[state.status] || "auth.emailVerification.invalidDescription";
+  const differentAccount = Boolean(state.differentAccount);
+
+  return (
+    <section className="section email-verification-page" aria-live={state.status === "verifying" ? "polite" : undefined}>
+      <h1 ref={headingRef} tabIndex={-1}>{t(titleKey)}</h1>
+      <p className="section-sub">{t(descriptionKey)}</p>
+      {differentAccount && <p className="email-verification-status">{t("auth.emailVerification.differentAccount")}</p>}
+      <div className="email-verification-actions">
+        {user ? (
+          <>
+            <Button type="button" variant="primary" onClick={() => go("ai-chat")}>{t("auth.emailVerification.continueCyberGuard")}</Button>
+            <Button type="button" variant="secondary" onClick={() => go("dashboard")}>{t("auth.emailVerification.continueDashboard")}</Button>
+          </>
+        ) : (
+          <Button type="button" variant="primary" onClick={() => go("login")}>{t("auth.emailVerification.loginToResend")}</Button>
+        )}
+      </div>
+    </section>
+  );
+}
+
+async function dbVerifyEmail(token) {
+  try {
+    const result = await verifyEmail(token);
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.generic");
+    return { ok: true, ...data };
+  } catch {
+    return networkFailure("errors.fallback.network");
+  }
+}
+
+async function dbResendVerificationEmail() {
+  try {
+    const result = await resendVerificationEmail();
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.generic");
+    return { ok: true, ...data };
+  } catch {
+    return networkFailure("errors.fallback.network");
+  }
+}
+
 const CHAT_HISTORY_GROUPS = [
   { key: "today", labelKey: "chat.history.groups.today" },
   { key: "yesterday", labelKey: "chat.history.groups.yesterday" },
@@ -11163,6 +11558,7 @@ export default function App() {
   const [authMode, setAuthMode] = useState("login");
   const [activityGuard, setActivityGuard] = useState(null);
   const [pendingNavigation, setPendingNavigation] = useState(null);
+  const appUserIdRef = useRef(null);
   const suppressHashGuardRef = useRef(null);
   const acceptedHashRef = useRef(acceptedHash);
   const activityGuardRef = useRef(null);
@@ -11177,8 +11573,13 @@ export default function App() {
   const userPreferredLanguage =
     user?.preferredLanguage;
 
+  useEffect(() => {
+    appUserIdRef.current = user?.id || null;
+  }, [user?.id]);
+
   const acceptHashRoute = useCallback((hashValue, historyIndex = historyIndexRef.current) => {
     const nextHash = normalizeHashRoute(hashValue);
+    if (parseHashPage(nextHash) !== "verify-email") clearEmailVerificationResult();
     acceptedHashRef.current = nextHash;
     historyIndexRef.current = Number.isInteger(historyIndex) ? historyIndex : historyIndexRef.current;
     setAcceptedHash(nextHash);
@@ -11235,6 +11636,7 @@ export default function App() {
         const restoredUser = normalizeSessionUser(result.user, result.profile);
         const currentHash = normalizeHashRoute(window.location.hash);
         const restoredPage = parseHashPage(currentHash);
+        appUserIdRef.current = restoredUser.id || null;
         setUser(restoredUser);
         if (PROTECTED_PAGES.has(restoredPage)) {
           commitHashRoute(resolveSessionRestoreHash({
@@ -11244,13 +11646,18 @@ export default function App() {
           }), { replace: true });
         } else if (restoredPage === "login") {
           commitHashRoute(`/${restoredUser.onboardingCompleted ? "dashboard" : "profile"}`, { replace: true });
+        } else if (VERIFICATION_PAGES.has(restoredPage)) {
+          commitHashRoute(currentHash, { replace: true });
         } else {
           commitHashRoute(`/${restoredPage}`, { replace: true });
         }
       } else {
-        const restoredPage = parseHashPage();
+        const currentHash = normalizeHashRoute(window.location.hash);
+        const restoredPage = parseHashPage(currentHash);
         if (PROTECTED_PAGES.has(restoredPage)) {
           commitHashRoute("/home", { replace: true });
+        } else if (VERIFICATION_PAGES.has(restoredPage)) {
+          commitHashRoute(currentHash, { replace: true });
         } else {
           commitHashRoute(`/${restoredPage}`, { replace: true });
         }
@@ -11367,6 +11774,7 @@ export default function App() {
 
   function login(userData, profileData, preferredPage) {
     const nextUser = normalizeSessionUser(userData, profileData);
+    appUserIdRef.current = nextUser.id || null;
     setUser(nextUser);
     commitHashRoute(`/${preferredPage || (nextUser.onboardingCompleted ? "dashboard" : "profile")}`, { replace: true });
   }
@@ -11399,7 +11807,31 @@ export default function App() {
       };
     });
   }  
+  async function refreshCurrentUserState() {
+    const requestUserId = appUserIdRef.current;
+    const result = await dbMe();
+    if (!result.ok) return result;
+    if (requestUserId !== appUserIdRef.current) return { ok: false, stale: true };
+    const nextUser = normalizeSessionUser(result.user, result.profile);
+    if (requestUserId && nextUser.id !== requestUserId) return { ok: false };
+    if (requestUserId !== appUserIdRef.current) return { ok: false, stale: true };
+    setUser(nextUser);
+    return { ok: true, user: nextUser, profile: result.profile };
+  }
+  function applyVerifiedEmailResult(verifiedUser) {
+    if (!verifiedUser?.id) return;
+    setUser(current => {
+      if (!current || current.id !== verifiedUser.id) return current;
+      return {
+        ...current,
+        emailVerified: Boolean(verifiedUser.emailVerified),
+        emailVerifiedAt: verifiedUser.emailVerifiedAt || current.emailVerifiedAt || null,
+      };
+    });
+  }
   async function logout() {
+    appUserIdRef.current = null;
+    clearEmailVerificationResult();
     await dbLogout();
     setUser(null);
     setResourceFocusTopic(null);
@@ -11595,6 +12027,8 @@ export default function App() {
     openAuth,
     updateProfile,
     updateAccount,
+    refreshCurrentUserState,
+    applyVerifiedEmailResult,
     resourceFocusTopic,
     pendingResourceTarget,
     pendingScenarioTarget,
@@ -11628,6 +12062,7 @@ export default function App() {
     profile:   <ProfilePage />,
     admin:     <AdminPage acceptedHash={acceptedHash} />,
     login:     <AuthGate />,
+    "verify-email": <EmailVerificationPage />,
   };
 
   return (
@@ -11641,7 +12076,12 @@ export default function App() {
               <p className="section-title">{t("app.loadingTitle")}</p>
               <p className="section-sub">{t("app.checkingSession")}</p>
             </div>
-          ) : (PAGES[page] ?? <HomePage />)}
+          ) : (
+            <>
+              {user && !user.emailVerified && page !== "login" && <EmailVerificationReminder compact={page === "ai-chat"} />}
+              {PAGES[page] ?? <HomePage />}
+            </>
+          )}
         </main>
         {page !== "ai-chat" && <Footer />}
         {!checkingSession && page !== "ai-chat" && <ChatWidget />}

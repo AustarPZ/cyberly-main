@@ -1,10 +1,11 @@
 const express = require('express');
 const { requireAuth } = require('../auth/middleware');
 
-function createAiRouter(aiService) {
+function createAiRouter(aiService, options = {}) {
   const router = express.Router();
+  const requireVerifiedEmail = options.requireVerifiedEmail || ((_req, _res, next) => next());
 
-  router.post('/conversations/:conversationId/messages/:messageId/generate', requireAuth, async (req, res, next) => {
+  router.post('/conversations/:conversationId/messages/:messageId/generate', requireAuth, requireVerifiedEmail, async (req, res, next) => {
     try {
       const result = await aiService.generateReply(
         req.session.userId,

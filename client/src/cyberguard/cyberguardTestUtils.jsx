@@ -5,7 +5,8 @@
 //   account, progress, recommendation, resource, scenario, admin, or assessment
 //   API mocks.
 // - Mocked modules: ../api/authApi.js exports register, login, restoreSession,
-//   logout; ../chat/chatApi.js exports listChatConversations,
+//   refreshCurrentUser, verifyEmail, resendVerificationEmail, logout;
+//   ../chat/chatApi.js exports listChatConversations,
 //   createChatConversation, getChatConversation, renameChatConversation,
 //   deleteChatConversation, createChatUserMessage, generateChatAssistantReply,
 //   createLearnerActionProposal, confirmLearnerActionProposal, and
@@ -22,6 +23,7 @@
 //   add a test-only route, change state orchestration, change API modules, or add a
 //   dependency.
 
+import { StrictMode } from "react";
 import { render, screen, waitFor } from "@testing-library/react";
 import App from "../App";
 import i18n from "../i18n";
@@ -29,6 +31,9 @@ import {
   register,
   login,
   restoreSession,
+  refreshCurrentUser,
+  verifyEmail,
+  resendVerificationEmail,
   logout,
 } from "../api/authApi";
 import {
@@ -68,6 +73,8 @@ export const cyberGuardPilotUser = {
   ageGroup: "teen_16_17",
   role: "user",
   accountStatus: "active",
+  emailVerified: true,
+  emailVerifiedAt: "2026-08-03T00:00:00.000Z",
 };
 
 export const cyberGuardPilotConversation = {
@@ -229,10 +236,16 @@ function groupedSourcesFor(messageId, sources) {
   return sources.length ? [{ messageId, sources }] : [];
 }
 
-function resetCyberGuardPilotState(route) {
+function resetCyberGuardPilotState(route, { preserveSessionStorage = false } = {}) {
   window.localStorage.clear();
-  window.sessionStorage.clear();
+  if (!preserveSessionStorage) window.sessionStorage.clear();
   window.history.replaceState({}, "", route);
+}
+
+function mockResolved(apiMock, value) {
+  if (apiMock && typeof apiMock.mockResolvedValue === "function") {
+    apiMock.mockResolvedValue(value);
+  }
 }
 
 export function configureCyberGuardPilotMocks({
@@ -249,6 +262,7 @@ export function configureCyberGuardPilotMocks({
   generatedActions = [cyberGuardPilotAction],
   proposal = cyberGuardPilotProposal,
   authResult,
+  authOverrides = {},
   chatOverrides = {},
 } = {}) {
   const sessionResult = authResult || {
@@ -256,10 +270,31 @@ export function configureCyberGuardPilotMocks({
     data: user ? { user, profile } : null,
   };
 
-  register.mockResolvedValue({ ok: false, error: "Not used by this fixture" });
-  login.mockResolvedValue({ ok: false, error: "Not used by this fixture" });
-  restoreSession.mockResolvedValue(sessionResult);
-  logout.mockResolvedValue({ ok: true });
+  mockResolved(register, { ok: false, error: "Not used by this fixture" });
+  mockResolved(login, { ok: false, error: "Not used by this fixture" });
+  mockResolved(restoreSession, sessionResult);
+  mockResolved(refreshCurrentUser, sessionResult);
+  mockResolved(verifyEmail, { ok: false, data: { error: { code: "EMAIL_VERIFICATION_TOKEN_INVALID" } } });
+  mockResolved(resendVerificationEmail, { ok: true, data: { sent: false, emailTransportDisabled: true, emailSendFailed: false, cooldownSeconds: 60 } });
+  mockResolved(logout, { ok: true });
+
+  const authMocks = {
+    register,
+    login,
+    restoreSession,
+    refreshCurrentUser,
+    verifyEmail,
+    resendVerificationEmail,
+    logout,
+  };
+
+  Object.entries(authOverrides).forEach(([name, value]) => {
+    if (typeof value === "function") {
+      authMocks[name]?.mockImplementation(value);
+    } else {
+      authMocks[name]?.mockResolvedValue(value);
+    }
+  });
 
   listChatConversations.mockResolvedValue({ ok: true, conversations });
   getChatConversation.mockResolvedValue({
@@ -322,15 +357,22 @@ export async function renderCyberGuardPilotFixture({
   messages,
   locale = "en",
   authResult,
+  authOverrides,
   chatOverrides,
   localStorageEntries = [],
+  sessionStorageEntries = [],
+  preserveSessionStorage = false,
   mobile = false,
+  strictMode = false,
 } = {}) {
   jest.clearAllMocks();
   installCyberGuardPilotBrowserShims({ mobile });
-  resetCyberGuardPilotState(route);
+  resetCyberGuardPilotState(route, { preserveSessionStorage });
   localStorageEntries.forEach(([key, value]) => {
     window.localStorage.setItem(key, value);
+  });
+  sessionStorageEntries.forEach(([key, value]) => {
+    window.sessionStorage.setItem(key, value);
   });
   await i18n.changeLanguage(locale);
 
@@ -340,10 +382,11 @@ export async function renderCyberGuardPilotFixture({
     activeConversation,
     messages,
     authResult,
+    authOverrides,
     chatOverrides,
   });
 
-  const result = render(<App />);
+  const result = render(strictMode ? <StrictMode><App /></StrictMode> : <App />);
 
   await waitFor(() => expect(restoreSession).toHaveBeenCalled());
 

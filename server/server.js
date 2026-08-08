@@ -13,6 +13,18 @@ const {
 } = require('./src/auth/validation');
 const MySqlSessionStore = require('./src/auth/mysql-session-store');
 const { requireAuth } = require('./src/auth/middleware');
+const { createRequireVerifiedEmail } = require('./src/auth/emailVerification.middleware');
+const { createEmailVerificationRepository } = require('./src/auth/emailVerification.repository');
+const {
+    DEFAULT_EXPIRY_HOURS,
+    DEFAULT_RESEND_COOLDOWN_SECONDS,
+    EMAIL_VERIFICATION_TOKEN_TYPE,
+    createEmailVerificationTokenService,
+} = require('./src/auth/emailVerification.service');
+const {
+    buildVerificationLink,
+    createEmailVerificationSender,
+} = require('./src/auth/emailVerificationEmail.service');
 const { createProfileRepository } = require('./src/profile/profile.repository');
 const { createProfileService } = require('./src/profile/profile.service');
 const { createProfileRouter } = require('./src/profile/profile.routes');
@@ -65,6 +77,21 @@ const sessionCookieSecure = isProduction || sessionCookieSameSite === 'none';
 const pool = createPool();
 const profileRepository = createProfileRepository(pool);
 const profileService = createProfileService(profileRepository);
+const emailVerificationRepository = createEmailVerificationRepository(pool);
+const emailVerificationTokenService = createEmailVerificationTokenService(emailVerificationRepository);
+const emailVerificationSender = createEmailVerificationSender({
+    transport: process.env.EMAIL_TRANSPORT || 'disabled',
+    fromName: process.env.EMAIL_FROM_NAME || 'Cyberly',
+    fromAddress: process.env.EMAIL_FROM_ADDRESS || '',
+    clientBaseUrl: process.env.CLIENT_BASE_URL || '',
+    smtp: {
+        host: process.env.SMTP_HOST || '',
+        port: process.env.SMTP_PORT || '',
+        secure: process.env.SMTP_SECURE || '',
+        user: process.env.SMTP_USER || '',
+        password: process.env.SMTP_PASSWORD || '',
+    },
+});
 const accountRepository = createAccountRepository(pool);
 const accountService = createAccountService(accountRepository);
 const assessmentRepository = createAssessmentRepository(pool);
@@ -131,7 +158,9 @@ app.use(createProgressRouter(progressService));
 app.use(createScenarioRouter(scenarioService));
 app.use(createResourceRouter(resourceService));
 app.use('/api/chat', createChatRouter(chatService));
-app.use('/api/chat', createAiRouter(aiService));
+app.use('/api/chat', createAiRouter(aiService, {
+    requireVerifiedEmail: createRequireVerifiedEmail(pool),
+}));
 app.use(createActionProposalRouter(actionProposalService));
 app.use('/api/admin', createAdminRouter(pool, { agenticTraceService }));
 
@@ -171,12 +200,15 @@ function buildSafeUser(row) {
         ageGroup: row.age_group,
         role: row.role,
         accountStatus: row.account_status,
+        emailVerified: Boolean(row.email_verified_at),
+        emailVerifiedAt: row.email_verified_at || null,
     };
 }
 
 async function findSafeUserById(userId) {
     const [rows] = await pool.query(
-        `SELECT id, email, display_name, age, age_group, role, account_status
+        `SELECT id, email, display_name, age, age_group, role, account_status,
+                email_verified_at
          FROM users
          WHERE id = ?
          LIMIT 1`,
@@ -220,6 +252,74 @@ async function establishSession(req, user) {
     await saveSession(req);
 }
 
+function sendAuthError(res, status, code, message, extra = {}) {
+    return res.status(status).json({
+        error: {
+            code,
+            message,
+        },
+        ...extra,
+    });
+}
+
+function getRequestLocale(req) {
+    const candidate = String(req.body?.locale || req.query?.locale || req.headers['accept-language'] || 'en').toLowerCase();
+    if (candidate.startsWith('ms')) return 'ms';
+    if (candidate.startsWith('zh')) return 'zh-CN';
+    return 'en';
+}
+
+function getVerificationUrl(rawToken) {
+    return buildVerificationLink(process.env.CLIENT_BASE_URL || clientOrigin || 'http://localhost:3000', rawToken);
+}
+
+async function issueAndSendVerificationEmail(user, req) {
+    const issued = await emailVerificationTokenService.issueEmailVerificationToken({
+        userId: user.id,
+        targetEmail: user.email,
+        requestIp: req.ip || req.socket?.remoteAddress || null,
+        requestUserAgent: req.get('user-agent') || null,
+    });
+    const delivery = await emailVerificationSender.sendEmailVerification({
+        recipientEmail: user.email,
+        learnerName: user.display_name || user.displayName || '',
+        verificationUrl: getVerificationUrl(issued.rawToken),
+        expiresAt: issued.expiresAt,
+        locale: getRequestLocale(req),
+    });
+
+    if (!delivery.ok) {
+        const failedAt = new Date();
+        await emailVerificationRepository.revokeActiveTokens(user.id, EMAIL_VERIFICATION_TOKEN_TYPE, failedAt);
+        await emailVerificationRepository.setUserVerificationState(user.id, {
+            emailVerificationSentAt: null,
+        });
+        return {
+            emailSent: false,
+            emailTransportDisabled: false,
+            failed: true,
+        };
+    }
+
+    return {
+        emailSent: !delivery.disabled,
+        emailTransportDisabled: Boolean(delivery.disabled),
+        failed: false,
+    };
+}
+
+function verificationResponsePatch(sendResult = {}) {
+    return {
+        verification: {
+            required: true,
+            emailSent: Boolean(sendResult.emailSent),
+            emailTransportDisabled: Boolean(sendResult.emailTransportDisabled),
+            emailSendFailed: Boolean(sendResult.failed),
+            expiresInSeconds: DEFAULT_EXPIRY_HOURS * 60 * 60,
+        },
+    };
+}
+
 app.get('/api/health', async (_req, res, next) => {
     try {
         await pool.query('SELECT 1');
@@ -258,15 +358,22 @@ app.post('/api/auth/register', authRateLimit, async (req, res, next) => {
         const passwordHash = await bcrypt.hash(password, 10);
         const [result] = await pool.query(
             `INSERT INTO users
-                (email, display_name, age, age_group, password_hash, role, account_status)
-             VALUES (?, ?, ?, ?, ?, 'user', 'active')`,
+                (email, display_name, age, age_group, password_hash, role, account_status,
+                 email_verified_at, email_verification_sent_at)
+             VALUES (?, ?, ?, ?, ?, 'user', 'active', NULL, NULL)`,
             [email, displayName, age, ageGroup, passwordHash]
         );
 
         const userRow = await findSafeUserById(result.insertId);
         await establishSession(req, userRow);
         const profile = await profileService.getProfileForUser(userRow.id);
-        res.status(201).json({ user: buildSafeUser(userRow), profile });
+        let sendResult = { emailSent: false, emailTransportDisabled: true, failed: false };
+        try {
+            sendResult = await issueAndSendVerificationEmail(userRow, req);
+        } catch {
+            sendResult = { emailSent: false, emailTransportDisabled: false, failed: true };
+        }
+        res.status(201).json({ user: buildSafeUser(userRow), profile, ...verificationResponsePatch(sendResult) });
     } catch (error) {
         next(error);
     }
@@ -285,7 +392,8 @@ app.post('/api/auth/login', authRateLimit, async (req, res, next) => {
         }
 
         const [rows] = await pool.query(
-            `SELECT id, email, display_name, age, age_group, password_hash, role, account_status
+            `SELECT id, email, display_name, age, age_group, password_hash, role, account_status,
+                    email_verified_at
              FROM users
              WHERE email = ?
              LIMIT 1`,
@@ -340,6 +448,145 @@ app.get('/api/auth/me', requireAuth, async (req, res, next) => {
         await saveSession(req);
         const profile = await profileService.getProfileForUser(user.id);
         res.json({ user: buildSafeUser(user), profile });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.post('/api/auth/verify-email', async (req, res, next) => {
+    try {
+        const rawToken = String(req.body?.token || '').trim();
+        if (!rawToken) {
+            return sendAuthError(
+                res,
+                400,
+                ERROR_CODES.EMAIL_VERIFICATION_TOKEN_REQUIRED,
+                'Verification token is required.'
+            );
+        }
+
+        const verification = await emailVerificationRepository.transaction(async (repo) => {
+            const scopedService = createEmailVerificationTokenService(repo);
+            const inspected = await scopedService.inspectEmailVerificationToken(rawToken);
+
+            if (inspected.status === 'missing') {
+                return { status: 'invalid' };
+            }
+
+            if (inspected.status === 'expired' || inspected.status === 'revoked') {
+                return { status: inspected.status };
+            }
+
+            const token = inspected.token;
+            const user = await repo.getUserVerificationState(token.userId);
+            if (!user) {
+                return { status: 'invalid' };
+            }
+
+            const alreadyVerified = Boolean(user.emailVerifiedAt) || inspected.status === 'used';
+            const verifiedAt = user.emailVerifiedAt || new Date();
+            if (!user.emailVerifiedAt) {
+                await repo.setUserVerificationState(user.id, { emailVerifiedAt: verifiedAt });
+            }
+
+            if (inspected.status === 'active') {
+                await repo.markTokenUsed(token.id, verifiedAt);
+            }
+            await repo.revokeActiveTokens(user.id, EMAIL_VERIFICATION_TOKEN_TYPE, verifiedAt);
+
+            return {
+                status: 'verified',
+                userId: user.id,
+                alreadyVerified,
+            };
+        });
+
+        if (verification.status === 'invalid') {
+            return sendAuthError(
+                res,
+                400,
+                ERROR_CODES.EMAIL_VERIFICATION_TOKEN_INVALID,
+                'Verification token is invalid.'
+            );
+        }
+
+        if (verification.status === 'expired') {
+            return sendAuthError(
+                res,
+                410,
+                ERROR_CODES.EMAIL_VERIFICATION_TOKEN_EXPIRED,
+                'Verification token has expired.',
+                { canResend: true }
+            );
+        }
+
+        if (verification.status === 'revoked') {
+            return sendAuthError(
+                res,
+                410,
+                ERROR_CODES.EMAIL_VERIFICATION_TOKEN_REVOKED,
+                'Verification token is no longer available.',
+                { canResend: true }
+            );
+        }
+
+        const user = await findSafeUserById(verification.userId);
+        return res.json({
+            verified: true,
+            alreadyVerified: Boolean(verification.alreadyVerified),
+            ...(user ? {
+                user: {
+                    id: user.id,
+                    email: user.email,
+                    emailVerified: true,
+                    emailVerifiedAt: user.email_verified_at || null,
+                },
+            } : {}),
+        });
+    } catch (error) {
+        next(error);
+    }
+});
+
+app.post('/api/auth/resend-verification-email', requireAuth, async (req, res, next) => {
+    try {
+        const user = await findSafeUserById(req.session.userId);
+        if (!user || user.account_status !== 'active') {
+            return sendAuthError(
+                res,
+                401,
+                ERROR_CODES.AUTH_REQUIRED,
+                'Authentication required.'
+            );
+        }
+
+        if (user.email_verified_at) {
+            return res.json({
+                sent: false,
+                alreadyVerified: true,
+            });
+        }
+
+        const cooldown = await emailVerificationTokenService.getEmailVerificationResendCooldown(user.id);
+        if (cooldown.active) {
+            res.set('Retry-After', String(cooldown.remainingSeconds));
+            return sendAuthError(
+                res,
+                429,
+                ERROR_CODES.EMAIL_VERIFICATION_RESEND_COOLDOWN,
+                'Please wait before requesting another verification email.',
+                { retryAfterSeconds: cooldown.remainingSeconds }
+            );
+        }
+
+        const sendResult = await issueAndSendVerificationEmail(user, req);
+        return res.json({
+            sent: Boolean(sendResult.emailSent),
+            cooldownSeconds: DEFAULT_RESEND_COOLDOWN_SECONDS,
+            expiresInSeconds: DEFAULT_EXPIRY_HOURS * 60 * 60,
+            emailTransportDisabled: Boolean(sendResult.emailTransportDisabled),
+            emailSendFailed: Boolean(sendResult.failed),
+        });
     } catch (error) {
         next(error);
     }

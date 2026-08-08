@@ -85,7 +85,7 @@ function runMigrationOrderingTests() {
   const migrationsDir = path.resolve(__dirname, '../migrations');
   const all = listMigrationFilesThrough({ migrationsDir });
   assert.equal(all[0], '001_create_schema_migrations.sql');
-  assert.equal(all[all.length - 1], '026_create_agentic_execution_traces.sql');
+  assert.equal(all[all.length - 1], '027_add_email_verification_foundation.sql');
 
   const through020 = listMigrationFilesThrough({
     migrationsDir,
@@ -121,7 +121,7 @@ async function runSchemaHelperTests() {
   assert.equal(await indexExists(connection, 'users', 'uq_users_email'), true);
   assert.equal(await triggerExists(connection, 'users_before_insert_legacy_defaults'), true);
   assert.equal(await foreignKeyExists(connection, 'learner_profiles', 'fk_learner_profiles_user'), true);
-  assert.equal(await migrationRecorded(connection, '026_create_agentic_execution_traces.sql'), true);
+  assert.equal(await migrationRecorded(connection, '027_add_email_verification_foundation.sql'), true);
 
   for (const call of calls) {
     assert.ok(Array.isArray(call.params), 'schema helper query should use parameters');

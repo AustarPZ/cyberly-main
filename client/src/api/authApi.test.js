@@ -2,7 +2,10 @@ import {
   login,
   logout,
   register,
+  resendVerificationEmail,
+  refreshCurrentUser,
   restoreSession,
+  verifyEmail,
 } from "./authApi";
 import {
   getProfile,
@@ -46,6 +49,47 @@ describe("auth, profile, and account API wrappers", () => {
       ["http://localhost:5000/api/auth/me", "GET", undefined],
       ["http://localhost:5000/api/auth/logout", "POST", undefined],
     ]);
+  });
+
+  test("preserves email verification endpoints", async () => {
+    await verifyEmail("token with spaces");
+    await resendVerificationEmail();
+    await refreshCurrentUser();
+
+    expect(global.fetch.mock.calls.map(call => [call[0], call[1].method, call[1].body])).toEqual([
+      [
+        "http://localhost:5000/api/auth/verify-email",
+        "POST",
+        "{\"token\":\"token with spaces\"}",
+      ],
+      ["http://localhost:5000/api/auth/resend-verification-email", "POST", undefined],
+      ["http://localhost:5000/api/auth/me", "GET", undefined],
+    ]);
+  });
+
+  test("preserves resend cooldown error metadata", async () => {
+    global.fetch.mockResolvedValueOnce(jsonResponse(429, {
+      error: {
+        code: "EMAIL_VERIFICATION_RESEND_COOLDOWN",
+        message: "Please wait before resending.",
+      },
+      retryAfterSeconds: 45,
+      canResend: true,
+    }));
+
+    const result = await resendVerificationEmail();
+
+    expect(result).toMatchObject({
+      ok: false,
+      status: 429,
+      data: {
+        error: {
+          code: "EMAIL_VERIFICATION_RESEND_COOLDOWN",
+        },
+        retryAfterSeconds: 45,
+        canResend: true,
+      },
+    });
   });
 
   test("preserves profile and account endpoints", async () => {
