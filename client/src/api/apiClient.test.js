@@ -24,8 +24,13 @@ describe("apiConfig", () => {
   test("uses localhost fallback outside production only", () => {
     expect(loadConfig({ NODE_ENV: "development", REACT_APP_API_BASE_URL: "" }).API_BASE_URL)
       .toBe("http://localhost:5000");
-    expect(loadConfig({ NODE_ENV: "production", REACT_APP_API_BASE_URL: "" }).API_BASE_URL)
-      .toBe("");
+  });
+
+  test("rejects missing or unsafe API origins in production", () => {
+    for (const value of ["", "/api", "http://localhost:5000", "http://api.example.com"]) {
+      expect(() => loadConfig({ NODE_ENV: "production", REACT_APP_API_BASE_URL: value }))
+        .toThrow("REACT_APP_API_BASE_URL");
+    }
   });
 });
 

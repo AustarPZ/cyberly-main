@@ -93,3 +93,18 @@ Only public, non-secret values should be exposed to the frontend.
 | `AI_GENERATION_STALE_MS` | Stale generation recovery window. | No |
 | `AI_DAILY_BUDGET_USD` | Optional estimated daily AI budget cap. | No |
 | `ACTION_PROPOSAL_TTL_SECONDS` | Learner-controlled action proposal expiry. | No |
+
+## Production Validation Contract
+
+The backend validates production configuration immediately after loading environment variables and before initializing Express, MySQL, SMTP, AI providers, or the network listener. With `NODE_ENV=production`, startup fails safely when:
+
+- `SESSION_SECRET` is absent, is the known development fallback, or is shorter than 32 characters;
+- `CLIENT_ORIGIN` is not an origin-only public HTTPS URL;
+- `CLIENT_BASE_URL` is not a public HTTPS URL or includes a query or fragment;
+- a required database connection field is absent or `DB_PORT` is outside `1` through `65535`;
+- `EMAIL_TRANSPORT=smtp` does not satisfy the accepted SMTP configuration contract; or
+- `OPENAI_API_KEY` is absent from the accepted OpenAI-backed external-Beta runtime.
+
+Validation errors identify variable names only. They must not include secret values. Development and test environments retain their current local defaults.
+
+The official React build requires `REACT_APP_API_BASE_URL` to be a public HTTPS API origin in production. It must not contain a path, query, fragment, or localhost address.

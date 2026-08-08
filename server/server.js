@@ -1,5 +1,15 @@
 require('dotenv').config();
 
+const { validateProductionConfig } = require('./src/config/productionConfig');
+
+let productionConfig;
+try {
+    productionConfig = validateProductionConfig(process.env);
+} catch (error) {
+    console.error(`Production configuration error: ${error.message}`);
+    process.exit(1);
+}
+
 const express = require('express');
 const session = require('express-session');
 const cors = require('cors');
@@ -66,12 +76,13 @@ const { ERROR_CODES } = require('./src/errors/errorCodes');
 
 const app = express();
 const port = process.env.PORT || 5000;
-const clientOrigin = process.env.CLIENT_ORIGIN || 'http://localhost:3000';
+const clientOrigin = productionConfig.clientOrigin || process.env.CLIENT_ORIGIN || 'http://localhost:3000';
+const clientBaseUrl = productionConfig.clientBaseUrl || process.env.CLIENT_BASE_URL || '';
 const sessionName = process.env.SESSION_NAME || 'cyberly.sid';
 const sessionTtlSeconds = Number(process.env.SESSION_TTL_SECONDS || 86400);
 const isProduction = process.env.NODE_ENV === 'production';
 const sessionCookieSameSite = normalizeSameSite(
-    process.env.SESSION_COOKIE_SAMESITE || (isProduction ? 'none' : 'lax')
+    productionConfig.sessionCookieSameSite || process.env.SESSION_COOKIE_SAMESITE || 'lax'
 );
 const sessionCookieSecure = isProduction || sessionCookieSameSite === 'none';
 const pool = createPool();
@@ -83,7 +94,7 @@ const emailVerificationSender = createEmailVerificationSender({
     transport: process.env.EMAIL_TRANSPORT || 'disabled',
     fromName: process.env.EMAIL_FROM_NAME || 'Cyberly',
     fromAddress: process.env.EMAIL_FROM_ADDRESS || '',
-    clientBaseUrl: process.env.CLIENT_BASE_URL || '',
+    clientBaseUrl,
     smtp: {
         host: process.env.SMTP_HOST || '',
         port: process.env.SMTP_PORT || '',
@@ -270,7 +281,7 @@ function getRequestLocale(req) {
 }
 
 function getVerificationUrl(rawToken) {
-    return buildVerificationLink(process.env.CLIENT_BASE_URL || clientOrigin || 'http://localhost:3000', rawToken);
+    return buildVerificationLink(clientBaseUrl || clientOrigin || 'http://localhost:3000', rawToken);
 }
 
 async function issueAndSendVerificationEmail(user, req) {

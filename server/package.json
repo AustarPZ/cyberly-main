@@ -6,6 +6,7 @@
   "scripts": {
     "test": "node scripts/test-safe-backend.js",
     "test:migration-foundation-unit": "node scripts/test-migration-foundation-unit.js",
+    "test:production-config": "node scripts/test-production-config.js",
     "test:account": "node scripts/test-account.js",
     "test:auth": "node scripts/test-auth.js",
     "test:profile": "node scripts/test-profile.js",

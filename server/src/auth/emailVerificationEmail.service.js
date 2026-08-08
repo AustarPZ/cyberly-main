@@ -266,4 +266,5 @@ module.exports = {
   buildVerificationLink,
   createEmailVerificationSender,
   safeEmailError,
+  validateSmtpConfiguration,
 };
