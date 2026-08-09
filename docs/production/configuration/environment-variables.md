@@ -41,9 +41,9 @@ Only public, non-secret values should be exposed to the frontend.
 | `DB_USER` | MySQL username. | Yes |
 | `DB_PASSWORD` | MySQL password. | Yes |
 | `DB_NAME` | MySQL database name. Standard value: `cyberly`. | No |
-| `DB_SSL_MODE` | Use `required` when the managed MySQL provider requires TLS. | No |
-| `DB_SSL_CA` | Optional managed MySQL CA certificate PEM text. | Yes |
-| `DB_SSL_REJECT_UNAUTHORIZED` | Certificate verification toggle. Keep `true` except for explicit diagnostics. | No |
+| `DB_SSL_MODE` | Production requires `required`; local development may use `disabled`. | No |
+| `DB_SSL_CA` | Production-required managed MySQL CA certificate as inline PEM text. | Yes |
+| `DB_SSL_REJECT_UNAUTHORIZED` | Production requires `true` so the managed database certificate is verified. | No |
 
 ## Sessions
 
@@ -102,9 +102,12 @@ The backend validates production configuration immediately after loading environ
 - `CLIENT_ORIGIN` is not an origin-only public HTTPS URL;
 - `CLIENT_BASE_URL` is not a public HTTPS URL or includes a query or fragment;
 - a required database connection field is absent or `DB_PORT` is outside `1` through `65535`;
+- managed MySQL TLS is not configured with `DB_SSL_MODE=required`, a non-empty `DB_SSL_CA`, and `DB_SSL_REJECT_UNAUTHORIZED=true`;
 - `EMAIL_TRANSPORT=smtp` does not satisfy the accepted SMTP configuration contract; or
 - `OPENAI_API_KEY` is absent from the accepted OpenAI-backed external-Beta runtime.
 
 Validation errors identify variable names only. They must not include secret values. Development and test environments retain their current local defaults.
 
 The official React build requires `REACT_APP_API_BASE_URL` to be a public HTTPS API origin in production. It must not contain a path, query, fragment, or localhost address.
+
+`DB_SSL_CA` accepts a real multiline PEM or PEM text whose newlines are represented as literal `\n` sequences. Escaped newlines are recommended for Render secret entry. `DB_SSL_CA_FILE` is not supported. Production must not rely only on the system CA store or disable certificate verification; local development may continue to use non-TLS MySQL.

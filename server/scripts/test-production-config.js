@@ -7,11 +7,14 @@ const {
   validateProductionUrl,
   validateSessionSecret,
 } = require('../src/config/productionConfig');
+const { getDatabaseConfig } = require('../src/database/pool');
 
 const VALID_SECRET = '0123456789abcdef0123456789abcdef';
+const FAKE_CA = '-----BEGIN CERTIFICATE-----\nFAKE_TEST_CA\n-----END CERTIFICATE-----';
 const SECRET_VALUES = {
   SESSION_SECRET: 'secret-value-that-must-never-appear',
   DB_PASSWORD: 'db-password-that-must-never-appear',
+  DB_SSL_CA: '-----BEGIN CERTIFICATE-----\nSECRET_CA_CONTENT_MUST_NOT_APPEAR\n-----END CERTIFICATE-----',
   SMTP_PASSWORD: 'smtp-password-that-must-never-appear',
   OPENAI_API_KEY: 'openai-key-that-must-never-appear',
 };
@@ -27,6 +30,9 @@ function validProductionEnv(overrides = {}) {
     DB_NAME: 'cyberly',
     DB_USER: 'cyberly_app',
     DB_PASSWORD: 'safe-placeholder-db-password',
+    DB_SSL_MODE: 'required',
+    DB_SSL_CA: FAKE_CA,
+    DB_SSL_REJECT_UNAUTHORIZED: 'true',
     EMAIL_TRANSPORT: 'disabled',
     OPENAI_API_KEY: 'safe-placeholder-openai-key',
     SESSION_COOKIE_SAMESITE: 'lax',
@@ -79,6 +85,16 @@ function runValidationCases() {
     assertInvalid({ DB_PORT: value }, 'DB_PORT');
   }
 
+  for (const value of [undefined, '', 'disabled', 'false', '0', 'preferred']) {
+    assertInvalid({ DB_SSL_MODE: value }, 'DB_SSL_MODE');
+  }
+  for (const value of [undefined, '   ']) {
+    assertInvalid({ DB_SSL_CA: value }, 'DB_SSL_CA');
+  }
+  for (const value of [undefined, 'false', '0', 'no']) {
+    assertInvalid({ DB_SSL_REJECT_UNAUTHORIZED: value }, 'DB_SSL_REJECT_UNAUTHORIZED');
+  }
+
   assertInvalid({
     EMAIL_TRANSPORT: 'smtp',
     SMTP_HOST: 'smtp.example.com',
@@ -101,6 +117,16 @@ function runValidationCases() {
   assert.equal(result.clientBaseUrl, 'https://app.example.com');
   assert.equal(result.sessionCookieSameSite, 'lax');
 
+  const previousEnvironment = process.env;
+  process.env = { ...validProductionEnv(), DB_SSL_CA: FAKE_CA.replace(/\n/g, '\\n') };
+  try {
+    const databaseConfig = getDatabaseConfig();
+    assert.equal(databaseConfig.ssl.ca, FAKE_CA);
+    assert.equal(databaseConfig.ssl.rejectUnauthorized, true);
+  } finally {
+    process.env = previousEnvironment;
+  }
+
   const secretEnv = validProductionEnv({ ...SECRET_VALUES, EMAIL_TRANSPORT: 'smtp' });
   let message = '';
   try {
@@ -116,11 +142,11 @@ function runValidationCases() {
   assert.deepEqual(validateProductionConfig({ NODE_ENV: 'test' }), { isProduction: false });
 }
 
-function runStartupGuardCase() {
+function assertStartupGuard(overrides, expectedField) {
   const serverPath = path.resolve(__dirname, '..', 'server.js');
   const env = {
     ...process.env,
-    ...validProductionEnv({ SESSION_SECRET: '' }),
+    ...validProductionEnv(overrides),
   };
   const result = spawnSync(process.execPath, [serverPath], {
     cwd: path.dirname(serverPath),
@@ -132,7 +158,7 @@ function runStartupGuardCase() {
 
   assert.notEqual(result.status, 0);
   assert.match(output, /Production configuration error/);
-  assert.match(output, /SESSION_SECRET/);
+  assert.match(output, new RegExp(expectedField));
   assert.doesNotMatch(output, /Server running on port/);
   assert.doesNotMatch(output, /Database health|ECONNREFUSED|access_denied/);
   for (const secret of Object.values(SECRET_VALUES)) {
@@ -140,6 +166,13 @@ function runStartupGuardCase() {
   }
 }
 
+
+function runStartupGuardCases() {
+  assertStartupGuard({ SESSION_SECRET: '' }, 'SESSION_SECRET');
+  assertStartupGuard({ DB_SSL_MODE: 'disabled' }, 'DB_SSL_MODE');
+  assertStartupGuard({ DB_SSL_REJECT_UNAUTHORIZED: 'false' }, 'DB_SSL_REJECT_UNAUTHORIZED');
+}
+
 runValidationCases();
-runStartupGuardCase();
+runStartupGuardCases();
 console.log('Production configuration verification passed.');

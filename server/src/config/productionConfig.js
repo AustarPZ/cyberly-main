@@ -65,6 +65,20 @@ function validateDatabaseConfig(env) {
   return { port };
 }
 
+function validateDatabaseTlsConfig(env) {
+  const mode = String(env.DB_SSL_MODE || '').trim().toLowerCase();
+  if (mode !== 'required') throw configurationError(['DB_SSL_MODE']);
+
+  requireTrimmed(env.DB_SSL_CA, 'DB_SSL_CA');
+
+  const rejectUnauthorized = String(env.DB_SSL_REJECT_UNAUTHORIZED || '').trim().toLowerCase();
+  if (rejectUnauthorized !== 'true') {
+    throw configurationError(['DB_SSL_REJECT_UNAUTHORIZED']);
+  }
+
+  return { mode, rejectUnauthorized: true };
+}
+
 function validateEmailConfig(env, clientBaseUrl) {
   const transport = String(env.EMAIL_TRANSPORT || 'disabled').trim().toLowerCase();
   if (!VALID_EMAIL_TRANSPORTS.has(transport)) throw configurationError(['EMAIL_TRANSPORT']);
@@ -104,6 +118,7 @@ function validateProductionConfig(env = process.env) {
     name: 'CLIENT_BASE_URL',
   });
   validateDatabaseConfig(env);
+  validateDatabaseTlsConfig(env);
   validateEmailConfig(env, clientBaseUrl);
   validateAiConfig(env);
 
@@ -124,6 +139,7 @@ module.exports = {
   DEVELOPMENT_SESSION_SECRET,
   validateAiConfig,
   validateDatabaseConfig,
+  validateDatabaseTlsConfig,
   validateEmailConfig,
   validateProductionConfig,
   validateProductionUrl,

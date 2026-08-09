@@ -2,7 +2,8 @@ CREATE TEMPORARY TABLE tmp_scenario_definition_translations (
   slug VARCHAR(120) NOT NULL,
   locale VARCHAR(10) NOT NULL,
   title VARCHAR(160) NOT NULL,
-  summary VARCHAR(500) NOT NULL
+  summary VARCHAR(500) NOT NULL,
+  PRIMARY KEY (slug, locale)
 );
 
 -- migrate:statement-start
@@ -39,7 +40,8 @@ CREATE TEMPORARY TABLE tmp_scenario_step_translations (
   step_order INT UNSIGNED NOT NULL,
   locale VARCHAR(10) NOT NULL,
   situation_text TEXT NOT NULL,
-  prompt_text TEXT NOT NULL
+  prompt_text TEXT NOT NULL,
+  PRIMARY KEY (slug, step_order, locale)
 );
 
 -- migrate:statement-start
@@ -111,7 +113,8 @@ CREATE TEMPORARY TABLE tmp_scenario_option_translations (
   locale VARCHAR(10) NOT NULL,
   text TEXT NOT NULL,
   feedback TEXT NOT NULL,
-  safety_explanation TEXT NOT NULL
+  safety_explanation TEXT NOT NULL,
+  PRIMARY KEY (slug, step_order, option_key, locale)
 );
 
 -- migrate:statement-start

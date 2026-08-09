@@ -2,7 +2,7 @@
 
 Cyberly is deployable as a static React frontend plus a persistent Express backend with managed MySQL.
 
-**Deployment status note:** The previous Render/Aiven deployment was prototype infrastructure. Current operating mode is local development, and future hosting provider selection is deferred until staging and production requirements are evaluated.
+**Deployment status note:** Local development remains the application operating mode. The `cyberly.my` domain, Cloudflare authoritative DNS, and an Aiven MySQL 8.4 staging database in Singapore are provisioned. Render frontend/backend services, application DNS records, and the external staging runtime are not yet provisioned.
 
 ## Current Shape
 
@@ -56,7 +56,7 @@ The backend needs production values for:
 - `DB_USER`
 - `DB_PASSWORD`
 - `DB_NAME`
-- `DB_SSL_MODE` and, for managed MySQL providers that require it, `DB_SSL_CA`
+- `DB_SSL_MODE=required`, a non-empty `DB_SSL_CA`, and `DB_SSL_REJECT_UNAUTHORIZED=true`
 - AI provider keys only when live AI generation is enabled
 
 The frontend needs:
@@ -122,15 +122,48 @@ See [Staging Configuration Contract](staging-configuration-contract.md) for the 
 - PB-OPS-2A SECRET AUDIT - PASSED
 - PB-OPS-2A FULL REGRESSION - PASSED
 
-PB-OPS-2A DOES NOT CERTIFY DEPLOYMENT. This acceptance confirms the repository-level production configuration guard and its automated regression evidence only. Cyberly remains in preparation-only, local-development operating mode.
+PB-OPS-2A DOES NOT CERTIFY DEPLOYMENT. This acceptance confirms the repository-level production configuration guard and its automated regression evidence only. Application execution remains local-development only; the separately accepted managed staging database baseline is recorded below.
 
 The following deployment work remains pending:
 
-- staging frontend and backend hosting;
-- custom or final-style staging domains;
-- managed MySQL provisioning;
-- database TLS and runtime connectivity verification;
+- Render frontend and backend provisioning;
+- application DNS records;
+- backend runtime connectivity and health verification;
 - real staging SMTP verification;
 - real staging OpenAI verification;
 - external browser cookie and CORS verification; and
-- fresh-database migration and RAG rehearsal.
+- external learner acceptance.
+
+## PB-OPS-2B-3B Managed Staging Database Acceptance
+
+**PB-OPS-2B-3B - Managed Staging Database Baseline:** ACCEPTED.
+
+Infrastructure evidence:
+
+- Aiven MySQL staging is provisioned in the Singapore region on MySQL 8.4.
+- Verified TLS connection and database authentication passed.
+- Aiven inbound networking remains temporarily broad pending the Render egress and network-access decision.
+
+Migration evidence:
+
+- A fresh migration rehearsal completed successfully.
+- Migration `012` initially failed because MySQL 8.4 applies `sql_require_primary_key` to temporary tables. Its three staging tables now use semantic natural primary keys.
+- The Aiven primary-key policy remains enabled.
+- All 27 migrations are applied, with zero pending migrations.
+- `db:ensure` was not used against Aiven staging.
+
+Content evidence:
+
+- Initial Assessment verification passed: 12 questions across four topics.
+- Scenario verification passed: eight definitions, 24 steps, and 72 options.
+- Resource verification passed: nine published Resources, including six approved RAG-eligible Resources.
+- Accepted English, Bahasa Melayu, and Simplified Chinese content coverage passed.
+
+RAG evidence:
+
+- Deterministic ingestion passed without an AI provider, embedding call, or provider cost.
+- The resulting index contains 18 documents and 90 chunks.
+- Duplicate document identities, orphan chunks, and missing eligible translations are all zero.
+- A second ingestion retained 18 documents and 90 chunks, confirming runtime idempotency.
+
+This acceptance certifies only the managed staging database, migration-seeded content, and deterministic RAG baseline. It does not certify Render deployment, backend runtime, application DNS records, staging SMTP or OpenAI, browser CORS/cookie behaviour, external learner acceptance, or production deployment.
