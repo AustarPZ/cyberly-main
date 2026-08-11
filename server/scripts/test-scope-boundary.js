@@ -80,7 +80,7 @@ function createFakeRepository(calls) {
     },
     async listLatestMessages() {
       calls.messages += 1;
-      return [];
+      return calls.recentMessages || [];
     },
     async insertMessageActions() {
       calls.actions += 1;
@@ -128,7 +128,63 @@ function createFakeRepository(calls) {
   };
 }
 
-async function assertDeterministicBoundaryReply(message, expectedType) {
+async function assertContextualFollowUpReply(message, recentMessages) {
+  const calls = {
+    message,
+    recentMessages,
+    createGeneration: 0,
+    markInProgress: 0,
+    markFailed: 0,
+    complete: 0,
+    learnerContext: 0,
+    actionData: 0,
+    messages: 0,
+    actions: 0,
+    sources: 0,
+    provider: 0,
+    rag: 0,
+    agentic: 0,
+    proposals: 0,
+  };
+  const service = createAiService(
+    createFakeRepository(calls),
+    {
+      id: 'openai',
+      model: 'test-model',
+      configured: true,
+      async generateReply({ messages }) {
+        calls.provider += 1;
+        calls.providerMessages = messages;
+        return {
+          content: 'Continue checking the sender, link, and request before responding.',
+          providerRequestId: 'context-follow-up-provider',
+          inputTokens: 1,
+          outputTokens: 1,
+        };
+      },
+    },
+    {
+      provider: 'openai',
+      model: 'test-model',
+      testMockMode: true,
+      perUserMinuteLimit: 100,
+      perUserDailyLimit: 100,
+      generationStaleMs: 60000,
+      contextMessageLimit: 12,
+      contextCharacterLimit: 6000,
+      dailyBudgetUsd: null,
+    }
+  );
+
+  const result = await service.generateReply(7, 11, 22, { locale: 'en' });
+  assert.equal(result.statusCode, 201);
+  assert.equal(calls.provider, 1, `${message} should reach the provider with trusted context`);
+  assert.equal(calls.messages, 1);
+  assert.equal(calls.providerMessages.at(-1).content, message);
+  return calls;
+}
+
+async function assertDeterministicBoundaryReply(message, expectedType, expectedHistoryCalls = 0) {
   const calls = {
     message,
     createGeneration: 0,
@@ -202,7 +258,7 @@ async function assertDeterministicBoundaryReply(message, expectedType) {
   assert.equal(calls.proposals, 0);
   assert.equal(calls.learnerContext, 0);
   assert.equal(calls.actionData, 0);
-  assert.equal(calls.messages, 0);
+  assert.equal(calls.messages, expectedHistoryCalls);
   assert.equal(calls.actions, 0);
   assert.equal(calls.sources, 0);
   assert.equal(classifyCyberGuardScope(message).type, expectedType);
@@ -407,7 +463,55 @@ async function run() {
 
   await assertDeterministicBoundaryReply('Teach me mathematics.', CYBER_GUARD_SCOPE_TYPES.OUT_OF_SCOPE);
   await assertDeterministicBoundaryReply('Hello CyberGuard', CYBER_GUARD_SCOPE_TYPES.CASUAL_ALLOWED);
+  await assertDeterministicBoundaryReply('continue', CYBER_GUARD_SCOPE_TYPES.OUT_OF_SCOPE, 1);
+  await assertDeterministicBoundaryReply('继续', CYBER_GUARD_SCOPE_TYPES.OUT_OF_SCOPE, 1);
+  await assertDeterministicBoundaryReply('why?', CYBER_GUARD_SCOPE_TYPES.OUT_OF_SCOPE, 1);
   await assertContextualLearningGuidanceReply('What should I study next?');
+
+  const phishingContext = [
+    { id: 1, role: 'user', content: 'How can I identify a phishing message?', locale: 'en' },
+    { id: 2, role: 'assistant', content: 'Check the sender, link, urgency, and request.', locale: 'en' },
+    { id: 22, role: 'user', content: 'continue', locale: 'en' },
+  ];
+  await assertContextualFollowUpReply('continue', phishingContext);
+  for (const message of ['tell me more', 'why?', 'what next?', 'explain more']) {
+    await assertContextualFollowUpReply(message, [
+      ...phishingContext.slice(0, -1),
+      { id: 22, role: 'user', content: message, locale: 'en' },
+    ]);
+  }
+  for (const message of ['继续', '为什么？', '然后呢？', '接下来呢？']) {
+    await assertContextualFollowUpReply(message, [
+      ...phishingContext.slice(0, -1),
+      { id: 22, role: 'user', content: message, locale: 'zh-CN' },
+    ]);
+  }
+
+  assertScopes(['continue', '继续', 'why?'], CYBER_GUARD_SCOPE_TYPES.OUT_OF_SCOPE);
+  assert.equal(
+    classifyCyberGuardScope('continue', { recentMessages: phishingContext }).type,
+    CYBER_GUARD_SCOPE_TYPES.IN_SCOPE
+  );
+  assert.equal(
+    classifyCyberGuardScope('Who won the World Cup?', { recentMessages: phishingContext }).type,
+    CYBER_GUARD_SCOPE_TYPES.OUT_OF_SCOPE
+  );
+  assert.equal(
+    classifyCyberGuardScope('continue with the World Cup topic', { recentMessages: phishingContext }).type,
+    CYBER_GUARD_SCOPE_TYPES.OUT_OF_SCOPE
+  );
+  assert.equal(
+    classifyCyberGuardScope('continue', {
+      recentMessages: [
+        { id: 1, role: 'user', content: 'How can I identify a phishing message?' },
+        { id: 2, role: 'assistant', content: 'Check the sender and link.' },
+        { id: 3, role: 'user', content: 'Who won the World Cup?' },
+        { id: 4, role: 'assistant', content: 'I can only help with cyber wellness.' },
+        { id: 22, role: 'user', content: 'continue' },
+      ],
+    }).type,
+    CYBER_GUARD_SCOPE_TYPES.OUT_OF_SCOPE
+  );
 
   const trace = sanitizeTracePayload({
     requestId: 'scope-test',

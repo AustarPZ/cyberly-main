@@ -20,6 +20,7 @@ const { buildCyberWellnessModelSummary } = require('../wellness/cyberWellness.ex
 const {
   classifyCyberGuardScope,
   CYBER_GUARD_SCOPE_TYPES,
+  isContextualScopeFollowUp,
 } = require('./scope/cyberGuardScope.classifier');
 const { buildScopeBoundaryReply } = require('./scope/cyberGuardScope.explanations');
 
@@ -493,7 +494,12 @@ function createAiService(repository, provider, config, options = {}) {
   async function generateReply(userId, conversationIdInput, messageIdInput, input = {}) {
     const target = await loadOwnedTarget(userId, conversationIdInput, messageIdInput);
     const requestId = `chat-${target.conversationId}-${target.messageId}-${Date.now().toString(36)}`;
-    const scope = classifyCyberGuardScope(target.userMessage.content);
+    const scopeContextMessages = isContextualScopeFollowUp(target.userMessage.content)
+      ? await repository.listLatestMessages(target.conversationId, config.contextMessageLimit)
+      : null;
+    const scope = classifyCyberGuardScope(target.userMessage.content, {
+      recentMessages: scopeContextMessages || [],
+    });
     let trace = null;
     if (agenticTraceService) {
       trace = await agenticTraceService.startTrace({
@@ -686,7 +692,7 @@ function createAiService(repository, provider, config, options = {}) {
       }
       const learningRoute = await buildRouteIfRequested(userId, target.userMessage, locale);
       const routeContext = buildLearningRouteContext(learningRoute);
-      const allMessages = await repository.listLatestMessages(
+      const allMessages = scopeContextMessages || await repository.listLatestMessages(
         target.conversationId,
         config.contextMessageLimit
       );

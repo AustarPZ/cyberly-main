@@ -68,6 +68,15 @@ const INTENT_TOKEN_CORRECTIONS = Object.freeze({
   practce: 'practice',
 });
 
+const CONTEXTUAL_FOLLOW_UPS = new Set([
+  'continue', 'tell me more', 'why', 'what next', 'explain more', 'how', 'and then',
+  '继续', '为什么', '然后呢', '接下来呢', '多说一点', '怎么做',
+  'teruskan', 'beritahu saya lagi', 'kenapa', 'apa seterusnya', 'jelaskan lagi',
+  'bagaimana', 'kemudian',
+]);
+
+const MAX_SCOPE_CONTEXT_MESSAGES = 7;
+
 function normalizeMessage(message) {
   return String(message || '')
     .toLowerCase()
@@ -126,7 +135,7 @@ function hasSuspiciousMessageCyberIntent(text) {
   );
 }
 
-function classifyCyberGuardScope(message) {
+function classifyStandaloneScope(message) {
   const text = normalizeMessage(message);
   if (!text) {
     return {
@@ -190,7 +199,49 @@ function classifyCyberGuardScope(message) {
   };
 }
 
+function isContextualScopeFollowUp(message) {
+  return CONTEXTUAL_FOLLOW_UPS.has(normalizeMessage(message));
+}
+
+function hasRecentInScopeReferent(recentMessages) {
+  // Scope inheritance is deliberately narrower than the provider context window.
+  // It uses at most seven persisted messages and only prior learner turns.
+  const learnerMessages = (Array.isArray(recentMessages) ? recentMessages : [])
+    .slice(-MAX_SCOPE_CONTEXT_MESSAGES)
+    .filter(message => message?.role === 'user');
+
+  // Persisted history includes the current learner message; inspect only earlier learner turns.
+  learnerMessages.pop();
+  for (let index = learnerMessages.length - 1; index >= 0; index -= 1) {
+    const content = learnerMessages[index]?.content;
+    if (isContextualScopeFollowUp(content)) continue;
+    const scope = classifyStandaloneScope(content);
+    return [
+      CYBER_GUARD_SCOPE_TYPES.IN_SCOPE,
+      CYBER_GUARD_SCOPE_TYPES.IN_SCOPE_LEARNING_GUIDANCE,
+    ].includes(scope.type);
+  }
+  return false;
+}
+
+function classifyCyberGuardScope(message, { recentMessages = [] } = {}) {
+  const standalone = classifyStandaloneScope(message);
+  if (
+    standalone.type === CYBER_GUARD_SCOPE_TYPES.OUT_OF_SCOPE &&
+    isContextualScopeFollowUp(message) &&
+    hasRecentInScopeReferent(recentMessages)
+  ) {
+    return {
+      type: CYBER_GUARD_SCOPE_TYPES.IN_SCOPE,
+      allowed: true,
+      reasonCode: 'recent_in_scope_follow_up',
+    };
+  }
+  return standalone;
+}
+
 module.exports = {
   CYBER_GUARD_SCOPE_TYPES,
   classifyCyberGuardScope,
+  isContextualScopeFollowUp,
 };
