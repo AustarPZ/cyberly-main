@@ -28,6 +28,7 @@ dist/
 .env.test.local
 .env.production.local
 /server/.env.staging.local
+/backups/private/
 
 npm-debug.log*
 yarn-debug.log*

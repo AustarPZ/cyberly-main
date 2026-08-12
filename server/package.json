@@ -11,6 +11,7 @@
     "test:security-boundary": "node scripts/test-security-boundary.js",
     "test:database-tls-config": "node scripts/test-database-tls-config.js",
     "test:staging-env-loader": "node scripts/test-staging-env-loader.js",
+    "test:backup-staging": "node scripts/test-backup-staging-mysql.js",
     "test:staging-content-verifier": "node scripts/test-staging-content-verifier.js",
     "test:account": "node scripts/test-account.js",
     "test:auth": "node scripts/test-auth.js",
@@ -52,7 +53,9 @@
     "staging:migrate:status": "node scripts/run-with-staging-env.js migrate:status",
     "staging:migrate": "node scripts/run-with-staging-env.js migrate",
     "staging:verify-content": "node scripts/run-with-staging-env.js verify-content",
-    "staging:rag:ingest": "node scripts/run-with-staging-env.js rag:ingest"
+    "staging:rag:ingest": "node scripts/run-with-staging-env.js rag:ingest",
+    "backup:staging:check": "node scripts/run-with-staging-env.js backup:check",
+    "backup:staging": "node scripts/run-with-staging-env.js backup"
   },
   "keywords": [],
   "author": "",

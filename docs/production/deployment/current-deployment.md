@@ -2,7 +2,7 @@
 
 Cyberly is deployable as a static React frontend plus a persistent Express backend with managed MySQL.
 
-**Deployment status note:** Local development remains the application operating mode. The `cyberly.my` domain, Cloudflare authoritative DNS, and an Aiven MySQL 8.4 staging database in Singapore are provisioned. Render frontend/backend services, application DNS records, and the external staging runtime are not yet provisioned.
+**Deployment status note:** Local development remains the primary engineering mode. The external staging environment is provisioned with Render frontend/backend services, Cloudflare authoritative DNS, and an Aiven MySQL 8.4 database in Singapore. This staging baseline does not certify a production deployment or public launch.
 
 ## Current Shape
 
@@ -167,3 +167,18 @@ RAG evidence:
 - A second ingestion retained 18 documents and 90 chunks, confirming runtime idempotency.
 
 This acceptance certifies only the managed staging database, migration-seeded content, and deterministic RAG baseline. It does not certify Render deployment, backend runtime, application DNS records, staging SMTP or OpenAI, browser CORS/cookie behaviour, external learner acceptance, or production deployment.
+
+## PB-OPS-3D Backup and Recovery Acceptance
+
+**PB-OPS-3D - Public Beta Backup and Recovery Baseline:** ACCEPTED.
+
+- The staging health endpoint passed.
+- All 27 migrations remained applied.
+- Content verification passed with the accepted Assessment, Scenario, Resource, and RAG counts.
+- MySQL 8.4.11 backup tooling passed its verified-TLS prerequisite check.
+- One independent staging logical backup completed at 89,806 bytes, and its SHA-256 companion was independently verified.
+- Both private artifacts remained Git-ignored and untracked; their SQL content was not inspected.
+- The backup operation read Aiven data but did not perform migrations, RAG ingestion, restore, or learner-data mutation.
+- Recovery remains a separate-target procedure: never import a logical backup over the only staging database.
+
+See [Public Beta Backup and Recovery](../operations/public-beta-backup-recovery.md) for the canonical backup, retention, privacy, and recovery procedure.

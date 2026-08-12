@@ -54,6 +54,10 @@ try {
   const ragIngestCommand = getApprovedCommand('rag:ingest');
   assert.equal(ragIngestCommand.executable, process.execPath);
   assert.deepEqual(ragIngestCommand.args, ['scripts/rag-ingest.js']);
+  const backupCheckCommand = getApprovedCommand('backup:check');
+  assert.deepEqual(backupCheckCommand.args, ['scripts/backup-staging-mysql.js', '--check']);
+  const backupCommand = getApprovedCommand('backup');
+  assert.deepEqual(backupCommand.args, ['scripts/backup-staging-mysql.js']);
   assert.throws(() => getApprovedCommand('db:ensure'), /not approved/);
   assert.throws(() => getApprovedCommand('start'), /not approved/);
   assert.throws(() => getApprovedCommand('unknown'), /not approved/);

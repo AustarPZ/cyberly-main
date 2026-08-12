@@ -63,6 +63,20 @@ function getApprovedCommand(commandName) {
       cwd: SERVER_ROOT,
     };
   }
+  if (commandName === 'backup:check') {
+    return {
+      executable: process.execPath,
+      args: ['scripts/backup-staging-mysql.js', '--check'],
+      cwd: SERVER_ROOT,
+    };
+  }
+  if (commandName === 'backup') {
+    return {
+      executable: process.execPath,
+      args: ['scripts/backup-staging-mysql.js'],
+      cwd: SERVER_ROOT,
+    };
+  }
   throw new Error(`Staging command is not approved: ${commandName || '(missing)'}`);
 }
 
