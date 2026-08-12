@@ -91,7 +91,7 @@ Only public, non-secret values should be exposed to the frontend.
 | `AI_PER_USER_MINUTE_LIMIT` | Per-user minute limit. | No |
 | `AI_PER_USER_DAILY_LIMIT` | Per-user daily limit. | No |
 | `AI_GENERATION_STALE_MS` | Stale generation recovery window. | No |
-| `AI_DAILY_BUDGET_USD` | Optional estimated daily AI budget cap. | No |
+| `AI_DAILY_BUDGET_USD` | Required positive production cap for estimated total daily AI spend. Optional in development/test. | No |
 | `ACTION_PROPOSAL_TTL_SECONDS` | Learner-controlled action proposal expiry. | No |
 
 ## Production Validation Contract
@@ -105,6 +105,9 @@ The backend validates production configuration immediately after loading environ
 - managed MySQL TLS is not configured with `DB_SSL_MODE=required`, a non-empty `DB_SSL_CA`, and `DB_SSL_REJECT_UNAUTHORIZED=true`;
 - `EMAIL_TRANSPORT=smtp` does not satisfy the accepted SMTP configuration contract; or
 - `OPENAI_API_KEY` is absent from the accepted OpenAI-backed external-Beta runtime.
+- `AI_DAILY_BUDGET_USD` is absent, non-numeric, zero, or negative.
+
+The API also requires an exact `CLIENT_ORIGIN` match on production mutation requests. See [Public Beta Security Boundary](../security/public-beta-security-boundary.md).
 
 Validation errors identify variable names only. They must not include secret values. Development and test environments retain their current local defaults.
 

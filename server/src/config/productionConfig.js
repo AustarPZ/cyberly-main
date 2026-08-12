@@ -101,7 +101,11 @@ function validateEmailConfig(env, clientBaseUrl) {
 
 function validateAiConfig(env) {
   requireTrimmed(env.OPENAI_API_KEY, 'OPENAI_API_KEY');
-  return { provider: 'openai' };
+  const dailyBudgetUsd = Number(env.AI_DAILY_BUDGET_USD);
+  if (!Number.isFinite(dailyBudgetUsd) || dailyBudgetUsd <= 0) {
+    throw configurationError(['AI_DAILY_BUDGET_USD']);
+  }
+  return { provider: 'openai', dailyBudgetUsd };
 }
 
 function validateProductionConfig(env = process.env) {

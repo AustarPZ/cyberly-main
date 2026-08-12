@@ -101,8 +101,11 @@ async function stopServer(child) {
 async function createUser(pool, email, role = 'user', accountStatus = 'active') {
   const passwordHash = await bcrypt.hash(PASSWORD, 10);
   const [result] = await pool.query(
-    `INSERT INTO users (email, username, display_name, age, age_group, password_hash, role, account_status)
-     VALUES (?, ?, ?, 16, 'teen', ?, ?, ?)`,
+    `INSERT INTO users (
+       email, username, display_name, age, age_group, password_hash, role, account_status,
+       email_verified_at
+     )
+     VALUES (?, ?, ?, 16, 'teen', ?, ?, ?, CURRENT_TIMESTAMP)`,
     [email, email, email, passwordHash, role, accountStatus]
   );
   return result.insertId;

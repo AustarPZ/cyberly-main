@@ -831,6 +831,29 @@ async function run() {
 
     await cleanup(pool);
 
+    await withServer({
+      OPENAI_API_KEY: 'test-key',
+      AI_TEST_MOCK_OPENAI: 'success',
+      AI_PER_USER_MINUTE_LIMIT: '100',
+      AI_PER_USER_DAILY_LIMIT: '2',
+    }, async (baseUrl) => {
+      const userA = await register(pool, baseUrl, USER_A_EMAIL, 'Phase 8B2 A');
+      const created = await createConversation(baseUrl, userA.cookieHeader, 'How do I spot phishing daily limit base message?');
+      for (let index = 0; index < 2; index += 1) {
+        const message = index === 0
+          ? created.message
+          : await addUserMessage(baseUrl, userA.cookieHeader, created.conversation.id, 'How do I protect my password daily limit message?');
+        const result = await generate(baseUrl, userA.cookieHeader, created.conversation.id, message.id);
+        assert.equal(result.response.status, 201);
+      }
+      const limitedMessage = await addUserMessage(baseUrl, userA.cookieHeader, created.conversation.id, 'How do I check another suspicious message today?');
+      const limited = await generate(baseUrl, userA.cookieHeader, created.conversation.id, limitedMessage.id);
+      assert.equal(limited.response.status, 429);
+      assert.equal(limited.json.code, 'AI_RATE_LIMITED');
+    });
+
+    await cleanup(pool);
+
     await withServer({ OPENAI_API_KEY: 'test-key', AI_TEST_MOCK_OPENAI: 'delay' }, async (baseUrl) => {
       const userA = await register(pool, baseUrl, USER_A_EMAIL, 'Phase 8B2 A');
       const created = await createConversation(baseUrl, userA.cookieHeader, 'How do I spot a phishing message during concurrent test?');

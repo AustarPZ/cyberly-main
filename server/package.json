@@ -8,6 +8,7 @@
     "test:migration-foundation-unit": "node scripts/test-migration-foundation-unit.js",
     "test:migration-primary-key-compatibility": "node scripts/test-migration-primary-key-compatibility.js",
     "test:production-config": "node scripts/test-production-config.js",
+    "test:security-boundary": "node scripts/test-security-boundary.js",
     "test:database-tls-config": "node scripts/test-database-tls-config.js",
     "test:staging-env-loader": "node scripts/test-staging-env-loader.js",
     "test:staging-content-verifier": "node scripts/test-staging-content-verifier.js",
@@ -63,6 +64,7 @@
     "dotenv": "^17.4.2",
     "express": "^5.2.1",
     "express-session": "^1.19.0",
+    "helmet": "^8.3.0",
     "mysql2": "^3.22.5",
     "nodemailer": "^9.0.3",
     "openai": "^6.45.0"

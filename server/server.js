@@ -73,6 +73,12 @@ const { createAgenticTraceService } = require('./src/agent/audit/agenticTrace.se
 const { createCyberWellnessService } = require('./src/wellness/cyberWellness.service');
 const { createAdminRouter } = require('./src/admin/admin.routes');
 const { ERROR_CODES } = require('./src/errors/errorCodes');
+const {
+    createCorsOptions,
+    createOriginProtection,
+    createSecurityHeadersMiddleware,
+} = require('./src/security/httpSecurity');
+const { createAuthRateLimiters } = require('./src/security/rateLimitPolicies');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -147,7 +153,12 @@ const aiService = createAiService(aiRepository, aiProvider, aiConfig, {
 });
 
 app.set('trust proxy', 1);
-app.use(cors({ origin: clientOrigin, credentials: true }));
+app.use(createSecurityHeadersMiddleware({ isProduction }));
+app.use(cors(createCorsOptions(clientOrigin)));
+app.use(createOriginProtection({
+    allowedOrigin: clientOrigin,
+    requireOrigin: isProduction,
+}));
 app.use(express.json({ limit: '32kb' }));
 app.use(session({
     name: sessionName,
@@ -175,32 +186,11 @@ app.use('/api/chat', createAiRouter(aiService, {
 app.use(createActionProposalRouter(actionProposalService));
 app.use('/api/admin', createAdminRouter(pool, { agenticTraceService }));
 
-const rateLimitBuckets = new Map();
-
-function authRateLimit(req, res, next) {
-    const key = req.ip || req.socket.remoteAddress || 'unknown';
-    const now = Date.now();
-    const windowMs = 15 * 60 * 1000;
-    const maxAttempts = 20;
-    const bucket = rateLimitBuckets.get(key) || { count: 0, resetAt: now + windowMs };
-
-    if (bucket.resetAt <= now) {
-        bucket.count = 0;
-        bucket.resetAt = now + windowMs;
-    }
-
-    bucket.count += 1;
-    rateLimitBuckets.set(key, bucket);
-
-    if (bucket.count > maxAttempts) {
-        return res.status(429).json({
-            code: ERROR_CODES.AUTH_RATE_LIMITED,
-            message: 'Too many authentication attempts. Please try again later.',
-        });
-    }
-
-    next();
-}
+const {
+    registration: registrationRateLimit,
+    loginIp: loginIpRateLimit,
+    loginAccount: loginAccountRateLimit,
+} = createAuthRateLimiters();
 
 function buildSafeUser(row) {
     return {
@@ -341,7 +331,7 @@ app.get('/api/health', async (_req, res, next) => {
     }
 });
 
-app.post('/api/auth/register', authRateLimit, async (req, res, next) => {
+app.post('/api/auth/register', registrationRateLimit, async (req, res, next) => {
     try {
         const email = normalizeEmail(req.body.email);
         const displayName = String(req.body.displayName || '').trim();
@@ -390,7 +380,7 @@ app.post('/api/auth/register', authRateLimit, async (req, res, next) => {
     }
 });
 
-app.post('/api/auth/login', authRateLimit, async (req, res, next) => {
+app.post('/api/auth/login', loginIpRateLimit, loginAccountRateLimit, async (req, res, next) => {
     try {
         const email = normalizeEmail(req.body.email);
         const password = String(req.body.password || '');

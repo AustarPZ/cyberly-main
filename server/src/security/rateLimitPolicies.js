@@ -1,0 +1,52 @@
+const { createFixedWindowRateLimiter, createHashedBodyKey } = require('./rateLimit');
+
+const AUTH_LIMIT_RESPONSE = {
+  code: 'AUTH_RATE_LIMITED',
+  message: 'Too many authentication attempts. Please try again later.',
+};
+
+function requestIp(req) {
+  return req.ip || req.socket?.remoteAddress || 'unknown';
+}
+
+function createAuthRateLimiters({ now = Date.now } = {}) {
+  return {
+    registration: createFixedWindowRateLimiter({
+      windowMs: 15 * 60 * 1000,
+      max: 10,
+      keyGenerator: req => `register-ip:${requestIp(req)}`,
+      now,
+      ...AUTH_LIMIT_RESPONSE,
+    }),
+    loginIp: createFixedWindowRateLimiter({
+      windowMs: 15 * 60 * 1000,
+      max: 20,
+      keyGenerator: req => `login-ip:${requestIp(req)}`,
+      now,
+      ...AUTH_LIMIT_RESPONSE,
+    }),
+    loginAccount: createFixedWindowRateLimiter({
+      windowMs: 15 * 60 * 1000,
+      max: 10,
+      keyGenerator: createHashedBodyKey('email', { prefix: 'login-account' }),
+      now,
+      ...AUTH_LIMIT_RESPONSE,
+    }),
+  };
+}
+
+function createAgentActionRateLimiter({ now = Date.now } = {}) {
+  return createFixedWindowRateLimiter({
+    windowMs: 60 * 1000,
+    max: 30,
+    keyGenerator: req => req.session?.userId ? `agent-action:${req.session.userId}` : null,
+    now,
+    code: 'ACTION_RATE_LIMITED',
+    message: 'Too many action requests. Please try again later.',
+  });
+}
+
+module.exports = {
+  createAgentActionRateLimiter,
+  createAuthRateLimiters,
+};

@@ -31,6 +31,7 @@ function representativeEnvironment(overrides = {}) {
     DB_SSL_REJECT_UNAUTHORIZED: 'true',
     EMAIL_TRANSPORT: 'disabled',
     OPENAI_API_KEY: 'safe-placeholder-openai-key',
+    AI_DAILY_BUDGET_USD: '25',
     ...overrides,
   };
 }

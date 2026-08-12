@@ -20,6 +20,7 @@ The root `src/` and root `public/` legacy React application have been removed fr
 - `deployment/current-deployment.md`: deployable shape, required runtime configuration, and prototype deployment notes.
 - `deployment/deployment-roadmap.md`: future deployment hardening work.
 - `configuration/environment-variables.md`: frontend and backend environment variables by purpose.
+- `security/public-beta-security-boundary.md`: current API security headers, mutation-Origin policy, abuse controls, and first-beta assumptions.
 - `testing/migration-test-foundation.md`: isolated migration-test safety contract and fresh-schema verification guide.
 
 ## Production Rules

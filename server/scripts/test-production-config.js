@@ -35,6 +35,7 @@ function validProductionEnv(overrides = {}) {
     DB_SSL_REJECT_UNAUTHORIZED: 'true',
     EMAIL_TRANSPORT: 'disabled',
     OPENAI_API_KEY: 'safe-placeholder-openai-key',
+    AI_DAILY_BUDGET_USD: '25',
     SESSION_COOKIE_SAMESITE: 'lax',
     ...overrides,
   };
@@ -142,6 +143,16 @@ function runValidationCases() {
   assert.deepEqual(validateProductionConfig({ NODE_ENV: 'test' }), { isProduction: false });
 }
 
+assert.throws(
+  () => validateProductionConfig(validProductionEnv({ AI_DAILY_BUDGET_USD: '' })),
+  (error) => error.code === 'INVALID_PRODUCTION_CONFIGURATION' && error.fields.includes('AI_DAILY_BUDGET_USD')
+);
+
+assert.throws(
+  () => validateProductionConfig(validProductionEnv({ AI_DAILY_BUDGET_USD: '0' })),
+  (error) => error.code === 'INVALID_PRODUCTION_CONFIGURATION' && error.fields.includes('AI_DAILY_BUDGET_USD')
+);
+
 function assertStartupGuard(overrides, expectedField) {
   const serverPath = path.resolve(__dirname, '..', 'server.js');
   const env = {
@@ -171,6 +182,7 @@ function runStartupGuardCases() {
   assertStartupGuard({ SESSION_SECRET: '' }, 'SESSION_SECRET');
   assertStartupGuard({ DB_SSL_MODE: 'disabled' }, 'DB_SSL_MODE');
   assertStartupGuard({ DB_SSL_REJECT_UNAUTHORIZED: 'false' }, 'DB_SSL_REJECT_UNAUTHORIZED');
+  assertStartupGuard({ AI_DAILY_BUDGET_USD: '' }, 'AI_DAILY_BUDGET_USD');
 }
 
 runValidationCases();
