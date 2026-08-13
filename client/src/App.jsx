@@ -4,6 +4,9 @@ import ReactMarkdown from "react-markdown";
 import { useTranslation } from "react-i18next";
 import remarkGfm from "remark-gfm";
 import "./design-system/tokens/cyberlyAurora.css";
+import "./design-system/tokens/layout.css";
+import "./design-system/foundation.css";
+import "./resources/resources.css";
 import "./cyberguard/cyberguardLayout.css";
 import CyberGuardWorkspaceHeader from "./cyberguard/CyberGuardWorkspaceHeader";
 import CyberGuardAiNotice from "./cyberguard/CyberGuardAiNotice";
@@ -13,6 +16,13 @@ import CyberGuardQuickPrompts from "./cyberguard/CyberGuardQuickPrompts";
 import CyberGuardComposerFrame from "./cyberguard/CyberGuardComposerFrame";
 import CyberGuardAssistantMessage from "./cyberguard/CyberGuardAssistantMessage";
 import Button from "./design-system/primitives/Button";
+import PageContainer from "./design-system/layout/PageContainer";
+import PageSection from "./design-system/layout/PageSection";
+import ContextHeader from "./design-system/headers/ContextHeader";
+import Surface from "./design-system/primitives/Surface";
+import Badge from "./design-system/primitives/Badge";
+import PageState from "./design-system/feedback/PageState";
+import ResourceDetailDialog from "./resources/ResourceDetailDialog";
 import profileMappings from "./profileMappings";
 import i18n, { STORAGE_KEY as UI_LANGUAGE_STORAGE_KEY, getStoredUiLanguage} from "./i18n";
 import { normalizeLocale, profileLanguageToLocale } from "./i18n/languageMappings";
@@ -2551,21 +2561,6 @@ function PageBackButton({ className = "", style }) {
       <span aria-hidden="true">←</span>
       <span>{label}</span>
     </button>
-  );
-}
-
-function PageState({ type = "loading", title, message, actionLabel, onAction }) {
-  const isError = type === "error";
-  return (
-    <div className={`page-state ${type}`} role={isError ? "alert" : "status"} aria-live={isError ? "assertive" : "polite"}>
-      {title && <div className="page-state-title">{title}</div>}
-      {message && <div>{message}</div>}
-      {actionLabel && onAction && (
-        <button type="button" className="btn-ghost" style={{ marginTop: "0.85rem" }} onClick={onAction}>
-          {actionLabel}
-        </button>
-      )}
-    </div>
   );
 }
 
@@ -6756,16 +6751,6 @@ function DashboardChatPreview() {
 }
 
 // ─── Page: Resources ──────────────────────────────────────────────
-const TOPIC_COLORS = {
-  Scams:             { bg: "#FFF3E0", text: "#E65100", dot: "#FF9800" },
-  Misinformation:    { bg: "#F3E5F5", text: "#6A1B9A", dot: "#AB47BC" },
-  "AI & Technology": { bg: "#E8F5E9", text: "#1B5E20", dot: "#43A047" },
-  Privacy:           { bg: "#E3F2FD", text: "#0D47A1", dot: "#1E88E5" },
-  Safety:            { bg: "#FCE4EC", text: "#880E4F", dot: "#E91E63" },
-  Passwords:         { bg: "#E0F7FA", text: "#006064", dot: "#00ACC1" },
-  Beginner:          { bg: "#E8F5E9", text: "#2E7D32", dot: "#66BB6A" },
-};
-
 function ResourcesPage() {
   const { t, i18n: activeI18n } = useTranslation();
   const {
@@ -6778,7 +6763,10 @@ function ResourcesPage() {
   const [resourceState, setResourceState] = useState({ loading: true, resources: [] });
   const [selected, setSelected]   = useState(null);
   const [filter,   setFilter]     = useState("All");
-  const resourceModalRef = useRef(null);
+  const libraryHeadingRef = useRef(null);
+  const resourceCardRefs = useRef(new Map());
+  const returnFocusSlugRef = useRef(null);
+  const restoreLibraryRef = useRef(false);
   const topic = resourceState.resources.find(resource => resource.slug === selected);
 
   const categories = ["All", ...Array.from(new Set(resourceState.resources.map(resource => resource.categoryCode)))];
@@ -6802,6 +6790,7 @@ function ResourcesPage() {
       (pendingResourceTarget.resourceId && Number(resource.id) === Number(pendingResourceTarget.resourceId))
     ));
     if (target) {
+      returnFocusSlugRef.current = target.slug;
       setSelected(target.slug);
       setFilter(target.categoryCode || "All");
     }
@@ -6809,9 +6798,11 @@ function ResourcesPage() {
   }, [pendingResourceTarget, resourceState.loading, resourceState.resources, clearPendingResourceTarget]);
 
   useEffect(() => {
-    if (!selected) return;
-    window.setTimeout(() => resourceModalRef.current?.focus?.(), 0);
-  }, [selected]);
+    if (selected || !restoreLibraryRef.current || resourceState.loading) return;
+    const returnTarget = resourceCardRefs.current.get(returnFocusSlugRef.current) || libraryHeadingRef.current;
+    returnTarget?.focus?.({ preventScroll: true });
+    restoreLibraryRef.current = false;
+  }, [selected, resourceState.loading, resourceState.resources]);
 
   useEffect(() => {
     let active = true;
@@ -6819,233 +6810,133 @@ function ResourcesPage() {
     dbGetResources(resourceLocale).then(result => {
       if (!active) return;
       if (result.ok) {
-        setResourceState({ loading: false, resources: result.resources || [] });
-        if (selected && !(result.resources || []).some(resource => resource.slug === selected)) {
-          setSelected(null);
-        }
+        const nextResources = result.resources || [];
+        setResourceState({ loading: false, resources: nextResources });
+        setSelected(current => {
+          if (current && !nextResources.some(resource => resource.slug === current)) {
+            restoreLibraryRef.current = true;
+            return null;
+          }
+          return current;
+        });
       } else {
         setResourceState({ loading: false, resources: [], error: result.error });
       }
     });
     return () => { active = false; };
-  }, [resourceLocale, selected]);
+  }, [resourceLocale]);
+
+  function openResource(resourceSlug) {
+    returnFocusSlugRef.current = resourceSlug;
+    setSelected(resourceSlug);
+  }
+
+  function returnToLibrary() {
+    restoreLibraryRef.current = true;
+    setSelected(null);
+  }
 
   return (
-    <div>
-      {/* Hero banner */}
-      <div style={{
-        background: "linear-gradient(135deg, #1a2e1a 0%, #2d4a2d 100%)",
-        padding: "3rem 1.5rem 2.5rem", color: "#fff", textAlign: "center",
-      }}>
-        <div style={{ maxWidth: 680, margin: "0 auto" }}>
-          <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>📚</div>
-          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.5rem, 3vw, 2.2rem)", fontWeight: 600, marginBottom: "0.75rem" }}>
-            {t("resources.title")}
-          </h1>
-          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "0.95rem", lineHeight: 1.7, marginBottom: "1.5rem" }}>
-            {t("resources.description")}
-          </p>
-          <div style={{ display: "flex", gap: "1rem", justifyContent: "center", flexWrap: "wrap" }}>
-            {resourceHeaderStats.map(s => (
-              <div key={s.labelKey} style={{ background: "rgba(255,255,255,0.08)", borderRadius: 10, padding: "0.6rem 1.2rem", textAlign: "center" }}>
-                {s.singleLine ? (
-                  <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.02rem", color: "var(--teal)" }}>{t(s.labelKey)}</div>
-                ) : (
-                  <>
-                    <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.2rem", color: "var(--teal)" }}>{resourceState.loading && s.labelKey !== "resources.stats.malaysiaFocused" ? "…" : s.value}</div>
-                    <div style={{ fontSize: "0.75rem", color: "rgba(255,255,255,0.5)" }}>{t(s.labelKey)}</div>
-                  </>
-                )}
-              </div>
+    <div className="resources-page">
+      <PageContainer>
+        <PageSection>
+          <PageBackButton />
+          <ContextHeader
+            title={t("resources.title")}
+            headingRef={libraryHeadingRef}
+            headingTabIndex={-1}
+            description={t("resources.description")}
+            metadata={resourceHeaderStats.map(s => (
+              <Badge key={s.labelKey} tone="neutral">
+                {s.singleLine ? t(s.labelKey) : `${resourceState.loading && s.labelKey !== "resources.stats.malaysiaFocused" ? "…" : s.value} ${t(s.labelKey)}`}
+              </Badge>
             ))}
-          </div>
-        </div>
-      </div>
-
-      <div className="section">
-        <PageBackButton />
+          />
 
         {focusedCategory && (
-          <div className="card" style={{ marginBottom: "1rem", background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)", display: "flex", gap: "0.85rem", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap" }}>
+          <Surface variant="subdued" className="resources-focus">
             <div>
-              <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.2rem" }}>{t("resources.focus.title")}</div>
-              <div style={{ fontSize: "0.84rem", color: "#455", lineHeight: 1.55 }}>
+              <div className="resources-focus-title">{t("resources.focus.title")}</div>
+              <div className="resources-focus-copy">
                 {t("resources.focus.description", { topic: t(`topics.${resourceFocusTopic}`, { defaultValue: topicLabel(resourceFocusTopic) }) })}
               </div>
             </div>
-            <button onClick={() => { clearResourceFocus(); setFilter("All"); }} style={{ background: "#fff", color: "var(--teal)", border: "1px solid rgba(29,158,117,0.3)", borderRadius: 10, padding: "0.5rem 0.9rem", fontSize: "0.8rem", fontWeight: 700, cursor: "pointer" }}>
+            <button type="button" className="resources-filter" onClick={() => { clearResourceFocus(); setFilter("All"); }}>
               {t("resources.focus.showAll")}
             </button>
-          </div>
+          </Surface>
         )}
 
-        {/* Category filter pills */}
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.5rem", marginBottom: "1.75rem" }}>
-          {categories.map(cat => (
-            <button
-              key={cat}
-              onClick={() => setFilter(cat)}
-              style={{
-                background: filter === cat ? "var(--teal)" : "#fff",
-                color: filter === cat ? "#fff" : "#555",
-                border: filter === cat ? "1px solid var(--teal)" : "1px solid rgba(0,0,0,0.1)",
-                borderRadius: 99, padding: "0.4rem 1rem",
-                fontSize: "0.8rem", fontWeight: 600, cursor: "pointer",
-                transition: "all 0.15s",
-              }}
-            >
-              {categoryLabel(cat)}
-            </button>
-          ))}
-          <span style={{ marginLeft: "auto", fontSize: "0.8rem", color: "#999", alignSelf: "center" }}>
+        <div className="resources-filter-region">
+          <div className="resources-filter-scroll">
+            {categories.map(cat => (
+              <button
+                type="button"
+                key={cat}
+                className={`resources-filter${filter === cat ? " active" : ""}`}
+                aria-pressed={filter === cat}
+                onClick={() => setFilter(cat)}
+              >
+                {categoryLabel(cat)}
+              </button>
+            ))}
+          </div>
+          <span className="resources-guide-count">
             {t("resources.guideCount", { count: filtered.length })}
           </span>
         </div>
 
-        {/* Cards grid */}
         {resourceState.loading ? (
-          <div className="card">{t("resources.loading")}</div>
+          <PageState type="loading" message={t("resources.loading")} />
         ) : resourceState.error ? (
-          <div className="card">{t("resources.error", { defaultValue: resourceState.error })}</div>
+          <PageState type="error" message={t("resources.error", { defaultValue: resourceState.error })} />
         ) : filtered.length === 0 ? (
-          <div className="card">{t("resources.empty")}</div>
+          <PageState type="empty" message={t("resources.empty")} />
         ) : (
-        <div className="res-grid">
+        <div className="resources-grid">
           {filtered.map(resource => {
-            const cat = TOPIC_COLORS[resource.categoryCode] || { bg: "#E8EDE8", text: "#1D9E75", dot: "#1D9E75" };
             return (
               <button
+                type="button"
                 key={resource.id}
-                onClick={() => setSelected(resource.slug)}
-                style={{
-                  background: "var(--surface-raised)", border: "1px solid var(--border-default)",
-                  borderRadius: 14, padding: "1.25rem", textAlign: "left",
-                  cursor: "pointer", transition: "box-shadow .2s, transform .2s, border-color .2s",
-                  boxShadow: "var(--shadow-card)",
-                  display: "flex", flexDirection: "column", gap: "0.6rem",
+                ref={node => {
+                  if (node) resourceCardRefs.current.set(resource.slug, node);
+                  else resourceCardRefs.current.delete(resource.slug);
                 }}
-                onMouseEnter={e => {
-                  e.currentTarget.style.boxShadow = "0 6px 20px rgba(29,158,117,0.13)";
-                  e.currentTarget.style.transform = "translateY(-2px)";
-                  e.currentTarget.style.borderColor = "var(--teal)";
-                }}
-                onMouseLeave={e => {
-                  e.currentTarget.style.boxShadow = "var(--shadow-card)";
-                  e.currentTarget.style.transform = "translateY(0)";
-                  e.currentTarget.style.borderColor = "var(--border-default)";
-                }}
+                className="resources-card"
+                onClick={() => openResource(resource.slug)}
               >
-                <span style={{
-                  display: "inline-flex", alignItems: "center", gap: 5,
-                  background: cat.bg, color: cat.text,
-                  borderRadius: 99, padding: "0.2rem 0.65rem",
-                  fontSize: "0.72rem", fontWeight: 600, alignSelf: "flex-start",
-                }}>
-                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: cat.dot, display: "inline-block" }} />
-                  {categoryLabel(resource.categoryCode)}
-                </span>
-                <div className="res-title">{resource.title}</div>
-                <div className="res-desc">{resource.summary}</div>
-                <span style={{ fontSize: "0.78rem", color: "var(--teal)", fontWeight: 600, display: "flex", alignItems: "center", gap: 4, marginTop: "auto" }}>
-                  {t("resources.readGuide")}
-                </span>
+                <Badge tone="brand">{categoryLabel(resource.categoryCode)}</Badge>
+                <span className="resources-card-title">{resource.title}</span>
+                <span className="resources-card-description">{resource.summary}</span>
+                <span className="resources-card-action">{t("resources.readGuide")}</span>
               </button>
             );
           })}
         </div>
         )}
 
-        {/* Safety tip banner */}
-        <div style={{
-          marginTop: "2.5rem", background: "var(--teal-lt)",
-          border: "1px solid rgba(29,158,117,0.2)", borderRadius: 14,
-          padding: "1.25rem 1.5rem", display: "flex", gap: "1rem", alignItems: "center",
-        }}>
-          <span style={{ fontSize: "1.5rem", flexShrink: 0 }}>💡</span>
+        <Surface variant="subdued" className="resources-tip">
+          <span className="resources-tip-icon" aria-hidden="true">💡</span>
           <div>
-            <div style={{ fontWeight: 600, fontSize: "0.9rem", color: "var(--teal)", marginBottom: "0.2rem" }}>{t("resources.tip.title")}</div>
-            <div style={{ fontSize: "0.85rem", color: "#444", lineHeight: 1.6 }}>
+            <div className="resources-tip-title">{t("resources.tip.title")}</div>
+            <div className="resources-tip-copy">
               {t("resources.tip.prefix")} <strong>{t("resources.tip.phishing")}</strong> {t("resources.tip.or")} <strong>{t("resources.tip.passwordSecurity")}</strong> {t("resources.tip.suffix")}
             </div>
           </div>
-        </div>
-      </div>
-
-      {/* Modal */}
-      {topic && (
-        <div
-          onClick={() => setSelected(null)}
-          style={{
-            position: "fixed", inset: 0, background: "rgba(10,20,10,0.5)",
-            display: "flex", alignItems: "center", justifyContent: "center",
-            zIndex: 300, padding: "1.5rem",
-          }}
-        >
-          <div
-            ref={resourceModalRef}
-            onClick={e => e.stopPropagation()}
-            role="dialog"
-            aria-modal="true"
-            aria-labelledby="resource-detail-title"
-            tabIndex={-1}
-            style={{
-              background: "#fff", borderRadius: 18, maxWidth: 660, width: "100%",
-              maxHeight: "85vh", overflowY: "auto", padding: "2.5rem",
-              boxShadow: "0 24px 64px rgba(0,0,0,0.22)", position: "relative",
-            }}
-          >
-            <button
-              onClick={() => setSelected(null)}
-              style={{
-                position: "absolute", top: 16, right: 16,
-                background: "#F1EFE8", border: "none", borderRadius: "50%",
-                width: 34, height: 34, cursor: "pointer", fontSize: 16, color: "#555",
-                display: "flex", alignItems: "center", justifyContent: "center",
-              }}
-            >✕</button>
-
-            {(() => {
-              const cat = TOPIC_COLORS[topic.categoryCode] || { bg: "#E8EDE8", text: "#1D9E75", dot: "#1D9E75" };
-              return (
-                <span style={{
-                  display: "inline-flex", alignItems: "center", gap: 5,
-                  background: cat.bg, color: cat.text,
-                  borderRadius: 99, padding: "0.2rem 0.65rem",
-                  fontSize: "0.72rem", fontWeight: 600, marginBottom: "0.9rem",
-                }}>
-                  <span style={{ width: 6, height: 6, borderRadius: "50%", background: cat.dot, display: "inline-block" }} />
-                  {categoryLabel(topic.categoryCode)}
-                </span>
-              );
-            })()}
-
-            <h2 id="resource-detail-title" style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.4rem", fontWeight: 600, marginBottom: "1.25rem", color: "#1a1a18" }}>
-              {topic.title}
-            </h2>
-
-            <div style={{ display: "flex", flexDirection: "column", gap: "1rem" }}>
-              {topic.content.map((para, i) => (
-                <p key={i} style={{ margin: 0, fontSize: "0.9rem", color: "#374237", lineHeight: 1.75 }}>{para}</p>
-              ))}
-            </div>
-
-            <div style={{ borderTop: "1px solid rgba(0,0,0,0.08)", margin: "1.75rem 0 1.25rem" }} />
-
-            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "0.75rem" }}>
-              <span style={{ fontSize: "0.78rem", color: "#aaa" }}>{t("resources.source")}: <em>{topic.sourceLabel}</em></span>
-              <a
-                href={topic.sourceUrl} target="_blank" rel="noopener noreferrer"
-                style={{
-                  display: "inline-flex", alignItems: "center", gap: 6,
-                  background: "var(--teal)", color: "#fff",
-                  borderRadius: 10, padding: "0.6rem 1.25rem",
-                  fontSize: "0.875rem", fontWeight: 600, textDecoration: "none",
-                }}
-              >{t("common.learnMore")}</a>
-            </div>
-          </div>
-        </div>
-      )}
+        </Surface>
+        {topic && (
+          <ResourceDetailDialog
+            resource={topic}
+            categoryLabel={categoryLabel(topic.categoryCode)}
+            sourceLabel={t("resources.source")}
+            learnMoreLabel={t("common.learnMore")}
+            closeLabel={t("common.close")}
+            onClose={returnToLibrary}
+          />
+        )}
+        </PageSection>
+      </PageContainer>
     </div>
   );
 }

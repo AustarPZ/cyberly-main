@@ -1,0 +1,26 @@
+.cy-page-container { width: 100%; margin-inline: auto; padding-inline: var(--cyberly-page-gutter); min-width: 0; }
+.cy-page-container-content { max-width: var(--cyberly-content-max); }
+.cy-page-container-reading { max-width: var(--cyberly-reading-max); }
+.cy-page-container-wide { max-width: var(--cyberly-workspace-max); }
+.cy-page-container-full { max-width: none; }
+.cy-page-section { padding-block: var(--cyberly-section-space); }
+.cy-context-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
+.cy-context-header-copy { min-width: 0; max-width: 52rem; }
+.cy-context-header-eyebrow { color: var(--cyberly-brand-accent); font-size: 0.78rem; font-weight: 700; }
+.cy-context-header-title { color: var(--cyberly-text-primary); font-family: 'Space Grotesk', sans-serif; font-size: clamp(1.75rem, 4vw, 2.75rem); line-height: 1.1; margin: 0; }
+.cy-context-header-title[tabindex="-1"]:focus { outline: none; border-radius: var(--cyberly-radius-control); box-shadow: var(--cyberly-focus-ring); }
+.cy-context-header-description { color: var(--cyberly-text-secondary); line-height: 1.65; margin-top: 0.75rem; }
+.cy-context-header-metadata, .cy-context-header-actions { display: flex; flex-wrap: wrap; gap: 0.65rem; align-items: center; }
+.cy-context-header-metadata { margin-top: 1rem; }
+.cy-surface { border-radius: var(--cyberly-radius-panel); min-width: 0; }
+.cy-surface-standard { background: var(--cyberly-surface-primary); border: 1px solid var(--cyberly-border-soft); }
+.cy-surface-subdued { background: var(--cyberly-surface-secondary); border: 1px solid transparent; }
+.cy-surface-outlined { background: transparent; border: 1px solid var(--cyberly-border-soft); }
+.cy-badge { display: inline-flex; align-items: center; min-height: 1.75rem; padding: 0.2rem 0.65rem; border-radius: 999px; font-size: 0.75rem; font-weight: 700; line-height: 1.2; }
+.cy-badge-neutral { background: var(--cyberly-surface-secondary); color: var(--cyberly-text-secondary); }
+.cy-badge-brand { background: color-mix(in srgb, var(--cyberly-brand-primary) 12%, white); color: var(--cyberly-brand-primary); }
+.cy-badge-success { background: color-mix(in srgb, var(--cyberly-success) 12%, white); color: var(--cyberly-success); }
+.cy-badge-warning { background: color-mix(in srgb, var(--cyberly-warning) 14%, white); color: var(--cyberly-warning); }
+.cy-badge-danger { background: color-mix(in srgb, var(--cyberly-danger) 12%, white); color: var(--cyberly-danger); }
+.page-state-action { margin-top: 0.85rem; }
+@media (max-width: 40rem) { .cy-context-header, .cy-context-header-actions { align-items: stretch; } }

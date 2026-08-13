@@ -10,6 +10,30 @@ function readTokenValue(name) {
 }
 
 describe("Cyberly Aurora CSS tokens", () => {
+  test("exposes shared semantic brand, surface, text, border, status, focus, and motion roles", () => {
+    [
+      "--cyberly-brand-primary",
+      "--cyberly-brand-accent",
+      "--cyberly-interactive-focus",
+      "--cyberly-page-bg",
+      "--cyberly-surface-primary",
+      "--cyberly-surface-secondary",
+      "--cyberly-text-primary",
+      "--cyberly-text-secondary",
+      "--cyberly-border-soft",
+      "--cyberly-success",
+      "--cyberly-warning",
+      "--cyberly-danger",
+      "--cyberly-focus-ring",
+      "--cyberly-shadow-overlay",
+      "--cyberly-motion-fast",
+    ].forEach(tokenName => {
+      expect(css).toContain(`${tokenName}:`);
+    });
+
+    expect(css).toMatch(/:root\s*{/);
+  });
+
   test("defines approved Cyberly Aurora tokens once as CSS Custom Properties", () => {
     expect(css).toContain("--cyberly-indigo-600: #5356D9;");
     expect(css).toContain("--cyberly-mint-500: #25BFA2;");
@@ -59,4 +83,3 @@ describe("Cyberly Aurora CSS tokens", () => {
     expect(readTokenValue("--cyberly-indigo-600")).not.toBe(readTokenValue("--cyberly-info"));
   });
 });
-

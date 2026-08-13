@@ -1,8 +1,12 @@
-.cyberguard-theme {
+:root {
   --cyberly-indigo-600: #5356D9;
   --cyberly-mint-500: #25BFA2;
   --cyberly-coral-500: #FF6F61;
   --cyberly-gold-500: #F5B942;
+
+  --cyberly-brand-primary: var(--color-brand-primary, var(--cyberly-mint-500));
+  --cyberly-brand-accent: var(--cyberly-mint-500);
+  --cyberly-interactive-focus: var(--cyberly-brand-primary);
 
   --cyberly-page-bg: #F7F8FC;
   --cyberly-surface-primary: #FFFFFF;
@@ -14,11 +18,13 @@
   --cyberly-success: #168A63;
   --cyberly-warning: #C77A12;
   --cyberly-error: #D64550;
+  --cyberly-danger: var(--cyberly-error);
   --cyberly-info: #2878C8;
 
   --cyberly-focus-ring:
     0 0 0 3px
     color-mix(in srgb, var(--cyberly-indigo-600) 22%, transparent);
+  --cyberly-shadow-overlay: 0 24px 64px rgba(32, 36, 56, 0.24);
 
   --cyberly-radius-control: 10px;
   --cyberly-radius-panel: 16px;
@@ -29,3 +35,6 @@
   --cyberly-motion-panel: 220ms;
 }
 
+.cyberguard-theme {
+  /* CyberGuard inherits the approved global Aurora values unchanged. */
+}

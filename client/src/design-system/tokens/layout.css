@@ -1,0 +1,10 @@
+:root {
+  --cyberly-page-gutter: clamp(1rem, 3vw, 2rem);
+  --cyberly-content-max: 80rem;
+  --cyberly-reading-max: 46rem;
+  --cyberly-workspace-max: 90rem;
+  --cyberly-section-space: clamp(2rem, 5vw, 4rem);
+  --cyberly-control-min-height: 44px;
+  --cyberly-layer-nav: 100;
+  --cyberly-layer-dialog: 300;
+}
