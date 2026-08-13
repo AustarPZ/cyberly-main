@@ -1,4 +1,4 @@
-import { render, screen } from "@testing-library/react";
+import { fireEvent, render, screen } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import ResourceDetailDialog from "./ResourceDetailDialog";
 
@@ -70,6 +70,27 @@ describe("ResourceDetailDialog", () => {
 
     onClose.mockClear();
     await userEvent.click(screen.getByRole("button", { name: "Close" }));
+    expect(onClose).toHaveBeenCalledTimes(1);
+  });
+
+  test("prevents default focus transfer only for a true backdrop mouse down", () => {
+    const onClose = renderDialog();
+    const backdrop = screen.getByTestId("resource-dialog-backdrop");
+    const dialog = screen.getByRole("dialog");
+
+    const backdropMouseDown = new MouseEvent("mousedown", { bubbles: true, cancelable: true });
+    backdrop.dispatchEvent(backdropMouseDown);
+    expect(backdropMouseDown.defaultPrevented).toBe(true);
+    expect(onClose).not.toHaveBeenCalled();
+
+    const dialogMouseDown = new MouseEvent("mousedown", { bubbles: true, cancelable: true });
+    dialog.dispatchEvent(dialogMouseDown);
+    expect(dialogMouseDown.defaultPrevented).toBe(false);
+    expect(onClose).not.toHaveBeenCalled();
+
+    fireEvent.click(dialog);
+    expect(onClose).not.toHaveBeenCalled();
+    fireEvent.click(backdrop);
     expect(onClose).toHaveBeenCalledTimes(1);
   });
 

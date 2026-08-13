@@ -6767,6 +6767,8 @@ function ResourcesPage() {
   const resourceCardRefs = useRef(new Map());
   const returnFocusSlugRef = useRef(null);
   const restoreLibraryRef = useRef(false);
+  const libraryScrollYRef = useRef(0);
+  const focusRestoreTaskRef = useRef(null);
   const topic = resourceState.resources.find(resource => resource.slug === selected);
 
   const categories = ["All", ...Array.from(new Set(resourceState.resources.map(resource => resource.categoryCode)))];
@@ -6776,6 +6778,22 @@ function ResourcesPage() {
   const resourceHeaderStats = buildResourceHeaderStats(resourceState.resources);
   const focusedCategory = resourceFocusTopic ? PROGRESS_TOPIC_META[resourceFocusTopic]?.category : null;
   const categoryLabel = category => t(`resources.categories.${category}`, { defaultValue: category });
+
+  const cancelFocusRestoreTask = useCallback(() => {
+    const task = focusRestoreTaskRef.current;
+    if (!task) return;
+    focusRestoreTaskRef.current = null;
+    if (task.type === "frame") window.cancelAnimationFrame?.(task.id);
+    else window.clearTimeout(task.id);
+  }, []);
+
+  const openResource = useCallback((resourceSlug) => {
+    cancelFocusRestoreTask();
+    restoreLibraryRef.current = false;
+    returnFocusSlugRef.current = resourceSlug;
+    libraryScrollYRef.current = window.scrollY;
+    setSelected(resourceSlug);
+  }, [cancelFocusRestoreTask]);
 
   useEffect(() => {
     if (focusedCategory && resourceState.resources.some(resource => resource.categoryCode === focusedCategory)) {
@@ -6790,19 +6808,36 @@ function ResourcesPage() {
       (pendingResourceTarget.resourceId && Number(resource.id) === Number(pendingResourceTarget.resourceId))
     ));
     if (target) {
-      returnFocusSlugRef.current = target.slug;
-      setSelected(target.slug);
+      openResource(target.slug);
       setFilter(target.categoryCode || "All");
     }
     clearPendingResourceTarget();
-  }, [pendingResourceTarget, resourceState.loading, resourceState.resources, clearPendingResourceTarget]);
+  }, [pendingResourceTarget, resourceState.loading, resourceState.resources, clearPendingResourceTarget, openResource]);
 
   useEffect(() => {
     if (selected || !restoreLibraryRef.current || resourceState.loading) return;
-    const returnTarget = resourceCardRefs.current.get(returnFocusSlugRef.current) || libraryHeadingRef.current;
-    returnTarget?.focus?.({ preventScroll: true });
-    restoreLibraryRef.current = false;
-  }, [selected, resourceState.loading, resourceState.resources]);
+    cancelFocusRestoreTask();
+    const task = {
+      type: typeof window.requestAnimationFrame === "function" ? "frame" : "timer",
+      id: null,
+    };
+    const restoreFocus = () => {
+      if (focusRestoreTaskRef.current !== task || !restoreLibraryRef.current) return;
+      focusRestoreTaskRef.current = null;
+      const returnTarget = resourceCardRefs.current.get(returnFocusSlugRef.current) || libraryHeadingRef.current;
+      returnTarget?.focus?.({ preventScroll: true });
+      if (window.scrollY !== libraryScrollYRef.current) {
+        window.scrollTo({ top: libraryScrollYRef.current, behavior: "auto" });
+      }
+      restoreLibraryRef.current = false;
+    };
+    focusRestoreTaskRef.current = task;
+    task.id = task.type === "frame"
+      ? window.requestAnimationFrame(restoreFocus)
+      : window.setTimeout(restoreFocus, 0);
+  }, [selected, resourceState.loading, resourceState.resources, cancelFocusRestoreTask]);
+
+  useEffect(() => () => cancelFocusRestoreTask(), [cancelFocusRestoreTask]);
 
   useEffect(() => {
     let active = true;
@@ -6826,12 +6861,8 @@ function ResourcesPage() {
     return () => { active = false; };
   }, [resourceLocale]);
 
-  function openResource(resourceSlug) {
-    returnFocusSlugRef.current = resourceSlug;
-    setSelected(resourceSlug);
-  }
-
   function returnToLibrary() {
+    cancelFocusRestoreTask();
     restoreLibraryRef.current = true;
     setSelected(null);
   }
@@ -6842,6 +6873,7 @@ function ResourcesPage() {
         <PageSection>
           <PageBackButton />
           <ContextHeader
+            className="resources-context-header"
             title={t("resources.title")}
             headingRef={libraryHeadingRef}
             headingTabIndex={-1}

@@ -62,7 +62,11 @@ export function ResourceDetailDialog({
     };
   }, [onClose]);
 
-  function dismissFromBackdrop(event) {
+  function preserveDialogFocusOnBackdropMouseDown(event) {
+    if (event.target === event.currentTarget) event.preventDefault();
+  }
+
+  function dismissFromBackdropClick(event) {
     if (event.target === event.currentTarget) onClose();
   }
 
@@ -70,7 +74,8 @@ export function ResourceDetailDialog({
     <div
       className="resources-dialog-backdrop"
       data-testid="resource-dialog-backdrop"
-      onMouseDown={dismissFromBackdrop}
+      onMouseDown={preserveDialogFocusOnBackdropMouseDown}
+      onClick={dismissFromBackdropClick}
     >
       <Surface
         as="section"

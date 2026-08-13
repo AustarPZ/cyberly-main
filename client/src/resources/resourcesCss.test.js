@@ -3,6 +3,22 @@ const path = require("path");
 
 const css = fs.readFileSync(path.join(__dirname, "resources.css"), "utf8");
 
+function extractMediaBlock(stylesheet, mediaPattern) {
+  const match = stylesheet.match(mediaPattern);
+  if (!match || match.index === undefined) return "";
+  const openingBrace = stylesheet.indexOf("{", match.index + match[0].length);
+  if (openingBrace === -1) return "";
+  let depth = 0;
+  for (let index = openingBrace; index < stylesheet.length; index += 1) {
+    if (stylesheet[index] === "{") depth += 1;
+    else if (stylesheet[index] === "}") {
+      depth -= 1;
+      if (depth === 0) return stylesheet.slice(openingBrace + 1, index);
+    }
+  }
+  return "";
+}
+
 describe("Resources responsive CSS contract", () => {
   test("supports a 320px viewport without concealing overflow defects", () => {
     expect(css).toMatch(/@media\s*\(max-width:\s*20rem\)/);
@@ -27,5 +43,26 @@ describe("Resources responsive CSS contract", () => {
     expect(css).toMatch(/\.resources-filter\s*\{[^}]*flex:\s*0\s+0\s+auto/);
     expect(css).toMatch(/\.resources-filter\s*\{[^}]*white-space:\s*nowrap/);
     expect(css).not.toMatch(/(?:html|body|\.resources-page)\s*\{[^}]*overflow-x:\s*hidden/);
+  });
+
+  test("uses a Resources-only one-row mobile metadata strip", () => {
+    const mobileCss = extractMediaBlock(css, /@media\s*\(max-width:\s*40rem\)/);
+    expect(mobileCss).toMatch(/\.resources-context-header\s+\.cy-context-header-metadata\s*\{[^}]*width:\s*100%[^}]*max-width:\s*100%[^}]*flex-wrap:\s*nowrap[^}]*overflow-x:\s*auto/);
+    expect(mobileCss).toMatch(/\.resources-context-header\s+\.cy-context-header-metadata\s*>\s*\.cy-badge\s*\{[^}]*flex:\s*0\s+0\s+auto[^}]*white-space:\s*nowrap/);
+    expect(css).not.toMatch(/(?:^|\})\s*\.cy-context-header-metadata\s*\{[^}]*flex-wrap:\s*nowrap/);
+    expect(css).not.toMatch(/(?:html|body|\.resources-page)\s*\{[^}]*overflow-x:\s*hidden/);
+    expect(mobileCss).toMatch(/\.resources-filter-scroll\s*\{[^}]*flex-wrap:\s*nowrap[^}]*overflow-x:\s*auto/);
+  });
+
+  test("rejects mobile metadata rules that exist only outside the 40rem media block", () => {
+    const misplacedCss = `
+      .resources-context-header .cy-context-header-metadata { width: 100%; max-width: 100%; flex-wrap: nowrap; overflow-x: auto; }
+      .resources-context-header .cy-context-header-metadata > .cy-badge { flex: 0 0 auto; white-space: nowrap; }
+      @media (max-width: 40rem) { .resources-filter-scroll { flex-wrap: nowrap; overflow-x: auto; } }
+    `;
+    expect(misplacedCss).toMatch(/\.resources-context-header\s+\.cy-context-header-metadata\s*\{[^}]*flex-wrap:\s*nowrap/);
+    const mobileCss = extractMediaBlock(misplacedCss, /@media\s*\(max-width:\s*40rem\)/);
+    expect(mobileCss).not.toMatch(/\.resources-context-header\s+\.cy-context-header-metadata/);
+    expect(mobileCss).toContain(".resources-filter-scroll");
   });
 });
