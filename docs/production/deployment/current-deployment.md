@@ -122,17 +122,7 @@ See [Staging Configuration Contract](staging-configuration-contract.md) for the 
 - PB-OPS-2A SECRET AUDIT - PASSED
 - PB-OPS-2A FULL REGRESSION - PASSED
 
-PB-OPS-2A DOES NOT CERTIFY DEPLOYMENT. This acceptance confirms the repository-level production configuration guard and its automated regression evidence only. Application execution remains local-development only; the separately accepted managed staging database baseline is recorded below.
-
-The following deployment work remains pending:
-
-- Render frontend and backend provisioning;
-- application DNS records;
-- backend runtime connectivity and health verification;
-- real staging SMTP verification;
-- real staging OpenAI verification;
-- external browser cookie and CORS verification; and
-- external learner acceptance.
+PB-OPS-2A did not itself certify deployment. Subsequent operational phases provisioned and verified the external staging frontend and backend, application DNS, backend health, staging SMTP and OpenAI paths, browser cookie/CORS behaviour, and bounded learner acceptance. These staging results do not certify production readiness or complete the final Public Beta Go / No-Go review.
 
 ## PB-OPS-2B-3B Managed Staging Database Acceptance
 
@@ -168,9 +158,17 @@ RAG evidence:
 
 This acceptance certifies only the managed staging database, migration-seeded content, and deterministic RAG baseline. It does not certify Render deployment, backend runtime, application DNS records, staging SMTP or OpenAI, browser CORS/cookie behaviour, external learner acceptance, or production deployment.
 
-## PB-OPS-3D Backup and Recovery Acceptance
+## PB-OPS-3D Operational Readiness Closure
 
-**PB-OPS-3D - Public Beta Backup and Recovery Baseline:** ACCEPTED.
+**PB-OPS-3D-2 Independent Logical Backup:** ACCEPTED.
+
+**PB-OPS-3D Operational Readiness:** CLOSED.
+
+**Closure date:** 2026-08-13.
+
+**Final Public Beta Go / No-Go:** PENDING.
+
+**Production readiness:** NOT CERTIFIED.
 
 - The staging health endpoint passed.
 - All 27 migrations remained applied.
@@ -180,5 +178,9 @@ This acceptance certifies only the managed staging database, migration-seeded co
 - Both private artifacts remained Git-ignored and untracked; their SQL content was not inspected.
 - The backup operation read Aiven data but did not perform migrations, RAG ingestion, restore, or learner-data mutation.
 - Recovery remains a separate-target procedure: never import a logical backup over the only staging database.
+- Aiven continuity was owner-verified: the Hobbyist MySQL service is Running, paid continuity and billing-group assignment are configured, connection identifiers are unchanged, and managed full backups are present in `do-sgp1`.
+- Manual login, authenticated refresh persistence, protected-route access, logout, and removal of protected access passed.
+- Fork service is disabled under the current Hobbyist service state. This does not block closure because managed backups and the independently verified logical backup are both present.
+- Accepted residual risks are the open Aiven IP allowlist, single-node Hobbyist availability, and a separate-target recovery rehearsal still required before final production Go / No-Go.
 
 See [Public Beta Backup and Recovery](../operations/public-beta-backup-recovery.md) for the canonical backup, retention, privacy, and recovery procedure.

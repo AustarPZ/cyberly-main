@@ -6,9 +6,17 @@ This is the operational baseline for independent Cyberly MySQL logical backups d
 
 Logical dumps are **high-sensitivity learner data**. They may contain names, email addresses, profiles, assessment and progress history, chat content, verification state, and account state.
 
-## PB-OPS-3D Acceptance Record
+## PB-OPS-3D Acceptance and Closure Record
 
-**PB-OPS-3D - Public Beta Backup and Recovery Baseline:** ACCEPTED on 12 August 2026.
+**PB-OPS-3D-2 Independent Logical Backup:** ACCEPTED on 12 August 2026.
+
+**PB-OPS-3D Operational Readiness:** CLOSED.
+
+**Closure date:** 2026-08-13.
+
+**Final Public Beta Go / No-Go:** PENDING.
+
+**Production readiness:** NOT CERTIFIED.
 
 - MySQL Community Server `mysqldump` 8.4.11 was available to the owner.
 - The staging backup prerequisite check passed with verified TLS configuration.
@@ -22,6 +30,40 @@ Logical dumps are **high-sensitivity learner data**. They may contain names, ema
 - The backup performed a read from Aiven. It did not run migrations, ingest RAG, restore a database, or mutate learner data.
 
 This acceptance proves independent logical-backup tooling, one successful staging logical backup, checksum integrity, safe Git exclusion, and a documented separate-target recovery policy. It does not prove point-in-time recovery, a successful logical restore, multi-region disaster recovery, production deployment, or unlimited retention.
+
+### Final Operational Readiness Evidence
+
+#### Aiven Continuity
+
+- The Hobbyist service plan is applied and the MySQL service is Running.
+- An active payment method and the project billing-group assignment are confirmed. Trial credits remain active, with paid continuity configured.
+- The staging host, port, and database user are confirmed unchanged.
+- Aiven-managed backups and full backups are present in `do-sgp1`.
+- Fork service is disabled under the current Hobbyist service state. This is not a PB-OPS-3D closure blocker because Cyberly has both Aiven-managed backups and an independently verified logical backup.
+
+#### Bounded Verification
+
+- Migrations `001` through `027` are applied.
+- Assessment verification passed with 12 questions across four topics.
+- Scenario verification passed with eight published definitions and 24 steps.
+- Resource verification passed with nine published Resources, including six RAG-eligible Resources.
+- RAG verification passed with 18 documents and 90 chunks.
+- Backend health returned HTTP 200 with `{"ok":true}`.
+- Manual login, authenticated refresh persistence, protected learner-route access, logout, and removal of protected access after logout passed.
+
+#### Independent Backup
+
+- The first independent logical backup succeeded and its SHA-256 checksum matched independently.
+- The backup and checksum remain private under the Git-ignored `backups/private/` path.
+- No destructive restore was performed. Recovery must target a separate recovery database or service, never the existing staging database.
+
+### Residual Risks
+
+These accepted beta-level residual risks do not reopen or block PB-OPS-3D closure:
+
+1. **Aiven IP allowlist:** The service uses the public-internet deployment model and its IP allowlist is currently open to all. Database access remains protected by verified TLS, authentication, and the configured database user. Whether Render provides a suitable stable outbound IP must be reviewed during the final Public Beta Go / No-Go review.
+2. **Recovery rehearsal:** No destructive restore has been performed against staging. A separate-target recovery rehearsal remains required before final production Go / No-Go; the existing staging database must never be the restore target.
+3. **Hobbyist availability:** Hobbyist is a single-node service and is not a high-availability configuration. Aiven-managed backups and the independent logical backup reduce data-loss risk, while temporary service unavailability remains an accepted beta-level residual risk.
 
 ## Recovery Classes
 
