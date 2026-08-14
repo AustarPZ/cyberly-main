@@ -4,6 +4,48 @@
 .cy-page-container-wide { max-width: var(--cyberly-workspace-max); }
 .cy-page-container-full { max-width: none; }
 .cy-page-section { padding-block: var(--cyberly-section-space); }
+.cy-app-shell { min-width: 0; }
+.cy-app-shell-main { min-width: 0; }
+.cy-compact-header {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 1.25rem;
+  padding-block: clamp(1.5rem, 3vw, 2.25rem);
+}
+.cy-compact-header-copy { min-width: 0; max-width: 52rem; }
+.cy-compact-header-eyebrow {
+  color: var(--cyberly-brand-accent);
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 0.4rem;
+}
+.cy-compact-header-title {
+  color: var(--cyberly-text-primary);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.5rem, 3vw, 2rem);
+  line-height: 1.2;
+  margin: 0;
+}
+.cy-compact-header-description {
+  color: var(--cyberly-text-secondary);
+  line-height: 1.6;
+  margin-top: 0.55rem;
+}
+.cy-compact-header-metadata,
+.cy-compact-header-actions {
+  display: flex;
+  align-items: center;
+  flex-wrap: wrap;
+  gap: 0.45rem 0.75rem;
+}
+.cy-compact-header-metadata {
+  color: var(--cyberly-text-secondary);
+  font-size: 0.9rem;
+  line-height: 1.5;
+  margin-top: 0.65rem;
+}
+.cy-compact-header-actions > * { min-height: var(--cyberly-control-min-height); }
 .cy-context-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
 .cy-context-header-copy { min-width: 0; max-width: 52rem; }
 .cy-context-header-eyebrow { color: var(--cyberly-brand-accent); font-size: 0.78rem; font-weight: 700; }
@@ -23,4 +65,12 @@
 .cy-badge-warning { background: color-mix(in srgb, var(--cyberly-warning) 14%, white); color: var(--cyberly-warning); }
 .cy-badge-danger { background: color-mix(in srgb, var(--cyberly-danger) 12%, white); color: var(--cyberly-danger); }
 .page-state-action { margin-top: 0.85rem; }
-@media (max-width: 40rem) { .cy-context-header, .cy-context-header-actions { align-items: stretch; } }
+@media (max-width: 40rem) {
+  .cy-context-header,
+  .cy-context-header-actions,
+  .cy-compact-header,
+  .cy-compact-header-actions { align-items: stretch; }
+  .cy-compact-header { flex-direction: column; }
+  .cy-compact-header-copy,
+  .cy-compact-header-actions { width: 100%; }
+}

@@ -16,8 +16,10 @@ import CyberGuardQuickPrompts from "./cyberguard/CyberGuardQuickPrompts";
 import CyberGuardComposerFrame from "./cyberguard/CyberGuardComposerFrame";
 import CyberGuardAssistantMessage from "./cyberguard/CyberGuardAssistantMessage";
 import Button from "./design-system/primitives/Button";
+import AppShell from "./design-system/layout/AppShell";
 import PageContainer from "./design-system/layout/PageContainer";
 import PageSection from "./design-system/layout/PageSection";
+import CompactHeader from "./design-system/headers/CompactHeader";
 import ContextHeader from "./design-system/headers/ContextHeader";
 import Surface from "./design-system/primitives/Surface";
 import Badge from "./design-system/primitives/Badge";
@@ -159,7 +161,6 @@ import {
   PROGRESS_SECTION_IDS,
 } from "./progress/progressSemantics";
 import {
-  buildDashboardHeaderStats,
   buildResourceHeaderStats,
   getAchievementDefinitions,
   getLearningInterestStateKey,
@@ -5887,7 +5888,6 @@ function DashboardPage() {
   const [progressState, setProgressState] = useState({ loading: true, progress: null });
   const [recommendationState, setRecommendationState] = useState({ loading: true, recommendation: null });
   const [scenarioState, setScenarioState] = useState({ loading: true, recommended: [], dashboard: null });
-  const [resourceCatalogState, setResourceCatalogState] = useState({ loading: true, resources: [] });
   const [activeSection, setActiveSection] = useState("dashboard-overview");
   const dashboardAssessmentResults = (progressState.progress?.assessmentTopicResults || []).map(mapAssessmentTopicResult);
   const hasLearningProfileSection = Boolean(user?.helpTopics?.length);
@@ -5963,18 +5963,6 @@ function DashboardPage() {
   useEffect(() => {
     let active = true;
     if (!user) return () => { active = false; };
-    dbGetResources(assessmentLocale).then(result => {
-      if (!active) return;
-      setResourceCatalogState(result.ok
-        ? { loading: false, resources: result.resources || [] }
-        : { loading: false, resources: [], error: result.error });
-    });
-    return () => { active = false; };
-  }, [user, assessmentLocale]);
-
-  useEffect(() => {
-    let active = true;
-    if (!user) return () => { active = false; };
     Promise.all([dbGetProgress(), dbGetCurrentRecommendation(assessmentLocale)]).then(([progressResult, recommendationResult]) => {
       if (!active) return;
       setProgressState(progressResult.ok
@@ -5995,7 +5983,6 @@ function DashboardPage() {
   const recommendation = recommendationState.recommendation;
   const recommendedScenario = scenarioState.recommended?.[0];
   const scenarioDashboard = scenarioState.dashboard;
-  const dashboardHeaderStats = buildDashboardHeaderStats(resourceCatalogState.resources);
   const translatedAgeGroup = t(`settings.ageGroups.${group.key}`,{defaultValue: group.label});
   const preferredLanguageValue = user.profile?.preferredLanguage || "";
   const familiarityValue = user.profile?.familiarityLevel || "";
@@ -6122,33 +6109,25 @@ function DashboardPage() {
 
   return (
     <div>
-      {/* Welcome hero */}
-      <div id="dashboard-overview" className="dashboard-anchor" style={{
-        background: "linear-gradient(135deg, var(--teal) 0%, #1a5c4a 100%)",
-        padding: "2.5rem 1.5rem", color: "#fff",
-      }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: "1rem" }}>
-          <div>
-            <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.6)", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.4rem" }}>
-              {t("dashboard.yourDashboard")}
-            </div>
-            <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 600, marginBottom: "0.35rem" }}>
-              {t("dashboard.welcomeBack", {name: nick,})} 👋
-            </h1>
-            <p style={{ color: "rgba(255,255,255,0.7)", fontSize: "0.9rem" }}>
-              {translatedAgeGroup} {" · "}{t("dashboard.levelDisplay", { level: translatedFamiliarity })}{translatedEducation ? ` · ${translatedEducation}` : ""}
-            </p>
-          </div>
-          <div style={{ display: "flex", gap: "0.75rem" }}>
-            {dashboardHeaderStats.map(stat => (
-              <div key={stat.labelKey} style={{ background: "rgba(255,255,255,0.12)", borderRadius: 12, padding: "0.75rem 1rem", textAlign: "center", minWidth: 64 }}>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.2rem" }}>{resourceCatalogState.loading && stat.labelKey === "dashboard.stats.learningTopics" ? "…" : stat.value}</div>
-                <div style={{ fontSize: "0.7rem", color: "rgba(255,255,255,0.6)" }}>{t(stat.labelKey)}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
+      <PageContainer id="dashboard-overview" className="dashboard-anchor">
+        <CompactHeader
+          eyebrow={t("dashboard.yourDashboard")}
+          title={`${t("dashboard.welcomeBack", { name: nick })} 👋`}
+          metadata={(
+            <>
+              <span>{translatedAgeGroup}</span>
+              <span aria-hidden="true">·</span>
+              <span>{t("dashboard.levelDisplay", { level: translatedFamiliarity })}</span>
+              {translatedEducation && (
+                <>
+                  <span aria-hidden="true">·</span>
+                  <span>{translatedEducation}</span>
+                </>
+              )}
+            </>
+          )}
+        />
+      </PageContainer>
 
       <div className="dashboard-shell">
         <aside className="dashboard-section-nav" aria-label={t("dashboard.sectionNav.ariaLabel")}>
@@ -12005,8 +11984,12 @@ export default function App() {
     <AppCtx.Provider value={ctx}>
       <ChatProvider user={user}>
         <style>{globalStyle}</style>
-        <Navbar page={page} />
-        <main className={`page-wrap${page === "ai-chat" ? " cyberguard-page-wrap" : ""}`}>
+        <AppShell
+          navigation={<Navbar page={page} />}
+          mainClassName={`page-wrap${page === "ai-chat" ? " cyberguard-page-wrap" : ""}`}
+          footer={page !== "ai-chat" ? <Footer /> : null}
+          floating={!checkingSession && page !== "ai-chat" ? <ChatWidget /> : null}
+        >
           {checkingSession ? (
             <div className="section">
               <p className="section-title">{t("app.loadingTitle")}</p>
@@ -12018,9 +12001,7 @@ export default function App() {
               {PAGES[page] ?? <HomePage />}
             </>
           )}
-        </main>
-        {page !== "ai-chat" && <Footer />}
-        {!checkingSession && page !== "ai-chat" && <ChatWidget />}
+        </AppShell>
         {pendingNavigation && (pendingNavigation.guard || activityGuard) && (
           <ConfirmationDialog
             title={(pendingNavigation.guard || activityGuard).title}
