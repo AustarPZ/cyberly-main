@@ -11859,7 +11859,13 @@ export default function App() {
       type: "logout",
       guard: {
         ...blocker,
-        description: blocker.logoutDescription || blocker.description,
+        title: t("nav.logoutModal.title"),
+        description:
+          blocker.logoutDescription
+          || blocker.description
+          || t("nav.logoutModal.description"),
+        cancelLabel: blocker.cancelLabel || t("nav.logoutModal.cancel"),
+        confirmLabel: t("nav.logoutModal.confirm"),
       },
     });
     return true;
@@ -11920,6 +11926,11 @@ export default function App() {
     setPendingNavigation(null);
     activityGuardRef.current = null;
     setActivityGuard(null);
+    if (target.type === "logout") {
+      target.guard?.onLeave?.();
+      await logout();
+      return;
+    }
     if (target.guard?.source === "scenario") {
       target.guard.onLeave?.();
       commitHashRoute("/scenarios", { replace: true });
@@ -11936,10 +11947,6 @@ export default function App() {
     }
     if (target.type === "action") {
       await target.execute?.();
-      return;
-    }
-    if (target.type === "logout") {
-      await logout();
       return;
     }
     completeNavigation(target.page || "dashboard");
