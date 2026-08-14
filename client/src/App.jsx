@@ -9136,7 +9136,7 @@ function ProgressPage() {
           </div>
         </aside>
 
-        <main className="progress-content">
+        <div className="progress-content">
           <PageBackButton style={{ marginBottom: "2rem" }} />
 
         <div id={PROGRESS_SECTION_IDS.OVERVIEW} className="progress-anchor" style={{ marginBottom: "2.5rem" }}>
@@ -9386,7 +9386,7 @@ function ProgressPage() {
             ))}
           </div>
         </div>
-        </main>
+        </div>
       </div>
     </div>
   );

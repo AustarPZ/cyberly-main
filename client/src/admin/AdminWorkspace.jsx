@@ -8,7 +8,7 @@ export default function AdminWorkspace({ onSectionNavigate, sections, activeSect
     <section className="admin-workspace admin-theme">
       <AdminSidebar sections={sections} activeSection={activeSection} onSectionNavigate={onSectionNavigate} />
 
-      <main className="admin-workspace-main">
+      <div className="admin-workspace-main">
         <header className="admin-workspace-main-header">
           <div>
             <p className="res-tag">{t(activeSection.labelKey)}</p>
@@ -24,7 +24,7 @@ export default function AdminWorkspace({ onSectionNavigate, sections, activeSect
         <div className="admin-workspace-content">
           {children}
         </div>
-      </main>
+      </div>
     </section>
   );
 }
