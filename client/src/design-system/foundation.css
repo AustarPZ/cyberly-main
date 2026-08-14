@@ -46,6 +46,46 @@
   margin-top: 0.65rem;
 }
 .cy-compact-header-actions > * { min-height: var(--cyberly-control-min-height); }
+.cy-section-nav {
+  position: sticky;
+  top: calc(var(--nav-h) + 1rem);
+  align-self: start;
+  min-width: 0;
+  max-width: 100%;
+  padding: 0.85rem;
+  background: var(--cyberly-surface-primary);
+  border: 1px solid var(--cyberly-border-soft);
+  border-radius: var(--cyberly-radius-panel);
+}
+.cy-section-nav-title {
+  color: var(--cyberly-text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+  margin-bottom: 0.45rem;
+}
+.cy-section-nav-list { display: grid; gap: 0.25rem; min-width: 0; }
+.cy-section-nav-button {
+  width: 100%;
+  min-height: var(--cyberly-control-min-height);
+  padding: 0.65rem 0.75rem;
+  border: 0;
+  border-radius: var(--cyberly-radius-control);
+  background: transparent;
+  color: var(--cyberly-text-secondary);
+  font: inherit;
+  font-weight: 600;
+  text-align: left;
+  cursor: pointer;
+}
+.cy-section-nav-button:hover,
+.cy-section-nav-button.active {
+  background: var(--cyberly-surface-secondary);
+  color: var(--cyberly-text-primary);
+}
+.cy-section-nav-button:focus-visible {
+  outline: none;
+  box-shadow: var(--cyberly-focus-ring);
+}
 .cy-context-header { display: flex; align-items: flex-end; justify-content: space-between; gap: 1.5rem; flex-wrap: wrap; }
 .cy-context-header-copy { min-width: 0; max-width: 52rem; }
 .cy-context-header-eyebrow { color: var(--cyberly-brand-accent); font-size: 0.78rem; font-weight: 700; }
@@ -73,4 +113,24 @@
   .cy-compact-header { flex-direction: column; }
   .cy-compact-header-copy,
   .cy-compact-header-actions { width: 100%; }
+}
+@media (max-width: 56.25rem) {
+  .cy-section-nav {
+    position: static;
+    width: 100%;
+    max-width: 100%;
+    overflow: hidden;
+  }
+  .cy-section-nav-list {
+    display: flex;
+    max-width: 100%;
+    overflow-x: auto;
+    overscroll-behavior-inline: contain;
+    padding-bottom: 0.15rem;
+  }
+  .cy-section-nav-button {
+    flex: 0 0 auto;
+    width: auto;
+    white-space: nowrap;
+  }
 }

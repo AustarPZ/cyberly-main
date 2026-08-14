@@ -21,6 +21,7 @@ import PageContainer from "./design-system/layout/PageContainer";
 import PageSection from "./design-system/layout/PageSection";
 import CompactHeader from "./design-system/headers/CompactHeader";
 import ContextHeader from "./design-system/headers/ContextHeader";
+import SectionNav from "./design-system/navigation/SectionNav";
 import Surface from "./design-system/primitives/Surface";
 import Badge from "./design-system/primitives/Badge";
 import PageState from "./design-system/feedback/PageState";
@@ -8995,9 +8996,11 @@ function ProgressPage() {
       ))
       .map(section => section.id);
 
-    if (!visibleSectionIds.includes(activeProgressSection)) {
-      setActiveProgressSection(visibleSectionIds[0] || PROGRESS_SECTION_IDS.OVERVIEW);
-    }
+    setActiveProgressSection(current => (
+      visibleSectionIds.includes(current)
+        ? current
+        : visibleSectionIds[0] || PROGRESS_SECTION_IDS.OVERVIEW
+    ));
 
     const sections = visibleSectionIds
       .map(id => document.getElementById(id))
@@ -9005,7 +9008,24 @@ function ProgressPage() {
 
     if (sections.length === 0) return undefined;
 
+    const isAtPageEnd = () => {
+      const tolerance = 4;
+      const documentHeight = Math.max(
+        document.documentElement.scrollHeight,
+        document.body?.scrollHeight || 0
+      );
+      const maxScrollY = Math.max(0, documentHeight - window.innerHeight);
+
+      if (maxScrollY <= tolerance) return false;
+      return window.scrollY >= maxScrollY - tolerance;
+    };
+
     const observer = new IntersectionObserver((entries) => {
+      if (isAtPageEnd()) {
+        setActiveProgressSection(visibleSectionIds[visibleSectionIds.length - 1]);
+        return;
+      }
+
       const visible = entries
         .filter(entry => entry.isIntersecting)
         .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
@@ -9018,9 +9038,21 @@ function ProgressPage() {
       threshold: [0.1, 0.35, 0.6],
     });
 
+    const updateActiveSectionAtPageEnd = () => {
+      if (isAtPageEnd()) {
+        setActiveProgressSection(visibleSectionIds[visibleSectionIds.length - 1]);
+      }
+    };
+
     sections.forEach(section => observer.observe(section));
-    return () => observer.disconnect();
-  }, [activeProgressSection, hasAssessmentResultsSection, hasRecommendationSection]);
+    window.addEventListener("scroll", updateActiveSectionAtPageEnd, { passive: true });
+    updateActiveSectionAtPageEnd();
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", updateActiveSectionAtPageEnd);
+    };
+  }, [hasAssessmentResultsSection, hasRecommendationSection]);
 
   useEffect(() => {
     if (!pendingProgressSection) return;
@@ -9105,36 +9137,34 @@ function ProgressPage() {
 
   return (
     <div>
-      {/* Hero */}
-      <div style={{ background: "linear-gradient(135deg, #1a2e1a 0%, #2d4a2d 100%)", padding: "2.5rem 1.5rem", color: "#fff" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.5)", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.4rem" }}>{t("progress.title")}</div>
-          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 600, marginBottom: "0.3rem" }}>
-            {t("progress.heroTitle", { name: nick })}
-          </h1>
-          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.9rem" }}>
-            {summary?.exists ? t("progress.baselineSummary", { count: assessmentTopicResults.length }) : t("progress.profileFamiliaritySummary", { level: profileLevel })} · {lang} · {style}
-          </p>
-        </div>
-      </div>
+      <PageContainer>
+        <CompactHeader
+          eyebrow={t("progress.title")}
+          title={t("progress.heroTitle", { name: nick })}
+          description={summary?.exists
+            ? t("progress.baselineSummary", { count: assessmentTopicResults.length })
+            : t("progress.profileFamiliaritySummary", { level: profileLevel })}
+          metadata={(
+            <>
+              <span>{lang}</span>
+              <span aria-hidden="true">·</span>
+              <span>{style}</span>
+            </>
+          )}
+        />
+      </PageContainer>
 
       <div className="progress-shell">
-        <aside className="dashboard-section-nav" aria-label={t("progress.sectionNav.ariaLabel")}>
-          <div className="dashboard-section-nav-title">{t("progress.sectionNav.title")}</div>
-          <div className="dashboard-section-nav-list">
-            {progressSections.map(section => (
-              <button
-                key={section.id}
-                type="button"
-                className={`dashboard-section-nav-button${activeProgressSection === section.id ? " active" : ""}`}
-                aria-current={activeProgressSection === section.id ? "location" : undefined}
-                onClick={() => scrollToProgressSection(section.id)}
-              >
-                {t(section.labelKey)}
-              </button>
-            ))}
-          </div>
-        </aside>
+        <SectionNav
+          ariaLabel={t("progress.sectionNav.ariaLabel")}
+          title={t("progress.sectionNav.title")}
+          items={progressSections.map((section) => ({
+            id: section.id,
+            label: t(section.labelKey),
+          }))}
+          activeId={activeProgressSection}
+          onSelect={scrollToProgressSection}
+        />
 
         <div className="progress-content">
           <PageBackButton style={{ marginBottom: "2rem" }} />
