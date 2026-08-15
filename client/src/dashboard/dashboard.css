@@ -1,0 +1,55 @@
+.dashboard-anchor { scroll-margin-top: calc(var(--nav-h) + 1rem); }
+
+.dashboard-explorer-hero { margin-top: 1.5rem; }
+.dashboard-explorer-hero .cy-compact-header { padding: 0; background: transparent; border: 0; box-shadow: none; }
+.dashboard-explorer-hero .cy-compact-header-title { max-width: 18ch; }
+.dashboard-explorer-visual { width: 100%; min-width: 0; }
+.dashboard-explorer-visual svg { display: block; width: 100%; height: auto; max-height: 18rem; }
+.dashboard-explorer-cloud { fill: var(--surface-raised); opacity: 0.9; }
+.dashboard-explorer-cloud-far { opacity: 0.65; }
+.dashboard-explorer-hill-far { fill: var(--color-brand-soft); }
+.dashboard-explorer-hill { fill: var(--cyberly-mint-500); opacity: 0.35; }
+.dashboard-explorer-path { fill: none; stroke: var(--cyberly-gold-500); stroke-width: 7; stroke-linecap: round; stroke-dasharray: 2 14; }
+.dashboard-explorer-waypoint path:first-child { fill: var(--color-brand-primary); stroke: var(--color-brand-primary-hover); stroke-width: 2; }
+.dashboard-explorer-waypoint path:last-child { fill: none; stroke: var(--text-on-brand); stroke-width: 4; stroke-linecap: round; stroke-linejoin: round; }
+.dashboard-explorer-star { fill: var(--cyberly-gold-500); }
+.dashboard-explorer-nodes circle { fill: var(--surface-raised); stroke: var(--color-brand-primary); stroke-width: 4; }
+.dashboard-explorer-companion-zone circle { fill: var(--surface-raised); stroke: var(--color-brand-border); stroke-width: 3; stroke-dasharray: 5 6; }
+.dashboard-explorer-companion-zone path { fill: none; stroke: var(--color-brand-primary); stroke-width: 3; stroke-linecap: round; opacity: 0.65; }
+
+.dashboard-shell { max-width: 1180px; margin: 0 auto; padding: 2.75rem 1.5rem 4rem; display: grid; grid-template-columns: minmax(190px, 230px) minmax(0, 1fr); gap: 2rem; }
+.dashboard-shell > .cy-section-nav { position: sticky; top: calc(var(--nav-h) + 1rem); align-self: start; }
+.dashboard-content { min-width: 0; display: grid; gap: 1.5rem; }
+.dashboard-content > .dashboard-anchor { margin: 0; }
+.dashboard-journey-surface,
+.dashboard-next-surface,
+.dashboard-practice-surface,
+.dashboard-field-note { border-color: var(--color-brand-border); box-shadow: var(--shadow-card); }
+.dashboard-journey-surface { background: var(--color-brand-soft); }
+.dashboard-next-surface { background: var(--status-warning-surface); }
+.dashboard-practice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.dashboard-field-note { display: flex; gap: 0.85rem; align-items: flex-start; padding: 1rem 1.2rem; border-radius: 14px; background: var(--status-warning-surface); }
+.dashboard-action-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: 1rem; margin-bottom: 1rem; }
+.dashboard-action-card { min-height: 9rem; padding: 1rem; text-align: left; cursor: pointer; border: 1px solid var(--border-default); border-radius: 14px; background: var(--surface-raised); box-shadow: var(--shadow-card); transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease; }
+.dashboard-action-card:hover { transform: translateY(-2px); border-color: var(--color-brand-border); box-shadow: var(--shadow-raised); }
+.dashboard-action-card:focus-visible { outline: none; box-shadow: var(--cyberly-focus-ring); }
+.dashboard-action-icon { display: grid; place-items: center; width: 2.4rem; height: 2.4rem; margin-bottom: 0.65rem; border-radius: 10px; background: var(--color-brand-soft); font-size: 1.25rem; }
+.dashboard-action-title { color: var(--color-brand-primary-hover); font-weight: 800; }
+.dashboard-action-description { margin-top: 0.25rem; color: var(--text-muted); font-size: 0.82rem; line-height: 1.5; }
+.dashboard-cyberguard-heading { padding-top: 0.5rem; }
+
+@media (max-width: 56.25rem) {
+  .dashboard-shell { display: block; padding: 1.5rem 1rem 3rem; }
+  .dashboard-shell > .cy-section-nav { position: static; margin-bottom: 1.5rem; }
+}
+
+@media (max-width: 40rem) {
+  .dashboard-explorer-hero { margin-top: 1rem; }
+  .dashboard-explorer-visual svg { max-height: 12rem; }
+  .dashboard-practice-grid { grid-template-columns: minmax(0, 1fr); }
+  .dashboard-action-grid { grid-template-columns: minmax(0, 1fr); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .dashboard-action-card { transition: none; }
+}

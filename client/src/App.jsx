@@ -8,6 +8,7 @@ import "./design-system/tokens/layout.css";
 import "./design-system/foundation.css";
 import "./resources/resources.css";
 import "./cyberguard/cyberguardLayout.css";
+import "./dashboard/dashboard.css";
 import CyberGuardWorkspaceHeader from "./cyberguard/CyberGuardWorkspaceHeader";
 import CyberGuardAiNotice from "./cyberguard/CyberGuardAiNotice";
 import CyberGuardChatShell from "./cyberguard/CyberGuardChatShell";
@@ -22,6 +23,8 @@ import PageSection from "./design-system/layout/PageSection";
 import CompactHeader from "./design-system/headers/CompactHeader";
 import ContextHeader from "./design-system/headers/ContextHeader";
 import SectionNav from "./design-system/navigation/SectionNav";
+import ExplorerHeroSurface from "./design-system/visual/ExplorerHeroSurface";
+import DashboardExplorerVisual from "./dashboard/DashboardExplorerVisual";
 import Surface from "./design-system/primitives/Surface";
 import Badge from "./design-system/primitives/Badge";
 import PageState from "./design-system/feedback/PageState";
@@ -1865,33 +1868,6 @@ body {
   background: var(--coral-lt); border: 1px solid rgba(216,90,48,0.18);
   border-radius: 9px; padding: 0.55rem 0.7rem;
 }
-.dashboard-anchor { scroll-margin-top: calc(var(--nav-h) + 1rem); }
-.dashboard-shell {
-  max-width: 1180px; margin: 0 auto; padding: 2.25rem 1.5rem 3rem;
-  display: grid; grid-template-columns: minmax(190px, 230px) minmax(0, 1fr); gap: 1.5rem;
-}
-.dashboard-section-nav {
-  position: sticky; top: calc(var(--nav-h) + 1rem); align-self: start;
-  background: var(--surface-raised); border: 1px solid var(--border-default); border-radius: 14px;
-  padding: 0.85rem; box-shadow: var(--shadow-card);
-}
-.dashboard-section-nav-title {
-  font-size: 0.76rem; font-weight: 800; color: #77827d; letter-spacing: 0.07em;
-  text-transform: uppercase; margin: 0 0 0.55rem 0.25rem;
-}
-.dashboard-section-nav-list { display: grid; gap: 0.2rem; }
-.dashboard-section-nav-button {
-  border: 1px solid transparent; background: none; cursor: pointer; text-align: left; border-radius: 9px;
-  padding: 0.55rem 0.65rem; font-family: 'DM Sans', sans-serif; font-size: 0.84rem;
-  color: #56615c;
-}
-.dashboard-section-nav-button:hover,
-.dashboard-section-nav-button:focus-visible,
-.dashboard-section-nav-button.active {
-  background: var(--teal-lt); color: var(--teal); outline: none;
-  border-color: var(--color-brand-border); box-shadow: inset 3px 0 0 var(--color-brand-primary);
-}
-.dashboard-content { min-width: 0; }
 .progress-anchor { scroll-margin-top: calc(var(--nav-h) + 1rem); }
 .progress-shell {
   max-width: 1180px; margin: 0 auto; padding: 2rem 1.5rem 3rem;
@@ -2006,15 +1982,7 @@ body {
 .home-how-title { font-weight: 700; font-size: 1rem; margin-bottom: 0.3rem; }
 .home-how-description { font-size: 0.85rem; color: #555; line-height: 1.65; }
 @media (max-width: 900px) {
-  .dashboard-shell { display: block; padding: 1.25rem 1rem 2.5rem; }
   .progress-shell { display: block; padding: 1.25rem 1rem 2.5rem; }
-  .dashboard-section-nav {
-    position: static; margin-bottom: 1rem; overflow-x: auto; padding: 0.65rem;
-  }
-  .dashboard-section-nav-list {
-    display: flex; gap: 0.35rem; min-width: max-content;
-  }
-  .dashboard-section-nav-button { white-space: nowrap; }
   .home-how-grid { grid-template-columns: 1fr; max-width: 560px; }
 }
 @media (max-width: 560px) {
@@ -5929,7 +5897,24 @@ function DashboardPage() {
 
     if (sections.length === 0) return undefined;
 
+    const isAtPageEnd = () => {
+      const tolerance = 4;
+      const documentHeight = Math.max(
+        document.documentElement.scrollHeight,
+        document.body?.scrollHeight || 0
+      );
+      const maxScrollY = Math.max(0, documentHeight - window.innerHeight);
+
+      if (maxScrollY <= tolerance) return false;
+      return window.scrollY >= maxScrollY - tolerance;
+    };
+
     const observer = new IntersectionObserver((entries) => {
+      if (isAtPageEnd()) {
+        setActiveSection(sectionIds[sectionIds.length - 1]);
+        return;
+      }
+
       const visible = entries
         .filter(entry => entry.isIntersecting)
         .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
@@ -5942,8 +5927,18 @@ function DashboardPage() {
       threshold: [0.1, 0.35, 0.6],
     });
 
+    const updateActiveSectionAtPageEnd = () => {
+      if (isAtPageEnd()) setActiveSection(sectionIds[sectionIds.length - 1]);
+    };
+
     sections.forEach(section => observer.observe(section));
-    return () => observer.disconnect();
+    window.addEventListener("scroll", updateActiveSectionAtPageEnd, { passive: true });
+    updateActiveSectionAtPageEnd();
+
+    return () => {
+      observer.disconnect();
+      window.removeEventListener("scroll", updateActiveSectionAtPageEnd);
+    };
   }, [hasLearningProfileSection, hasTopicMasterySection]);
 
   useEffect(() => {
@@ -6025,56 +6020,42 @@ function DashboardPage() {
       labelKey: "dashboard.actions.resources",
       descKey: "dashboard.actions.resourcesDescription",
       page: "resources",
-      color: "#E3F2FD",
-      accent: "#1E88E5",
     },
     {
       icon: "🧭",
       labelKey: "dashboard.actions.assessment",
       descKey: "dashboard.actions.assessmentDescription",
       page: "assessment",
-      color: "#FFF3E0",
-      accent: "#FB8C00",
     },
     {
       icon: "🎮",
       labelKey: "dashboard.actions.scenarios",
       descKey: "dashboard.actions.scenariosDescription",
       page: "scenarios",
-      color: "#E8F5E9",
-      accent: "#2E7D32",
     },
     {
       icon: "👤",
       labelKey: "dashboard.actions.profile",
       descKey: "dashboard.actions.profileDescription",
       page: "profile",
-      color: "#E1F5EE",
-      accent: "#1D9E75",
     },
     {
       icon: "ℹ️",
       labelKey: "dashboard.actions.about",
       descKey: "dashboard.actions.aboutDescription",
       page: "about",
-      color: "#F3E5F5",
-      accent: "#8E24AA",
     },
     {
       icon: "📊",
       labelKey: "dashboard.actions.progress",
       descKey: "dashboard.actions.progressDescription",
       page: "progress",
-      color: "#FFF8E1",
-      accent: "#F59E0B",
     },
     {
       icon: "🏠",
       labelKey: "dashboard.actions.home",
       descKey: "dashboard.actions.homeDescription",
       page: "home",
-      color: "#E8F5E9",
-      accent: "#43A047",
     },
   ];
 
@@ -6111,48 +6092,46 @@ function DashboardPage() {
   return (
     <div>
       <PageContainer id="dashboard-overview" className="dashboard-anchor">
-        <CompactHeader
-          eyebrow={t("dashboard.yourDashboard")}
-          title={`${t("dashboard.welcomeBack", { name: nick })} 👋`}
-          metadata={(
-            <>
-              <span>{translatedAgeGroup}</span>
-              <span aria-hidden="true">·</span>
-              <span>{t("dashboard.levelDisplay", { level: translatedFamiliarity })}</span>
-              {translatedEducation && (
-                <>
-                  <span aria-hidden="true">·</span>
-                  <span>{translatedEducation}</span>
-                </>
-              )}
-            </>
-          )}
-        />
+        <ExplorerHeroSurface
+          identity={t("dashboard.yourDashboard")}
+          icon={<span aria-hidden="true">◇</span>}
+          visual={<DashboardExplorerVisual />}
+          className="dashboard-explorer-hero"
+        >
+          <CompactHeader
+            title={`${t("dashboard.welcomeBack", { name: nick })} 👋`}
+            description={t("dashboard.continueLearning")}
+            metadata={(
+              <>
+                <span>{translatedAgeGroup}</span>
+                <span aria-hidden="true">·</span>
+                <span>{t("dashboard.levelDisplay", { level: translatedFamiliarity })}</span>
+                {translatedEducation && (
+                  <>
+                    <span aria-hidden="true">·</span>
+                    <span>{translatedEducation}</span>
+                  </>
+                )}
+              </>
+            )}
+          />
+        </ExplorerHeroSurface>
       </PageContainer>
 
       <div className="dashboard-shell">
-        <aside className="dashboard-section-nav" aria-label={t("dashboard.sectionNav.ariaLabel")}>
-          <div className="dashboard-section-nav-title">{t("dashboard.sectionNav.title")}</div>
-          <div className="dashboard-section-nav-list">
-            {dashboardSections.map(section => (
-              <button
-                key={section.id}
-                type="button"
-                className={`dashboard-section-nav-button${activeSection === section.id ? " active" : ""}`}
-                onClick={() => scrollToDashboardSection(section.id)}
-                aria-current={activeSection === section.id ? "true" : undefined}
-              >
-                {t(section.labelKey)}
-              </button>
-            ))}
-          </div>
-        </aside>
+        <SectionNav
+          ariaLabel={t("dashboard.sectionNav.ariaLabel")}
+          title={t("dashboard.sectionNav.title")}
+          items={dashboardSections.map(section => ({ id: section.id, label: t(section.labelKey) }))}
+          activeId={activeSection}
+          onSelect={scrollToDashboardSection}
+        />
 
       <div className="dashboard-content">
 
         {/* Profile summary */}
         {user.helpTopics?.length > 0 && (
-          <div id="dashboard-learning-profile" className="card dashboard-anchor" style={{ marginBottom: "2rem", background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)", display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
+          <div id="dashboard-learning-profile" className="card dashboard-anchor dashboard-journey-surface" style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
             <div style={{ flex: 1, minWidth: 200 }}>
               <div style={{ fontWeight: 600, marginBottom: "0.4rem", color: "var(--teal)" }}>🎯 {t("dashboard.learningProfile")}</div>
               <div style={{ fontSize: "0.85rem", color: "#333", lineHeight: 1.7 }}>
@@ -6172,7 +6151,7 @@ function DashboardPage() {
           </div>
         )}
 
-        <div id="dashboard-measured-progress" className="dashboard-anchor" style={{ marginBottom: "2rem" }}>
+        <div id="dashboard-measured-progress" className="dashboard-anchor">
           {progressState.loading ? (
             <div className="card learning-path-card compact">
               <PageState message={t("dashboard.progress.loading")} />
@@ -6194,7 +6173,7 @@ function DashboardPage() {
           )}
         </div>
 
-        <div id="dashboard-initial-assessment" className="card dashboard-anchor" style={{ marginBottom: "2rem", background: "#fff8e1", border: "1px solid #ffe082", display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
+        <div id="dashboard-initial-assessment" className="card dashboard-anchor dashboard-next-surface" style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
           <div style={{ flex: 1, minWidth: 220 }}>
             <div style={{ fontWeight: 700, color: "#e65100", marginBottom: "0.25rem" }}>
               {assessmentStatus.status === "completed"
@@ -6217,8 +6196,8 @@ function DashboardPage() {
           </button>
         </div>
 
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
-          <div id="dashboard-recommended-next-step" className="card dashboard-anchor" style={{ background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.18)" }}>
+        <div>
+          <div id="dashboard-recommended-next-step" className="card dashboard-anchor dashboard-journey-surface">
             <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.35rem" }}>{t("dashboard.recommendation.title")}</div>
             {recommendationState.loading ? (
               <PageState message={t("dashboard.recommendation.loading")} />
@@ -6240,7 +6219,7 @@ function DashboardPage() {
           </div>
         </div>
 
-        <div id="dashboard-scenario-practice" className="dashboard-anchor" style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(260px, 1fr))", gap: "1rem", marginBottom: "2rem" }}>
+        <div id="dashboard-scenario-practice" className="dashboard-anchor dashboard-practice-grid">
           <div className="card" style={{ border: "1px solid rgba(0,0,0,0.07)" }}>
             <div style={{ fontWeight: 700, color: "#2E7D32", marginBottom: "0.35rem" }}>{t("dashboard.scenarios.practiceTitle")}</div>
             {scenarioState.loading ? (
@@ -6316,11 +6295,7 @@ function DashboardPage() {
         )}
 
         {/* Daily tip */}
-        <div style={{
-          background: "#fffde7", border: "1px solid #ffe082", borderRadius: 14,
-          padding: "1.1rem 1.4rem", display: "flex", gap: "0.85rem",
-          alignItems: "flex-start", marginBottom: "2rem",
-        }}>
+        <div className="dashboard-field-note">
           <span style={{ fontSize: "1.4rem", flexShrink: 0 }}>{todayTip.emoji}</span>
           <div>
             <div style={{ fontWeight: 700, fontSize: "0.82rem", color: "#e65100", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.25rem" }}>{t("dashboard.dailyTip")}</div>
@@ -6332,23 +6307,12 @@ function DashboardPage() {
         <div id="dashboard-quick-actions" className="dashboard-anchor">
         <p className="section-title" style={{ fontSize: "1.1rem", marginBottom: "0.4rem" }}>{t("dashboard.quickActions.title")}</p>
         <p className="section-sub" style={{ marginBottom: "1.25rem" }}>{t("dashboard.quickActions.description")}</p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem", marginBottom: "2.5rem" }}>
+        <div className="dashboard-action-grid">
           {quickActions.map(a => (
-            <button
-              key={a.labelKey}
-              onClick={() => go(a.page)}
-              style={{
-                background: a.color, border: `1px solid ${a.accent}22`,
-                borderRadius: 14, padding: "1.25rem", textAlign: "left",
-                cursor: "pointer", transition: "transform 0.15s, box-shadow 0.15s",
-                boxShadow: "0 2px 8px rgba(0,0,0,0.05)",
-              }}
-              onMouseEnter={e => { e.currentTarget.style.transform = "translateY(-2px)"; e.currentTarget.style.boxShadow = "0 6px 20px rgba(0,0,0,0.1)"; }}
-              onMouseLeave={e => { e.currentTarget.style.transform = "translateY(0)"; e.currentTarget.style.boxShadow = "0 2px 8px rgba(0,0,0,0.05)"; }}
-            >
-              <div style={{ fontSize: "1.6rem", marginBottom: "0.5rem" }}>{a.icon}</div>
-              <div style={{ fontWeight: 700, fontSize: "0.95rem", color: a.accent, marginBottom: "0.2rem" }}> {t(a.labelKey)}</div>
-              <div style={{ fontSize: "0.8rem", color: "#666"}}>{t(a.descKey)}</div>
+            <button key={a.labelKey} className="dashboard-action-card" onClick={() => go(a.page)}>
+              <div className="dashboard-action-icon" aria-hidden="true">{a.icon}</div>
+              <div className="dashboard-action-title">{t(a.labelKey)}</div>
+              <div className="dashboard-action-description">{t(a.descKey)}</div>
             </button>
           ))}
         </div>
