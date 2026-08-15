@@ -1,0 +1,176 @@
+.progress-explorer-hero {
+  margin-block: 1.5rem;
+}
+
+.progress-explorer-hero .cy-compact-header {
+  padding: 0;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+}
+
+.progress-explorer-visual {
+  width: 100%;
+  min-width: 0;
+}
+
+.progress-explorer-visual svg {
+  display: block;
+  width: 100%;
+  height: auto;
+}
+
+.progress-explorer-clouds {
+  fill: var(--surface-raised);
+  opacity: 0.82;
+}
+
+.progress-explorer-mountain-far {
+  fill: var(--color-brand-soft);
+}
+
+.progress-explorer-mountain-near {
+  fill: var(--cyberly-mint-500);
+  opacity: 0.32;
+}
+
+.progress-explorer-path {
+  fill: none;
+  stroke: var(--cyberly-gold-500);
+  stroke-width: 10;
+  stroke-linecap: round;
+  stroke-dasharray: 2 17;
+}
+
+.progress-explorer-milestone {
+  fill: var(--surface-raised);
+  stroke: var(--color-brand-primary);
+  stroke-width: 5;
+}
+
+.progress-explorer-star {
+  fill: var(--cyberly-gold-500);
+}
+
+.progress-explorer-shield {
+  fill: var(--color-brand-primary);
+  stroke: var(--surface-raised);
+  stroke-width: 3;
+}
+
+.progress-explorer-shield-mark {
+  fill: none;
+  stroke: var(--surface-raised);
+  stroke-width: 4;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+}
+
+.progress-explorer-digital-accents {
+  fill: none;
+  stroke: var(--cyberly-indigo-600);
+  stroke-width: 3;
+  opacity: 0.68;
+}
+
+.progress-explorer-companion-zone {
+  fill: none;
+  stroke: var(--cyberly-text-secondary);
+  stroke-width: 2;
+  stroke-dasharray: 5 7;
+  opacity: 0.38;
+}
+
+.progress-content {
+  position: relative;
+}
+
+.progress-content::before {
+  position: absolute;
+  inset-block: 4.5rem 1rem;
+  inset-inline-start: -0.9rem;
+  width: 2px;
+  content: "";
+  background: linear-gradient(var(--cyberly-mint-500), var(--cyberly-gold-500));
+  opacity: 0.28;
+}
+
+.progress-overview-surface,
+.progress-checkpoint-surface,
+.progress-activity-trail,
+.progress-achievement-grid {
+  position: relative;
+}
+
+.progress-overview-surface::before,
+.progress-checkpoint-surface::before,
+.progress-activity-trail::before,
+.progress-achievement-grid::before {
+  position: absolute;
+  inset-block-start: 0.25rem;
+  inset-inline-start: -1.25rem;
+  width: 0.75rem;
+  height: 0.75rem;
+  content: "";
+  background: var(--cyberly-surface-primary);
+  border: 3px solid var(--color-brand-primary);
+  border-radius: 50%;
+}
+
+.progress-checkpoint-surface,
+.progress-activity-trail,
+.progress-achievement-grid {
+  padding: clamp(1rem, 2vw, 1.5rem);
+  background: color-mix(in srgb, var(--cyberly-surface-primary) 88%, var(--color-brand-soft));
+  border: 1px solid var(--cyberly-border-soft);
+  border-radius: var(--cyberly-radius-panel);
+  box-shadow: var(--shadow-card);
+}
+
+.progress-recommendation-surface {
+  background: color-mix(in srgb, var(--cyberly-surface-primary) 72%, var(--color-brand-soft));
+  border-color: color-mix(in srgb, var(--color-brand-primary) 28%, var(--cyberly-border-soft));
+  box-shadow: var(--shadow-card);
+}
+
+.progress-activity-trail .recent-activity-list {
+  padding-inline-start: 0.75rem;
+  border-inline-start: 2px solid var(--cyberly-border-soft);
+}
+
+.progress-achievement-grid .card {
+  border-color: color-mix(in srgb, var(--cyberly-gold-500) 32%, var(--cyberly-border-soft));
+}
+
+@media (max-width: 40rem) {
+  .progress-explorer-hero {
+    margin-block: 1rem;
+  }
+
+  .progress-explorer-visual {
+    max-width: 22rem;
+    margin-inline: auto;
+  }
+
+  .progress-content::before,
+  .progress-overview-surface::before,
+  .progress-checkpoint-surface::before,
+  .progress-activity-trail::before,
+  .progress-achievement-grid::before {
+    display: none;
+  }
+
+  .progress-checkpoint-surface,
+  .progress-activity-trail,
+  .progress-achievement-grid {
+    padding: 1rem;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .progress-explorer-visual,
+  .progress-explorer-visual * {
+    animation: none;
+    transition: none;
+  }
+}

@@ -3,7 +3,11 @@ import App from "../App";
 import i18n from "../i18n";
 import { restoreSession } from "../api/authApi";
 import { getProgress } from "../api/progressApi";
-import { getCurrentRecommendation, markRecommendationCompleted } from "../api/recommendationApi";
+import {
+  getCurrentRecommendation,
+  markRecommendationCompleted,
+  markRecommendationViewed,
+} from "../api/recommendationApi";
 import { listChatConversations } from "../chat/chatApi";
 
 jest.mock("react-markdown", () => ({ __esModule: true, default: ({ children }) => <div>{children}</div> }));
@@ -91,7 +95,8 @@ describe("Progress design foundation pilot", () => {
     expect(screen.getByRole("main")).toHaveClass("cy-app-shell-main");
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(header).toBeInTheDocument();
-    expect(within(header).getByText(i18n.t("progress.title"))).toBeInTheDocument();
+    expect(heading.closest(".cy-explorer-hero")).toContainElement(screen.getByText(i18n.t("progress.title")));
+    expect(within(header).queryByText(i18n.t("progress.title"))).not.toBeInTheDocument();
     expect(within(header).getByText(i18n.t("progress.profileFamiliaritySummary", { level: "Beginner" }))).toBeInTheDocument();
     expect(within(header).getByText("English")).toBeInTheDocument();
     expect(within(header).getByText("Step-by-step guidance")).toBeInTheDocument();
@@ -162,6 +167,38 @@ describe("Progress design foundation pilot", () => {
     expect(document.querySelectorAll('.cy-section-nav-button[aria-current="location"]')).toHaveLength(1);
     expect(window.location.hash).toBe("#/progress");
     expect(markRecommendationCompleted).not.toHaveBeenCalled();
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
+  });
+
+  test("resumes observer tracking after leaving the genuine document end", async () => {
+    Object.defineProperty(window, "innerHeight", { configurable: true, value: 900 });
+    Object.defineProperty(window, "scrollY", { configurable: true, value: 1600 });
+    Object.defineProperty(document.documentElement, "scrollHeight", { configurable: true, value: 2500 });
+    Object.defineProperty(document.body, "scrollHeight", { configurable: true, value: 2500 });
+
+    render(<App />);
+
+    const achievements = await screen.findByRole("button", { name: "Achievements" });
+    const activity = screen.getByRole("button", { name: "Activity History" });
+    fireEvent.scroll(window);
+    await waitFor(() => expect(achievements).toHaveAttribute("aria-current", "location"));
+
+    Object.defineProperty(window, "scrollY", { configurable: true, value: 700 });
+    act(() => {
+      fireEvent.scroll(window);
+      intersectionObserverCallback([{
+        isIntersecting: true,
+        intersectionRatio: 0.6,
+        target: document.getElementById("progress-learning-activity"),
+      }]);
+    });
+
+    expect(activity).toHaveAttribute("aria-current", "location");
+    expect(achievements).not.toHaveAttribute("aria-current");
+    expect(document.querySelectorAll('.cy-section-nav-button[aria-current="location"]')).toHaveLength(1);
+    expect(window.location.hash).toBe("#/progress");
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
   });
 
   test("keeps Overview active when the Progress document has no meaningful scroll range", async () => {
@@ -210,5 +247,20 @@ describe("Progress design foundation pilot", () => {
     expect(document.querySelectorAll('.cy-section-nav-button[aria-current="location"]')).toHaveLength(1);
     expect(window.location.hash).toBe("#/progress");
     expect(markRecommendationCompleted).not.toHaveBeenCalled();
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
+  });
+
+  test("scrolls to a Progress section without changing route or learner state", async () => {
+    const { container } = render(<App />);
+    await screen.findByRole("heading", { level: 1, name: "Alya's Learning Journey 📊" });
+    const target = container.querySelector("#progress-learning-activity");
+    target.scrollIntoView = jest.fn();
+
+    fireEvent.click(screen.getByRole("button", { name: "Activity History" }));
+
+    expect(target.scrollIntoView).toHaveBeenCalledWith({ behavior: "auto", block: "start" });
+    expect(window.location.hash).toBe("#/progress");
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
   });
 });

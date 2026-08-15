@@ -9,6 +9,7 @@ import "./design-system/foundation.css";
 import "./resources/resources.css";
 import "./cyberguard/cyberguardLayout.css";
 import "./dashboard/dashboard.css";
+import "./progress/progress.css";
 import CyberGuardWorkspaceHeader from "./cyberguard/CyberGuardWorkspaceHeader";
 import CyberGuardAiNotice from "./cyberguard/CyberGuardAiNotice";
 import CyberGuardChatShell from "./cyberguard/CyberGuardChatShell";
@@ -25,6 +26,7 @@ import ContextHeader from "./design-system/headers/ContextHeader";
 import SectionNav from "./design-system/navigation/SectionNav";
 import ExplorerHeroSurface from "./design-system/visual/ExplorerHeroSurface";
 import DashboardExplorerVisual from "./dashboard/DashboardExplorerVisual";
+import ProgressExplorerVisual from "./progress/ProgressExplorerVisual";
 import Surface from "./design-system/primitives/Surface";
 import Badge from "./design-system/primitives/Badge";
 import PageState from "./design-system/feedback/PageState";
@@ -9102,20 +9104,26 @@ function ProgressPage() {
   return (
     <div>
       <PageContainer>
-        <CompactHeader
-          eyebrow={t("progress.title")}
-          title={t("progress.heroTitle", { name: nick })}
-          description={summary?.exists
-            ? t("progress.baselineSummary", { count: assessmentTopicResults.length })
-            : t("progress.profileFamiliaritySummary", { level: profileLevel })}
-          metadata={(
-            <>
-              <span>{lang}</span>
-              <span aria-hidden="true">·</span>
-              <span>{style}</span>
-            </>
-          )}
-        />
+        <ExplorerHeroSurface
+          identity={t("progress.title")}
+          icon={<span aria-hidden="true">↗</span>}
+          visual={<ProgressExplorerVisual />}
+          className="progress-explorer-hero"
+        >
+          <CompactHeader
+            title={t("progress.heroTitle", { name: nick })}
+            description={summary?.exists
+              ? t("progress.baselineSummary", { count: assessmentTopicResults.length })
+              : t("progress.profileFamiliaritySummary", { level: profileLevel })}
+            metadata={(
+              <>
+                <span>{lang}</span>
+                <span aria-hidden="true">·</span>
+                <span>{style}</span>
+              </>
+            )}
+          />
+        </ExplorerHeroSurface>
       </PageContainer>
 
       <div className="progress-shell">
@@ -9133,7 +9141,7 @@ function ProgressPage() {
         <div className="progress-content">
           <PageBackButton style={{ marginBottom: "2rem" }} />
 
-        <div id={PROGRESS_SECTION_IDS.OVERVIEW} className="progress-anchor" style={{ marginBottom: "2.5rem" }}>
+        <div id={PROGRESS_SECTION_IDS.OVERVIEW} className="progress-anchor progress-overview-surface" style={{ marginBottom: "2.5rem" }}>
           {progressState.loading ? (
             <div className="card learning-path-card">
               <PageState message={t("common.loading")} />
@@ -9235,7 +9243,7 @@ function ProgressPage() {
         </div>
 
         {assessmentTopicResults.length > 0 && (
-          <div id={PROGRESS_SECTION_IDS.ASSESSMENT_RESULTS} className="progress-anchor" style={{ marginBottom: "2.5rem" }}>
+          <div id={PROGRESS_SECTION_IDS.ASSESSMENT_RESULTS} className="progress-anchor progress-checkpoint-surface" style={{ marginBottom: "2.5rem" }}>
             <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("progress.assessmentResults.title")}</p>
             <p className="section-sub" style={{ marginBottom: "1rem" }}>{t("progress.assessmentResults.description")}</p>
             <div className="assessment-results-grid">
@@ -9262,7 +9270,7 @@ function ProgressPage() {
         )}
 
         {recommendation && (
-          <div id="progress-recommendation" className="card progress-anchor" style={{ marginBottom: "2.5rem", background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)" }}>
+          <div id="progress-recommendation" className="card progress-anchor progress-recommendation-surface" style={{ marginBottom: "2.5rem" }}>
             {recommendationCompleteSaved && <SuccessFeedback message={t("progress.recommendation.completedSaved")} />}
             <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.3rem" }}>{t("progress.currentFocus.title")}</div>
             <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.05rem", marginBottom: "0.4rem" }}>
@@ -9293,7 +9301,7 @@ function ProgressPage() {
         )}
 
         {/* Learning activity and topics */}
-        <div id={PROGRESS_SECTION_IDS.LEARNING_ACTIVITY} className="progress-anchor" style={{ marginBottom: "2.5rem" }}>
+        <div id={PROGRESS_SECTION_IDS.LEARNING_ACTIVITY} className="progress-anchor progress-activity-trail" style={{ marginBottom: "2.5rem" }}>
           <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("progress.learningActivity.title")}</p>
           <p className="section-sub" style={{ marginBottom: "1rem" }}>{t("progress.learningActivity.description")}</p>
           <div className="card" style={{ marginBottom: "1rem", padding: "1rem" }}>
@@ -9363,7 +9371,7 @@ function ProgressPage() {
         </div>
 
         {/* Achievements */}
-        <div id={PROGRESS_SECTION_IDS.BADGES} className="progress-anchor">
+        <div id={PROGRESS_SECTION_IDS.BADGES} className="progress-anchor progress-achievement-grid">
           <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("progress.achievements.title")}</p>
           <p className="section-sub" style={{ marginBottom: "1rem" }}>{t("progress.achievements.description")}</p>
           <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "1rem" }}>
