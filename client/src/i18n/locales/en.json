@@ -483,6 +483,12 @@
       "exit": "Exit scenario",
       "progressSaved": "Progress saved",
       "chooseOption": "Choose an option before continuing",
+      "outcomeLabel": "Decision outcome",
+      "outcomes": {
+        "safest": "Safest choice",
+        "partial": "Partly safe choice",
+        "unsafe": "Unsafe choice"
+      },
       "readyToComplete": "Ready to complete",
       "readyToCompleteDescription": "All decisions are submitted. Complete the scenario to calculate your result and apply progress."
     },

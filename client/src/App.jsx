@@ -11,6 +11,7 @@ import "./cyberguard/cyberguardLayout.css";
 import "./dashboard/dashboard.css";
 import "./progress/progress.css";
 import "./assessment/assessment.css";
+import "./scenario/scenarios.css";
 import CyberGuardWorkspaceHeader from "./cyberguard/CyberGuardWorkspaceHeader";
 import CyberGuardAiNotice from "./cyberguard/CyberGuardAiNotice";
 import CyberGuardChatShell from "./cyberguard/CyberGuardChatShell";
@@ -29,6 +30,7 @@ import ExplorerHeroSurface from "./design-system/visual/ExplorerHeroSurface";
 import DashboardExplorerVisual from "./dashboard/DashboardExplorerVisual";
 import ProgressExplorerVisual from "./progress/ProgressExplorerVisual";
 import AssessmentCheckpointVisual from "./assessment/AssessmentCheckpointVisual";
+import ScenarioDecisionVisual from "./scenario/ScenarioDecisionVisual";
 import PageIdentity from "./design-system/visual/PageIdentity";
 import Surface from "./design-system/primitives/Surface";
 import Badge from "./design-system/primitives/Badge";
@@ -2384,100 +2386,6 @@ body {
 .res-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(260px,1fr)); gap: 1rem; }
 .res-card { background: var(--surface-raised); border-radius: 14px; border: 1px solid var(--border-default); padding: 1.25rem; box-shadow: var(--shadow-card); }
 .res-card:hover { border-color: var(--border-strong); }
-.scenario-library-card {
-  position: relative;
-  overflow: hidden;
-  border: 1px solid var(--border-default);
-  background: var(--surface-raised);
-  box-shadow: var(--shadow-card);
-  transition: border-color 0.18s ease, box-shadow 0.18s ease, transform 0.18s ease, background 0.18s ease;
-}
-.scenario-library-card:hover,
-.scenario-library-card:focus-within {
-  border-color: var(--border-strong);
-  box-shadow: var(--shadow-raised);
-  transform: translateY(-1px);
-}
-.scenario-library-card.recommended {
-  border: 2px solid var(--color-brand-border);
-  box-shadow: 0 10px 24px rgba(29,158,117,0.16);
-  background: linear-gradient(180deg, #f3fbf7 0%, var(--surface-raised) 62%);
-}
-.scenario-library-card.recommended::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 4px;
-  background: linear-gradient(90deg, var(--teal), #6fcf97);
-}
-.scenario-library-card.recommended:hover,
-.scenario-library-card.recommended:focus-within {
-  border-color: var(--teal);
-  box-shadow: 0 12px 28px rgba(29,158,117,0.22);
-}
-.scenario-library-card.highlighted {
-  border: 2px solid #f2b84b;
-  box-shadow: 0 0 0 4px rgba(242,184,75,0.18), 0 14px 30px rgba(111,76,0,0.14);
-  background: linear-gradient(180deg, #fff9e8 0%, var(--surface-raised) 68%);
-}
-.scenario-library-card.highlighted::before {
-  content: "";
-  position: absolute;
-  inset: 0 0 auto 0;
-  height: 4px;
-  background: linear-gradient(90deg, #f2b84b, var(--teal));
-}
-.scenario-library-card.highlighted:focus {
-  outline: 3px solid rgba(242,184,75,0.45);
-  outline-offset: 3px;
-}
-.scenario-detail-layout {
-  display: grid;
-  grid-template-columns: minmax(120px, 1fr) minmax(0, 900px) minmax(120px, 1fr);
-  gap: 1rem;
-  align-items: start;
-  min-width: 0;
-}
-.scenario-detail-back-rail { display: flex; justify-content: flex-end; }
-.scenario-detail-main { min-width: 0; }
-@media (max-width: 820px) {
-  .scenario-detail-layout {
-    grid-template-columns: minmax(0, 1fr);
-    width: 100%;
-  }
-  .scenario-detail-back-rail { justify-content: flex-start; }
-}
-.scenario-recommended-badge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.28rem;
-  max-width: 100%;
-  background: #dff5e7;
-  color: #145c42;
-  border: 1px solid rgba(29,158,117,0.32);
-  border-radius: 999px;
-  padding: 0.22rem 0.58rem;
-  font-size: 0.7rem;
-  font-weight: 850;
-  line-height: 1.2;
-  white-space: normal;
-}
-.scenario-recommended-badge svg {
-  width: 0.78rem;
-  height: 0.78rem;
-  flex: 0 0 auto;
-}
-.scenario-locale-fallback {
-  max-width: 820px;
-  margin: 0 auto 1rem;
-  padding: 0.75rem 0.9rem;
-  border: 1px solid rgba(29, 158, 117, 0.22);
-  border-radius: 12px;
-  background: rgba(232, 245, 233, 0.72);
-  color: #31584a;
-  font-size: 0.84rem;
-  line-height: 1.5;
-}
 .res-tag { display: inline-block; font-size: 0.72rem; font-weight: 600; border-radius: 99px; padding: 0.2rem 0.65rem; margin-bottom: 0.6rem; background: var(--teal-lt); color: var(--teal); }
 .res-title { font-weight: 600; margin-bottom: 0.35rem; font-size: 0.95rem; }
 .res-desc { color: #666; font-size: 0.82rem; line-height: 1.5; }
@@ -7779,8 +7687,8 @@ function ScenariosPage() {
   }
 
   const filterBar = (
-    <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", marginBottom: "1.25rem" }}>
-      <select aria-label={t("scenarios.filters.topic")} value={filters.topicCode} onChange={event => setFilters(current => ({ ...current, topicCode: event.target.value }))} style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 10, padding: "0.55rem 0.75rem" }}>
+    <Surface variant="outlined" className="scenario-library-filters">
+      <select className="scenario-filter-control" aria-label={t("scenarios.filters.topic")} value={filters.topicCode} onChange={event => setFilters(current => ({ ...current, topicCode: event.target.value }))}>
         <option value="">{t("scenarios.filters.allTopics")}</option>
         {Object.entries(PROGRESS_TOPIC_META).map(([value, meta]) => (
           <option key={value} value={value}>
@@ -7788,7 +7696,7 @@ function ScenariosPage() {
           </option>
         ))}
       </select>
-      <select aria-label={t("scenarios.filters.difficulty")} value={filters.difficulty} onChange={event => setFilters(current => ({ ...current, difficulty: event.target.value }))} style={{ border: "1px solid rgba(0,0,0,0.12)", borderRadius: 10, padding: "0.55rem 0.75rem" }}>
+      <select className="scenario-filter-control" aria-label={t("scenarios.filters.difficulty")} value={filters.difficulty} onChange={event => setFilters(current => ({ ...current, difficulty: event.target.value }))}>
         <option value="">{t("scenarios.filters.allDifficulties")}</option>
         {["beginner", "developing", "intermediate", "advanced"].map(value => (
           <option key={value} value={value}>
@@ -7796,136 +7704,179 @@ function ScenariosPage() {
           </option>
         ))}
       </select>
-    </div>
+    </Surface>
   );
+
+  function renderScenarioHeader(title, description, { compact = false, visual = false } = {}) {
+    return (
+      <header className={`scenario-page-header${compact ? " scenario-page-header-compact" : ""}${view.mode === "library" ? " scenario-library-header" : ""}`}>
+        <PageContainer width="wide" className="scenario-page-header-layout">
+          <div className="scenario-page-header-copy">
+            <PageIdentity label={t("nav.scenarios")} icon="◇" />
+            <h1>{title}</h1>
+            {description && <p>{description}</p>}
+          </div>
+          {visual && (
+            <div className="scenario-page-header-visual" aria-hidden="true">
+              <ScenarioDecisionVisual />
+            </div>
+          )}
+        </PageContainer>
+      </header>
+    );
+  }
 
   function renderLibrary() {
     return (
-      <>
-        {filterBar}
+      <PageSection className="scenario-library-section">
+        <div className="scenario-library-toolbar">{filterBar}</div>
         {library.loading ? (
           <PageState title={t("scenarios.library.loadingTitle")} message={t("scenarios.library.loading")} />
         ) : library.scenarios.length === 0 ? (
           <PageState type="empty" title={t("scenarios.library.empty")} message={t("scenarios.library.emptyDescription")} />
         ) : (
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(260px, 1fr))", gap: "1rem" }}>
+          <div className="scenario-library-grid">
             {library.scenarios.map(scenario => {
               const latest = scenario.latestAttempt;
               const isRecommended = recommendedIds.has(scenario.id);
               const isHighlighted = highlightedScenarioTarget?.scenarioSlug === scenario.slug;
               return (
-                <div
+                <Surface
                   key={scenario.id}
                   ref={element => {
                     if (element) scenarioCardRefs.current.set(scenario.slug, element);
                     else scenarioCardRefs.current.delete(scenario.slug);
                   }}
                   tabIndex={isHighlighted ? -1 : undefined}
-                  className={`card scenario-library-card${isRecommended ? " recommended" : ""}${isHighlighted ? " highlighted" : ""}`}
+                  className={`scenario-library-card${isRecommended ? " recommended" : ""}${isHighlighted ? " highlighted" : ""}`}
                 >
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.65rem" }}>
-                    <span style={{ color: "#2E7D32", fontWeight: 700, fontSize: "0.78rem" }}>{t(`topics.${scenario.topicCode}`, { defaultValue: topicLabel(scenario.topicCode) })}</span>
+                  <div className="scenario-card-heading">
+                    <span className="scenario-card-topic">{t(`topics.${scenario.topicCode}`, { defaultValue: topicLabel(scenario.topicCode) })}</span>
                     {(isHighlighted || isRecommended) && (
-                      <span className="scenario-recommended-badge">
+                      <Badge tone={isHighlighted ? "warning" : "brand"} className="scenario-recommended-badge">
                         <svg viewBox="0 0 24 24" fill="currentColor" aria-hidden="true" focusable="false">
                           <path d="M12 3.6l2.35 4.76 5.25.76-3.8 3.7.9 5.23L12 15.58l-4.7 2.47.9-5.23-3.8-3.7 5.25-.76L12 3.6z" />
                         </svg>
                         <span>{isHighlighted ? t("scenarios.library.recommendedNext") : t("scenarios.library.recommended")}</span>
-                      </span>
+                      </Badge>
                     )}
                   </div>
-                  <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.05rem", marginBottom: "0.4rem" }}>{scenario.title}</div>
-                  <div style={{ color: "#666", fontSize: "0.84rem", lineHeight: 1.55, marginBottom: "0.8rem" }}>{scenario.summary}</div>
-                  <div style={{ fontSize: "0.78rem", color: "#777", marginBottom: "0.9rem" }}>
-                    {t(`levels.${scenario.difficulty}`, { defaultValue: levelLabel(scenario.difficulty) })} · {t("scenarios.card.minutes", { count: scenario.estimatedMinutes })} · {t("scenarios.card.decisions", { count: scenario.totalSteps })}
+                  <h2 className="scenario-card-title">{scenario.title}</h2>
+                  <p className="scenario-card-summary">{scenario.summary}</p>
+                  <div className="scenario-card-meta">
+                    <Badge>{t(`levels.${scenario.difficulty}`, { defaultValue: levelLabel(scenario.difficulty) })}</Badge>
+                    <Badge>{t("scenarios.card.minutes", { count: scenario.estimatedMinutes })}</Badge>
+                    <Badge>{t("scenarios.card.decisions", { count: scenario.totalSteps })}</Badge>
                   </div>
-                  <div style={{ display: "flex", gap: "0.55rem", flexWrap: "wrap" }}>
+                  {latest?.status && (
+                    <div className="scenario-card-status">
+                      <Badge tone={latest.status === "completed" ? "success" : "warning"}>
+                        {latest.status === "completed" ? t("scenarios.result.completed") : t("scenarios.card.resume")}
+                      </Badge>
+                    </div>
+                  )}
+                  <div className="scenario-card-actions">
                     {latest?.status === "in_progress" ? (
-                      <button onClick={() => openAttempt(latest.id)} className="btn-primary" style={{ minWidth: 0, padding: "0.55rem 0.9rem" }}>{t("scenarios.card.resume")}</button>
+                      <Button variant="primary" onClick={() => openAttempt(latest.id)}>{t("scenarios.card.resume")}</Button>
                     ) : (
-                      <button onClick={() => openIntro(scenario.slug)} className="btn-primary" style={{ minWidth: 0, padding: "0.55rem 0.9rem" }}>{t("scenarios.card.start")}</button>
+                      <Button variant="primary" onClick={() => openIntro(scenario.slug)}>{t("scenarios.card.start")}</Button>
                     )}
                     {latest?.status === "completed" && (
-                      <button onClick={() => openResult(latest.id)} className="btn-ghost">{t("scenarios.card.viewResult")}</button>
+                      <Button onClick={() => openResult(latest.id)}>{t("scenarios.card.viewResult")}</Button>
                     )}
                   </div>
-                </div>
+                </Surface>
               );
             })}
           </div>
         )}
-      </>
+      </PageSection>
     );
   }
 
   function renderIntro() {
     const scenario = view.scenario;
     return (
-      <div className="card" ref={scenarioIntroRef} tabIndex={-1} style={{ maxWidth: 760, margin: "0 auto" }}>
-        <div style={{ color: "#2E7D32", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.35rem" }}>{t(`topics.${scenario.topicCode}`, { defaultValue: topicLabel(scenario.topicCode) })}</div>
-        <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", marginBottom: "0.5rem" }}>{scenario.title}</h2>
-        <p style={{ color: "#555", lineHeight: 1.65 }}>{scenario.summary}</p>
-        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap", fontSize: "0.82rem", color: "#666", margin: "1rem 0" }}>
-          <span>{t(`levels.${scenario.difficulty}`, { defaultValue: levelLabel(scenario.difficulty) })}</span>
-          <span>{t("scenarios.card.minutes", { count: scenario.estimatedMinutes })}</span>
-          <span>{t("scenarios.card.decisions", { count: scenario.totalSteps })}</span>
+      <Surface className="scenario-briefing" ref={scenarioIntroRef} tabIndex={-1}>
+        <div className="scenario-briefing-copy">
+          <Badge tone="brand">{t(`topics.${scenario.topicCode}`, { defaultValue: topicLabel(scenario.topicCode) })}</Badge>
+          <p className="scenario-briefing-summary">{scenario.summary}</p>
+          <div className="scenario-briefing-meta">
+            <Badge>{t(`levels.${scenario.difficulty}`, { defaultValue: levelLabel(scenario.difficulty) })}</Badge>
+            <Badge>{t("scenarios.card.minutes", { count: scenario.estimatedMinutes })}</Badge>
+            <Badge>{t("scenarios.card.decisions", { count: scenario.totalSteps })}</Badge>
+          </div>
+          <div className="scenario-briefing-notice">{t("scenarios.intro.choiceNotice")}</div>
+          {renderLocaleFallbackNotice(view.locale)}
+          <div className="scenario-actions">
+            <Button variant="primary" onClick={() => startScenario(scenario.slug)} loading={busy} loadingLabel={t("common.loading")}>{t("scenarios.intro.startPractice")}</Button>
+          </div>
         </div>
-        <div style={{ background: "#fff8e1", border: "1px solid #ffe082", borderRadius: 12, padding: "0.9rem", fontSize: "0.84rem", color: "#5f4a1d", lineHeight: 1.6, marginBottom: "1rem" }}>
-          {t("scenarios.intro.choiceNotice")}
+        <div aria-hidden="true">
+          <ScenarioDecisionVisual />
         </div>
-        {renderLocaleFallbackNotice(view.locale)}
-        <button className="btn-primary" onClick={() => startScenario(scenario.slug)} disabled={busy}>{t("scenarios.intro.startPractice")}</button>
-      </div>
+      </Surface>
     );
   }
 
   function renderAttempt() {
     const step = view.currentStep;
+    const decisionClassification = ["safest", "partial", "unsafe"].includes(decisionFeedback?.classification)
+      ? decisionFeedback.classification
+      : null;
     if (!step) {
       return (
-        <div className="card" style={{ maxWidth: 760, margin: "0 auto" }}>
-          <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", marginBottom: "0.5rem" }}>{t("scenarios.attempt.readyToComplete")}</h2>
-          <p style={{ color: "#555", lineHeight: 1.6 }}>{t("scenarios.attempt.readyToCompleteDescription")}</p>
-          <button className="btn-primary" onClick={completeScenario} disabled={busy}>{busy ? t("scenarios.attempt.completing") : t("scenarios.attempt.complete")}</button>
-        </div>
+        <Surface className="scenario-ready">
+          <p>{t("scenarios.attempt.readyToCompleteDescription")}</p>
+          <div className="scenario-actions">
+            <Button variant="primary" onClick={completeScenario} loading={busy} loadingLabel={t("scenarios.attempt.completing")}>{t("scenarios.attempt.complete")}</Button>
+          </div>
+        </Surface>
       );
     }
     return (
-        <div className="card" style={{ maxWidth: 820, margin: "0 auto" }}>
-          <div style={{ color: "#2E7D32", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.35rem" }}>
-          {t("scenarios.attempt.stepProgress", { current: step.stepOrder, total: view.scenario.totalSteps })}
-        </div>
-        <div style={{ background: "#edf3ef", borderRadius: 99, height: 8, overflow: "hidden", marginBottom: "1rem" }}>
-          <div style={{ width: `${((step.stepOrder - 1) / view.scenario.totalSteps) * 100}%`, background: "#2E7D32", height: "100%" }} />
-        </div>
-        <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", marginBottom: "0.65rem" }}>{view.scenario.title}</h2>
-        <p style={{ color: "#333", lineHeight: 1.7, marginBottom: "0.8rem" }}>{step.situationText}</p>
-        <div style={{ fontWeight: 700, marginBottom: "0.75rem" }}>{step.promptText}</div>
-        <div style={{ display: "grid", gap: "0.65rem", marginBottom: "1rem" }}>
-          {step.options.map(option => (
-            <button
-              key={option.key}
-              type="button"
-              disabled={Boolean(decisionFeedback)}
-              onClick={() => setSelectedChoice(option.key)}
-              style={{ textAlign: "left", background: selectedChoice === option.key ? "var(--teal-lt)" : "#fff", border: selectedChoice === option.key ? "1px solid var(--teal)" : "1px solid rgba(0,0,0,0.1)", borderRadius: 12, padding: "0.85rem 1rem", cursor: decisionFeedback ? "default" : "pointer", fontSize: "0.9rem", lineHeight: 1.5 }}
-            >
-              <strong>{option.key}.</strong> {option.text}
-            </button>
-          ))}
-        </div>
-        {!decisionFeedback ? (
-          <button className="btn-primary" disabled={!selectedChoice || busy} onClick={submitDecision}>{busy ? t("scenarios.attempt.savingDecision") : t("scenarios.attempt.confirmChoice")}</button>
-        ) : (
-          <div style={{ background: "#E8F5E9", border: "1px solid rgba(46,125,50,0.22)", borderRadius: 12, padding: "1rem" }}>
-            <div style={{ fontWeight: 700, color: "#2E7D32", marginBottom: "0.35rem" }}>{t("scenarios.attempt.decisionSaved")}</div>
-            <div style={{ fontSize: "0.78rem", color: "#477", fontWeight: 700, marginBottom: "0.2rem" }}>{t("scenarios.result.feedback")}</div>
-            <div style={{ fontSize: "0.88rem", color: "#333", lineHeight: 1.65, marginBottom: "0.55rem" }}>{decisionFeedback.feedback}</div>
-            <div style={{ fontSize: "0.78rem", color: "#477", fontWeight: 700, marginBottom: "0.2rem" }}>{t("scenarios.result.keyLesson")}</div>
-            <div style={{ fontSize: "0.82rem", color: "#566", lineHeight: 1.6, marginBottom: "0.85rem" }}>{decisionFeedback.safetyExplanation}</div>
-            <button className="btn-primary" onClick={continueAfterFeedback} disabled={busy}>{view.nextStep ? t("common.next") : busy ? t("scenarios.attempt.completing") : t("scenarios.attempt.complete")}</button>
+      <div className="scenario-attempt-shell">
+        <div className="scenario-attempt-progress">
+          <div className="scenario-attempt-progress-label">{t("scenarios.attempt.stepProgress", { current: step.stepOrder, total: view.scenario.totalSteps })}</div>
+          <div className="scenario-progress-track" aria-hidden="true">
+            <div className="scenario-progress-value" style={{ width: `${((step.stepOrder - 1) / view.scenario.totalSteps) * 100}%` }} />
           </div>
-        )}
+        </div>
+        <Surface className="scenario-step-card">
+          <div className="scenario-situation-label">{view.scenario.title}</div>
+          <p className="scenario-situation">{step.situationText}</p>
+          <div className="scenario-choice-list">
+            {step.options.map(option => (
+              <button key={option.key} type="button" className="scenario-choice" disabled={Boolean(decisionFeedback)} aria-pressed={selectedChoice === option.key} onClick={() => setSelectedChoice(option.key)}>
+                <span className="scenario-choice-key">{option.key}.</span>
+                <span>{option.text}</span>
+                <span className="scenario-choice-marker" aria-hidden="true">&#10003;</span>
+              </button>
+            ))}
+          </div>
+          {!decisionFeedback ? (
+            <div className="scenario-actions">
+              <Button variant="primary" disabled={!selectedChoice} loading={busy} loadingLabel={t("scenarios.attempt.savingDecision")} onClick={submitDecision}>{t("scenarios.attempt.confirmChoice")}</Button>
+            </div>
+          ) : (
+            <Surface variant="subdued" className="scenario-feedback">
+              <div className="scenario-feedback-title">{t("scenarios.attempt.decisionSaved")}</div>
+              {decisionClassification && (
+                <div className={`scenario-feedback-outcome is-${decisionClassification}`}>
+                  <span>{t("scenarios.attempt.outcomeLabel")}</span>
+                  <strong>{t(`scenarios.attempt.outcomes.${decisionClassification}`)}</strong>
+                </div>
+              )}
+              <div className="scenario-feedback-label">{t("scenarios.result.feedback")}</div>
+              <p>{decisionFeedback.feedback}</p>
+              <div className="scenario-feedback-label">{t("scenarios.result.keyLesson")}</div>
+              <p>{decisionFeedback.safetyExplanation}</p>
+              <div className="scenario-actions">
+                <Button variant="primary" onClick={continueAfterFeedback} loading={busy} loadingLabel={t("scenarios.attempt.completing")}>{view.nextStep ? t("common.next") : t("scenarios.attempt.complete")}</Button>
+              </div>
+            </Surface>
+          )}
+        </Surface>
       </div>
     );
   }
@@ -7933,80 +7884,67 @@ function ScenariosPage() {
   function renderResult() {
     const result = view;
     return (
-      <div className="card" style={{ maxWidth: 900, margin: "0 auto" }}>
-        <div style={{ color: "#2E7D32", fontWeight: 700, fontSize: "0.8rem", marginBottom: "0.35rem" }}>{t("scenarios.result.completed")}</div>
-        <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", marginBottom: "0.5rem" }}>{result.scenario.title}</h2>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: "0.75rem", margin: "1rem 0" }}>
-          <div><strong>{result.attempt.totalScore}/{result.attempt.maximumScore}</strong><div style={{ color: "#777", fontSize: "0.76rem" }}>{t("scenarios.result.score")}</div></div>
-          <div><strong>{result.attempt.percentage}%</strong><div style={{ color: "#777", fontSize: "0.76rem" }}>{t("scenarios.result.percentage")}</div></div>
-          <div><strong>{t(`scenarioResults.${result.attempt.resultLevel}`, { defaultValue: scenarioResultLabel(result.attempt.resultLevel) })}</strong><div style={{ color: "#777", fontSize: "0.76rem" }}>{t("scenarios.result.performanceLevel")}</div></div>
-          <div><strong>+{result.progressImpact?.masteryDelta || 0}</strong><div style={{ color: "#777", fontSize: "0.76rem" }}>{t("scenarios.result.masteryDelta")}</div></div>
+      <div className="scenario-result-summary">
+        <div className="scenario-result-metrics">
+          <Surface variant="outlined" className="scenario-result-metric"><strong>{result.attempt.totalScore}/{result.attempt.maximumScore}</strong><span>{t("scenarios.result.score")}</span></Surface>
+          <Surface variant="outlined" className="scenario-result-metric"><strong>{result.attempt.percentage}%</strong><span>{t("scenarios.result.percentage")}</span></Surface>
+          <Surface variant="outlined" className="scenario-result-metric"><strong>{t(`scenarioResults.${result.attempt.resultLevel}`, { defaultValue: scenarioResultLabel(result.attempt.resultLevel) })}</strong><span>{t("scenarios.result.performanceLevel")}</span></Surface>
+          <Surface variant="outlined" className="scenario-result-metric"><strong>+{result.progressImpact?.masteryDelta || 0}</strong><span>{t("scenarios.result.masteryDelta")}</span></Surface>
         </div>
-        <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, marginBottom: "0.65rem" }}>{t("scenarios.result.decisionsReviewed")}</div>
-        <div style={{ display: "grid", gap: "0.85rem", margin: "1.25rem 0" }}>
+        <h2>{t("scenarios.result.decisionsReviewed")}</h2>
+        <div className="scenario-result-review-list">
           {result.review.map(item => (
-            <div key={item.id} style={{ border: "1px solid rgba(0,0,0,0.08)", borderRadius: 12, padding: "1rem" }}>
-              <div style={{ fontWeight: 700, marginBottom: "0.35rem" }}>{t("scenarios.result.step", { step: item.stepOrder })}</div>
-              <div style={{ fontSize: "0.8rem", color: "#777", marginBottom: "0.35rem" }}>
-                {t("scenarios.result.yourChoice")}: {item.selectedOptionKey}
+            <Surface key={item.id} variant="outlined" className="scenario-result-review">
+              <h2>{t("scenarios.result.step", { step: item.stepOrder })}</h2>
+              <div className="scenario-result-review-meta">
+                <span>{t("scenarios.result.yourChoice")}: {item.selectedOptionKey}</span>
+                {item.recommendedOptionKey && <span>{t("scenarios.result.recommendedChoice")}: {item.recommendedOptionKey}</span>}
               </div>
-              {item.recommendedOptionKey && (
-                <div style={{ fontSize: "0.8rem", color: "#777", marginBottom: "0.35rem" }}>
-                  {t("scenarios.result.recommendedChoice")}: {item.recommendedOptionKey}
-                </div>
-              )}
-              <div style={{ fontSize: "0.78rem", color: "#777", fontWeight: 700, marginBottom: "0.2rem" }}>{t("scenarios.result.feedback")}</div>
-              <div style={{ fontSize: "0.86rem", color: "#333", lineHeight: 1.6 }}>{item.feedback}</div>
-              <div style={{ fontSize: "0.78rem", color: "#777", fontWeight: 700, marginTop: "0.35rem", marginBottom: "0.2rem" }}>{t("scenarios.result.keyLesson")}</div>
-              <div style={{ fontSize: "0.8rem", color: "#666", lineHeight: 1.55, marginTop: "0.35rem" }}>{item.safetyExplanation}</div>
-            </div>
+              <div className="scenario-feedback-label">{t("scenarios.result.feedback")}</div>
+              <p>{item.feedback}</p>
+              <div className="scenario-feedback-label">{t("scenarios.result.keyLesson")}</div>
+              <p>{item.safetyExplanation}</p>
+            </Surface>
           ))}
         </div>
         {result.recommendation && (
-          <div style={{ background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)", borderRadius: 12, padding: "1rem", marginBottom: "1rem" }}>
-            <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.25rem" }}>{t("scenarios.result.updatedRecommendation")}</div>
-            <div style={{ fontSize: "0.86rem", color: "#455", lineHeight: 1.6 }}>{result.recommendation.reasonText}</div>
-          </div>
+          <Surface variant="subdued" className="scenario-result-recommendation">
+            <strong>{t("scenarios.result.updatedRecommendation")}</strong>
+            <p>{result.recommendation.reasonText}</p>
+          </Surface>
         )}
-        <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-          <button className="btn-primary" onClick={() => setView({ mode: "library" })}>{t("scenarios.result.returnToLibrary")}</button>
-          <button className="btn-ghost" onClick={() => go("dashboard")}>{t("nav.dashboard")}</button>
-          <button className="btn-ghost" onClick={() => go("progress")}>{t("scenarios.result.viewProgress")}</button>
+        <div className="scenario-actions">
+          <Button variant="primary" onClick={() => setView({ mode: "library" })}>{t("scenarios.result.returnToLibrary")}</Button>
+          <Button onClick={() => go("dashboard")}>{t("nav.dashboard")}</Button>
+          <Button onClick={() => go("progress")}>{t("scenarios.result.viewProgress")}</Button>
         </div>
       </div>
     );
   }
 
   return (
-    <div>
-      <div style={{ background: "linear-gradient(135deg, #1a2e1a 0%, #2d4a2d 100%)", padding: "2.5rem 1.5rem", color: "#fff" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.55)", fontWeight: 600, letterSpacing: "0.08em", textTransform: "uppercase", marginBottom: "0.4rem" }}>{t("nav.scenarios")}</div>
-          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 600, marginBottom: "0.35rem" }}>{t("scenarios.library.title")}</h1>
-          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "0.9rem", lineHeight: 1.6 }}>{t("scenarios.library.description")}</p>
-        </div>
-      </div>
-      <div className="section">
+    <div className={`scenario-page scenario-page-${view.mode}`}>
+      {view.mode === "library" && renderScenarioHeader(t("scenarios.library.title"), t("scenarios.library.description"), { visual: true })}
+      {view.mode === "intro" && renderScenarioHeader(view.scenario.title, null, { visual: false })}
+      {view.mode === "attempt" && renderScenarioHeader(view.currentStep?.promptText || t("scenarios.attempt.readyToComplete"), null, { compact: true })}
+      {view.mode === "result" && renderScenarioHeader(view.scenario.title, t("scenarios.result.completed"), { visual: true })}
+      <PageContainer width="wide" className="scenario-content">
         {error && <div className="field-error" role="alert" style={{ marginBottom: "1rem" }}>{error}</div>}
         {view.mode === "library" ? (
           <>
-            <PageBackButton style={{ marginBottom: "1.5rem" }} />
+            <PageBackButton />
             {renderLibrary()}
           </>
         ) : view.mode === "attempt" ? (
           <>
-            <button className="btn-ghost" onClick={exitActiveScenario} style={{ marginBottom: "1.5rem" }}>
-              {t("scenarios.attempt.exit")}
-            </button>
+            <Button variant="quiet" onClick={exitActiveScenario}>{t("scenarios.attempt.exit")}</Button>
             {renderLocaleFallbackNotice(view.locale)}
             {renderAttempt()}
           </>
         ) : view.mode === "intro" ? (
           <div className="scenario-detail-layout">
             <div className="scenario-detail-back-rail">
-              <button className="btn-ghost" onClick={() => setView({ mode: "library" })}>
-                ← {t("scenarios.library.backToLibrary")}
-              </button>
+              <Button variant="quiet" onClick={() => setView({ mode: "library" })}>{t("scenarios.library.backToLibrary")}</Button>
             </div>
             <div className="scenario-detail-main">
               {renderIntro()}
@@ -8016,7 +7954,7 @@ function ScenariosPage() {
         ) : (
           renderResult()
         )}
-      </div>
+      </PageContainer>
     </div>
   );
 }

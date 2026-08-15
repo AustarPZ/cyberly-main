@@ -483,6 +483,12 @@
       "exit": "退出情境",
       "progressSaved": "进度已保存",
       "chooseOption": "请先选择一个选项再继续",
+      "outcomeLabel": "决策结果",
+      "outcomes": {
+        "safest": "最安全的选择",
+        "partial": "部分安全的选择",
+        "unsafe": "不安全的选择"
+      },
       "readyToComplete": "可以完成了",
       "readyToCompleteDescription": "所有决策都已提交。完成情境后将计算你的结果并更新进度。"
     },

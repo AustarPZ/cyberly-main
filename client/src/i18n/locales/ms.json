@@ -483,6 +483,12 @@
       "exit": "Keluar daripada senario",
       "progressSaved": "Kemajuan disimpan",
       "chooseOption": "Pilih satu pilihan sebelum meneruskan",
+      "outcomeLabel": "Hasil keputusan",
+      "outcomes": {
+        "safest": "Pilihan paling selamat",
+        "partial": "Pilihan separa selamat",
+        "unsafe": "Pilihan tidak selamat"
+      },
       "readyToComplete": "Sedia untuk diselesaikan",
       "readyToCompleteDescription": "Semua keputusan telah dihantar. Selesaikan senario untuk mengira keputusan anda dan mengemas kini kemajuan."
     },

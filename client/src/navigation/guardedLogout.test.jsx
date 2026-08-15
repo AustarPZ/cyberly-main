@@ -130,8 +130,7 @@ async function renderAuthenticatedScenario() {
 
 async function enterGuardedAttempt() {
   await userEvent.click(await screen.findByRole("button", { name: "Start scenario" }));
-  await screen.findByRole("heading", { level: 2, name: scenario.title });
-  await userEvent.click(screen.getByRole("button", { name: "Start practice" }));
+  await userEvent.click(await screen.findByRole("button", { name: "Start practice" }));
   await screen.findByText(firstStep.promptText);
 }
 
