@@ -10,6 +10,7 @@ import "./resources/resources.css";
 import "./cyberguard/cyberguardLayout.css";
 import "./dashboard/dashboard.css";
 import "./progress/progress.css";
+import "./assessment/assessment.css";
 import CyberGuardWorkspaceHeader from "./cyberguard/CyberGuardWorkspaceHeader";
 import CyberGuardAiNotice from "./cyberguard/CyberGuardAiNotice";
 import CyberGuardChatShell from "./cyberguard/CyberGuardChatShell";
@@ -27,6 +28,8 @@ import SectionNav from "./design-system/navigation/SectionNav";
 import ExplorerHeroSurface from "./design-system/visual/ExplorerHeroSurface";
 import DashboardExplorerVisual from "./dashboard/DashboardExplorerVisual";
 import ProgressExplorerVisual from "./progress/ProgressExplorerVisual";
+import AssessmentCheckpointVisual from "./assessment/AssessmentCheckpointVisual";
+import PageIdentity from "./design-system/visual/PageIdentity";
 import Surface from "./design-system/primitives/Surface";
 import Badge from "./design-system/primitives/Badge";
 import PageState from "./design-system/feedback/PageState";
@@ -7210,51 +7213,61 @@ function AssessmentPage() {
     setConfirmAction(null);
   }
 
+  function renderCheckpointHero(title, description) {
+    return (
+      <PageContainer>
+        <ExplorerHeroSurface
+          identity={t("assessment.baselineLabel")}
+          icon="⌖"
+          visual={<AssessmentCheckpointVisual />}
+          className="assessment-checkpoint-hero"
+        >
+          <CompactHeader title={title} description={description} />
+        </ExplorerHeroSurface>
+      </PageContainer>
+    );
+  }
+
+  function renderTaskHeader() {
+    return (
+      <div className="assessment-task-identity">
+        <PageIdentity label={t("assessment.baselineLabel")} icon="⌖" />
+      </div>
+    );
+  }
+
   function renderIntro() {
     return (
-      <div className="section" style={{ maxWidth: 850 }}>
-        <div className="card" style={{ background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)" }}>
-          <div style={{ fontSize: "2rem", marginBottom: "0.5rem" }}>🧭</div>
-          <h1 className="section-title">{assessment?.title || t("assessment.title")}</h1>
-          <p className="section-sub" style={{ marginBottom: "1rem" }}>
-            {t("assessment.introduction")}
-          </p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(180px, 1fr))", gap: "0.75rem", marginBottom: "1.5rem" }}>
-            {[
-              {
-                value: "12",
-                labelKey: "assessment.stats.questions",
-              },
-              {
-                value: "5-10",
-                labelKey: "assessment.stats.minutes",
-              },
-              {
-                value: "0",
-                labelKey: "assessment.stats.negativeMarks",
-              },
-              {
-                value: "4",
-                labelKey: "assessment.stats.topicAreas",
-              },
-            ].map(stat => (
-              <div key={stat.labelKey} style={{ background: "#fff", borderRadius: 10, padding: "0.9rem", textAlign: "center" }}>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", color: "var(--teal)", fontWeight: 700, fontSize: "1.2rem" }}>{stat.value}</div>
-                <div style={{ fontSize: "0.78rem", color: "#666" }}>{t(stat.labelKey)}</div>
+      <>
+        {renderCheckpointHero(assessment?.title || t("assessment.title"), t("assessment.introduction"))}
+        <PageContainer width="reading" className="assessment-content">
+          <PageSection>
+            <PageBackButton />
+            <Surface className="assessment-intro">
+              <div className="assessment-briefing-grid">
+                {[
+                  { value: "12", labelKey: "assessment.stats.questions" },
+                  { value: "5-10", labelKey: "assessment.stats.minutes" },
+                  { value: "0", labelKey: "assessment.stats.negativeMarks" },
+                  { value: "4", labelKey: "assessment.stats.topicAreas" },
+                ].map(stat => (
+                  <div className="assessment-briefing-stat" key={stat.labelKey}>
+                    <div className="assessment-briefing-value">{stat.value}</div>
+                    <div className="assessment-briefing-label">{t(stat.labelKey)}</div>
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-          <p style={{ fontSize: "0.86rem", color: "#42524d", lineHeight: 1.7, marginBottom: "1rem" }}>
-            {t("assessment.measurementNote")}
-          </p>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
-            <button className="btn-primary" style={{ flex: "0 0 auto", minWidth: 190 }} onClick={start} disabled={loading}>
-              {attempt ? t("assessment.resume") : t("assessment.start")}
-            </button>
-            <button className="btn-ghost" onClick={() => go("dashboard")}>{t("assessment.doLater")}</button>
-          </div>
-        </div>
-      </div>
+              <p className="assessment-measurement-note">{t("assessment.measurementNote")}</p>
+              <div className="assessment-actions">
+                <Button variant="primary" onClick={start} disabled={loading}>
+                  {attempt ? t("assessment.resume") : t("assessment.start")}
+                </Button>
+                <Button variant="quiet" onClick={() => go("dashboard")}>{t("assessment.doLater")}</Button>
+              </div>
+            </Surface>
+          </PageSection>
+        </PageContainer>
+      </>
     );
   }
 
@@ -7265,10 +7278,12 @@ function AssessmentPage() {
     const progress = Math.round(((current + 1) / questions.length) * 100);
 
     return (
-      <div className="section" style={{ maxWidth: 860 }}>
-        <PageBackButton style={{ marginBottom: "1rem" }} />
-        <div className="card">
-          <div className="auth-progress" style={{ marginBottom: "1.25rem" }}>
+      <PageContainer width="reading" className="assessment-question-shell">
+        <PageSection>
+          {renderTaskHeader()}
+          <PageBackButton />
+          <Surface className="assessment-question-card">
+          <div className="auth-progress assessment-question-progress">
             <div className="auth-progress-track">
               <div className="auth-progress-fill" style={{ width: `${progress}%` }} />
             </div>
@@ -7277,13 +7292,13 @@ function AssessmentPage() {
               <span>{answeredCount}/{questions.length} {t("assessment.answeredProgress", { answered: answeredCount, total: questions.length })} {saving ? "· " + t("common.saving") : ""}</span>
             </div>
           </div>
-          <div className="res-tag">{question?.topicLabel}</div>
-          <h2 className="section-title" style={{ fontSize: "1.25rem" }}>{question?.prompt}</h2>
-          <div className="opt-grid" style={{ marginTop: "1rem" }}>
+          <div className="res-tag assessment-question-topic">{question?.topicLabel}</div>
+          <h1 className="assessment-question-title">{question?.prompt}</h1>
+          <div className="assessment-options">
             {question?.options.map(option => (
               <button
                 key={option.key}
-                className={`opt-btn full-width ${selected === option.key ? "selected" : ""}`}
+                className="assessment-option"
                 onClick={() => selectAnswer(question.id, option.key)}
                 aria-pressed={selected === option.key}
               >
@@ -7291,21 +7306,22 @@ function AssessmentPage() {
               </button>
             ))}
           </div>
-          <div className="auth-nav">
-            <button className="btn-ghost" onClick={() => setCurrent(index => Math.max(0, index - 1))} disabled={current === 0}>{t("assessment.previous")}</button>
+          <div className="assessment-question-actions">
+            <Button variant="quiet" onClick={() => setCurrent(index => Math.max(0, index - 1))} disabled={current === 0}>{t("assessment.previous")}</Button>
             {current < questions.length - 1 ? (
-              <button className="btn-primary" onClick={() => setCurrent(index => Math.min(questions.length - 1, index + 1))}>{t("assessment.next")}</button>
+              <Button variant="primary" onClick={() => setCurrent(index => Math.min(questions.length - 1, index + 1))}>{t("assessment.next")}</Button>
             ) : (
-              <button className="btn-primary" onClick={submit} disabled={submitting || answeredCount !== questions.length}>
+              <Button variant="primary" onClick={submit} disabled={submitting || answeredCount !== questions.length}>
                 {submitting ? t("assessment.submitting") : t("assessment.submit")}
-              </button>
+              </Button>
             )}
           </div>
           {answeredCount !== questions.length && current === questions.length - 1 && (
-            <div style={{ fontSize: "0.8rem", color: "#777", marginTop: "0.75rem" }}>{t("assessment.finalSubmissionReminder")}</div>
+            <div className="assessment-reminder">{t("assessment.finalSubmissionReminder")}</div>
           )}
-        </div>
-      </div>
+          </Surface>
+        </PageSection>
+      </PageContainer>
     );
   }
 
@@ -7314,100 +7330,101 @@ function AssessmentPage() {
     const strengths = (result?.topicScores || []).filter(topic => topic.classification === "strength");
     const improvements = (result?.topicScores || []).filter(topic => topic.classification === "improvement");
     return (
-      <div className="section" style={{ maxWidth: 980 }}>
-        <PageBackButton />
-        <div className="card" style={{ marginBottom: "1.5rem", background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)" }}>
-          <div style={{ fontSize: "0.78rem", color: "var(--teal)", fontWeight: 700, textTransform: "uppercase" }}>{t("assessment.result")}</div>
-          <h1 className="section-title" style={{ marginTop: "0.25rem" }}>{t("assessment.completed")}</h1>
-          <p className="section-sub" style={{ marginBottom: "1rem" }}>
+      <>
+        {renderCheckpointHero(t("assessment.completed"), t("assessment.resultSummary", {
+          score: attemptResult?.totalScore,
+          maxScore: attemptResult?.maximumScore,
+        }))}
+        <PageContainer className="assessment-content">
+          <PageSection>
+            <PageBackButton />
+            <Surface className="assessment-result-summary">
+          <div className="assessment-result-label">{t("assessment.result")}</div>
+          <p className="section-sub">
             {t("assessment.resultSummary", {
               score: attemptResult?.totalScore,
               maxScore: attemptResult?.maximumScore,
             })}
           </p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(160px, 1fr))", gap: "0.75rem", marginBottom: "1rem" }}>
-            <div style={{ background: "#fff", borderRadius: 10, padding: "0.9rem" }}>
-              <div style={{ fontSize: "0.76rem", color: "#777", fontWeight: 700, marginBottom: "0.25rem" }}>{t("assessment.measuredLevel")}</div>
-              <div style={{ fontFamily: "'Space Grotesk', sans-serif", color: "var(--teal)", fontWeight: 700, fontSize: "1.2rem" }}>{attemptResult?.measuredLevel}</div>
+          <div className="assessment-result-metrics">
+            <div className="assessment-result-metric">
+              <div className="assessment-result-label">{t("assessment.measuredLevel")}</div>
+              <div className="assessment-result-value">{attemptResult?.measuredLevel}</div>
             </div>
-            <div style={{ background: "#fff", borderRadius: 10, padding: "0.9rem" }}>
-              <div style={{ fontSize: "0.76rem", color: "#777", fontWeight: 700, marginBottom: "0.25rem" }}>{t("assessment.score")}</div>
-              <div style={{ fontFamily: "'Space Grotesk', sans-serif", color: "var(--teal)", fontWeight: 700, fontSize: "1.2rem" }}>{attemptResult?.percentage}%</div>
+            <div className="assessment-result-metric">
+              <div className="assessment-result-label">{t("assessment.score")}</div>
+              <div className="assessment-result-value">{attemptResult?.percentage}%</div>
             </div>
           </div>
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
-            <button className="btn-primary" style={{ flex: "0 0 auto" }} onClick={() => go("dashboard")}>{t("assessment.backToDashboard")}</button>
-            <button className="btn-ghost" onClick={() => go("progress")}>{t("assessment.viewProgress")}</button>
+          <div className="assessment-actions">
+            <Button variant="primary" onClick={() => go("dashboard")}>{t("assessment.backToDashboard")}</Button>
+            <Button variant="quiet" onClick={() => go("progress")}>{t("assessment.viewProgress")}</Button>
           </div>
-        </div>
+            </Surface>
 
-        <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("assessment.topicBreakdown")}</p>
-        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(210px, 1fr))", gap: "1rem", marginBottom: "1.5rem" }}>
+        <h2 className="section-title">{t("assessment.topicBreakdown")}</h2>
+        <div className="assessment-topic-grid">
           {(result?.topicScores || []).map(topic => (
-            <div key={topic.topicCode} className="card" style={{ padding: "1.1rem" }}>
-              <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.35rem" }}>{topic.topicLabel}</div>
-              <div style={{ fontSize: "1.2rem", fontWeight: 700 }}>{topic.correctCount}/{topic.totalCount} · {topic.percentage}%</div>
-              <div style={{ fontSize: "0.78rem", color: "#777", marginTop: "0.3rem" }}>
+            <Surface key={topic.topicCode} className="assessment-topic-result">
+              <div className="assessment-result-value">{topic.topicLabel}</div>
+              <div>{topic.correctCount}/{topic.totalCount} · {topic.percentage}%</div>
+              <div className="assessment-topic-result-label">
                 {topic.classification === "strength" ? t("assessment.relativeStrength") : t("assessment.areaToImprove")}
               </div>
-            </div>
+            </Surface>
           ))}
         </div>
 
-        <div className="card" style={{ marginBottom: "1.5rem" }}>
-          <div style={{ fontWeight: 700, marginBottom: "0.5rem" }}>{t("assessment.strengths")}</div>
-          <div style={{ fontSize: "0.86rem", color: "#555", lineHeight: 1.7 }}>
+        <Surface className="assessment-insights">
+          <div className="section-title">{t("assessment.strengths")}</div>
+          <div className="assessment-insight-copy">
             {strengths.length ? strengths.map(topic => topic.topicLabel).join(", ") : t("assessment.noStrengthsYet")}
           </div>
-          <div style={{ fontWeight: 700, margin: "1rem 0 0.5rem" }}>{t("assessment.areasToImprove")}</div>
-          <div style={{ fontSize: "0.86rem", color: "#555", lineHeight: 1.7 }}>
+          <div className="section-title assessment-review-heading">{t("assessment.areasToImprove")}</div>
+          <div className="assessment-insight-copy">
             {improvements.length ? improvements.map(topic => topic.topicLabel).join(", ") : t("assessment.allTopicsMetThreshold")}
           </div>
-        </div>
+        </Surface>
 
-        <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("assessment.reviewAnswers")}</p>
-        <div style={{ display: "grid", gap: "0.9rem" }}>
+        <h2 className="section-title assessment-review-heading">{t("assessment.reviewAnswers")}</h2>
+        <div className="assessment-review-list">
           {(result?.review || []).map(item => (
-            <div key={item.questionId} className="card" style={{ padding: "1rem" }}>
+            <Surface key={item.questionId} className="assessment-review-card">
               <div className="res-tag">{item.topicLabel}</div>
-              <div style={{ fontWeight: 700, marginBottom: "0.55rem" }}>{item.prompt}</div>
-              <div style={{ fontSize: "0.84rem", color: item.isCorrect ? "var(--teal)" : "var(--coral)", fontWeight: 700, marginBottom: "0.35rem" }}>
+              <div className="section-title">{item.prompt}</div>
+              <div className={`assessment-review-status ${item.isCorrect ? "is-correct" : "is-incorrect"}`}>
                 {item.isCorrect ? t("assessment.correct") : t("assessment.incorrect")}
               </div>
-              <div style={{ fontSize: "0.84rem", color: "#555", lineHeight: 1.6, marginBottom: "0.35rem" }}>
+              <div className="assessment-review-detail">
                 {t("assessment.yourAnswer")}: {item.selectedOptionKey} · {t("assessment.correctAnswer")}: {item.correctOptionKey}
               </div>
-              <div style={{ fontSize: "0.78rem", color: "#777", fontWeight: 700, marginBottom: "0.2rem" }}>
+              <div className="assessment-result-label assessment-review-heading">
                 {t("assessment.explanation")}
               </div>
-              <div style={{ fontSize: "0.84rem", color: "#555", lineHeight: 1.6 }}>{item.explanation}</div>
-            </div>
+              <div className="assessment-review-explanation">{item.explanation}</div>
+            </Surface>
           ))}
         </div>
-      </div>
+          </PageSection>
+        </PageContainer>
+      </>
     );
   }
 
   return (
-    <div>
-      <div style={{ background: "linear-gradient(135deg, #1a2e1a 0%, #2d4a2d 100%)", padding: "2.5rem 1.5rem", color: "#fff" }}>
-        <div style={{ maxWidth: 980, margin: "0 auto" }}>
-          <div style={{ fontSize: "0.78rem", color: "rgba(255,255,255,0.55)", fontWeight: 700, textTransform: "uppercase", letterSpacing: "0.08em" }}> {t("assessment.baselineLabel")}</div>
-          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.5rem, 3vw, 2.2rem)", marginTop: "0.35rem" }}> {t("assessment.title")}</h1>
-        </div>
-      </div>
-      {!attempt && !result && (
-        <div className="section" style={{ paddingBottom: 0 }}>
-          <PageBackButton />
-        </div>
-      )}
+    <div className="assessment-page">
       {error && (
-        <div className="section" style={{ paddingBottom: 0 }}>
+        <PageContainer width="reading" className="assessment-content">
           <PageState type="error" title={t("assessment.errorTitle")} message={error || t("assessment.error")} />
-        </div>
+        </PageContainer>
       )}
       {loading ? (
-        <div className="section"><PageState title={t("assessment.loadingTitle")} message={t("assessment.loading")} /></div>
+        <>
+          {renderCheckpointHero(t("assessment.title"), t("assessment.loading"))}
+          <PageContainer width="reading" className="assessment-content">
+            <PageState title={t("assessment.loadingTitle")} message={t("assessment.loading")} />
+          </PageContainer>
+        </>
       ) : result ? renderResult() : attempt ? renderAttempt() : renderIntro()}
       {confirmAction === "submit" && (
         <ConfirmationDialog
