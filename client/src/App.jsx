@@ -13,6 +13,7 @@ import "./progress/progress.css";
 import "./assessment/assessment.css";
 import "./scenario/scenarios.css";
 import "./profile/profile.css";
+import "./home/home.css";
 import CyberGuardWorkspaceHeader from "./cyberguard/CyberGuardWorkspaceHeader";
 import CyberGuardAiNotice from "./cyberguard/CyberGuardAiNotice";
 import CyberGuardChatShell from "./cyberguard/CyberGuardChatShell";
@@ -5541,10 +5542,10 @@ function HomePage() {
       };
 
   const threatStats = [
-    { emoji: "😨", value: "11%", descKey: "home.stats.scamVictim" },
-    { emoji: "📧", value: "50%", descKey: "home.stats.scamMessages" },
-    { emoji: "🎓", value: "84.6%", descKey: "home.stats.noWorkshop" },
-    { emoji: "📱", value: "96%", descKey: "home.stats.dailyOnline" },
+    { emoji: "😨", labelKey: "home.stats.scamVictimLabel", descKey: "home.stats.scamVictim" },
+    { emoji: "📧", labelKey: "home.stats.scamMessagesLabel", descKey: "home.stats.scamMessages" },
+    { emoji: "🎓", labelKey: "home.stats.noWorkshopLabel", descKey: "home.stats.noWorkshop" },
+    { emoji: "📱", labelKey: "home.stats.dailyOnlineLabel", descKey: "home.stats.dailyOnline" },
   ];
 
   const topics = [
@@ -5563,184 +5564,142 @@ function HomePage() {
   ];
 
   return (
-    <>
-      {/* ── Hero ── */}
-      <div className="hero">
-        <h1>{t("home.hero.title")}</h1>
-        <p>
-          {t("home.hero.description")}
-        </p>
-        <button className="hero-cta" onClick={homeCta.action}>
-          {homeCta.label}
-        </button>
-        <div className="stat-row">
-          <div className="stat-chip">🎓 {t("home.hero.chips.students")}</div>
-          <div className="stat-chip">🌐 {t("home.hero.chips.languages")}</div>
-          <div className="stat-chip">🤖 {t("home.hero.chips.aiPersonalised")}</div>
-        </div>
-      </div>
-
-      {/* ── Threat Stats Strip ── */}
-      <div style={{ background: "#1a2e1a", padding: "2.5rem 1.5rem" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <p style={{ textAlign: "center", color: "rgba(255,255,255,0.5)", fontSize: "0.75rem", fontWeight: 600, letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "1.5rem" }}>
-            {t("home.threats.eyebrow")}
-          </p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1rem" }}>
-            {threatStats.map(s => (
-              <div key={s.value} style={{
-                background: "rgba(255,255,255,0.06)", borderRadius: 14,
-                border: "1px solid rgba(255,255,255,0.08)",
-                padding: "1.25rem", textAlign: "center",
-              }}>
-                <div style={{ fontSize: "1.6rem", marginBottom: "0.4rem" }}>{s.emoji}</div>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "2rem", fontWeight: 700, color: "var(--teal)", marginBottom: "0.35rem" }}>{s.value}</div>
-                <div style={{ fontSize: "0.8rem", color: "rgba(255,255,255,0.6)", lineHeight: 1.5 }}>{t(s.descKey)}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Why Cyberly ── */}
-      <div className="section">
-        <p className="section-title">{t("home.why.title")}</p>
-        <p className="section-sub">{t("home.why.description")}</p>
-        <div className="card-grid">
-          {[
-            { icon: "🧠", titleKey: "home.why.cards.adaptive.title", descKey: "home.why.cards.adaptive.description" },
-            { icon: "🔒", titleKey: "home.why.cards.skills.title", descKey: "home.why.cards.skills.description" },
-            { icon: "🎯", titleKey: "home.why.cards.topics.title", descKey: "home.why.cards.topics.description" },
-          ].map(c => (
-            <div className="card" key={c.titleKey}>
-              <div style={{ fontSize: "1.8rem", marginBottom: "0.6rem" }}>{c.icon}</div>
-              <div style={{ fontWeight: 600, marginBottom: "0.35rem" }}>{t(c.titleKey)}</div>
-              <div style={{ color: "#666", fontSize: "0.875rem", lineHeight: 1.55 }}>{t(c.descKey)}</div>
+    <div className="cy-home-page">
+      <PageContainer className="cy-home-hero-wrap">
+        <ExplorerHeroSurface
+          identity="Cyberly"
+          icon="◇"
+          className="cy-home-hero"
+          visual={(
+            <div className="cy-home-gateway-visual">
+              <span className="cy-home-gateway-ring" />
+              <span className="cy-home-gateway-path" />
+              <span className="cy-home-gateway-shield" />
+              <span className="cy-home-gateway-node cy-home-gateway-node-one" />
+              <span className="cy-home-gateway-node cy-home-gateway-node-two" />
+              <span className="cy-home-gateway-node cy-home-gateway-node-three" />
             </div>
-          ))}
-        </div>
-      </div>
-
-      {/* ── Cyber Threat of the Week ── */}
-      <div className="section" style={{ paddingTop: 0 }}>
-        <div style={{
-          background: "linear-gradient(135deg, #fff8e1 0%, #fff3e0 100%)",
-          border: "1px solid #ffe082", borderRadius: 16,
-          padding: "1.75rem 2rem", display: "flex", gap: "1.5rem",
-          alignItems: "flex-start", flexWrap: "wrap",
-        }}>
-          <div style={{ fontSize: "2.5rem", flexShrink: 0 }}>⚠️</div>
-          <div style={{ flex: 1, minWidth: 220 }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.6rem", marginBottom: "0.5rem" }}>
-              <span style={{ background: "#ff9800", color: "#fff", fontSize: "0.7rem", fontWeight: 700, borderRadius: 99, padding: "0.2rem 0.65rem", letterSpacing: "0.05em" }}>
-                {t("home.threatOfWeek.badge")}
-              </span>
-            </div>
-            <div style={{ fontWeight: 700, fontSize: "1.1rem", marginBottom: "0.4rem", color: "#1a1a18" }}>
-              {t("home.threatOfWeek.title")}
-            </div>
-            <div style={{ fontSize: "0.875rem", color: "#555", lineHeight: 1.65 }}>
-              {t("home.threatOfWeek.description")}
-            </div>
-          </div>
-          <button
-            onClick={() => go("resources")}
-            style={{
-              background: "#ff9800", color: "#fff", border: "none",
-              borderRadius: 10, padding: "0.65rem 1.25rem",
-              fontSize: "0.85rem", fontWeight: 600, cursor: "pointer",
-              flexShrink: 0, alignSelf: "center",
-              transition: "background 0.15s",
-            }}
-            onMouseEnter={e => e.currentTarget.style.background = "#e65100"}
-            onMouseLeave={e => e.currentTarget.style.background = "#ff9800"}
-          >
-            {t("common.learnMore")}
-          </button>
-        </div>
-      </div>
-
-      {/* ── Quick Topic Cards ── */}
-      <div className="section" style={{ paddingTop: 0 }}>
-        <p className="section-title">{t("home.quickTopics.title")}</p>
-        <p className="section-sub">{t("home.quickTopics.description")}</p>
-        <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
-          {topics.map(topic => (
-            <button
-              key={topic.labelKey}
-              onClick={() => go("resources")}
-              style={{
-                display: "inline-flex", alignItems: "center", gap: "0.5rem",
-                background: "var(--surface-raised)", border: "1px solid var(--border-default)",
-                borderRadius: 99, padding: "0.55rem 1.1rem",
-                fontSize: "0.875rem", fontWeight: 600, cursor: "pointer",
-                color: "var(--text-primary)", transition: "all 0.15s",
-                boxShadow: "var(--shadow-card)",
-              }}
-              onMouseEnter={e => {
-                e.currentTarget.style.background = "var(--teal-lt)";
-                e.currentTarget.style.borderColor = "var(--teal)";
-                e.currentTarget.style.color = "var(--teal)";
-              }}
-              onMouseLeave={e => {
-                e.currentTarget.style.background = "var(--surface-raised)";
-                e.currentTarget.style.borderColor = "var(--border-default)";
-                e.currentTarget.style.color = "var(--text-primary)";
-              }}
-            >
-              <span>{topic.emoji}</span> {t(topic.labelKey)}
-            </button>
-          ))}
-        </div>
-      </div>
-
-      {/* ── How it works ── */}
-      <div style={{ background: "var(--teal-lt)", borderTop: "1px solid rgba(29,158,117,0.12)", borderBottom: "1px solid rgba(29,158,117,0.12)", padding: "3rem 1.5rem" }}>
-        <div style={{ maxWidth: 1100, margin: "0 auto" }}>
-          <p className="section-title" style={{ textAlign: "center" }}>{t("home.how.title")}</p>
-          <p className="section-sub" style={{ textAlign: "center", marginBottom: "2rem" }}>{t("home.how.description")}</p>
-          <div className="home-how-grid">
-            {steps.map((s, i) => (
-              <div key={s.num} className="home-how-step">
-                <div className="home-how-number">{s.num}</div>
-                <div className="home-how-copy">
-                  <div className="home-how-title">
-                    {s.icon} {t(s.titleKey)}
-                  </div>
-                  <div className="home-how-description">{t(s.descKey)}</div>
-                </div>
-                {i < steps.length - 1 && (
-                  <div style={{ display: "none" }} />
-                )}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-
-      {/* ── Bottom CTA ── */}
-      <div style={{ background: "#1a2e1a", padding: "4rem 1.5rem", textAlign: "center" }}>
-        <div style={{ maxWidth: 560, margin: "0 auto" }}>
-          <div style={{ fontSize: "2.2rem", marginBottom: "0.75rem" }}>🚀</div>
-          <h2 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.4rem, 3vw, 2rem)", fontWeight: 600, color: "#fff", marginBottom: "0.75rem" }}>
-            {t("home.bottomCta.title")}
-          </h2>
-          <p style={{ color: "rgba(255,255,255,0.6)", fontSize: "0.95rem", lineHeight: 1.7, marginBottom: "2rem" }}>
-            {t("home.bottomCta.description")}
-          </p>
-          <button
-            className="hero-cta"
-            onClick={homeCta.action}
-            style={{ fontSize: "1rem", padding: "0.85rem 2.5rem" }}
-          >
+          )}
+        >
+          <h1 className="cy-home-hero-title">{t("home.hero.title")}</h1>
+          <p className="cy-home-hero-description">{t("home.hero.description")}</p>
+          <Button variant="primary" className="cy-home-primary-action" onClick={homeCta.action}>
             {homeCta.label}
-          </button>
-          <div style={{ marginTop: "1.25rem", fontSize: "0.8rem", color: "rgba(255,255,255,0.35)" }}>
-            {t("home.bottomCta.note")}
-          </div>
-        </div>
+          </Button>
+          <ul className="cy-home-hero-signals" aria-label={t("home.hero.title")}>
+            <li><Badge tone="brand">🎓 {t("home.hero.chips.students")}</Badge></li>
+            <li><Badge tone="neutral">🌐 {t("home.hero.chips.languages")}</Badge></li>
+            <li><Badge tone="success">🤖 {t("home.hero.chips.aiPersonalised")}</Badge></li>
+          </ul>
+        </ExplorerHeroSurface>
+      </PageContainer>
+
+      <div className="cy-home-awareness-band">
+        <PageContainer>
+          <PageSection className="cy-home-awareness-section">
+            <h2 className="cy-home-section-title cy-home-awareness-title">{t("home.threats.eyebrow")}</h2>
+            <ul className="cy-home-stat-grid">
+              {threatStats.map(stat => (
+                <li key={stat.labelKey} className="cy-home-stat-item">
+                  <span className="cy-home-stat-icon" aria-hidden="true">{stat.emoji}</span>
+                  <strong className="cy-home-stat-value">{t(stat.labelKey)}</strong>
+                  <span className="cy-home-stat-description">{t(stat.descKey)}</span>
+                </li>
+              ))}
+            </ul>
+          </PageSection>
+        </PageContainer>
       </div>
-    </>
+
+      <PageContainer>
+        <PageSection className="cy-home-section">
+          <div className="cy-home-section-heading">
+            <h2 className="cy-home-section-title">{t("home.why.title")}</h2>
+            <p className="cy-home-section-description">{t("home.why.description")}</p>
+          </div>
+          <ul className="cy-home-feature-grid">
+            {[
+              { icon: "🧠", titleKey: "home.why.cards.adaptive.title", descKey: "home.why.cards.adaptive.description" },
+              { icon: "🔒", titleKey: "home.why.cards.skills.title", descKey: "home.why.cards.skills.description" },
+              { icon: "🎯", titleKey: "home.why.cards.topics.title", descKey: "home.why.cards.topics.description" },
+            ].map(item => (
+              <Surface as="li" key={item.titleKey} className="cy-home-feature-card">
+                <span className="cy-home-feature-icon" aria-hidden="true">{item.icon}</span>
+                <h3>{t(item.titleKey)}</h3>
+                <p>{t(item.descKey)}</p>
+              </Surface>
+            ))}
+          </ul>
+        </PageSection>
+
+        <PageSection className="cy-home-section cy-home-threat-section">
+          <Surface className="cy-home-threat-card" variant="subdued">
+            <div className="cy-home-threat-icon" aria-hidden="true">!</div>
+            <div className="cy-home-threat-copy">
+              <Badge tone="warning">{t("home.threatOfWeek.badge")}</Badge>
+              <h2 className="cy-home-section-title">{t("home.threatOfWeek.title")}</h2>
+              <p>{t("home.threatOfWeek.description")}</p>
+            </div>
+            <Button variant="secondary" onClick={() => go("resources")}>
+              {t("common.learnMore")}
+            </Button>
+          </Surface>
+        </PageSection>
+
+        <PageSection className="cy-home-section">
+          <div className="cy-home-section-heading">
+            <h2 className="cy-home-section-title">{t("home.quickTopics.title")}</h2>
+            <p className="cy-home-section-description">{t("home.quickTopics.description")}</p>
+          </div>
+          <ul className="cy-home-topic-list">
+            {topics.map(topic => (
+              <li key={topic.labelKey}>
+                <Button variant="secondary" className="cy-home-topic-button" onClick={() => go("resources")}>
+                  <span aria-hidden="true">{topic.emoji}</span>
+                  <span>{t(topic.labelKey)}</span>
+                </Button>
+              </li>
+            ))}
+          </ul>
+        </PageSection>
+      </PageContainer>
+
+      <div className="cy-home-journey-band">
+        <PageContainer>
+          <PageSection className="cy-home-section cy-home-journey-section">
+            <div className="cy-home-section-heading cy-home-section-heading-centered">
+              <h2 className="cy-home-section-title">{t("home.how.title")}</h2>
+              <p className="cy-home-section-description">{t("home.how.description")}</p>
+            </div>
+            <ol className="cy-home-journey-list">
+              {steps.map(stepItem => (
+                <li key={stepItem.num} className="cy-home-journey-step">
+                  <span className="cy-home-journey-number" aria-hidden="true">{stepItem.num}</span>
+                  <div>
+                    <h3><span aria-hidden="true">{stepItem.icon}</span> {t(stepItem.titleKey)}</h3>
+                    <p>{t(stepItem.descKey)}</p>
+                  </div>
+                </li>
+              ))}
+            </ol>
+          </PageSection>
+        </PageContainer>
+      </div>
+
+      <PageContainer width="reading">
+        <PageSection className="cy-home-final-section">
+          <Surface className="cy-home-final-card">
+            <span className="cy-home-final-mark" aria-hidden="true">◇</span>
+            <h2 className="cy-home-section-title">{t("home.bottomCta.title")}</h2>
+            <p>{t("home.bottomCta.description")}</p>
+            <Button variant="primary" className="cy-home-primary-action" onClick={homeCta.action}>
+              {homeCta.label}
+            </Button>
+            <small>{t("home.bottomCta.note")}</small>
+          </Surface>
+        </PageSection>
+      </PageContainer>
+    </div>
   );
 }
 
@@ -11287,18 +11246,19 @@ export default function App() {
     requestHashNavigation(buildRecommendedScenarioNavigation(scenarioTarget, source));
   }
   function openAuth(mode = "login") {
-    setAuthMode(mode);
     setResourceFocusTopic(null);
-    go("login");
+    go("login", { authMode: mode });
   }
-  function completeNavigation(nextPage, replace = false) {
+  function completeNavigation(nextPage, replace = false, requestedAuthMode) {
     if (nextPage !== "resources") {
       setResourceFocusTopic(null);
       setPendingResourceTarget(null);
     }
     if (nextPage !== "scenarios") setPendingScenarioTarget(null);
     if (nextPage !== "progress") setPendingProgressSection(null);
-    if (nextPage === "login") setAuthMode("login");
+    if (nextPage === "login") {
+      setAuthMode(requestedAuthMode === "register" ? "register" : "login");
+    }
     const safePage = VALID_PAGES.has(nextPage) ? nextPage : "home";
     if (!user && PROTECTED_PAGES.has(safePage)) {
       commitHashRoute("/home", { replace: true });
@@ -11314,7 +11274,7 @@ export default function App() {
       setPendingNavigation({ type: "hash", hash: targetHash, guard: blocker });
       return;
     }
-    completeNavigation(safePage, options.replace);
+    completeNavigation(safePage, options.replace, options.authMode);
   }
   function requestHashNavigation(hashValue, options = {}) {
     const nextHash = normalizeHashRoute(hashValue);

@@ -528,13 +528,17 @@
       }
     },
     "threats": {
-      "eyebrow": "Tahukah anda? — Ancaman siber yang dihadapi remaja Malaysia sekarang"
+      "eyebrow": "Kesedaran keselamatan siber untuk kehidupan harian"
     },
     "stats": {
-      "scamVictim": "remaja Malaysia pernah menjadi mangsa penipuan dalam talian",
-      "scamMessages": "pelajar pernah menerima e-mel atau SMS berkaitan penipuan",
-      "noWorkshop": "pelajar tidak pernah menghadiri bengkel kesedaran penipuan",
-      "dailyOnline": "remaja Malaysia berumur 12–17 tahun masuk dalam talian setiap hari"
+      "scamVictimLabel": "Peka terhadap penipuan harian",
+      "scamVictim": "Penipuan boleh muncul semasa aktiviti dalam talian harian.",
+      "scamMessagesLabel": "Berhenti seketika sebelum membalas",
+      "scamMessages": "Berhenti seketika dan periksa mesej mencurigakan sebelum bertindak.",
+      "noWorkshopLabel": "Kemahiran berkembang melalui latihan",
+      "noWorkshop": "Berlatih mengenal pasti risiko dan memilih langkah seterusnya yang lebih selamat.",
+      "dailyOnlineLabel": "Lindungi tabiat digital harian",
+      "dailyOnline": "Kukuhkan keselamatan akaun, privasi dan tabiat mengurus maklumat dalam talian."
     },
     "why": {
       "title": "Mengapa Cyberly?",
@@ -555,9 +559,9 @@
       }
     },
     "threatOfWeek": {
-      "badge": "ANCAMAN MINGGU INI",
+      "badge": "FOKUS KESELAMATAN",
       "title": "Penipuan Suara & Video AI (Deepfake)",
-      "description": "Penipu di Malaysia kini menggunakan AI untuk meniru suara dan wajah selebriti serta ahli keluarga bagi memperdaya orang menghantar wang. Jika anda menerima panggilan video atau mesej suara mengejut yang meminta wang — walaupun nampak benar — sentiasa sahkan melalui saluran lain sebelum bertindak."
+      "description": "Penipu boleh menggunakan AI untuk meniru suara dan wajah selebriti atau ahli keluarga lalu meminta wang. Jika anda menerima panggilan video atau mesej suara mengejut yang meminta wang — walaupun nampak benar — sahkan melalui saluran lain sebelum bertindak."
     },
     "quickTopics": {
       "title": "Apa yang anda mahu pelajari hari ini?",
@@ -591,7 +595,7 @@
     },
     "bottomCta": {
       "title": "Sedia tingkatkan kemahiran siber anda?",
-      "description": "Sertai ribuan remaja Malaysia yang belajar cara kekal selamat dalam talian — percuma, dalam bahasa anda, mengikut rentak anda.",
+      "description": "Bina kemahiran keselamatan siber yang praktikal dalam bahasa anda dan mengikut rentak sendiri.",
       "note": "Tiada kad kredit diperlukan · Tersedia dalam English, BM & 中文"
     }
   },

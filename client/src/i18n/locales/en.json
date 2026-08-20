@@ -528,13 +528,17 @@
       }
     },
     "threats": {
-      "eyebrow": "Did you know? — Cyber threats facing Malaysian teens right now"
+      "eyebrow": "Everyday cyber-safety awareness"
     },
     "stats": {
-      "scamVictim": "of Malaysian teens have fallen victim to an online scam",
-      "scamMessages": "of students have received scam-related emails or SMS",
-      "noWorkshop": "of students never attended a scam awareness workshop",
-      "dailyOnline": "of Malaysian teens aged 12–17 go online every single day"
+      "scamVictimLabel": "Everyday scam awareness",
+      "scamVictim": "Scams can appear during everyday online activities.",
+      "scamMessagesLabel": "Pause before responding",
+      "scamMessages": "Pause and check suspicious messages before you act.",
+      "noWorkshopLabel": "Skills grow with practice",
+      "noWorkshop": "Practise spotting risks and choosing safer next steps.",
+      "dailyOnlineLabel": "Protect daily digital habits",
+      "dailyOnline": "Strengthen account security, privacy, and online information habits."
     },
     "why": {
       "title": "Why Cyberly?",
@@ -555,9 +559,9 @@
       }
     },
     "threatOfWeek": {
-      "badge": "THREAT OF THE WEEK",
+      "badge": "SAFETY FOCUS",
       "title": "AI Voice & Video Scams (Deepfakes)",
-      "description": "Scammers in Malaysia are now using AI to clone the voices and faces of celebrities and family members to trick people into sending money. If you get an unexpected video call or voice message asking for money — even if it looks real — always verify through another channel before acting."
+      "description": "Scammers can use AI to copy the voices and faces of celebrities or family members and ask for money. If you get an unexpected video call or voice message asking for money — even if it looks real — verify it through another channel before acting."
     },
     "quickTopics": {
       "title": "What do you want to learn today?",
@@ -591,7 +595,7 @@
     },
     "bottomCta": {
       "title": "Ready to level up your cyber skills?",
-      "description": "Join thousands of Malaysian teens learning how to stay safe online — for free, in your language, at your pace.",
+      "description": "Build practical cyber-safety skills in your language and at your own pace.",
       "note": "No credit card needed · Available in English, BM & 中文"
     }
   },

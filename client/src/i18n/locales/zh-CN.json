@@ -528,13 +528,17 @@
       }
     },
     "threats": {
-      "eyebrow": "你知道吗？— 马来西亚青少年正在面对的网络威胁"
+      "eyebrow": "日常网络安全提醒"
     },
     "stats": {
-      "scamVictim": "的马来西亚青少年曾成为网络诈骗受害者",
-      "scamMessages": "的学生曾收到与诈骗相关的电子邮件或短信",
-      "noWorkshop": "的学生从未参加过诈骗意识工作坊",
-      "dailyOnline": "的 12–17 岁马来西亚青少年每天都会上网"
+      "scamVictimLabel": "留意日常诈骗",
+      "scamVictim": "诈骗可能出现在日常网络活动中。",
+      "scamMessagesLabel": "回复前先停一停",
+      "scamMessages": "采取行动前，先停下来检查可疑信息。",
+      "noWorkshopLabel": "练习让技能更扎实",
+      "noWorkshop": "练习识别风险，并选择更安全的下一步。",
+      "dailyOnlineLabel": "保护日常数字习惯",
+      "dailyOnline": "加强账户安全、个人资料保护和网络信息习惯。"
     },
     "why": {
       "title": "为什么选择 Cyberly？",
@@ -555,9 +559,9 @@
       }
     },
     "threatOfWeek": {
-      "badge": "本周威胁",
+      "badge": "安全焦点",
       "title": "AI 语音与视频诈骗（Deepfake）",
-      "description": "马来西亚的诈骗者现在会使用 AI 克隆名人和家人的声音与面孔，诱骗人们汇款。如果你收到意外的视频通话或语音消息要求转账，即使看起来很真实，也请先通过其他渠道确认。"
+      "description": "诈骗者可能利用 AI 模仿名人或家人的声音和面孔，并要求转账。如果你收到意外的视频通话或语音消息要求转账，即使看起来很真实，也请先通过其他渠道确认。"
     },
     "quickTopics": {
       "title": "你今天想学什么？",
@@ -591,7 +595,7 @@
     },
     "bottomCta": {
       "title": "准备提升你的网络安全技能了吗？",
-      "description": "加入成千上万正在学习如何安全上网的马来西亚青少年，免费、使用你的语言、按照你的节奏学习。",
+      "description": "使用你的语言，按照自己的节奏培养实用的网络安全技能。",
       "note": "无需信用卡 · 支持 English、BM 和中文"
     }
   },

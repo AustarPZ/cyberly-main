@@ -1,0 +1,241 @@
+.cy-home-page {
+  min-width: 0;
+  background: var(--cyberly-page-bg);
+  color: var(--cyberly-text-primary);
+}
+
+.cy-home-hero-wrap { padding-block: clamp(1rem, 3vw, 2.5rem); }
+.cy-home-hero { padding: clamp(1.25rem, 4vw, 3rem); }
+.cy-home-hero-title,
+.cy-home-section-title,
+.cy-home-feature-card h3,
+.cy-home-journey-step h3 {
+  color: var(--cyberly-text-primary);
+  font-family: 'Space Grotesk', sans-serif;
+  overflow-wrap: anywhere;
+}
+.cy-home-hero-title {
+  max-width: 15ch;
+  margin: 0.75rem 0 1rem;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.05;
+}
+.cy-home-hero-description {
+  max-width: 58ch;
+  margin: 0 0 1.5rem;
+  color: var(--cyberly-text-secondary);
+  font-size: clamp(1rem, 1.7vw, 1.125rem);
+  line-height: 1.7;
+}
+.cy-home-primary-action { min-width: min(100%, 12rem); }
+.cy-home-hero-signals,
+.cy-home-stat-grid,
+.cy-home-feature-grid,
+.cy-home-topic-list,
+.cy-home-journey-list {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+.cy-home-hero-signals {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.55rem;
+  margin-top: 1.25rem;
+}
+.cy-home-hero-signals li { min-width: 0; }
+.cy-home-hero-signals .cy-badge { max-width: 100%; white-space: normal; }
+
+.cy-home-gateway-visual {
+  position: relative;
+  width: min(100%, 20rem);
+  aspect-ratio: 1.2;
+  min-width: 0;
+}
+.cy-home-gateway-ring {
+  position: absolute;
+  inset: 8% 12% 14%;
+  border: 1px solid color-mix(in srgb, var(--cyberly-indigo-600) 28%, transparent);
+  border-radius: 50%;
+}
+.cy-home-gateway-path {
+  position: absolute;
+  inset: 52% 9% auto 10%;
+  height: 28%;
+  border-top: 0.35rem solid var(--cyberly-mint-500);
+  border-radius: 50%;
+  transform: rotate(-7deg);
+}
+.cy-home-gateway-shield {
+  position: absolute;
+  top: 25%;
+  left: 50%;
+  width: 28%;
+  aspect-ratio: 0.9;
+  border: 0.35rem solid var(--cyberly-indigo-600);
+  border-radius: 42% 42% 52% 52%;
+  background: color-mix(in srgb, var(--cyberly-surface-primary) 76%, transparent);
+  box-shadow: 0 1rem 2rem color-mix(in srgb, var(--cyberly-indigo-600) 16%, transparent);
+  transform: translateX(-50%) rotate(45deg);
+}
+.cy-home-gateway-node {
+  position: absolute;
+  width: 0.9rem;
+  aspect-ratio: 1;
+  border: 0.2rem solid var(--cyberly-surface-primary);
+  border-radius: 50%;
+  background: var(--cyberly-coral-500);
+  box-shadow: 0 0 0 1px var(--cyberly-border-soft);
+}
+.cy-home-gateway-node-one { top: 25%; left: 16%; }
+.cy-home-gateway-node-two { top: 18%; right: 18%; background: var(--cyberly-gold-500); }
+.cy-home-gateway-node-three { right: 13%; bottom: 24%; background: var(--cyberly-mint-500); }
+
+.cy-home-awareness-band {
+  background: var(--cyberly-text-primary);
+  color: var(--cyberly-surface-primary);
+}
+.cy-home-awareness-section { padding-block: clamp(2rem, 4vw, 3rem); }
+.cy-home-awareness-title {
+  max-width: 58rem;
+  margin: 0 auto 1.5rem;
+  color: var(--cyberly-surface-primary);
+  font-size: clamp(1rem, 2vw, 1.35rem);
+  text-align: center;
+}
+.cy-home-stat-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.75rem;
+}
+.cy-home-stat-item {
+  display: grid;
+  min-width: 0;
+  gap: 0.35rem;
+  align-content: start;
+  padding: 1rem;
+  border: 1px solid color-mix(in srgb, var(--cyberly-surface-primary) 16%, transparent);
+  border-radius: var(--cyberly-radius-control);
+  background: color-mix(in srgb, var(--cyberly-surface-primary) 7%, transparent);
+  text-align: center;
+}
+.cy-home-stat-icon { font-size: 1.35rem; }
+.cy-home-stat-value { color: var(--cyberly-mint-500); font-size: clamp(1.45rem, 3vw, 2rem); }
+.cy-home-stat-description { color: color-mix(in srgb, var(--cyberly-surface-primary) 76%, transparent); font-size: 0.82rem; line-height: 1.5; }
+
+.cy-home-section { min-width: 0; }
+.cy-home-section-heading { max-width: 48rem; margin-bottom: 1.5rem; }
+.cy-home-section-heading-centered { margin-inline: auto; text-align: center; }
+.cy-home-section-title { margin: 0; font-size: clamp(1.4rem, 3vw, 2rem); line-height: 1.2; }
+.cy-home-section-description { margin: 0.6rem 0 0; color: var(--cyberly-text-secondary); line-height: 1.65; }
+.cy-home-feature-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+.cy-home-feature-card { padding: clamp(1rem, 2.5vw, 1.5rem); }
+.cy-home-feature-icon { display: block; margin-bottom: 0.75rem; font-size: 1.6rem; }
+.cy-home-feature-card h3 { margin: 0 0 0.45rem; font-size: 1rem; }
+.cy-home-feature-card p,
+.cy-home-threat-copy p,
+.cy-home-journey-step p,
+.cy-home-final-card p {
+  margin: 0;
+  color: var(--cyberly-text-secondary);
+  line-height: 1.65;
+}
+
+.cy-home-threat-section { padding-top: 0; }
+.cy-home-threat-card {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto;
+  gap: 1.25rem;
+  align-items: center;
+  padding: clamp(1rem, 3vw, 1.75rem);
+  border-color: color-mix(in srgb, var(--cyberly-warning) 38%, var(--cyberly-border-soft));
+}
+.cy-home-threat-icon {
+  display: grid;
+  width: 2.75rem;
+  aspect-ratio: 1;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--cyberly-warning) 16%, var(--cyberly-surface-primary));
+  color: var(--cyberly-warning);
+  font-weight: 800;
+}
+.cy-home-threat-copy { min-width: 0; }
+.cy-home-threat-copy .cy-badge { margin-bottom: 0.65rem; }
+.cy-home-threat-copy .cy-home-section-title { margin-bottom: 0.45rem; font-size: clamp(1.15rem, 2.3vw, 1.45rem); }
+
+.cy-home-topic-list { display: flex; flex-wrap: wrap; gap: 0.65rem; }
+.cy-home-topic-list li { min-width: 0; }
+.cy-home-topic-button { display: inline-flex; gap: 0.5rem; max-width: 100%; }
+.cy-home-topic-button span:last-child { min-width: 0; overflow-wrap: anywhere; }
+
+.cy-home-journey-band {
+  background: color-mix(in srgb, var(--cyberly-mint-500) 7%, var(--cyberly-page-bg));
+  border-block: 1px solid color-mix(in srgb, var(--cyberly-mint-500) 20%, var(--cyberly-border-soft));
+}
+.cy-home-journey-list {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+.cy-home-journey-step { display: flex; min-width: 0; gap: 0.85rem; }
+.cy-home-journey-number {
+  display: grid;
+  flex: 0 0 2.75rem;
+  width: 2.75rem;
+  height: 2.75rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--cyberly-indigo-600);
+  color: var(--cyberly-surface-primary);
+  font-size: 0.8rem;
+  font-weight: 800;
+}
+.cy-home-journey-step > div { min-width: 0; }
+.cy-home-journey-step h3 { margin: 0 0 0.35rem; font-size: 1rem; }
+
+.cy-home-final-section { text-align: center; }
+.cy-home-final-card { padding: clamp(1.5rem, 5vw, 3rem); }
+.cy-home-final-mark {
+  display: grid;
+  width: 2.5rem;
+  aspect-ratio: 1;
+  margin: 0 auto 0.75rem;
+  place-items: center;
+  border-radius: 50%;
+  background: color-mix(in srgb, var(--cyberly-indigo-600) 12%, var(--cyberly-surface-primary));
+  color: var(--cyberly-indigo-600);
+}
+.cy-home-final-card p { max-width: 40rem; margin: 0.75rem auto 1.5rem; }
+.cy-home-final-card small { display: block; margin-top: 1rem; color: var(--cyberly-text-secondary); line-height: 1.5; }
+
+@media (max-width: 63.9375rem) {
+  .cy-home-stat-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cy-home-feature-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .cy-home-feature-card:last-child { grid-column: 1 / -1; }
+}
+
+@media (max-width: 47.9375rem) {
+  .cy-home-hero-title { max-width: none; }
+  .cy-home-feature-grid,
+  .cy-home-journey-list { grid-template-columns: minmax(0, 1fr); }
+  .cy-home-feature-card:last-child { grid-column: auto; }
+  .cy-home-threat-card { grid-template-columns: auto minmax(0, 1fr); align-items: start; }
+  .cy-home-threat-card > .cy-button { grid-column: 1 / -1; width: 100%; }
+}
+
+@media (max-width: 24.3125rem) {
+  .cy-home-stat-grid { grid-template-columns: minmax(0, 1fr); }
+  .cy-home-primary-action { width: 100%; }
+  .cy-home-topic-list { display: grid; grid-template-columns: minmax(0, 1fr); }
+  .cy-home-topic-button { width: 100%; justify-content: flex-start; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cy-home-page .cy-button,
+  .cy-home-gateway-visual { transition: none; animation: none; }
+}
