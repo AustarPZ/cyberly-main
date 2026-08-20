@@ -12,6 +12,7 @@ import "./dashboard/dashboard.css";
 import "./progress/progress.css";
 import "./assessment/assessment.css";
 import "./scenario/scenarios.css";
+import "./profile/profile.css";
 import CyberGuardWorkspaceHeader from "./cyberguard/CyberGuardWorkspaceHeader";
 import CyberGuardAiNotice from "./cyberguard/CyberGuardAiNotice";
 import CyberGuardChatShell from "./cyberguard/CyberGuardChatShell";
@@ -8246,615 +8247,179 @@ function ProfilePage() {
     }
   );
 
+  const preferredLanguage = LANGUAGES.find(option => option.value === form.preferredLanguage);
+  const translatedPreferredLanguage = preferredLanguage
+    ? t(`profileOptions.language.${preferredLanguage.value}`, { defaultValue: preferredLanguage.label })
+    : t("settings.chooseOne");
+  const familiarity = FAMILIARITY.find(option => option.value === form.familiarityLevel);
+  const translatedFamiliarity = familiarity
+    ? t(`profileOptions.familiarity.${familiarity.value}.label`, { defaultValue: familiarity.label })
+    : t("settings.chooseOne");
+  const displayName = accountForm.displayName || user.displayName || user.name || "";
+  const profileInitial = displayName.trim().charAt(0).toUpperCase() || "C";
+
   return (
-    <div>
-      {/* Header */}
-      <div
-        style={{
-          background:
-            "linear-gradient(135deg, var(--teal) 0%, #1a5c4a 100%)",
+    <div className="profile-page">
+      <PageContainer width="content">
+        <CompactHeader
+          className="profile-header"
+          eyebrow={<PageIdentity label={t("settings.learnerProfile")} icon="ID" />}
+          title={t("settings.title")}
+          description={t("settings.description")}
+        />
+        <PageBackButton className="profile-back" />
 
-          padding:
-            "2.5rem 1.5rem",
-
-          color:
-            "#fff",
-        }}
-      >
-        <div
-          style={{
-            maxWidth: 900,
-            margin: "0 auto",
-          }}
-        >
-          <div
-            style={{
-              fontSize:
-                "0.78rem",
-
-              color:
-                "rgba(255,255,255,0.6)",
-
-              fontWeight:
-                600,
-
-              letterSpacing:
-                "0.08em",
-
-              textTransform:
-                "uppercase",
-
-              marginBottom:
-                "0.4rem",
-            }}
-          >
-            {t("settings.learnerProfile")}
-          </div>
-
-          <h1
-            style={{
-              fontFamily:
-                "'Space Grotesk', sans-serif",
-
-              fontSize:
-                "clamp(1.4rem, 3vw, 2rem)",
-
-              fontWeight:
-                600,
-
-              marginBottom:
-                "0.35rem",
-            }}
-          >
-            {t("settings.title")}
-          </h1>
-
-          <p
-            style={{
-              color:
-                "rgba(255,255,255,0.7)",
-
-              fontSize:
-                "0.9rem",
-
-              lineHeight:
-                1.6,
-            }}
-          >
-            {t("settings.description")}
-          </p>
-        </div>
-      </div>
-
-      <div
-        className="section"
-        style={{
-          maxWidth: 900,
-        }}
-      >
-        <PageBackButton style={{ marginBottom: "1.5rem" }} />
-
-        {/* Incomplete onboarding */}
-        {!user.onboardingCompleted && (
-          <div
-            className="card"
-            style={{
-              marginBottom:
-                "1rem",
-
-              background:
-                "var(--coral-lt)",
-
-              border:
-                "1px solid rgba(216,90,48,0.25)",
-            }}
-          >
-            <div
-              style={{
-                fontWeight:
-                  700,
-
-                color:
-                  "var(--coral)",
-
-                marginBottom:
-                  "0.25rem",
-              }}
-            >
-              {t(
-                "settings.finishOnboarding"
-              )}
+        <PageSection className="profile-content">
+          <Surface className="profile-identity-summary">
+            <div className="profile-avatar" aria-hidden="true">{profileInitial}</div>
+            <div className="profile-identity-copy">
+              <div className="profile-identity-name">{displayName}</div>
+              <div className="profile-identity-badges">
+                <Badge tone="brand">{translatedAgeGroup}</Badge>
+                <Badge>{translatedPreferredLanguage}</Badge>
+                <Badge>{translatedFamiliarity}</Badge>
+              </div>
             </div>
+          </Surface>
 
-            <div
-              style={{
-                fontSize:
-                  "0.86rem",
+          {!user.onboardingCompleted && (
+            <Surface as="aside" variant="subdued" className="profile-onboarding-notice" aria-labelledby="profile-onboarding-title">
+              <div id="profile-onboarding-title" className="profile-notice-title">{t("settings.finishOnboarding")}</div>
+              <p>{t("settings.finishOnboardingDescription")}</p>
+            </Surface>
+          )}
 
-                color:
-                  "#5f4036",
-
-                lineHeight:
-                  1.6,
-              }}
-            >
-              {t(
-                "settings.finishOnboardingDescription"
-              )}
+          <Surface as="section" className="profile-panel" aria-labelledby="profile-account-title">
+            <h2 id="profile-account-title" className="profile-section-title">{t("settings.accountInformation")}</h2>
+            <div className="profile-form-grid">
+              <div className="profile-field">
+                <label htmlFor="profile-email">{t("settings.email")}</label>
+                <input id="profile-email" className="profile-form-control" value={user?.email || ""} readOnly />
+              </div>
+              <div className="profile-field">
+                <label htmlFor="profile-display-name">{t("settings.displayName")}</label>
+                <input
+                  id="profile-display-name"
+                  className="profile-form-control"
+                  data-field="displayName"
+                  value={accountForm.displayName}
+                  maxLength={50}
+                  aria-invalid={Boolean(accountErrors.displayName)}
+                  aria-describedby={accountErrors.displayName ? "account-display-name-error" : undefined}
+                  onChange={event => setAccount("displayName", event.target.value)}
+                  placeholder={t("settings.displayNamePlaceholder")}
+                />
+                {accountErrors.displayName && <div className="field-error" id="account-display-name-error" role="alert">{accountErrors.displayName}</div>}
+              </div>
+              <div className="profile-field">
+                <label htmlFor="profile-age">{t("settings.age")}</label>
+                <input
+                  id="profile-age"
+                  className="profile-form-control"
+                  data-field="age"
+                  type="number"
+                  min="1"
+                  max="120"
+                  value={accountForm.age}
+                  aria-invalid={Boolean(accountErrors.age)}
+                  aria-describedby={accountErrors.age ? "account-age-error" : undefined}
+                  onChange={event => setAccount("age", event.target.value)}
+                />
+                {accountErrors.age && <div className="field-error" id="account-age-error" role="alert">{accountErrors.age}</div>}
+              </div>
+              <div className="profile-field">
+                <label htmlFor="profile-age-group">{t("settings.ageGroup")}</label>
+                <input id="profile-age-group" className="profile-form-control" value={translatedAgeGroup} readOnly />
+              </div>
             </div>
-          </div>
-        )}
+            {(accountErrors.form || accountErrors.forbidden) && <div className="field-error profile-form-message" role="alert">{accountErrors.form || accountErrors.forbidden}</div>}
+            {accountSaved && <SuccessFeedback message={t("settings.accountSaved")} />}
+            <div className="profile-actions">
+              <Button variant="primary" loading={accountSaving} loadingLabel={t("settings.saving")} onClick={saveAccount}>
+                {t("settings.saveAccount")}
+              </Button>
+            </div>
+          </Surface>
 
-        {/* Account information */}
-        <div
-          className="card"
-          style={{
-            marginBottom:
-              "1rem",
-          }}
-        >
-          <div
-            style={{
-              fontFamily:
-                "'Space Grotesk', sans-serif",
-
-              fontWeight:
-                700,
-
-              marginBottom:
-                "1rem",
-            }}
-          >
-            {t(
-              "settings.accountInformation"
-            )}
-          </div>
-
-          <div
-            style={{
-              display:
-                "grid",
-
-              gridTemplateColumns:
-                "repeat(auto-fit, minmax(220px, 1fr))",
-
-              gap:
-                "1rem",
-            }}
-          >
-            <div className="field">
-              <label>
-                {t("settings.email")}
-              </label>
-
+          <Surface as="section" className="profile-panel" aria-labelledby="profile-preferences-title">
+            <h2 id="profile-preferences-title" className="profile-section-title">{t("settings.learningPreferences")}</h2>
+            <div className="profile-field profile-field-wide">
+              <label htmlFor="profile-ai-nickname">{t("settings.aiNickname")}</label>
               <input
-                value={
-                  user?.email || ""
-                }
-                readOnly
-              />
-            </div>
-
-            <div className="field">
-              <label>
-                {t(
-                  "settings.displayName"
-                )}
-              </label>
-
-              <input
-                data-field="displayName"
-                value={
-                  accountForm.displayName
-                }
+                id="profile-ai-nickname"
+                className="profile-form-control"
+                data-field="aiNickname"
+                value={form.aiNickname}
                 maxLength={50}
-                aria-invalid={Boolean(accountErrors.displayName)}
-                aria-describedby={accountErrors.displayName ? "account-display-name-error" : undefined}
-                onChange={event =>
-                  setAccount(
-                    "displayName",
-                    event.target.value
-                  )
-                }
-                placeholder={t(
-                  "settings.displayNamePlaceholder"
-                )}
+                aria-invalid={Boolean(errors.aiNickname)}
+                aria-describedby={errors.aiNickname ? "profile-ai-nickname-error" : undefined}
+                onChange={event => set("aiNickname", event.target.value)}
+                placeholder={t("settings.aiNicknamePlaceholder")}
               />
-
-              {accountErrors.displayName && (
-                <div className="field-error" id="account-display-name-error" role="alert">
-                  {
-                    accountErrors.displayName
-                  }
-                </div>
-              )}
+              {errors.aiNickname && <div className="field-error" id="profile-ai-nickname-error" role="alert">{errors.aiNickname}</div>}
             </div>
 
-            <div className="field">
-              <label>
-                {t("settings.age")}
-              </label>
-
-              <input
-                data-field="age"
-                type="number"
-                min="1"
-                max="120"
-                value={
-                  accountForm.age
-                }
-                aria-invalid={Boolean(accountErrors.age)}
-                aria-describedby={accountErrors.age ? "account-age-error" : undefined}
-                onChange={event =>
-                  setAccount(
-                    "age",
-                    event.target.value
-                  )
-                }
-              />
-
-              {accountErrors.age && (
-                <div className="field-error" id="account-age-error" role="alert">
-                  {accountErrors.age}
-                </div>
-              )}
-            </div>
-
-            <div className="field">
-              <label>
-                {t(
-                  "settings.ageGroup"
-                )}
-              </label>
-
-              <input
-                value={
-                  translatedAgeGroup
-                }
-                readOnly
-              />
-            </div>
-          </div>
-
-          {(accountErrors.form ||
-            accountErrors.forbidden) && (
-            <div
-              className="field-error"
-              role="alert"
-              style={{
-                marginBottom:
-                  "0.75rem",
-              }}
-            >
-              {accountErrors.form ||
-                accountErrors.forbidden}
-            </div>
-          )}
-
-          {accountSaved && <SuccessFeedback message={t("settings.accountSaved")} />}
-
-          <button
-            className="btn-primary"
-            style={{
-              flex:
-                "0 0 auto",
-
-              minWidth:
-                180,
-            }}
-            onClick={
-              saveAccount
-            }
-            disabled={
-              accountSaving
-            }
-          >
-            {accountSaving
-              ? t("settings.saving")
-              : t(
-                  "settings.saveAccount"
-                )}
-          </button>
-        </div>
-
-        {/* Learning preferences */}
-        <div className="card">
-          <div
-            style={{
-              fontFamily:
-                "'Space Grotesk', sans-serif",
-
-              fontWeight:
-                700,
-
-              marginBottom:
-                "1rem",
-            }}
-          >
-            {t(
-              "settings.learningPreferences"
-            )}
-          </div>
-
-          <div className="field">
-            <label>
-              {t(
-                "settings.aiNickname"
-              )}
-            </label>
-
-            <input
-              data-field="aiNickname"
-              value={
-                form.aiNickname
-              }
-              maxLength={50}
-              aria-invalid={Boolean(errors.aiNickname)}
-              aria-describedby={errors.aiNickname ? "profile-ai-nickname-error" : undefined}
-              onChange={event =>
-                set(
-                  "aiNickname",
-                  event.target.value
-                )
-              }
-              placeholder={t(
-                "settings.aiNicknamePlaceholder"
-              )}
-            />
-
-            {errors.aiNickname && (
-              <div className="field-error" id="profile-ai-nickname-error" role="alert">
-                {errors.aiNickname}
-              </div>
-            )}
-          </div>
-
-          <div
-            style={{
-              display:
-                "grid",
-
-              gridTemplateColumns:
-                "repeat(auto-fit, minmax(220px, 1fr))",
-
-              gap:
-                "1rem",
-            }}
-          >
-            {fieldSet.map(field => (
-              <div
-                className="field"
-                key={field.key}
-              >
-                <label>
-                  {t(field.labelKey)}
-                </label>
-
-                <select
-                  data-field={field.key}
-                  value={
-                    form[field.key]
-                  }
-                  aria-invalid={Boolean(errors[field.key])}
-                  aria-describedby={errors[field.key] ? `profile-${field.key}-error` : undefined}
-                  onChange={event =>
-                    set(
-                      field.key,
-                      event.target.value
-                    )
-                  }
-                  style={{
-                    width:
-                      "100%",
-
-                    border:
-                      "1.5px solid rgba(0,0,0,0.13)",
-
-                    borderRadius:
-                      10,
-
-                    padding:
-                      "0.65rem 0.9rem",
-
-                    fontFamily:
-                      "'DM Sans', sans-serif",
-
-                    fontSize:
-                      "0.9rem",
-
-                    background:
-                      "#fff",
-                  }}
-                >
-                  <option value="">
-                    {t(
-                      "settings.chooseOne"
-                    )}
-                  </option>
-
-                  {field.options.map(
-                    option => (
-                      <option
-                        key={
-                          option.value
-                        }
-                        value={
-                          option.value
-                        }
-                      >
-                        {translatedOptionLabel(
-                          field,
-                          option
-                        )}
-                      </option>
-                    )
-                  )}
-                </select>
-
-                {errors[field.key] && (
-                  <div className="field-error" id={`profile-${field.key}-error`} role="alert">
-                    {
-                      errors[field.key]
-                    }
+            <div className="profile-form-grid">
+              {fieldSet.map(field => {
+                const inputId = `profile-${field.key}`;
+                return (
+                  <div className="profile-field" key={field.key}>
+                    <label htmlFor={inputId}>{t(field.labelKey)}</label>
+                    <select
+                      id={inputId}
+                      className="profile-form-control"
+                      data-field={field.key}
+                      value={form[field.key]}
+                      aria-invalid={Boolean(errors[field.key])}
+                      aria-describedby={errors[field.key] ? `profile-${field.key}-error` : undefined}
+                      onChange={event => set(field.key, event.target.value)}
+                    >
+                      <option value="">{t("settings.chooseOne")}</option>
+                      {field.options.map(option => <option key={option.value} value={option.value}>{translatedOptionLabel(field, option)}</option>)}
+                    </select>
+                    {errors[field.key] && <div className="field-error" id={`profile-${field.key}-error`} role="alert">{errors[field.key]}</div>}
                   </div>
-                )}
+                );
+              })}
+            </div>
+
+            <fieldset className="profile-topic-fieldset">
+              <legend>{t("settings.helpTopics")}</legend>
+              <div className="profile-topic-grid">
+                {HELP_OPTIONS.map(topic => {
+                  const selected = form.helpTopics.includes(topic.value);
+                  return (
+                    <button
+                      key={topic.value}
+                      data-field="helpTopics"
+                      className="profile-topic-chip"
+                      aria-pressed={selected}
+                      onClick={() => toggleTopic(topic.value)}
+                      disabled={form.helpTopics.length >= 3 && !selected}
+                      type="button"
+                    >
+                      <span className="profile-topic-state" aria-hidden="true">{selected ? "OK" : "+"}</span>
+                      <span>{t(`profileOptions.helpTopics.${topic.value}`, { defaultValue: topic.label })}</span>
+                    </button>
+                  );
+                })}
               </div>
-            ))}
-          </div>
+              <div className="chip-limit-note">{t("onboarding.selectedCount", { count: form.helpTopics.length, max: 3 })}</div>
+              {errors.helpTopics && <div className="field-error" role="alert">{errors.helpTopics}</div>}
+            </fieldset>
 
-          <div className="field">
-            <label>
-              {t(
-                "settings.helpTopics"
-              )}
-            </label>
-
-            <div className="chip-grid">
-              {HELP_OPTIONS.map(topic => (
-                <button
-                  key={
-                    topic.value
-                  }
-                  data-field="helpTopics"
-                  className={`chip-btn ${
-                    form.helpTopics.includes(
-                      topic.value
-                    )
-                      ? "selected"
-                      : ""
-                  }`}
-                  onClick={() =>
-                    toggleTopic(
-                      topic.value
-                    )
-                  }
-                  disabled={
-                    form.helpTopics
-                      .length >= 3 &&
-                    !form.helpTopics.includes(
-                      topic.value
-                    )
-                  }
-                  type="button"
-                >
-                  {t(
-                    `profileOptions.helpTopics.${topic.value}`,
-                    {
-                      defaultValue:
-                        topic.label,
-                    }
-                  )}
-                </button>
-              ))}
+            {errors.form && <div className="field-error profile-form-message" role="alert">{errors.form}</div>}
+            {saved && <SuccessFeedback message={t("settings.profileSaved")} />}
+            <div className="profile-actions">
+              <Button variant="primary" loading={saving} loadingLabel={t("settings.saving")} onClick={save}>
+                {t("settings.saveProfile")}
+              </Button>
+              {user.onboardingCompleted && <Button variant="quiet" onClick={() => go("dashboard")}>{t("nav.dashboard")}</Button>}
             </div>
-
-            <div className="chip-limit-note">
-              {t(
-                "onboarding.selectedCount",
-                {
-                  count:
-                    form.helpTopics
-                      .length,
-
-                  max:
-                    3,
-                }
-              )}
-            </div>
-
-            {errors.helpTopics && (
-              <div className="field-error">
-                {errors.helpTopics}
-              </div>
-            )}
-          </div>
-
-          {errors.form && (
-            <div
-              className="field-error"
-              role="alert"
-              style={{
-                marginBottom:
-                  "0.75rem",
-              }}
-            >
-              {errors.form}
-            </div>
-          )}
-
-          {saved && <SuccessFeedback message={t("settings.profileSaved")} />}
-
-          <div
-            style={{
-              display:
-                "flex",
-
-              flexWrap:
-                "wrap",
-
-              gap:
-                "0.75rem",
-
-              alignItems:
-                "center",
-            }}
-          >
-            <button
-              className="btn-primary"
-              style={{
-                flex:
-                  "0 0 auto",
-
-                minWidth:
-                  180,
-              }}
-              onClick={save}
-              disabled={saving}
-            >
-              {saving
-                ? t(
-                    "settings.saving"
-                  )
-                : t(
-                    "settings.saveProfile"
-                  )}
-            </button>
-
-            {user.onboardingCompleted && (
-              <button
-                className="btn-ghost"
-                onClick={() =>
-                  go("dashboard")
-                }
-              >
-                {t(
-                  "nav.dashboard"
-                )}
-              </button>
-            )}
-          </div>
-
-          <div
-            style={{
-              fontSize:
-                "0.76rem",
-
-              color:
-                "#777",
-
-              marginTop:
-                "1rem",
-
-              lineHeight:
-                1.6,
-            }}
-          >
-            {t(
-              "settings.identityNote"
-            )}
-          </div>
-        </div>
-      </div>
+            <p className="profile-identity-note">{t("settings.identityNote")}</p>
+          </Surface>
+        </PageSection>
+      </PageContainer>
     </div>
   );
 }
