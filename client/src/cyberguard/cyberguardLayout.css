@@ -95,8 +95,7 @@
 }
 
 .cyberguard-page {
-  background:
-    linear-gradient(180deg, var(--cyberly-indigo-50) 0%, var(--cyberly-surface-primary) 42%);
+  background: var(--cyberly-page-bg);
   height: auto;
   min-height: 0;
   max-height: none;
@@ -105,7 +104,6 @@
   gap: 0.65rem;
   padding: 1rem 1rem 1.25rem;
   overflow: visible;
-  overflow-x: hidden;
 }
 
 .cyberguard-workspace-header {
@@ -128,6 +126,26 @@
 
 .cyberguard-workspace-copy {
   min-width: 0;
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 0.8rem;
+}
+
+.cyberguard-workspace-copy-text {
+  min-width: 0;
+}
+
+.cyberguard-workspace-identity-mark {
+  width: 2.75rem;
+  height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--cyberly-border-soft);
+  border-radius: var(--cyberly-radius-control);
+  background: var(--cyberly-surface-secondary);
+  color: var(--cyberly-indigo-600);
 }
 
 .cyberguard-workspace-kicker {
@@ -587,10 +605,47 @@
   font-size: 0.92rem;
 }
 
+.cyberguard-chat-shell-messages .chat-bubble.user {
+  background: var(--cyberly-indigo-600);
+  color: var(--cyberly-surface-primary);
+}
+
+.cyberguard-chat-shell-messages .chat-bubble.ai {
+  border: 1px solid var(--cyberly-border-soft);
+  background: var(--cyberly-surface-primary);
+  color: var(--cyberly-text-primary);
+  box-shadow: var(--cyberly-shadow-subtle);
+}
+
 .cyberguard-assistant-message {
+  min-width: 0;
+  max-width: 100%;
   display: grid;
   gap: 0.55rem;
   justify-items: start;
+}
+
+.cyberguard-assistant-message .chat-markdown pre {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.cyberguard-assistant-message .chat-table-wrap {
+  max-width: 100%;
+  overflow-x: auto;
+}
+
+.cyberguard-assistant-message-sources .chat-source-group {
+  border-left: 3px solid var(--cyberly-mint-500);
+  background: var(--cyberly-surface-secondary);
+}
+
+.cyberguard-assistant-message-actions .chat-action-card {
+  border-left: 3px solid var(--cyberly-gold-500);
+}
+
+.cyberguard-assistant-message-proposal .chat-action-proposal {
+  border-left: 3px solid var(--cyberly-indigo-600);
 }
 
 .cyberguard-assistant-message-answer,
@@ -682,6 +737,18 @@
   width: 100%;
 }
 
+.cyberguard-composer-frame .chat-input {
+  min-width: 0;
+  border-color: var(--cyberly-border-soft);
+  background: var(--cyberly-surface-primary);
+  color: var(--cyberly-text-primary);
+}
+
+.cyberguard-composer-frame .chat-send {
+  background: var(--cyberly-indigo-600);
+  color: var(--cyberly-surface-primary);
+}
+
 .cyberguard-composer-guidance,
 .cyberguard-composer-status {
   margin: 0.55rem 0 0;
@@ -770,7 +837,6 @@
     min-height: calc(100dvh - var(--nav-h));
     grid-template-rows: auto auto auto;
     overflow: visible;
-    overflow-x: hidden;
   }
 
   .cyberguard-workspace-history-control {
@@ -823,6 +889,7 @@
 @media (prefers-reduced-motion: reduce) {
   .cy-button,
   .cy-icon-button,
+  .cyberguard-quick-prompt,
   .ai-chat-history-group-chevron {
     transition: none;
   }

@@ -16,6 +16,15 @@ function HistoryIcon() {
   );
 }
 
+function CompanionMark() {
+  return (
+    <svg aria-hidden="true" focusable="false" viewBox="0 0 24 24" width="24" height="24">
+      <path d="M12 2.8 19 5.7v5.1c0 4.6-2.8 8.5-7 10.4-4.2-1.9-7-5.8-7-10.4V5.7L12 2.8Z" fill="none" stroke="currentColor" strokeLinejoin="round" strokeWidth="1.8" />
+      <path d="m8.7 12 2.1 2.1 4.6-4.7" fill="none" stroke="currentColor" strokeLinecap="round" strokeLinejoin="round" strokeWidth="1.8" />
+    </svg>
+  );
+}
+
 export default function CyberGuardWorkspaceHeader({
   title,
   description,
@@ -42,10 +51,15 @@ export default function CyberGuardWorkspaceHeader({
     >
       <div className="cyberguard-workspace-header-main">
         <div className="cyberguard-workspace-copy">
-          <h1 id="cyberguard-workspace-title" className="cyberguard-workspace-heading">
-            {title}
-          </h1>
-          <p className="cyberguard-workspace-description">{description}</p>
+          <span className="cyberguard-workspace-identity-mark" aria-hidden="true">
+            <CompanionMark />
+          </span>
+          <div className="cyberguard-workspace-copy-text">
+            <h1 id="cyberguard-workspace-title" className="cyberguard-workspace-heading">
+              {title}
+            </h1>
+            <p className="cyberguard-workspace-description">{description}</p>
+          </div>
         </div>
 
         <div className="cyberguard-workspace-actions">

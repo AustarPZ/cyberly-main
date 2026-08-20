@@ -335,6 +335,29 @@ describe("CyberGuard public beta pilot baseline", () => {
     expect(within(header).getByRole("button", { name: /expand chat history/i })).toHaveClass("cyberguard-workspace-history-control");
   });
 
+  test("final alignment presents one trusted companion workspace without render-time mutations", async () => {
+    const { container } = await renderCyberGuardPilotFixture();
+
+    const appMain = container.querySelector("main");
+    const header = within(appMain).getByRole("banner", { name: "CyberGuard" });
+
+    expect(container.querySelectorAll("main")).toHaveLength(1);
+    expect(within(appMain).getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(header).toHaveClass("cyberguard-workspace-header");
+    expect(header.querySelector(".cyberguard-workspace-identity-mark")).toHaveAttribute("aria-hidden", "true");
+    expect(within(appMain).getByRole("complementary", { name: /AI-supported guidance/i })).toBeInTheDocument();
+    expect(within(appMain).getByRole("region", { name: /CyberGuard conversation workspace/i })).toBeInTheDocument();
+    expect(within(appMain).getByRole("form", { name: /Message CyberGuard/i })).toBeInTheDocument();
+    expect(appMain.querySelector(".cy-explorer-hero")).not.toBeInTheDocument();
+    expect(appMain.querySelector(".cy-context-header")).not.toBeInTheDocument();
+    expect(appMain.querySelector(".cy-compact-header")).not.toBeInTheDocument();
+    expect(createChatConversation).not.toHaveBeenCalled();
+    expect(createChatUserMessage).not.toHaveBeenCalled();
+    expect(renameChatConversation).not.toHaveBeenCalled();
+    expect(deleteChatConversation).not.toHaveBeenCalled();
+    expect(generateChatAssistantReply).not.toHaveBeenCalled();
+  });
+
   test("current assistant presentation keeps Markdown, sources, proposal, and actions", async () => {
     await renderCyberGuardPilotFixture({
       activeConversation: cyberGuardPilotEmptyConversation,

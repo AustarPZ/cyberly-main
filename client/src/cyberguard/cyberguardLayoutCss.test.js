@@ -72,7 +72,7 @@ describe("CyberGuard Task 4 layout CSS", () => {
     expect(page).toMatch(/(?:^|\n)\s*min-height\s*:\s*0/);
     expect(page).toMatch(/(?:^|\n)\s*max-height\s*:\s*none/);
     expect(page).toMatch(/overflow\s*:\s*visible/);
-    expect(page).toMatch(/overflow-x\s*:\s*hidden/);
+    expect(page).not.toMatch(/overflow-x\s*:\s*(?:hidden|clip|auto|scroll)/);
     expect(page).not.toMatch(/grid-template-rows\s*:\s*auto auto minmax\(0,\s*1fr\)/);
     expect(page).toMatch(/grid-template-rows\s*:\s*auto auto auto/);
     expect(blockFor(".cyberguard-chat-shell")).toMatch(/min-height\s*:/);
@@ -175,7 +175,7 @@ describe("CyberGuard Task 4 layout CSS", () => {
 
     expect(mobilePage).toMatch(/height\s*:\s*auto/);
     expect(mobilePage).toMatch(/overflow\s*:\s*visible/);
-    expect(mobilePage).toMatch(/overflow-x\s*:\s*hidden/);
+    expect(mobilePage).not.toMatch(/overflow-x\s*:\s*(?:hidden|clip|auto|scroll)/);
     expect(mobilePage).toMatch(/grid-template-rows\s*:\s*auto auto auto/);
     expect(mobileMain).toMatch(/height\s*:\s*clamp\(24rem,\s*68dvh,\s*44rem\)/);
     expect(mobileMain).toMatch(/min-height\s*:\s*0/);
@@ -283,5 +283,41 @@ describe("CyberGuard Task 5 empty state and composer CSS", () => {
     expect(css).not.toMatch(/#5356D9|#25BFA2|#FF6F61|#F5B942|#D64550/);
     expect(css).not.toMatch(/(?:^|\n)\s*(?:textarea|form|button)\s*\{/);
     expect(blockFor(".cyberguard-chat-shell-composer")).not.toMatch(/position\s*:\s*(?:fixed|sticky)/);
+  });
+});
+
+describe("CyberGuard final visual alignment CSS", () => {
+  test("uses a compact token-based trusted companion identity", () => {
+    expect(blockFor(".cyberguard-workspace-identity-mark")).toMatch(/background\s*:\s*var\(--cyberly-surface-secondary\)/);
+    expect(blockFor(".cyberguard-workspace-identity-mark")).toMatch(/color\s*:\s*var\(--cyberly-indigo-600\)/);
+    expect(blockFor(".cyberguard-workspace-copy")).toMatch(/display\s*:\s*grid/);
+    expect(blockFor(".cyberguard-workspace-copy")).not.toMatch(/min-height\s*:\s*\d+px/);
+    expect(blockFor(".cyberguard-page")).not.toMatch(/linear-gradient/);
+  });
+
+  test("scopes the final conversation, evidence, action, and proposal hierarchy", () => {
+    [
+      ".cyberguard-chat-shell-messages .chat-bubble.user",
+      ".cyberguard-chat-shell-messages .chat-bubble.ai",
+      ".cyberguard-assistant-message-sources .chat-source-group",
+      ".cyberguard-assistant-message-actions .chat-action-card",
+      ".cyberguard-assistant-message-proposal .chat-action-proposal",
+      ".cyberguard-composer-frame .chat-input",
+      ".cyberguard-composer-frame .chat-send",
+    ].forEach(selector => expect(css).toContain(selector));
+
+    expect(blockFor(".cyberguard-assistant-message-sources .chat-source-group")).toMatch(/border-left\s*:\s*3px solid var\(--cyberly-mint-500\)/);
+    expect(blockFor(".cyberguard-assistant-message-actions .chat-action-card")).toMatch(/border-left\s*:\s*3px solid var\(--cyberly-gold-500\)/);
+    expect(blockFor(".cyberguard-assistant-message-proposal .chat-action-proposal")).toMatch(/border-left\s*:\s*3px solid var\(--cyberly-indigo-600\)/);
+  });
+
+  test("keeps final alignment shrink-safe, locally scrollable, and reduced-motion aware", () => {
+    expect(blockFor(".cyberguard-assistant-message")).toMatch(/min-width\s*:\s*0/);
+    expect(blockFor(".cyberguard-assistant-message .chat-markdown pre")).toMatch(/overflow-x\s*:\s*auto/);
+    expect(blockFor(".cyberguard-assistant-message .chat-table-wrap")).toMatch(/overflow-x\s*:\s*auto/);
+    expect(blockFor(".cyberguard-composer-frame .chat-input")).toMatch(/min-width\s*:\s*0/);
+    expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.cyberguard-quick-prompt/);
+    expect(css).not.toMatch(/body\s*\{[\s\S]*?overflow-x\s*:\s*hidden/);
+    expect(css).not.toMatch(/!important/);
   });
 });
