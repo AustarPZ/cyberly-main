@@ -131,7 +131,7 @@ describe("Home Cyber Explorer Gateway final visual migration", () => {
     await userEvent.click(screen.getAllByRole("button", { name: i18n.t("home.hero.cta") })[0]);
 
     expect(window.location.hash).toBe("#/login");
-    expect(await screen.findByText(i18n.t("auth.createAccount"))).toBeVisible();
+    expect(await screen.findByRole("heading", { level: 1, name: i18n.t("auth.createAccount") })).toBeVisible();
   });
 
   test("routes an authenticated learner to the existing Dashboard flow", async () => {

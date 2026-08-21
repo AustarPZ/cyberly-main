@@ -253,7 +253,7 @@ describe("CyberGuard email verification frontend integration", () => {
     expect(verifyEmail).toHaveBeenCalledTimes(1);
     expect(verifyEmail).toHaveBeenCalledWith("strict-mode-token");
     expectTokenNotExposed("strict-mode-token");
-    expect(screen.queryByText(/verify your email/i)).not.toBeInTheDocument();
+    expect(screen.queryByText(/check your inbox/i)).not.toBeInTheDocument();
   });
 
   test("verification page handles already verified tokens as a non-error success state", async () => {

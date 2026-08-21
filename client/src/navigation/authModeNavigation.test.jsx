@@ -42,7 +42,7 @@ describe("explicit authentication mode navigation", () => {
     await userEvent.click(screen.getByRole("button", { name: i18n.t("auth.getStarted") }));
 
     expect(window.location.hash).toBe("#/login");
-    expect(await screen.findByText(i18n.t("auth.createAccount"))).toBeVisible();
+    expect(await screen.findByRole("heading", { level: 1, name: i18n.t("auth.createAccount") })).toBeVisible();
     expect(screen.queryByRole("heading", { level: 1, name: i18n.t("auth.welcomeBack") })).not.toBeInTheDocument();
     expect(register).not.toHaveBeenCalled();
     expect(login).not.toHaveBeenCalled();

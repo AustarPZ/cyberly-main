@@ -14,6 +14,7 @@ import "./assessment/assessment.css";
 import "./scenario/scenarios.css";
 import "./profile/profile.css";
 import "./home/home.css";
+import "./auth/auth.css";
 import CyberGuardWorkspaceHeader from "./cyberguard/CyberGuardWorkspaceHeader";
 import CyberGuardAiNotice from "./cyberguard/CyberGuardAiNotice";
 import CyberGuardChatShell from "./cyberguard/CyberGuardChatShell";
@@ -4388,20 +4389,21 @@ function StepCredentials({ data, onChange, errors }) {
 
   return (
     <>
-      <div className="auth-title">
+      <h1 className="cy-auth-step-title">
         {t("auth.createAccount")}
-      </div>
+      </h1>
 
-      <div className="auth-sub">
+      <p className="cy-auth-step-description">
         {t("auth.accountDetailsHint")}
-      </div>
+      </p>
 
-      <div className="field">
-        <label>
+      <div className="cy-auth-field">
+        <label htmlFor="register-email">
           {t("auth.email")}
         </label>
 
         <input
+          id="register-email"
           data-field="email"
           type="email"
           placeholder={t("auth.emailPlaceholder")}
@@ -4423,12 +4425,13 @@ function StepCredentials({ data, onChange, errors }) {
         )}
       </div>
 
-      <div className="field">
-        <label>
+      <div className="cy-auth-field">
+        <label htmlFor="register-display-name">
           {t("auth.displayName")}
         </label>
 
         <input
+          id="register-display-name"
           data-field="displayName"
           placeholder={t(
             "auth.displayNamePlaceholder"
@@ -4451,12 +4454,13 @@ function StepCredentials({ data, onChange, errors }) {
         )}
       </div>
 
-      <div className="field">
-        <label>
+      <div className="cy-auth-field">
+        <label htmlFor="register-age">
           {t("auth.age")}
         </label>
 
         <input
+          id="register-age"
           data-field="age"
           type="number"
           placeholder={t(
@@ -4480,12 +4484,13 @@ function StepCredentials({ data, onChange, errors }) {
         )}
       </div>
 
-      <div className="field">
-        <label>
+      <div className="cy-auth-field">
+        <label htmlFor="register-password">
           {t("auth.password")}
         </label>
 
         <input
+          id="register-password"
           data-field="password"
           type="password"
           placeholder={t(
@@ -4524,23 +4529,20 @@ function StepNickname({
 
   return (
     <>
-      <div className="q-label">
-        {t("onboarding.nicknameQuestion")}
+      <h1 className="cy-auth-step-title">{t("onboarding.nicknameQuestion")}</h1>
+      <p className="cy-auth-step-description" id="register-nickname-hint">{t("onboarding.nicknameHint")}</p>
 
-        <div className="q-hint">
-          {t("onboarding.nicknameHint")}
-        </div>
-      </div>
-
-      <div className="field">
+      <div className="cy-auth-field">
+        <label className="cy-auth-visually-hidden" htmlFor="register-ai-nickname">{t("onboarding.aiNickname")}</label>
         <input
+          id="register-ai-nickname"
           data-field="aiNickname"
           placeholder={t(
             "onboarding.nicknamePlaceholder"
           )}
           value={data.aiNickname}
           aria-invalid={Boolean(errors.aiNickname)}
-          aria-describedby={errors.aiNickname ? "register-ai-nickname-error" : undefined}
+          aria-describedby={errors.aiNickname ? "register-ai-nickname-error register-nickname-hint" : "register-nickname-hint"}
           onChange={event =>
             onChange(
               "aiNickname",
@@ -4570,20 +4572,19 @@ function StepEducationLevel({
 
   return (
     <>
-      <div className="q-label">
-        {t("onboarding.educationQuestion")}
-      </div>
+      <h1 className="cy-auth-step-title">{t("onboarding.educationQuestion")}</h1>
 
-      <div className="opt-grid">
+      <div className="cy-auth-option-grid">
         {EDUCATION_LEVELS.map(level => (
           <button
             key={level.value}
             data-field="educationLevel"
-            className={`opt-btn full-width ${
+            className={`cy-auth-option ${
               data.educationLevel === level.value
                 ? "selected"
                 : ""
             }`}
+            aria-pressed={data.educationLevel === level.value}
             onClick={() =>
               onChange(
                 "educationLevel",
@@ -4615,21 +4616,20 @@ function StepLanguage({
 
   return (
     <>
-      <div className="q-label">
-        {t("onboarding.languageQuestion")}
-      </div>
+      <h1 className="cy-auth-step-title">{t("onboarding.languageQuestion")}</h1>
 
-      <div className="opt-grid">
+      <div className="cy-auth-option-grid">
         {LANGUAGES.map(languageOption => (
           <button
             key={languageOption.value}
             data-field="language"
-            className={`opt-btn full-width ${
+            className={`cy-auth-option ${
               data.language ===
               languageOption.value
                 ? "selected"
                 : ""
             }`}
+            aria-pressed={data.language === languageOption.value}
             onClick={() =>
               onChange(
                 "language",
@@ -4662,22 +4662,19 @@ function StepFamiliarity({
 
   return (
     <>
-      <div className="q-label">
-        {t(
-          "onboarding.familiarityQuestion"
-        )}
-      </div>
+      <h1 className="cy-auth-step-title">{t("onboarding.familiarityQuestion")}</h1>
 
-      <div className="opt-grid">
+      <div className="cy-auth-option-grid">
         {FAMILIARITY.map(level => (
           <button
             key={level.value}
             data-field="familiarity"
-            className={`opt-btn full-width ${
+            className={`cy-auth-option ${
               data.familiarity === level.value
                 ? "selected"
                 : ""
             }`}
+            aria-pressed={data.familiarity === level.value}
             onClick={() =>
               onChange(
                 "familiarity",
@@ -4695,18 +4692,7 @@ function StepFamiliarity({
               )}
             </strong>
 
-            <div
-              style={{
-                fontSize: "0.78rem",
-                color:
-                  data.familiarity ===
-                  level.value
-                    ? "inherit"
-                    : "#888",
-                marginTop: "0.2rem",
-                fontWeight: 400,
-              }}
-            >
+            <span className="cy-auth-option-description">
               {t(
                 `profileOptions.familiarity.${level.value}.description`,
                 {
@@ -4714,7 +4700,7 @@ function StepFamiliarity({
                     level.desc,
                 }
               )}
-            </div>
+            </span>
           </button>
         ))}
       </div>
@@ -4750,24 +4736,22 @@ function StepHelpTopics({
 
   return (
     <>
-      <div className="q-label">
+      <h1 className="cy-auth-step-title">
         {t("onboarding.helpTopicsQuestion")}
+      </h1>
+      <p className="cy-auth-step-description">{t("onboarding.helpTopicsHint")}</p>
 
-        <div className="q-hint">
-          {t("onboarding.helpTopicsHint")}
-        </div>
-      </div>
-
-      <div className="chip-grid">
+      <div className="cy-auth-chip-grid">
         {HELP_OPTIONS.map(topic => (
           <button
             key={topic.value}
             data-field="helpTopics"
-            className={`chip-btn ${
+            className={`cy-auth-chip ${
               selected.includes(topic.value)
                 ? "selected"
                 : ""
             }`}
+            aria-pressed={selected.includes(topic.value)}
             onClick={() =>
               toggle(topic.value)
             }
@@ -4786,7 +4770,7 @@ function StepHelpTopics({
         ))}
       </div>
 
-      <div className="chip-limit-note">
+      <div className="cy-auth-selection-count" aria-live="polite">
         {t(
           "onboarding.selectedCount",
           {
@@ -4810,22 +4794,19 @@ function StepLearningStyle({
 
   return (
     <>
-      <div className="q-label">
-        {t(
-          "onboarding.learningStyleQuestion"
-        )}
-      </div>
+      <h1 className="cy-auth-step-title">{t("onboarding.learningStyleQuestion")}</h1>
 
-      <div className="opt-grid">
+      <div className="cy-auth-option-grid">
         {LEARNING_STYLES.map(style => (
           <button
             key={style.value}
             data-field="learningStyle"
-            className={`opt-btn full-width ${
+            className={`cy-auth-option ${
               data.learningStyle === style.value
                 ? "selected"
                 : ""
             }`}
+            aria-pressed={data.learningStyle === style.value}
             onClick={() =>
               onChange(
                 "learningStyle",
@@ -5128,25 +5109,31 @@ function RegisterPage({ onSwitch }) {
   );
 
   return (
-    <div className="auth-wrap">
-      <div className="auth-card">
-        {/* Logo */}
-        <div className="auth-logo">
+    <div className="cy-auth-shell">
+      <Surface className="cy-auth-panel cy-auth-register">
+        <div className="cy-auth-logo">
           <img className="auth-logo-image" src={cyberlyAuthLogo} alt="Cyberly" />
         </div>
+        <PageIdentity label={t("auth.createAccount")} icon="◇" className="cy-auth-identity" />
 
-        {/* Progress */}
-        <div className="auth-progress">
-          <div className="auth-progress-track">
+        <div
+          className="cy-auth-progress"
+          role="progressbar"
+          aria-valuemin={1}
+          aria-valuemax={TOTAL_STEPS}
+          aria-valuenow={step}
+          aria-valuetext={t("onboarding.progress", { step, total: TOTAL_STEPS, label: stepLabel })}
+        >
+          <div className="cy-auth-progress-track" aria-hidden="true">
             <div
-              className="auth-progress-fill"
+              className="cy-auth-progress-fill"
               style={{
                 width: `${progress}%`,
               }}
             />
           </div>
 
-          <div className="auth-progress-label">
+          <div className="cy-auth-progress-label">
             <span>
               {t("onboarding.progress", {
                 step,
@@ -5220,42 +5207,32 @@ function RegisterPage({ onSwitch }) {
 
         {errors.form && (
           <div
-            className="field-error"
+            className="field-error cy-auth-form-error"
             role="alert"
-            style={{
-              marginTop: "0.5rem",
-            }}
           >
             {errors.form}
           </div>
         )}
 
         {/* Navigation */}
-        <div className="auth-nav">
+        <div className="cy-auth-actions">
           {step > 1 && (
-            <button
-              className="btn-ghost"
+            <Button
+              variant="quiet"
               onClick={back}
               disabled={loading}
             >
               ← {t("common.back")}
-            </button>
+            </Button>
           )}
 
-          <button
-            className="btn-primary"
+          <Button
+            variant="primary"
             onClick={next}
-            disabled={loading}
+            loading={loading}
+            loadingLabel={registeredUser ? t("onboarding.savingProfile") : t("onboarding.settingUp")}
           >
-            {loading
-              ? registeredUser
-                ? t(
-                    "onboarding.savingProfile"
-                  )
-                : t(
-                    "onboarding.settingUp"
-                  )
-              : step === TOTAL_STEPS
+            {step === TOTAL_STEPS
                 ? registeredUser
                   ? t(
                       "onboarding.retrySavingProfile"
@@ -5266,21 +5243,21 @@ function RegisterPage({ onSwitch }) {
                 : t(
                     "onboarding.continue"
                   )}
-          </button>
+          </Button>
         </div>
 
-        {/* Switch to login */}
-        <div className="auth-switch">
+        <div className="cy-auth-switch">
           {t("auth.signInPrompt")}{" "}
 
-          <button
+          <Button
+            variant="quiet"
             onClick={onSwitch}
             disabled={loading}
           >
             {t("auth.goToLogin")}
-          </button>
+          </Button>
         </div>
-      </div>
+      </Surface>
     </div>
   );
 }
@@ -5364,30 +5341,24 @@ function LoginPage({ onSwitch }) {
   }
 
   return (
-    <div className="auth-wrap">
-      <div className="auth-card">
-        <div className="auth-logo">
+    <div className="cy-auth-shell">
+      <Surface className="cy-auth-panel cy-auth-login">
+        <div className="cy-auth-logo">
           <img className="auth-logo-image" src={cyberlyAuthLogo} alt="Cyberly" />
         </div>
+        <PageIdentity label={t("auth.login")} icon="◇" className="cy-auth-identity" />
 
-        <div className="auth-title">
-          <h1>
-            {t("auth.welcomeBack")}
-          </h1>
-        </div>
+        <h1 className="cy-auth-step-title">{t("auth.welcomeBack")}</h1>
 
-        <div className="auth-sub">
-          <p>
-            {t("auth.loginDescription")}
-          </p>
-        </div>
+        <p className="cy-auth-step-description">{t("auth.loginDescription")}</p>
 
-        <div className="field">
-          <label>
+        <div className="cy-auth-field">
+          <label htmlFor="login-email">
             {t("auth.email")}
           </label>
 
           <input
+            id="login-email"
             data-field="email"
             type="email"
             placeholder={t("auth.email")}
@@ -5415,12 +5386,13 @@ function LoginPage({ onSwitch }) {
           )}
         </div>
 
-        <div className="field">
-          <label>
+        <div className="cy-auth-field">
+          <label htmlFor="login-password">
             {t("auth.password")}
           </label>
 
           <input
+            id="login-password"
             data-field="password"
             type="password"
             placeholder={t("auth.password")}
@@ -5450,46 +5422,38 @@ function LoginPage({ onSwitch }) {
 
         {errors.form && (
           <div
-            className="field-error"
+            className="field-error cy-auth-form-error"
             role="alert"
-            style={{
-              marginTop: "0.5rem",
-            }}
           >
             {errors.form}
           </div>
         )}
 
-        <div
-          className="auth-nav"
-          style={{
-            marginTop: "1.5rem",
-          }}
-        >
-          <button
-            className="btn-primary"
+        <div className="cy-auth-actions cy-auth-login-actions">
+          <Button
+            variant="primary"
             onClick={handleSubmit}
-            disabled={loading}
+            loading={loading}
+            loadingLabel={t("auth.loading")}
           >
-            {loading
-              ? t("auth.loading")
-              : t("auth.signInButton")}
-          </button>
+            {t("auth.signInButton")}
+          </Button>
         </div>
 
-        <div className="auth-switch">
+        <div className="cy-auth-switch">
           <span>
             {t("auth.registerPrompt")}
           </span>{" "}
 
-          <button
+          <Button
+            variant="quiet"
             onClick={onSwitch}
             disabled={loading}
           >
             {t("auth.goToRegister")}
-          </button>
+          </Button>
         </div>
-      </div>
+      </Surface>
     </div>
   );
 }
@@ -5501,28 +5465,23 @@ function AuthGate() {
   const mode = authMode;
   const setMode = setAuthMode;
   return (
-    <div>
-      <button
+    <div className="cy-auth-route">
+      <PageContainer width="reading" className="cy-auth-route-container">
+      <Button
+        variant="quiet"
+        className="cy-auth-back"
         onClick={() => go("home")}
-        style={{
-          display: "inline-flex", alignItems: "center", gap: "0.4rem",
-          background: "none", border: "none", cursor: "pointer",
-          color: "#555", fontSize: "0.875rem", fontWeight: 500,
-          padding: "1rem 1.5rem",
-          transition: "color 0.15s",
-        }}
-        onMouseEnter={e => e.currentTarget.style.color = "var(--teal)"}
-        onMouseLeave={e => e.currentTarget.style.color = "#555"}
       >
         <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M19 12H5M12 5l-7 7 7 7"/>
         </svg>
         {t("common.backToHome")}
-      </button>
+      </Button>
       {mode === "login"
         ? <LoginPage    onSwitch={() => setMode("register")} />
         : <RegisterPage onSwitch={() => setMode("login")}    />
       }
+      </PageContainer>
     </div>
   );
 }
@@ -8993,7 +8952,7 @@ function EmailVerificationReminder({ compact = false }) {
   if (!user || user.emailVerified) return null;
 
   return (
-    <aside className={`email-verification-reminder${compact ? " compact" : ""}`} aria-labelledby="email-verification-reminder-title">
+    <aside className={`email-verification-reminder cy-auth-reminder${compact ? " compact" : ""}`} aria-labelledby="email-verification-reminder-title">
       <div>
         <h2 id="email-verification-reminder-title">{t("auth.emailVerification.bannerTitle")}</h2>
         <p>{t("auth.emailVerification.bannerDescription")}</p>
@@ -9133,21 +9092,26 @@ function EmailVerificationPage() {
   const differentAccount = Boolean(state.differentAccount);
 
   return (
-    <section className="section email-verification-page" aria-live={state.status === "verifying" ? "polite" : undefined}>
-      <h1 ref={headingRef} tabIndex={-1}>{t(titleKey)}</h1>
-      <p className="section-sub">{t(descriptionKey)}</p>
-      {differentAccount && <p className="email-verification-status">{t("auth.emailVerification.differentAccount")}</p>}
-      <div className="email-verification-actions">
-        {user ? (
-          <>
-            <Button type="button" variant="primary" onClick={() => go("ai-chat")}>{t("auth.emailVerification.continueCyberGuard")}</Button>
-            <Button type="button" variant="secondary" onClick={() => go("dashboard")}>{t("auth.emailVerification.continueDashboard")}</Button>
-          </>
-        ) : (
-          <Button type="button" variant="primary" onClick={() => go("login")}>{t("auth.emailVerification.loginToResend")}</Button>
-        )}
-      </div>
-    </section>
+    <div className="cy-auth-route cy-auth-verification-route">
+      <PageContainer width="reading" className="cy-auth-route-container">
+        <Surface as="section" className="cy-auth-panel cy-auth-verification" aria-live={state.status === "verifying" ? "polite" : undefined}>
+          <PageIdentity label={t("auth.emailVerification.bannerTitle")} icon="✓" className="cy-auth-identity" />
+          <h1 className="cy-auth-step-title" ref={headingRef} tabIndex={-1}>{t(titleKey)}</h1>
+          <p className="cy-auth-step-description">{t(descriptionKey)}</p>
+          {differentAccount && <p className="email-verification-status">{t("auth.emailVerification.differentAccount")}</p>}
+          <div className="email-verification-actions cy-auth-actions">
+            {user ? (
+              <>
+                <Button type="button" variant="primary" onClick={() => go("ai-chat")}>{t("auth.emailVerification.continueCyberGuard")}</Button>
+                <Button type="button" variant="secondary" onClick={() => go("dashboard")}>{t("auth.emailVerification.continueDashboard")}</Button>
+              </>
+            ) : (
+              <Button type="button" variant="primary" onClick={() => go("login")}>{t("auth.emailVerification.loginToResend")}</Button>
+            )}
+          </div>
+        </Surface>
+      </PageContainer>
+    </div>
   );
 }
 

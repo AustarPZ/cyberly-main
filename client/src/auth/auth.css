@@ -1,0 +1,329 @@
+.cy-auth-route {
+  min-width: 0;
+  padding-block: clamp(1rem, 4vw, 3rem);
+  background:
+    radial-gradient(circle at 85% 8%, color-mix(in srgb, var(--cyberly-mint-500) 12%, transparent), transparent 28rem),
+    var(--cyberly-page-bg);
+  color: var(--cyberly-text-primary);
+}
+
+.cy-auth-route-container {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.cy-auth-back {
+  margin-bottom: 0.75rem;
+  padding-inline: 0;
+}
+
+.cy-auth-shell {
+  display: grid;
+  min-width: 0;
+  place-items: start center;
+}
+
+.cy-auth-panel {
+  width: min(100%, 38rem);
+  min-width: 0;
+  padding: clamp(1.25rem, 4vw, 2.25rem);
+  box-shadow: 0 16px 40px color-mix(in srgb, var(--cyberly-indigo-600) 10%, transparent);
+}
+
+.cy-auth-login,
+.cy-auth-verification {
+  width: min(100%, 32rem);
+}
+
+.cy-auth-logo {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 1rem;
+}
+
+.cy-auth-logo .auth-logo-image {
+  width: min(100%, 10rem);
+  height: auto;
+}
+
+.cy-auth-identity {
+  margin-bottom: 0.75rem;
+}
+
+.cy-auth-step-title {
+  margin: 0;
+  color: var(--cyberly-text-primary);
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.5rem, 4vw, 2rem);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.cy-auth-step-description {
+  margin: 0.65rem 0 1.5rem;
+  color: var(--cyberly-text-secondary);
+  line-height: 1.6;
+  overflow-wrap: anywhere;
+}
+
+.cy-auth-field {
+  min-width: 0;
+  margin-bottom: 1rem;
+}
+
+.cy-auth-field label {
+  display: block;
+  margin-bottom: 0.4rem;
+  color: var(--cyberly-text-primary);
+  font-size: 0.88rem;
+  font-weight: 700;
+}
+
+.cy-auth-field input {
+  width: 100%;
+  max-width: 100%;
+  min-height: 2.75rem;
+  padding: 0.7rem 0.8rem;
+  border: 1px solid var(--cyberly-border-soft);
+  border-radius: var(--cyberly-radius-control);
+  background: var(--cyberly-surface-primary);
+  color: var(--cyberly-text-primary);
+  font: inherit;
+}
+
+.cy-auth-field input:focus-visible {
+  border-color: var(--cyberly-brand-primary);
+  outline: 3px solid color-mix(in srgb, var(--cyberly-brand-primary) 20%, transparent);
+  outline-offset: 1px;
+}
+
+.cy-auth-field input[aria-invalid="true"] {
+  border-color: var(--cyberly-danger);
+}
+
+.cy-auth-panel .field-error {
+  margin-top: 0.4rem;
+  color: var(--cyberly-danger);
+  font-size: 0.82rem;
+  line-height: 1.45;
+  overflow-wrap: anywhere;
+}
+
+.cy-auth-progress {
+  min-width: 0;
+  margin-bottom: 1.5rem;
+}
+
+.cy-auth-progress-track {
+  height: 0.5rem;
+  overflow: hidden;
+  border-radius: 999px;
+  background: var(--cyberly-surface-secondary);
+}
+
+.cy-auth-progress-fill {
+  height: 100%;
+  border-radius: inherit;
+  background: linear-gradient(90deg, var(--cyberly-brand-primary), var(--cyberly-mint-500));
+  transition: width var(--cyberly-motion-panel) ease;
+}
+
+.cy-auth-progress-label {
+  display: flex;
+  min-width: 0;
+  margin-top: 0.55rem;
+  gap: 0.75rem;
+  justify-content: space-between;
+  color: var(--cyberly-text-secondary);
+  font-size: 0.8rem;
+  line-height: 1.4;
+}
+
+.cy-auth-progress-label span:first-child {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.cy-auth-option-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  gap: 0.7rem;
+  margin-top: 1.25rem;
+}
+
+.cy-auth-option,
+.cy-auth-chip {
+  min-width: 0;
+  min-height: 2.75rem;
+  border: 1px solid var(--cyberly-border-soft);
+  border-radius: var(--cyberly-radius-control);
+  background: var(--cyberly-surface-primary);
+  color: var(--cyberly-text-primary);
+  font: inherit;
+  font-weight: 700;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.cy-auth-option {
+  display: grid;
+  width: 100%;
+  padding: 0.8rem 0.9rem;
+  gap: 0.25rem;
+  text-align: left;
+}
+
+.cy-auth-option[aria-pressed="true"],
+.cy-auth-chip[aria-pressed="true"] {
+  border-color: var(--cyberly-brand-primary);
+  background: color-mix(in srgb, var(--cyberly-brand-primary) 10%, var(--cyberly-surface-primary));
+  box-shadow: inset 0 0 0 1px var(--cyberly-brand-primary);
+}
+
+.cy-auth-option:focus-visible,
+.cy-auth-chip:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--cyberly-brand-primary) 24%, transparent);
+  outline-offset: 2px;
+}
+
+.cy-auth-option-description {
+  display: block;
+  color: var(--cyberly-text-secondary);
+  font-size: 0.8rem;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.cy-auth-chip-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+  margin-top: 1.25rem;
+}
+
+.cy-auth-chip {
+  max-width: 100%;
+  padding: 0.65rem 0.85rem;
+}
+
+.cy-auth-chip:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.cy-auth-selection-count {
+  margin-top: 0.75rem;
+  color: var(--cyberly-text-secondary);
+  font-size: 0.8rem;
+}
+
+.cy-auth-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.75rem;
+  margin-top: 1.5rem;
+}
+
+.cy-auth-actions .cy-button {
+  min-width: min(100%, 9rem);
+}
+
+.cy-auth-login-actions .cy-button {
+  width: 100%;
+}
+
+.cy-auth-switch {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.25rem;
+  margin-top: 1.25rem;
+  color: var(--cyberly-text-secondary);
+  font-size: 0.88rem;
+}
+
+.cy-auth-switch .cy-button {
+  min-height: 2.75rem;
+}
+
+.cy-auth-form-error {
+  margin-top: 0.5rem;
+}
+
+.cy-auth-verification-route {
+  padding-block: clamp(2rem, 8vw, 5rem);
+}
+
+.cy-auth-verification {
+  margin-inline: auto;
+}
+
+.cy-auth-reminder {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  align-items: center;
+  gap: 1rem;
+  min-width: 0;
+  padding: 1rem;
+  border-color: color-mix(in srgb, var(--cyberly-warning) 35%, var(--cyberly-border-soft));
+  background: color-mix(in srgb, var(--cyberly-warning) 8%, var(--cyberly-surface-primary));
+}
+
+.cy-auth-reminder .email-verification-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.65rem;
+}
+
+.cy-auth-reminder .email-verification-status {
+  grid-column: 1 / -1;
+  margin: 0;
+}
+
+.cy-auth-visually-hidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+@media (max-width: 40rem) {
+  .cy-auth-route {
+    padding-block: 0.75rem 2rem;
+  }
+
+  .cy-auth-panel {
+    padding: 1.1rem;
+  }
+
+  .cy-auth-actions {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cy-auth-actions .cy-button {
+    width: 100%;
+  }
+
+  .cy-auth-progress-label {
+    align-items: flex-start;
+  }
+
+  .cy-auth-reminder {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cy-auth-reminder .email-verification-actions .cy-button {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .cy-auth-progress-fill {
+    transition: none;
+  }
+}
