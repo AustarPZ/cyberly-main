@@ -99,19 +99,20 @@ describe("Dashboard final visual migration", () => {
   });
 
   test("keeps representative Dashboard content and conditional navigation aligned", async () => {
-    render(<App />);
+    const { container } = render(<App />);
     await screen.findByRole("heading", { level: 1, name: /Welcome back, Alya/i });
 
-    expect(screen.getByText(new RegExp(i18n.t("dashboard.learningProfile"), "i"))).toBeVisible();
+    expect(container.querySelector("#dashboard-learning-profile")).not.toBeInTheDocument();
     expect(screen.getByText(i18n.t("dashboard.assessment.pending"))).toBeVisible();
     expect(screen.getByText(i18n.t("dashboard.recommendation.title"))).toBeVisible();
     expect(await screen.findByText(i18n.t("progress.learningPath.title"))).toBeVisible();
     expect(screen.getByText(i18n.t("dashboard.scenarios.practiceTitle"))).toBeVisible();
-    expect(await screen.findByText(i18n.t("dashboard.topicMastery.title"))).toBeVisible();
+    expect(container.querySelector("#dashboard-topic-mastery")).not.toBeInTheDocument();
     expect(screen.getByText(i18n.t("dashboard.quickActions.title"))).toBeVisible();
     expect(screen.getByText(i18n.t("dashboard.cyberGuard.title"))).toBeVisible();
-    expect(screen.getByRole("button", { name: i18n.t("dashboard.sectionNav.learningProfile") })).toBeVisible();
-    expect(await screen.findByRole("button", { name: i18n.t("dashboard.sectionNav.topicMastery") })).toBeVisible();
+    expect(screen.queryByRole("button", { name: i18n.t("dashboard.sectionNav.learningProfile") })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: i18n.t("dashboard.sectionNav.topicMastery") })).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: new RegExp(i18n.t("dashboard.actions.profile"), "i") })).toBeVisible();
     await waitFor(() => expect(getProgress).toHaveBeenCalledTimes(1));
   });
 
@@ -134,17 +135,134 @@ describe("Dashboard final visual migration", () => {
     expect(window.location.hash).toBe("#/dashboard");
   });
 
-  test("omits Topic Mastery while retaining Learning Profile without assessment results", async () => {
+  test("omits the retired Learning Profile and Topic Mastery sections without assessment results", async () => {
     getProgress.mockResolvedValue({ ok: true, data: { learningPathProgress: { percentage: 25, components: [] }, assessmentTopicResults: [] } });
     const { container } = render(<App />);
     await screen.findByRole("heading", { level: 1, name: /Welcome back, Alya/i });
 
     expect(container.querySelector("#dashboard-topic-mastery")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: i18n.t("dashboard.sectionNav.topicMastery") })).not.toBeInTheDocument();
-    expect(container.querySelector("#dashboard-learning-profile")).toBeInTheDocument();
-    expect(screen.getByRole("button", { name: i18n.t("dashboard.sectionNav.learningProfile") })).toBeVisible();
+    expect(container.querySelector("#dashboard-learning-profile")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: i18n.t("dashboard.sectionNav.learningProfile") })).not.toBeInTheDocument();
     expect(screen.getByRole("button", { name: i18n.t("dashboard.sectionNav.cyberGuardAi") })).toBeVisible();
     expect(window.location.hash).toBe("#/dashboard");
+  });
+
+  test("renders the approved Dashboard decision flow in DOM order", async () => {
+    const { container } = render(<App />);
+    await screen.findByRole("heading", { level: 1, name: /Welcome back, Alya/i });
+
+    const orderedIds = [
+      "dashboard-measured-progress",
+      "dashboard-recommended-next-step",
+      "dashboard-scenario-practice",
+      "dashboard-initial-assessment",
+      "dashboard-quick-actions",
+      "dashboard-daily-tip",
+      "dashboard-cyberguard-ai",
+    ];
+    const sections = orderedIds.map(id => container.querySelector(`#${id}`));
+    sections.forEach(section => expect(section).toBeInTheDocument());
+    await waitFor(() => {
+      sections.forEach(section => expect(section.querySelector("h2")).toBeInTheDocument());
+    });
+    sections.slice(0, -1).forEach((section, index) => {
+      expect(section.compareDocumentPosition(sections[index + 1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    });
+  });
+
+  test("uses the canonical Scenario target without creating a second primary recommendation", async () => {
+    getCurrentRecommendation.mockResolvedValue({
+      ok: true,
+      data: {
+        recommendation: {
+          id: 7,
+          topicCode: "phishing",
+          reasonText: "Continue with the canonical scenario.",
+          targetScenarioTitle: "Canonical phishing scenario",
+          target: { page: "scenarios", scenarioId: 12, scenarioSlug: "canonical-phishing" },
+        },
+      },
+    });
+    const { container } = render(<App />);
+    await screen.findByRole("heading", { level: 1, name: /Welcome back, Alya/i });
+    await screen.findByText("Continue with the canonical scenario.");
+    const recommendation = container.querySelector("#dashboard-recommended-next-step");
+
+    expect(within(recommendation).getByText("Canonical phishing scenario")).toBeVisible();
+    expect(screen.getAllByText(i18n.t("dashboard.recommendation.title"))).toHaveLength(1);
+    expect(screen.queryByText(i18n.t("dashboard.scenarios.recommendedTitle"))).not.toBeInTheDocument();
+    fireEvent.click(within(recommendation).getByRole("button", { name: i18n.t("dashboard.recommendation.practiceScenario") }));
+    await waitFor(() => expect(window.location.hash).toBe("#/scenarios"));
+    expect(markRecommendationViewed).toHaveBeenCalledWith(7, { locale: "en" });
+  });
+
+  test("uses canonical Resource and Assessment recommendation targets", async () => {
+    getCurrentRecommendation.mockResolvedValue({
+      ok: true,
+      data: { recommendation: { id: 8, topicCode: "privacy", reasonText: "Review privacy guidance.", target: { page: "resources", resourceSlug: "protect-privacy" } } },
+    });
+    const firstRender = render(<App />);
+    await screen.findByText("Review privacy guidance.");
+    const resourceRecommendation = firstRender.container.querySelector("#dashboard-recommended-next-step");
+    fireEvent.click(within(resourceRecommendation).getByRole("button", { name: i18n.t("dashboard.recommendation.readResource") }));
+    await waitFor(() => expect(window.location.hash).toBe("#/resources"));
+    firstRender.unmount();
+
+    window.history.replaceState({}, "", "#/dashboard");
+    getCurrentRecommendation.mockResolvedValue({
+      ok: true,
+      data: { recommendation: { id: 9, reasonText: "Establish your starting point.", target: { page: "assessment" } } },
+    });
+    const secondRender = render(<App />);
+    await screen.findByText("Establish your starting point.");
+    const assessmentRecommendation = secondRender.container.querySelector("#dashboard-recommended-next-step");
+    fireEvent.click(within(assessmentRecommendation).getByRole("button", { name: i18n.t("dashboard.recommendation.startAssessment") }));
+    await waitFor(() => expect(window.location.hash).toBe("#/assessment"));
+  });
+
+  test("keeps a safe empty recommendation without fabricating a destination", async () => {
+    getCurrentRecommendation.mockResolvedValue({ ok: true, data: { recommendation: null } });
+    const { container } = render(<App />);
+    await screen.findByText(i18n.t("dashboard.recommendation.empty"));
+    const recommendation = container.querySelector("#dashboard-recommended-next-step");
+
+    expect(within(recommendation).getByText(i18n.t("dashboard.recommendation.empty"))).toBeVisible();
+    expect(within(recommendation).queryByRole("button")).not.toBeInTheDocument();
+  });
+
+  test("keeps pending and in-progress Assessment states distinct without inventing skipped", async () => {
+    const pendingRender = render(<App />);
+    await screen.findByText(i18n.t("dashboard.assessment.pending"));
+    const pending = pendingRender.container.querySelector("#dashboard-initial-assessment");
+    expect(within(pending).getByText(i18n.t("dashboard.assessment.pending"))).toBeVisible();
+    expect(within(pending).getByRole("button", { name: i18n.t("dashboard.assessment.start") })).toBeVisible();
+    expect(pending).not.toHaveTextContent(/skipped/i);
+    pendingRender.unmount();
+
+    window.history.replaceState({}, "", "#/dashboard");
+    getInitialAssessmentStatus.mockResolvedValue({ ok: true, data: { status: "in_progress", attempt: { id: 31, status: "in_progress", answers: [] } } });
+    const inProgressRender = render(<App />);
+    await screen.findByText(i18n.t("dashboard.assessment.inProgress"));
+    const inProgress = inProgressRender.container.querySelector("#dashboard-initial-assessment");
+    expect(within(inProgress).getByText(i18n.t("dashboard.assessment.inProgress"))).toBeVisible();
+    expect(within(inProgress).getByRole("button", { name: i18n.t("dashboard.assessment.resume") })).toBeVisible();
+  });
+
+  test("integrates completed Assessment topic results into the Initial Assessment section", async () => {
+    getInitialAssessmentStatus.mockResolvedValue({
+      ok: true,
+      data: { status: "completed", result: { attempt: { percentage: 67, measuredLevel: "developing" } } },
+    });
+    const { container } = render(<App />);
+    await screen.findByText(i18n.t("dashboard.assessment.completed"));
+    const assessment = container.querySelector("#dashboard-initial-assessment");
+
+    expect(within(assessment).getByText(i18n.t("dashboard.assessment.completed"))).toBeVisible();
+    expect(within(assessment).getByText(/67%/)).toBeVisible();
+    expect(within(assessment).getByText(i18n.t("topics.phishing", { defaultValue: "Phishing" }), { exact: false })).toBeVisible();
+    expect(within(assessment).getByRole("button", { name: i18n.t("dashboard.assessment.viewResults") })).toBeVisible();
+    expect(container.querySelector("#dashboard-topic-mastery")).not.toBeInTheDocument();
   });
 
   test("keeps the final visible Dashboard section current at genuine page end", async () => {

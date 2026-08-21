@@ -4271,6 +4271,7 @@ function learningPathStatusMessageKey(componentId, status) {
 }
 
 function LearningPathProgressPanel({ value, t, compact = false, onViewJourney }) {
+  const LearningPathHeading = compact ? "h2" : "p";
   const progress = normalizeLearningPathProgress(value);
   const segments = buildLearningPathSegments(progress);
   const components = [
@@ -4310,9 +4311,9 @@ function LearningPathProgressPanel({ value, t, compact = false, onViewJourney })
     <div className={`card learning-path-card${compact ? " compact" : ""}`}>
       <div className="learning-path-header">
         <div>
-          <p className="section-title" style={{ fontSize: compact ? "1rem" : "1.1rem", marginBottom: "0.25rem" }}>
+          <LearningPathHeading className="section-title" style={{ fontSize: compact ? "1rem" : "1.1rem", marginBottom: "0.25rem" }}>
             {t("progress.learningPath.title")}
-          </p>
+          </LearningPathHeading>
           <p className="section-sub" style={{ marginBottom: 0 }}>
             {reachedCore ? t("progress.learningPath.coreReached") : t("progress.learningPath.shortDescription")}
           </p>
@@ -5666,13 +5667,12 @@ function HomePage() {
 // ─── Page: Dashboard ──────────────────────────────────────────────
 const DASHBOARD_SECTIONS = [
   { id: "dashboard-overview", labelKey: "dashboard.sectionNav.overview" },
-  { id: "dashboard-learning-profile", labelKey: "dashboard.sectionNav.learningProfile" },
   { id: "dashboard-measured-progress", labelKey: "dashboard.sectionNav.measuredProgress" },
-  { id: "dashboard-initial-assessment", labelKey: "dashboard.sectionNav.initialAssessment" },
   { id: "dashboard-recommended-next-step", labelKey: "dashboard.sectionNav.recommendedNextStep" },
   { id: "dashboard-scenario-practice", labelKey: "dashboard.sectionNav.scenarioPractice" },
-  { id: "dashboard-topic-mastery", labelKey: "dashboard.sectionNav.topicMastery" },
+  { id: "dashboard-initial-assessment", labelKey: "dashboard.sectionNav.initialAssessment" },
   { id: "dashboard-quick-actions", labelKey: "dashboard.sectionNav.quickActions" },
+  { id: "dashboard-daily-tip", labelKey: "dashboard.dailyTip" },
   { id: "dashboard-cyberguard-ai", labelKey: "dashboard.sectionNav.cyberGuardAi" },
 ];
 
@@ -5682,7 +5682,7 @@ const PROGRESS_SECTIONS = [
 
 function DashboardPage() {
   const { t, i18n: activeI18n } = useTranslation();
-  const { user, go, openRecommendedResource, openScenarioTarget } = useApp();
+  const { user, go, handleChatAction, openRecommendedResource, openScenarioTarget } = useApp();
   const { conversations, selectConversation, initialLoading: chatHistoryLoading } = useChat();
   const assessmentLocale = normalizeLocale(activeI18n.language);
   const [tipIndex] = useState(() => Math.floor(Math.random() * 4));
@@ -5692,12 +5692,7 @@ function DashboardPage() {
   const [scenarioState, setScenarioState] = useState({ loading: true, recommended: [], dashboard: null });
   const [activeSection, setActiveSection] = useState("dashboard-overview");
   const dashboardAssessmentResults = (progressState.progress?.assessmentTopicResults || []).map(mapAssessmentTopicResult);
-  const hasLearningProfileSection = Boolean(user?.helpTopics?.length);
-  const hasTopicMasterySection = Boolean(dashboardAssessmentResults.length);
-  const dashboardSections = DASHBOARD_SECTIONS.filter(section => (
-    (section.id !== "dashboard-learning-profile" || hasLearningProfileSection) &&
-    (section.id !== "dashboard-topic-mastery" || hasTopicMasterySection)
-  ));
+  const dashboardSections = DASHBOARD_SECTIONS;
 
   useEffect(() => {
     let active = true;
@@ -5718,12 +5713,7 @@ function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    const sectionIds = DASHBOARD_SECTIONS
-      .filter(section => (
-        (section.id !== "dashboard-learning-profile" || hasLearningProfileSection) &&
-        (section.id !== "dashboard-topic-mastery" || hasTopicMasterySection)
-      ))
-      .map(section => section.id);
+    const sectionIds = DASHBOARD_SECTIONS.map(section => section.id);
     const sections = sectionIds
       .map(id => document.getElementById(id))
       .filter(Boolean);
@@ -5772,7 +5762,7 @@ function DashboardPage() {
       observer.disconnect();
       window.removeEventListener("scroll", updateActiveSectionAtPageEnd);
     };
-  }, [hasLearningProfileSection, hasTopicMasterySection]);
+  }, []);
 
   useEffect(() => {
     let active = true;
@@ -5813,19 +5803,23 @@ function DashboardPage() {
   const recommendedScenario = scenarioState.recommended?.[0];
   const scenarioDashboard = scenarioState.dashboard;
   const translatedAgeGroup = t(`settings.ageGroups.${group.key}`,{defaultValue: group.label});
-  const preferredLanguageValue = user.profile?.preferredLanguage || "";
   const familiarityValue = user.profile?.familiarityLevel || "";
   const educationValue = user.profile?.educationLevel || "";
-  const learningStyleValue = user.profile?.learningStyle || "";
-  const translatedLanguage = t(`profileOptions.language.${preferredLanguageValue}`,{defaultValue: user.language || "English" });
   const translatedFamiliarity = t(`profileOptions.familiarity.${familiarityValue}.label`,{defaultValue: user.familiarity || t("dashboard.beginner") });
   const translatedEducation = educationValue? t(`profileOptions.education.${educationValue}`,{ defaultValue: user.educationLevel }): "";
-  const translatedLearningStyle = learningStyleValue? t( `profileOptions.learningStyle.${learningStyleValue}`, { defaultValue: user.learningStyle,}): "";
-  const translatedHelpTopics = (user.profile?.helpTopics || []).map( topicCode => t(`profileOptions.helpTopics.${topicCode}`, { defaultValue: topicCode }));
+  const recommendationTargetPage = recommendation?.target?.page;
+  const recommendationTitle = recommendation?.targetScenarioTitle || (
+    recommendation?.topicCode
+      ? t(`topics.${recommendation.topicCode}`, { defaultValue: topicLabel(recommendation.topicCode, recommendation.topicLabel) })
+      : t("dashboard.recommendation.initialAssessment")
+  );
 
   async function followRecommendation() {
     if (recommendation?.id) {
       await dbMarkRecommendationViewed(recommendation.id, assessmentLocale);
+    }
+    if (recommendation?.target && handleChatAction({ target: recommendation.target })) {
+      return;
     }
     if (recommendedScenario) {
       openScenarioTarget(recommendedScenario, "dashboard");
@@ -5962,28 +5956,6 @@ function DashboardPage() {
 
       <div className="dashboard-content">
 
-        {/* Profile summary */}
-        {user.helpTopics?.length > 0 && (
-          <div id="dashboard-learning-profile" className="card dashboard-anchor dashboard-journey-surface" style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
-            <div style={{ flex: 1, minWidth: 200 }}>
-              <div style={{ fontWeight: 600, marginBottom: "0.4rem", color: "var(--teal)" }}>🎯 {t("dashboard.learningProfile")}</div>
-              <div style={{ fontSize: "0.85rem", color: "#333", lineHeight: 1.7 }}>
-                <span>🌐 {translatedLanguage}</span>
-                <span style={{ margin: "0 0.5rem" }}>·</span>
-                <span>📖 {translatedLearningStyle}</span>
-                <span style={{ margin: "0 0.5rem" }}>·</span>
-                <span>🎯 {translatedHelpTopics.join(", ")}</span>
-              </div>
-              <div style={{ fontSize: "0.76rem", color: "#5f6f69", marginTop: "0.45rem" }}>
-                {t("dashboard.learningProfileDescription")}
-              </div>
-            </div>
-            <button onClick={() => go("profile")} style={{ background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1.1rem", fontSize: "0.82rem", fontWeight: 600, cursor: "pointer", flexShrink: 0 }}>
-              {t("dashboard.editProfile")}
-            </button>
-          </div>
-        )}
-
         <div id="dashboard-measured-progress" className="dashboard-anchor">
           {progressState.loading ? (
             <div className="card learning-path-card compact">
@@ -6006,44 +5978,31 @@ function DashboardPage() {
           )}
         </div>
 
-        <div id="dashboard-initial-assessment" className="card dashboard-anchor dashboard-next-surface" style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
-          <div style={{ flex: 1, minWidth: 220 }}>
-            <div style={{ fontWeight: 700, color: "#e65100", marginBottom: "0.25rem" }}>
-              {assessmentStatus.status === "completed"
-                ? t("dashboard.assessment.completed")
-                : assessmentStatus.status === "in_progress"
-                  ? t("dashboard.assessment.inProgress")
-                  : t("dashboard.assessment.pending")}
-            </div>
-            <div style={{ fontSize: "0.86rem", color: "#5f4a1d", lineHeight: 1.6 }}>
-              {assessmentStatus.loading && t("dashboard.assessment.checking")}
-              {!assessmentStatus.loading && assessmentStatus.status === "completed" && (
-                <>{t("dashboard.assessment.completedDescription")}</>
-              )}
-              {!assessmentStatus.loading && assessmentStatus.status === "in_progress" && t("dashboard.assessment.resumeDescription")}
-              {!assessmentStatus.loading && assessmentStatus.status !== "completed" && assessmentStatus.status !== "in_progress" && t("dashboard.assessment.pendingDescription")}
-            </div>
-          </div>
-          <button onClick={() => go("assessment")} style={{ background: "#FB8C00", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>
-            {assessmentStatus.status === "completed" ? t("dashboard.assessment.viewResults") : assessmentStatus.status === "in_progress" ? t("dashboard.assessment.resume") : t("dashboard.assessment.start")}
-          </button>
-        </div>
-
         <div>
           <div id="dashboard-recommended-next-step" className="card dashboard-anchor dashboard-journey-surface">
-            <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.35rem" }}>{t("dashboard.recommendation.title")}</div>
+            <h2 style={{ fontWeight: 700, color: "var(--teal)", margin: "0 0 0.35rem" }}>{t("dashboard.recommendation.title")}</h2>
             {recommendationState.loading ? (
               <PageState message={t("dashboard.recommendation.loading")} />
             ) : recommendation ? (
               <>
                 <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.05rem", marginBottom: "0.35rem", color: "#1a1a18" }}>
-                  {recommendation.topicCode ? t( `topics.${recommendation.topicCode}`, { defaultValue: topicLabel(  recommendation.topicCode,  recommendation.topicLabel )}) : t("dashboard.recommendation.initialAssessment")}
+                  {recommendationTitle}
                 </div>
                 <div style={{ fontSize: "0.84rem", color: "#3e5149", lineHeight: 1.55, marginBottom: "0.85rem" }}>
                   {recommendation.reasonText}
                 </div>
                 <button onClick={followRecommendation} style={{ background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1rem", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
-                  {recommendedScenario ?  t("dashboard.recommendation.practiceScenario") : recommendation.topicCode ? t("dashboard.recommendation.readResource") : t("dashboard.recommendation.startAssessment")}
+                  {recommendationTargetPage === "scenarios"
+                    ? t("dashboard.recommendation.practiceScenario")
+                    : recommendationTargetPage === "resources"
+                      ? t("dashboard.recommendation.readResource")
+                      : recommendationTargetPage === "assessment"
+                        ? t("dashboard.recommendation.startAssessment")
+                        : recommendedScenario
+                          ? t("dashboard.recommendation.practiceScenario")
+                          : recommendation.topicCode
+                            ? t("dashboard.recommendation.readResource")
+                            : t("dashboard.recommendation.startAssessment")}
                 </button>
               </>
             ) : (
@@ -6054,7 +6013,7 @@ function DashboardPage() {
 
         <div id="dashboard-scenario-practice" className="dashboard-anchor dashboard-practice-grid">
           <div className="card" style={{ border: "1px solid rgba(0,0,0,0.07)" }}>
-            <div style={{ fontWeight: 700, color: "#2E7D32", marginBottom: "0.35rem" }}>{t("dashboard.scenarios.practiceTitle")}</div>
+            <h2 style={{ fontWeight: 700, color: "#2E7D32", margin: "0 0 0.35rem" }}>{t("dashboard.scenarios.practiceTitle")}</h2>
             {scenarioState.loading ? (
               <PageState message={t("dashboard.scenarios.loadingActivity")} />
             ) : (
@@ -6074,6 +6033,11 @@ function DashboardPage() {
                     {t("dashboard.scenarios.latest")}: <strong>{scenarioDashboard.latestCompleted.title}</strong> · {t( `scenarioResults.${scenarioDashboard.latestCompleted.resultLevel}`, { defaultValue: scenarioResultLabel( scenarioDashboard.latestCompleted.resultLevel)})}
                   </div>
                 )}
+                {recommendedScenario && (
+                  <div style={{ fontSize: "0.82rem", color: "#445", lineHeight: 1.55, marginBottom: "0.8rem" }}>
+                    <strong>{recommendedScenario.title}</strong> · {t(`topics.${recommendedScenario.topicCode}`, { defaultValue: topicLabel(recommendedScenario.topicCode) })} · {t(`levels.${recommendedScenario.difficulty}`, { defaultValue: levelLabel(recommendedScenario.difficulty) })}
+                  </div>
+                )}
                 <button onClick={() => go("scenarios")} style={{ background: "#2E7D32", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1rem", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
                   {scenarioDashboard?.inProgress ? t("dashboard.scenarios.continueScenario") : t("dashboard.scenarios.openLibrary")}
                 </button>
@@ -6081,64 +6045,56 @@ function DashboardPage() {
             )}
           </div>
 
-          <div className="card" style={{ background: "#E8F5E9", border: "1px solid rgba(46,125,50,0.18)" }}>
-            <div style={{ fontWeight: 700, color: "#2E7D32", marginBottom: "0.35rem" }}>{t("dashboard.scenarios.recommendedTitle")}</div>
-            {scenarioState.loading ? (
-              <PageState message={t("dashboard.scenarios.finding")} />
-            ) : recommendedScenario ? (
-              <>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.02rem", marginBottom: "0.35rem" }}>{recommendedScenario.title}</div>
-                <div style={{ fontSize: "0.82rem", color: "#445", lineHeight: 1.55, marginBottom: "0.8rem" }}>
-                  {t( `topics.${recommendedScenario.topicCode}`,{ defaultValue: topicLabel( recommendedScenario.topicCode)})} · {t( `levels.${recommendedScenario.difficulty}`, { defaultValue: levelLabel( recommendedScenario.difficulty)})} · {t("dashboard.scenarios.minutes", {count: recommendedScenario.estimatedMinutes})}
-                </div>
-                <button onClick={() => recommendedScenario ? openScenarioTarget(recommendedScenario, "dashboard") : go("scenarios")} style={{ background: "#2E7D32", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1rem", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
-                  {t("dashboard.recommendation.practiceScenario")}
-                </button>
-              </>
-            ) : (
-              <PageState type="empty" message={t("dashboard.scenarios.unlockDescription")} />
-            )}
-          </div>
         </div>
 
-        {dashboardAssessmentResults.length > 0 && (
-          <div id="dashboard-topic-mastery" className="dashboard-anchor" style={{ marginBottom: "2rem" }}>
-            <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", alignItems: "center", marginBottom: "0.75rem", flexWrap: "wrap" }}>
-              <p className="section-title" style={{ fontSize: "1.1rem", margin: 0 }}>{t("dashboard.topicMastery.title")}</p>
-              <button onClick={() => go("progress")} style={{ background: "transparent", color: "var(--teal)", border: "none", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>{t("dashboard.topicMastery.viewProgress")}</button>
+        <div id="dashboard-initial-assessment" className="card dashboard-anchor dashboard-next-surface">
+          <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
+            <div style={{ flex: 1, minWidth: 220 }}>
+              <h2 style={{ fontWeight: 700, color: "#e65100", margin: "0 0 0.25rem" }}>
+                {assessmentStatus.status === "completed"
+                  ? t("dashboard.assessment.completed")
+                  : assessmentStatus.status === "in_progress"
+                    ? t("dashboard.assessment.inProgress")
+                    : t("dashboard.assessment.pending")}
+              </h2>
+              <div style={{ fontSize: "0.86rem", color: "#5f4a1d", lineHeight: 1.6 }}>
+                {assessmentStatus.loading && t("dashboard.assessment.checking")}
+                {!assessmentStatus.loading && assessmentStatus.status === "completed" && t("dashboard.assessment.completedDescription")}
+                {!assessmentStatus.loading && assessmentStatus.status === "in_progress" && t("dashboard.assessment.resumeDescription")}
+                {!assessmentStatus.loading && assessmentStatus.status !== "completed" && assessmentStatus.status !== "in_progress" && t("dashboard.assessment.pendingDescription")}
+              </div>
+              {assessmentStatus.status === "completed" && assessmentStatus.result?.attempt?.percentage != null && (
+                <div style={{ marginTop: "0.55rem", fontWeight: 700 }}>
+                  {assessmentStatus.result.attempt.percentage}% · {t(`levels.${assessmentStatus.result.attempt.measuredLevel}`, { defaultValue: levelLabel(assessmentStatus.result.attempt.measuredLevel) })}
+                </div>
+              )}
             </div>
-            <div className="assessment-results-grid">
+            <button onClick={() => go("assessment")} style={{ background: "#FB8C00", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>
+              {assessmentStatus.status === "completed" ? t("dashboard.assessment.viewResults") : assessmentStatus.status === "in_progress" ? t("dashboard.assessment.resume") : t("dashboard.assessment.start")}
+            </button>
+          </div>
+          {assessmentStatus.status === "completed" && dashboardAssessmentResults.length > 0 && (
+            <div className="assessment-results-grid" style={{ marginTop: "1rem" }}>
               {dashboardAssessmentResults.map(topic => (
                 <div key={topic.topicCode} className="card" style={{ padding: "1rem" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.55rem" }}>
-                    <span style={{ fontWeight: 700, fontSize: "0.86rem" }}>{PROGRESS_TOPIC_META[topic.topicCode]?.icon} {t(`topics.${topic.topicCode}`,{defaultValue: topicLabel(topic.topicCode, topic.topicLabel)})}</span>
+                    <span style={{ fontWeight: 700, fontSize: "0.86rem" }}>{PROGRESS_TOPIC_META[topic.topicCode]?.icon} {t(`topics.${topic.topicCode}`, { defaultValue: topicLabel(topic.topicCode, topic.topicLabel) })}</span>
                     <span style={{ color: "var(--teal)", fontWeight: 700, fontSize: "0.82rem" }}>
                       {t("progress.assessmentResults.correctOutOfTotal", { correct: topic.correctCount, total: topic.totalCount })}
                     </span>
                   </div>
                   <div style={{ fontSize: "0.74rem", color: "#777", marginTop: "0.45rem" }}>
-                    {t("progress.assessmentResults.assessmentResult", {
-                      level: t(`levels.${topic.resultLevel}`, { defaultValue: levelLabel(topic.resultLevel) }),
-                    })} · {t("progress.assessmentResults.source")}
+                    {t("progress.assessmentResults.assessmentResult", { level: t(`levels.${topic.resultLevel}`, { defaultValue: levelLabel(topic.resultLevel) }) })} · {t("progress.assessmentResults.source")}
                   </div>
                 </div>
               ))}
             </div>
-          </div>
-        )}
-
-        {/* Daily tip */}
-        <div className="dashboard-field-note">
-          <span style={{ fontSize: "1.4rem", flexShrink: 0 }}>{todayTip.emoji}</span>
-          <div>
-            <div style={{ fontWeight: 700, fontSize: "0.82rem", color: "#e65100", textTransform: "uppercase", letterSpacing: "0.06em", marginBottom: "0.25rem" }}>{t("dashboard.dailyTip")}</div>
-            <div style={{ fontSize: "0.88rem", color: "#444", lineHeight: 1.6 }}>{t(todayTip.tipKey)}</div>
-          </div>
+          )}
         </div>
 
         {/* Quick actions */}
         <div id="dashboard-quick-actions" className="dashboard-anchor">
-        <p className="section-title" style={{ fontSize: "1.1rem", marginBottom: "0.4rem" }}>{t("dashboard.quickActions.title")}</p>
+        <h2 className="section-title" style={{ fontSize: "1.1rem", marginBottom: "0.4rem" }}>{t("dashboard.quickActions.title")}</h2>
         <p className="section-sub" style={{ marginBottom: "1.25rem" }}>{t("dashboard.quickActions.description")}</p>
         <div className="dashboard-action-grid">
           {quickActions.map(a => (
@@ -6151,10 +6107,19 @@ function DashboardPage() {
         </div>
         </div>
 
+        {/* Daily tip */}
+        <div id="dashboard-daily-tip" className="dashboard-anchor dashboard-field-note">
+          <span style={{ fontSize: "1.4rem", flexShrink: 0 }}>{todayTip.emoji}</span>
+          <div>
+            <h2 style={{ fontWeight: 700, fontSize: "0.82rem", color: "#e65100", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 0.25rem" }}>{t("dashboard.dailyTip")}</h2>
+            <div style={{ fontSize: "0.88rem", color: "#444", lineHeight: 1.6 }}>{t(todayTip.tipKey)}</div>
+          </div>
+        </div>
+
         {/* CyberGuard AI */}
         <div id="dashboard-cyberguard-ai" className="dashboard-anchor dashboard-cyberguard-heading">
           <div>
-            <p className="section-title" style={{ fontSize: "1.1rem", margin: 0 }}>🛡 {t("dashboard.cyberGuard.title")}</p>
+            <h2 className="section-title" style={{ fontSize: "1.1rem", margin: 0 }}>🛡 {t("dashboard.cyberGuard.title")}</h2>
             <p className="section-sub" style={{ margin: "0.25rem 0 0" }}>{t("dashboard.cyberGuard.description")}</p>
           </div>
           <button className="btn-ghost" onClick={viewDashboardChatHistory} disabled={chatHistoryLoading}>

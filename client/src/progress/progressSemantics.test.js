@@ -155,7 +155,8 @@ test("dashboard places learning path progress before initial assessment", () => 
   expect(assessmentIndex).toBeGreaterThan(-1);
   expect(recommendationIndex).toBeGreaterThan(-1);
   expect(progressIndex).toBeLessThan(assessmentIndex);
-  expect(assessmentIndex).toBeLessThan(recommendationIndex);
+  expect(progressIndex).toBeLessThan(recommendationIndex);
+  expect(recommendationIndex).toBeLessThan(assessmentIndex);
 });
 
 test("recommendation completion refreshes progress data from the API", () => {
