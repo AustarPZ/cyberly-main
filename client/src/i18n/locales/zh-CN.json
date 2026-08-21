@@ -642,81 +642,84 @@
   "about": {
     "hero": {
       "eyebrow": "Capstone 项目 · 第 20 组 · Taylor's University",
-      "title": "面向青少年的互动网络健康工具包",
-      "description": "一个由 AI 驱动的平台，旨在提升 13–17 岁马来西亚青少年的网络安全意识，并促进更安全的数字行为。",
-      "collaboration": "与 Cybersecurity Hub DISS – Impact Lab 合作"
+      "title": "Cyberly：面向青少年的网络健康学习工具包",
+      "description": "Cyberly 是一项由 AI 支持的互动学习体验，帮助 13–17 岁的马来西亚青少年建立实用的网络安全知识，并作出更明智的数字选择。",
+      "audience": "面向 13–17 岁的马来西亚青少年",
+      "collaboration": "Cybersecurity Hub DISS – IMPACT LAB",
+      "projectDetailsLabel": "项目详情"
     },
     "why": {
-      "title": "为什么这很重要",
-      "description": "马来西亚青少年面对的网络威胁形势严峻且持续增长。"
+      "title": "为什么需要 Cyberly",
+      "description": "年轻人经常接触数字服务、消息和媒体。实用的网络安全习惯可以帮助他们先停下来，评估眼前的信息，再选择更安全的下一步。",
+      "practice": "Cyberly 提供有结构的学习、决策练习和日常网络情境反思机会，但不会承诺技术能够消除所有风险。"
     },
-    "stats": {
-      "identifyScams": "的马来西亚青少年表示自己能识别诈骗",
-      "scamVictim": "已经成为网络诈骗受害者",
-      "noWorkshop": "的学生从未参加过诈骗意识工作坊",
-      "dailyOnline": "的 12–17 岁青少年每天都会上网"
-    },
-    "built": {
-      "title": "我们构建了什么",
-      "description": "一个模块化、AI 驱动的工具包，具备六项核心能力。"
-    },
-    "features": {
-      "agentic": {
-        "title": "Agentic AI 指导",
-        "description": "自主、目标导向的学习支持，结合情境决策帮助与实时个性化推荐。"
+    "capabilities": {
+      "title": "学习者可以做什么",
+      "description": "Cyberly 将一组重点学习活动和支持工具整合在一起。",
+      "agenticLabel": "由学习者掌控的辅助",
+      "agenticDescription": "当 CyberGuard 提供受支持的操作或建议时，学习者仍掌握控制权：受保护的操作必须经过确认和应用保障后才能继续。",
+      "items": {
+        "assessment": {
+          "title": "初始测评",
+          "description": "完成初始测评，在主要主题上建立网络安全学习基线。"
+        },
+        "recommendations": {
+          "title": "基于测评的推荐",
+          "description": "结合测评结果、学习者资料和当前进度，找出合适的下一步学习内容。"
+        },
+        "scenarios": {
+          "title": "情境练习",
+          "description": "通过有引导的网络安全情境练习作出选择，并在每次选择后查看反馈。"
+        },
+        "cyberguard": {
+          "title": "CyberGuard",
+          "description": "提出聚焦网络健康的问题，并在可用时获得带有来源或由学习者掌控操作的 AI 支持指导。"
+        },
+        "progress": {
+          "title": "进度追踪",
+          "description": "查看测评结果、已完成活动、当前推荐和学习进度。"
+        },
+        "interactive": {
+          "title": "互动学习",
+          "description": "通过测评、情境决策、进度标记和徽章，让学习更加主动和有参与感。"
+        }
       },
-      "chatbot": {
-        "title": "网络健康聊天机器人",
-        "description": "通过自然语言互动，实时回答网络安全问题。"
-      },
-      "adaptive": {
-        "title": "自适应难度",
-        "description": "根据用户的知识和进度自动选择难度，提供更有效的学习体验。"
-      },
-      "simulations": {
-        "title": "网络威胁模拟",
-        "description": "模拟网络钓鱼、诈骗和虚假信息情境，锻炼批判性思维和网络安全决策能力。"
-      },
-      "progress": {
-        "title": "进度追踪",
-        "description": "监测学习进度和参与模式，以评估效果并推动自适应推荐。"
-      },
-      "gamified": {
-        "title": "游戏化挑战",
-        "description": "可选测验、成就和互动活动，用于提升动力、参与度和知识保留。"
-      }
+      "summary": "当前学习者功能"
     },
     "how": {
-      "title": "它如何运作",
-      "description": "每一次体验都会围绕个人学习者进行调整。",
+      "title": "Cyberly 如何运作",
+      "description": "一段简单的学习旅程将资料选择、基线测评、练习和反思连接起来。",
       "steps": {
-        "signUp": {
-          "title": "你注册账号",
-          "description": "完成简短的入门资料，包括年龄、语言、熟悉程度和学习目标。"
+        "profile": {
+          "title": "创建学习者资料",
+          "description": "设置账户，并提供语言、熟悉程度和兴趣主题等学习偏好。"
         },
-        "path": {
-          "title": "AI 构建你的路径",
-          "description": "Agentic AI 模块会根据你的回答构建个性化学习路径。"
+        "assessment": {
+          "title": "完成初始测评",
+          "description": "回答基线问题，让 Cyberly 记录你在各主题的起始结果。"
         },
-        "learn": {
-          "title": "按你的方式学习",
-          "description": "与 CyberGuard AI 聊天、探索资源并完成模拟，全部都会根据你的水平调整。"
+        "explore": {
+          "title": "探索和练习",
+          "description": "打开推荐资源，并完成有引导的情境练习。"
         },
-        "track": {
-          "title": "追踪你的成长",
-          "description": "系统会追踪你的进度，并持续优化后续推荐。"
+        "continue": {
+          "title": "回顾并继续",
+          "description": "查看你的进度，并在需要时借助 CyberGuard 支持继续学习。"
         }
       }
     },
     "objectives": {
+      "identity": "Capstone 项目的原始方向",
       "title": "项目目标",
-      "description": "五个目标指引我们构建的一切。",
+      "description": "五个目标塑造了 Cyberly Capstone 项目的方向。",
+      "note": "这些目标描述的是项目愿景，与上方列出的当前学习者功能有所区别；它们并不表示每项目标都已经完整实现或评估。",
+      "itemLabel": "目标 {{number}}",
       "items": {
-        "toolkit": "设计并开发 AI 驱动的网络健康工具包，提升 13–17 岁马来西亚青少年的网络安全意识。",
-        "chatbot": "创建智能网络安全聊天机器人，支持多语言实时对话式学习。",
-        "agentic": "构建 Agentic AI 模块，用于个性化学习推荐和自适应难度调整。",
-        "gamified": "加入可选的游戏化学习区域，包括测验、模拟和真实网络威胁情境。",
-        "evaluate": "通过用户互动分析、前后测评和反馈收集来评估系统。"
+        "toolkit": "为 13–17 岁的马来西亚青少年开发网络健康学习工具包。",
+        "chatbot": "提供多语言对话支持，帮助学习网络健康知识。",
+        "agentic": "探索 AI 支持的推荐和受控智能辅助。",
+        "gamified": "使用测评和网络安全情境等互动学习体验。",
+        "evaluate": "通过学习者互动、测评和反馈来评估项目。"
       }
     },
     "team": {
@@ -729,23 +732,23 @@
       "members": {
         "jayron": {
           "role": "网页开发",
-          "description": "确保逻辑和网页可用性正常，并负责实现 Agentic AI 功能和自适应学习工具。"
+          "description": "参与应用逻辑、网页可用性和受控 AI 支持学习功能的实现。"
         },
         "jinHong": {
           "role": "UI/UX 设计师",
-          "description": "开发核心线框图和低保真原型设计，确保界面适合青少年目标用户。"
+          "description": "参与线框图、原型设计和面向青少年学习者的界面决策。"
         },
         "edward": {
           "role": "系统架构师与聊天机器人负责人",
-          "description": "负责后端架构和 AI 工作流规划，确保组件能支持自适应学习功能。"
+          "description": "参与后端架构、系统整合和 CyberGuard 工作流程规划。"
         },
         "arman": {
-          "role": "Agentic AI 个性化",
-          "description": "构建用于个性化功能和自适应学习的 Agentic AI 分析，关注用户行为分析。"
+          "role": "AI 支持的个性化",
+          "description": "专注于个性化概念、学习者情境和项目的推荐支持方式。"
         },
         "puah": {
           "role": "Agentic AI 模块负责人",
-          "description": "负责系统架构和 Agentic AI 模块实现，并支持聊天机器人功能。"
+          "description": "参与系统架构、受控 Agentic AI 工作和 CyberGuard 功能。"
         }
       }
     }

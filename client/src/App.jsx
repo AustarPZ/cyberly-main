@@ -15,6 +15,7 @@ import "./scenario/scenarios.css";
 import "./profile/profile.css";
 import "./home/home.css";
 import "./auth/auth.css";
+import "./about/about.css";
 import CyberGuardWorkspaceHeader from "./cyberguard/CyberGuardWorkspaceHeader";
 import CyberGuardAiNotice from "./cyberguard/CyberGuardAiNotice";
 import CyberGuardChatShell from "./cyberguard/CyberGuardChatShell";
@@ -6761,20 +6762,20 @@ function AboutPage() {
     { initials: "PW",  name: "Puah Wen Zhen",  roleKey: "about.team.members.puah.role", descKey: "about.team.members.puah.description" },
   ];
 
-  const features = [
-    { icon: "🤖", titleKey: "about.features.agentic.title", descKey: "about.features.agentic.description" },
-    { icon: "💬", titleKey: "about.features.chatbot.title", descKey: "about.features.chatbot.description" },
-    { icon: "🎯", titleKey: "about.features.adaptive.title", descKey: "about.features.adaptive.description" },
-    { icon: "🛡",  titleKey: "about.features.simulations.title", descKey: "about.features.simulations.description" },
-    { icon: "📊", titleKey: "about.features.progress.title", descKey: "about.features.progress.description" },
-    { icon: "🎮", titleKey: "about.features.gamified.title", descKey: "about.features.gamified.description" },
+  const capabilities = [
+    { icon: "◎", key: "assessment" },
+    { icon: "◇", key: "recommendations" },
+    { icon: "↗", key: "scenarios" },
+    { icon: "✦", key: "cyberguard" },
+    { icon: "▤", key: "progress" },
+    { icon: "○", key: "interactive" },
   ];
 
-  const stats = [
-    { value: "56%",   labelKey: "about.stats.identifyScams" },
-    { value: "11%",   labelKey: "about.stats.scamVictim" },
-    { value: "84.6%", labelKey: "about.stats.noWorkshop" },
-    { value: "96%",   labelKey: "about.stats.dailyOnline" },
+  const journeySteps = [
+    "profile",
+    "assessment",
+    "explore",
+    "continue",
   ];
 
   const objectives = [
@@ -6786,132 +6787,116 @@ function AboutPage() {
   ];
 
   return (
-    <div>
-      {/* Hero banner */}
-      <div style={{
-        background: "linear-gradient(135deg, #1a2e1a 0%, #2d4a2d 100%)",
-        padding: "3.5rem 1.5rem 3rem", textAlign: "center", color: "#fff",
-      }}>
-        <div style={{ maxWidth: 680, margin: "0 auto" }}>
-          <div style={{ fontSize: "0.78rem", fontWeight: 600, color: "rgba(255,255,255,0.45)", letterSpacing: "0.1em", textTransform: "uppercase", marginBottom: "0.75rem" }}>
-            {t("about.hero.eyebrow")}
+    <div className="cy-about-page">
+      <PageContainer className="cy-about-header-wrap">
+        <PageBackButton className="cy-about-back" />
+        <header className="cy-about-header">
+          <PageIdentity label={t("about.hero.eyebrow")} icon="◇" />
+          <h1 className="cy-about-title">{t("about.hero.title")}</h1>
+          <p className="cy-about-lede">{t("about.hero.description")}</p>
+          <ul className="cy-about-project-meta" aria-label={t("about.hero.projectDetailsLabel")}>
+            <li><Badge tone="brand">{t("about.hero.audience")}</Badge></li>
+            <li><Badge tone="neutral">Taylor's University</Badge></li>
+            <li><Badge tone="success">{t("about.hero.collaboration")}</Badge></li>
+          </ul>
+        </header>
+      </PageContainer>
+
+      <PageContainer>
+        <PageSection className="cy-about-section cy-about-why">
+          <div className="cy-about-section-heading">
+            <h2>{t("about.why.title")}</h2>
+            <p>{t("about.why.description")}</p>
           </div>
-          <h1 style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "clamp(1.6rem, 4vw, 2.4rem)", fontWeight: 600, marginBottom: "0.85rem", lineHeight: 1.3 }}>
-            {t("about.hero.title")}
-          </h1>
-          <p style={{ color: "rgba(255,255,255,0.65)", fontSize: "0.95rem", lineHeight: 1.7, marginBottom: "1.5rem" }}>
-            {t("about.hero.description")}
-          </p>
-          <div style={{ display: "inline-flex", alignItems: "center", gap: "0.5rem", background: "rgba(255,255,255,0.1)", border: "1px solid rgba(255,255,255,0.15)", borderRadius: 99, padding: "0.45rem 1rem", fontSize: "0.8rem", color: "rgba(255,255,255,0.65)" }}>
-            🏫 {t("about.hero.collaboration")}
+          <Surface variant="subdued" className="cy-about-purpose">
+            <p>{t("about.why.practice")}</p>
+          </Surface>
+        </PageSection>
+
+        <PageSection className="cy-about-section">
+          <div className="cy-about-section-heading">
+            <h2>{t("about.capabilities.title")}</h2>
+            <p>{t("about.capabilities.description")}</p>
           </div>
-        </div>
-      </div>
-
-      <div className="section">
-
-        <PageBackButton />
-
-        {/* Stats */}
-        <div style={{ marginBottom: "3rem" }}>
-          <p className="section-title" style={{ fontSize: "1.3rem" }}>{t("about.why.title")}</p>
-          <p className="section-sub">{t("about.why.description")}</p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(200px, 1fr))", gap: "1rem" }}>
-            {stats.map(s => (
-              <div key={s.value} className="card" style={{ textAlign: "center", padding: "1.5rem 1rem" }}>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "2rem", fontWeight: 700, color: "var(--teal)", marginBottom: "0.4rem" }}>{s.value}</div>
-                <div style={{ fontSize: "0.82rem", color: "#666", lineHeight: 1.5 }}>{t(s.labelKey)}</div>
-              </div>
+          <ul className="cy-about-capability-grid">
+            {capabilities.map(capability => (
+              <li key={capability.key}>
+                <Surface as="article" className="cy-about-capability-card">
+                  <span className="cy-about-capability-icon" aria-hidden="true">{capability.icon}</span>
+                  <h3>{t(`about.capabilities.items.${capability.key}.title`)}</h3>
+                  <p>{t(`about.capabilities.items.${capability.key}.description`)}</p>
+                </Surface>
+              </li>
             ))}
-          </div>
-        </div>
+          </ul>
+          <aside className="cy-about-agentic-note" aria-label={t("about.capabilities.agenticLabel")}>
+            <strong>{t("about.capabilities.agenticLabel")}</strong>
+            <p>{t("about.capabilities.agenticDescription")}</p>
+          </aside>
+        </PageSection>
 
-        {/* Features */}
-        <div style={{ marginBottom: "3rem" }}>
-          <p className="section-title" style={{ fontSize: "1.3rem" }}>{t("about.built.title")}</p>
-          <p className="section-sub">{t("about.built.description")}</p>
-          <div className="card-grid">
-            {features.map(f => (
-              <div key={f.titleKey} className="card" style={{ padding: "1.25rem" }}>
-                <div style={{ fontSize: "1.6rem", marginBottom: "0.6rem" }}>{f.icon}</div>
-                <div style={{ fontWeight: 600, fontSize: "0.95rem", marginBottom: "0.35rem" }}>{t(f.titleKey)}</div>
-                <div style={{ color: "#666", fontSize: "0.82rem", lineHeight: 1.6 }}>{t(f.descKey)}</div>
-              </div>
-            ))}
+        <PageSection className="cy-about-section">
+          <div className="cy-about-section-heading">
+            <h2>{t("about.how.title")}</h2>
+            <p>{t("about.how.description")}</p>
           </div>
-        </div>
-
-        {/* How it works */}
-        <div style={{ marginBottom: "3rem" }}>
-          <p className="section-title" style={{ fontSize: "1.3rem" }}>{t("about.how.title")}</p>
-          <p className="section-sub">{t("about.how.description")}</p>
-          <div className="card" style={{ background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)", padding: "1.75rem" }}>
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "1.25rem" }}>
-              {[
-                { step: "01", titleKey: "about.how.steps.signUp.title", descKey: "about.how.steps.signUp.description" },
-                { step: "02", titleKey: "about.how.steps.path.title", descKey: "about.how.steps.path.description" },
-                { step: "03", titleKey: "about.how.steps.learn.title", descKey: "about.how.steps.learn.description" },
-                { step: "04", titleKey: "about.how.steps.track.title", descKey: "about.how.steps.track.description" },
-              ].map(s => (
-                <div key={s.step} style={{ display: "flex", gap: "0.85rem" }}>
-                  <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.1rem", fontWeight: 700, color: "var(--teal)", opacity: 0.5, flexShrink: 0 }}>{s.step}</div>
-                  <div>
-                    <div style={{ fontWeight: 600, fontSize: "0.9rem", marginBottom: "0.25rem" }}>{t(s.titleKey)}</div>
-                    <div style={{ fontSize: "0.82rem", color: "#555", lineHeight: 1.6 }}>{t(s.descKey)}</div>
-                  </div>
+          <ol className="cy-about-journey">
+            {journeySteps.map((step, index) => (
+              <li key={step}>
+                <span className="cy-about-step-number" aria-hidden="true">{String(index + 1).padStart(2, "0")}</span>
+                <div>
+                  <h3>{t(`about.how.steps.${step}.title`)}</h3>
+                  <p>{t(`about.how.steps.${step}.description`)}</p>
                 </div>
-              ))}
-            </div>
-          </div>
-        </div>
-
-        {/* Objectives */}
-        <div style={{ marginBottom: "3rem" }}>
-          <p className="section-title" style={{ fontSize: "1.3rem" }}>{t("about.objectives.title")}</p>
-          <p className="section-sub">{t("about.objectives.description")}</p>
-          <div style={{ display: "flex", flexDirection: "column", gap: "0.75rem" }}>
-            {objectives.map((obj, i) => (
-              <div key={i} className="card" style={{ display: "flex", gap: "1rem", alignItems: "flex-start", padding: "1rem 1.25rem" }}>
-                <div style={{
-                  width: 28, height: 28, borderRadius: "50%", background: "var(--teal-lt)",
-                  color: "var(--teal)", fontFamily: "'Space Grotesk', sans-serif",
-                  fontWeight: 700, fontSize: "0.78rem", display: "flex", alignItems: "center",
-                  justifyContent: "center", flexShrink: 0,
-                }}>{i + 1}</div>
-                <p style={{ margin: 0, fontSize: "0.88rem", color: "#444", lineHeight: 1.65 }}>{t(obj)}</p>
-              </div>
+              </li>
             ))}
+          </ol>
+        </PageSection>
+
+        <PageSection className="cy-about-section cy-about-objectives">
+          <div className="cy-about-section-heading">
+            <PageIdentity label={t("about.objectives.identity")} icon="◎" />
+            <h2>{t("about.objectives.title")}</h2>
+            <p>{t("about.objectives.description")}</p>
           </div>
-        </div>
+          <p className="cy-about-objective-note">{t("about.objectives.note")}</p>
+          <ol className="cy-about-objective-list">
+            {objectives.map((objective, index) => (
+              <li key={objective}>
+                <Badge tone="neutral">{t("about.objectives.itemLabel", { number: index + 1 })}</Badge>
+                <p>{t(objective)}</p>
+              </li>
+            ))}
+          </ol>
+        </PageSection>
 
-        {/* Team */}
-        <div>
-          <p className="section-title" style={{ fontSize: "1.3rem" }}>{t("about.team.title")}</p>
-          <p className="section-sub">{t("about.team.description")}</p>
-
-          {/* Supervisor */}
-          <div className="card" style={{ display: "flex", alignItems: "center", gap: "1rem", marginBottom: "1.25rem", background: "var(--teal-lt)", border: "1px solid rgba(29,158,117,0.2)", padding: "1.25rem 1.5rem" }}>
-            <div style={{ width: 48, height: 48, borderRadius: "50%", background: "var(--teal)", color: "#fff", display: "flex", alignItems: "center", justifyContent: "center", fontWeight: 700, fontSize: "1rem", flexShrink: 0 }}>SZ</div>
+        <PageSection className="cy-about-section cy-about-team">
+          <div className="cy-about-section-heading">
+            <h2>{t("about.team.title")}</h2>
+            <p>{t("about.team.description")}</p>
+          </div>
+          <Surface as="article" variant="subdued" className="cy-about-supervisor">
+            <div className="cy-about-avatar" aria-hidden="true">SZ</div>
             <div>
-              <div style={{ fontWeight: 600, fontSize: "0.95rem" }}>Dr Siti Zainab Ibrahim</div>
-              <div style={{ fontSize: "0.8rem", color: "var(--teal)", fontWeight: 600, marginBottom: "0.2rem" }}>{t("about.team.supervisor.role")}</div>
-              <div style={{ fontSize: "0.8rem", color: "#555" }}>{t("about.team.supervisor.description")}</div>
+              <h3>Dr Siti Zainab Ibrahim</h3>
+              <p className="cy-about-team-role">{t("about.team.supervisor.role")}</p>
+              <p>{t("about.team.supervisor.description")}</p>
             </div>
-          </div>
-
-          <div className="team-grid">
-            {members.map(m => (
-              <div className="team-card" key={m.name} style={{ padding: "1.5rem 1.25rem" }}>
-                <div className="avatar">{m.initials}</div>
-                <div style={{ fontWeight: 600, fontSize: "0.95rem" }}>{m.name}</div>
-                <div style={{ color: "var(--teal)", fontSize: "0.75rem", fontWeight: 600, margin: "0.2rem 0 0.5rem" }}>{t(m.roleKey)}</div>
-                <div style={{ color: "#777", fontSize: "0.78rem", lineHeight: 1.55 }}>{t(m.descKey)}</div>
-              </div>
+          </Surface>
+          <ul className="cy-about-team-grid">
+            {members.map(member => (
+              <li key={member.name}>
+                <Surface as="article" className="cy-about-team-card">
+                  <div className="cy-about-avatar" aria-hidden="true">{member.initials}</div>
+                  <h3>{member.name}</h3>
+                  <p className="cy-about-team-role">{t(member.roleKey)}</p>
+                  <p>{t(member.descKey)}</p>
+                </Surface>
+              </li>
             ))}
-          </div>
-        </div>
-
-      </div>
+          </ul>
+        </PageSection>
+      </PageContainer>
     </div>
   );
 }

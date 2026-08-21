@@ -642,81 +642,84 @@
   "about": {
     "hero": {
       "eyebrow": "Projek Capstone · Kumpulan 20 · Taylor's University",
-      "title": "Toolkit Kesihatan Siber Interaktif untuk Remaja",
-      "description": "Platform berasaskan AI yang dibina untuk meningkatkan kesedaran keselamatan siber dan menggalakkan tingkah laku digital yang lebih selamat dalam kalangan remaja Malaysia berumur 13–17 tahun.",
-      "collaboration": "Dengan kerjasama Cybersecurity Hub DISS – Impact Lab"
+      "title": "Cyberly: toolkit pembelajaran kesihatan siber untuk remaja",
+      "description": "Cyberly ialah pengalaman pembelajaran interaktif yang disokong AI untuk membantu remaja Malaysia berumur 13–17 tahun membina pengetahuan keselamatan siber praktikal dan membuat keputusan digital yang lebih termaklum.",
+      "audience": "Untuk remaja Malaysia berumur 13–17 tahun",
+      "collaboration": "Cybersecurity Hub DISS – IMPACT LAB",
+      "projectDetailsLabel": "Butiran projek"
     },
     "why": {
-      "title": "Mengapa ini penting",
-      "description": "Landskap ancaman siber yang dihadapi remaja Malaysia semakin serius dan berkembang."
+      "title": "Mengapa Cyberly",
+      "description": "Golongan muda kerap menggunakan perkhidmatan digital, mesej dan media. Amalan keselamatan siber praktikal boleh membantu mereka berhenti seketika, menilai perkara yang dilihat dan memilih langkah seterusnya yang lebih selamat.",
+      "practice": "Cyberly menyediakan peluang berstruktur untuk belajar, berlatih membuat keputusan dan membuat refleksi tentang situasi dalam talian harian tanpa menjanjikan bahawa teknologi boleh menghapuskan setiap risiko."
     },
-    "stats": {
-      "identifyScams": "remaja Malaysia berkata mereka boleh mengenal pasti penipuan",
-      "scamVictim": "telah menjadi mangsa penipuan dalam talian",
-      "noWorkshop": "pelajar tidak pernah menghadiri bengkel kesedaran penipuan",
-      "dailyOnline": "remaja berumur 12–17 tahun masuk dalam talian setiap hari"
-    },
-    "built": {
-      "title": "Apa yang kami bina",
-      "description": "Toolkit modular berkuasa AI dengan enam keupayaan utama."
-    },
-    "features": {
-      "agentic": {
-        "title": "Panduan AI Agentic",
-        "description": "Sokongan pembelajaran autonomi dan berorientasikan matlamat dengan bantuan keputusan berasaskan senario serta cadangan masa nyata yang diperibadikan."
+    "capabilities": {
+      "title": "Apa yang Pelajar Boleh Lakukan",
+      "description": "Cyberly menghimpunkan aktiviti pembelajaran dan alat sokongan yang berfokus.",
+      "agenticLabel": "Bantuan dikawal pelajar",
+      "agenticDescription": "Apabila CyberGuard membentangkan tindakan atau cadangan yang disokong, pelajar kekal mengawal: pengesahan dan perlindungan aplikasi diperlukan sebelum tindakan terlindung boleh diteruskan.",
+      "items": {
+        "assessment": {
+          "title": "Penilaian Awal",
+          "description": "Lengkapkan penilaian awal untuk menetapkan tahap asas pembelajaran keselamatan siber merentas topik utama."
+        },
+        "recommendations": {
+          "title": "Cadangan Berdasarkan Penilaian",
+          "description": "Gunakan keputusan penilaian, maklumat profil pelajar dan kemajuan semasa untuk mengenal pasti langkah pembelajaran seterusnya yang sesuai."
+        },
+        "scenarios": {
+          "title": "Latihan Senario",
+          "description": "Berlatih membuat keputusan melalui senario keselamatan siber berpandu dan semak maklum balas selepas setiap pilihan."
+        },
+        "cyberguard": {
+          "title": "CyberGuard",
+          "description": "Tanya soalan kesihatan siber yang berfokus dan terima panduan disokong AI dengan sumber atau tindakan dikawal pelajar apabila tersedia."
+        },
+        "progress": {
+          "title": "Penjejakan Kemajuan",
+          "description": "Semak keputusan penilaian, aktiviti yang diselesaikan, cadangan semasa dan kemajuan pembelajaran."
+        },
+        "interactive": {
+          "title": "Pembelajaran Interaktif",
+          "description": "Gunakan penilaian, keputusan senario, penanda kemajuan dan lencana untuk menjadikan pembelajaran lebih aktif dan menarik."
+        }
       },
-      "chatbot": {
-        "title": "Chatbot Kesihatan Siber",
-        "description": "Sokongan perbualan masa nyata yang menjawab soalan keselamatan siber melalui interaksi bahasa semula jadi."
-      },
-      "adaptive": {
-        "title": "Kesukaran Adaptif",
-        "description": "Memilih tahap kesukaran secara automatik berdasarkan pengetahuan dan kemajuan pengguna untuk pengalaman pembelajaran yang lebih berkesan."
-      },
-      "simulations": {
-        "title": "Simulasi Ancaman Siber",
-        "description": "Mensimulasikan pancingan data, penipuan dan senario maklumat palsu untuk mengasah pemikiran kritis serta keputusan keselamatan siber."
-      },
-      "progress": {
-        "title": "Penjejakan Kemajuan",
-        "description": "Memantau kemajuan pembelajaran dan corak penglibatan untuk menilai keberkesanan dan memacu cadangan adaptif."
-      },
-      "gamified": {
-        "title": "Cabaran Bergamifikasi",
-        "description": "Kuiz, pencapaian dan aktiviti interaktif pilihan untuk meningkatkan motivasi, penglibatan dan pengekalan pengetahuan."
-      }
+      "summary": "Keupayaan pelajar semasa"
     },
     "how": {
-      "title": "Cara ia berfungsi",
-      "description": "Setiap pengalaman dibentuk mengikut pelajar secara individu.",
+      "title": "Cara Cyberly Berfungsi",
+      "description": "Perjalanan pembelajaran ringkas menghubungkan pilihan profil, penilaian asas, latihan dan refleksi.",
       "steps": {
-        "signUp": {
-          "title": "Anda mendaftar",
-          "description": "Lengkapkan profil permulaan ringkas — umur, bahasa, tahap kebiasaan dan matlamat pembelajaran anda."
+        "profile": {
+          "title": "Cipta profil pelajar anda",
+          "description": "Sediakan akaun anda dan kongsi pilihan pembelajaran seperti bahasa, tahap kebiasaan dan topik minat."
         },
-        "path": {
-          "title": "AI membina laluan anda",
-          "description": "Modul Agentic AI membina laluan pembelajaran diperibadikan berdasarkan respons anda."
+        "assessment": {
+          "title": "Lengkapkan penilaian awal",
+          "description": "Jawab soalan asas supaya Cyberly boleh merekodkan keputusan awal topik anda."
         },
-        "learn": {
-          "title": "Belajar dengan cara anda",
-          "description": "Berbual dengan CyberGuard AI, teroka sumber dan cuba simulasi — semuanya disesuaikan dengan tahap anda."
+        "explore": {
+          "title": "Teroka dan berlatih",
+          "description": "Buka sumber yang dicadangkan dan lalui Latihan Senario berpandu."
         },
-        "track": {
-          "title": "Pantau perkembangan anda",
-          "description": "Kemajuan anda dijejaki untuk terus memperhalusi cadangan dari semasa ke semasa."
+        "continue": {
+          "title": "Semak dan teruskan",
+          "description": "Semak kemajuan anda dan teruskan pembelajaran dengan sokongan CyberGuard apabila diperlukan."
         }
       }
     },
     "objectives": {
-      "title": "Objektif projek",
-      "description": "Lima matlamat yang membimbing semua perkara yang kami bina.",
+      "identity": "Hala tuju asal projek Capstone",
+      "title": "Objektif Projek",
+      "description": "Lima matlamat membentuk hala tuju projek Capstone Cyberly.",
+      "note": "Objektif ini menerangkan matlamat projek. Ia berasingan daripada keupayaan pelajar semasa yang diterangkan di atas dan tidak mendakwa bahawa setiap objektif telah dilaksanakan atau dinilai sepenuhnya.",
+      "itemLabel": "Objektif {{number}}",
       "items": {
-        "toolkit": "Mereka bentuk dan membangunkan Toolkit Kesihatan Siber berasaskan AI yang meningkatkan kesedaran keselamatan siber dalam kalangan remaja Malaysia berumur 13–17 tahun.",
-        "chatbot": "Mencipta chatbot keselamatan siber pintar untuk pembelajaran perbualan masa nyata dalam pelbagai bahasa.",
-        "agentic": "Membina modul Agentic AI untuk cadangan pembelajaran diperibadikan dan pelarasan kesukaran adaptif.",
-        "gamified": "Menggabungkan kawasan pembelajaran bergamifikasi pilihan — kuiz, simulasi dan senario ancaman siber kehidupan sebenar.",
-        "evaluate": "Menilai sistem melalui analisis interaksi pengguna, penilaian sebelum/selepas dan pengumpulan maklum balas."
+        "toolkit": "Membangunkan toolkit pembelajaran kesihatan siber untuk remaja Malaysia berumur 13–17 tahun.",
+        "chatbot": "Menyediakan sokongan perbualan pelbagai bahasa untuk pembelajaran kesihatan siber.",
+        "agentic": "Meneroka cadangan disokong AI dan bantuan pintar yang terkawal.",
+        "gamified": "Menggunakan pengalaman pembelajaran interaktif seperti penilaian dan senario keselamatan siber.",
+        "evaluate": "Menilai projek melalui interaksi pelajar, penilaian dan maklum balas."
       }
     },
     "team": {
@@ -729,23 +732,23 @@
       "members": {
         "jayron": {
           "role": "Pembangun Web",
-          "description": "Memastikan logik dan kebolehgunaan halaman web berfungsi, serta mengetuai pelaksanaan ciri Agentic AI dan alat pembelajaran adaptif."
+          "description": "Bekerja pada logik aplikasi, kebolehgunaan web dan pelaksanaan ciri pembelajaran disokong AI yang terkawal."
         },
         "jinHong": {
           "role": "Pereka UI/UX",
-          "description": "Membangunkan wireframe utama dan reka bentuk prototaip fideliti rendah, memastikan antara muka disesuaikan untuk demografi sasaran remaja."
+          "description": "Menyumbang kepada wireframe, reka bentuk prototaip dan keputusan antara muka yang berfokus pada pelajar remaja."
         },
         "edward": {
           "role": "Arkitek Sistem & Ketua Chatbot",
-          "description": "Mengendalikan seni bina bahagian belakang dan perancangan aliran kerja AI, memastikan komponen diperkemas untuk ciri pembelajaran adaptif."
+          "description": "Menyumbang kepada seni bina bahagian belakang, integrasi sistem dan perancangan aliran kerja CyberGuard."
         },
         "arman": {
-          "role": "Pemperibadian Agentic AI",
-          "description": "Membina analitik Agentic AI untuk ciri diperibadikan dan pembelajaran adaptif, dengan fokus pada analisis tingkah laku pengguna."
+          "role": "Pemperibadian Disokong AI",
+          "description": "Berfokus pada konsep pemperibadian, konteks pelajar dan pendekatan projek terhadap sokongan cadangan."
         },
         "puah": {
           "role": "Ketua Modul Agentic AI",
-          "description": "Mengetuai pelaksanaan seni bina sistem dan modul Agentic AI, serta menyokong fungsi chatbot."
+          "description": "Menyumbang kepada seni bina sistem, kerja Agentic AI yang terkawal dan fungsi CyberGuard."
         }
       }
     }

@@ -1,0 +1,297 @@
+.cy-about-page {
+  min-width: 0;
+  padding-block: clamp(1rem, 3vw, 2rem) clamp(3rem, 7vw, 5rem);
+  background:
+    linear-gradient(180deg, color-mix(in srgb, var(--cyberly-indigo-600) 6%, transparent), transparent 24rem),
+    var(--cyberly-page-bg);
+  color: var(--cyberly-text-primary);
+}
+
+.cy-about-header-wrap,
+.cy-about-header,
+.cy-about-section,
+.cy-about-section-heading,
+.cy-about-capability-card,
+.cy-about-team-card,
+.cy-about-supervisor,
+.cy-about-journey li,
+.cy-about-objective-list li {
+  min-width: 0;
+  max-width: 100%;
+}
+
+.cy-about-back {
+  margin-bottom: 1rem;
+}
+
+.cy-about-header {
+  display: grid;
+  gap: 1rem;
+  padding: clamp(1.5rem, 5vw, 3rem);
+  border: 1px solid var(--cyberly-border-soft);
+  border-radius: var(--cyberly-radius-panel);
+  background:
+    linear-gradient(135deg, color-mix(in srgb, var(--cyberly-mint-500) 13%, var(--cyberly-surface-primary)), var(--cyberly-surface-primary) 58%),
+    var(--cyberly-surface-primary);
+  box-shadow: 0 18px 50px color-mix(in srgb, var(--cyberly-indigo-600) 10%, transparent);
+}
+
+.cy-about-title {
+  max-width: 18ch;
+  margin: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(2rem, 5vw, 3.5rem);
+  line-height: 1.08;
+  overflow-wrap: anywhere;
+}
+
+.cy-about-lede {
+  max-width: 68ch;
+  margin: 0;
+  color: var(--cyberly-text-secondary);
+  font-size: clamp(1rem, 2vw, 1.12rem);
+  line-height: 1.7;
+}
+
+.cy-about-project-meta,
+.cy-about-capability-grid,
+.cy-about-team-grid,
+.cy-about-objective-list,
+.cy-about-journey {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.cy-about-project-meta {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.6rem;
+}
+
+.cy-about-section {
+  padding-block: clamp(2.75rem, 7vw, 5rem) 0;
+}
+
+.cy-about-section-heading {
+  display: grid;
+  gap: 0.65rem;
+  max-width: 70ch;
+  margin-bottom: 1.5rem;
+}
+
+.cy-about-section-heading h2 {
+  margin: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: clamp(1.55rem, 3vw, 2.15rem);
+  line-height: 1.2;
+  overflow-wrap: anywhere;
+}
+
+.cy-about-section-heading p,
+.cy-about-purpose p,
+.cy-about-capability-card p,
+.cy-about-agentic-note p,
+.cy-about-journey p,
+.cy-about-objective-list p,
+.cy-about-team-card p,
+.cy-about-supervisor p {
+  margin: 0;
+  color: var(--cyberly-text-secondary);
+  line-height: 1.65;
+  overflow-wrap: anywhere;
+}
+
+.cy-about-purpose {
+  max-width: 72ch;
+  border-inline-start: 4px solid var(--cyberly-mint-500);
+}
+
+.cy-about-capability-grid {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.cy-about-capability-grid > li,
+.cy-about-team-grid > li {
+  display: flex;
+  min-width: 0;
+}
+
+.cy-about-capability-card,
+.cy-about-team-card {
+  width: 100%;
+}
+
+.cy-about-capability-card {
+  display: grid;
+  align-content: start;
+  gap: 0.65rem;
+}
+
+.cy-about-capability-icon {
+  display: grid;
+  width: 2.5rem;
+  height: 2.5rem;
+  place-items: center;
+  border-radius: var(--cyberly-radius-control);
+  background: color-mix(in srgb, var(--cyberly-mint-500) 14%, var(--cyberly-surface-primary));
+  color: var(--cyberly-indigo-600);
+  font-size: 1.2rem;
+  font-weight: 800;
+}
+
+.cy-about-capability-card h3,
+.cy-about-journey h3,
+.cy-about-team-card h3,
+.cy-about-supervisor h3 {
+  margin: 0;
+  font-family: 'Space Grotesk', sans-serif;
+  font-size: 1rem;
+  line-height: 1.35;
+  overflow-wrap: anywhere;
+}
+
+.cy-about-agentic-note {
+  display: grid;
+  gap: 0.3rem;
+  max-width: 72ch;
+  margin-top: 1.25rem;
+  padding: 1rem 1.15rem;
+  border: 1px solid color-mix(in srgb, var(--cyberly-indigo-600) 24%, var(--cyberly-border-soft));
+  border-radius: var(--cyberly-radius-control);
+  background: color-mix(in srgb, var(--cyberly-indigo-600) 5%, var(--cyberly-surface-primary));
+}
+
+.cy-about-journey {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 1rem;
+}
+
+.cy-about-journey li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  gap: 0.75rem;
+  padding: 1.15rem 0;
+  border-top: 2px solid var(--cyberly-border-soft);
+}
+
+.cy-about-step-number {
+  color: var(--cyberly-brand-primary);
+  font-family: 'Space Grotesk', sans-serif;
+  font-weight: 800;
+}
+
+.cy-about-journey h3 {
+  margin-bottom: 0.35rem;
+}
+
+.cy-about-objectives {
+  margin-top: clamp(2.75rem, 7vw, 5rem);
+  padding: clamp(1.5rem, 4vw, 2.5rem);
+  border: 1px solid var(--cyberly-border-soft);
+  border-radius: var(--cyberly-radius-panel);
+  background: var(--cyberly-surface-secondary);
+}
+
+.cy-about-objectives .cy-about-section-heading {
+  margin-bottom: 1rem;
+}
+
+.cy-about-objective-note {
+  max-width: 72ch;
+  margin: 0 0 1.25rem;
+  color: var(--cyberly-text-secondary);
+  font-weight: 700;
+  line-height: 1.6;
+}
+
+.cy-about-objective-list {
+  display: grid;
+  gap: 0.75rem;
+}
+
+.cy-about-objective-list li {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: start;
+  gap: 0.8rem;
+  padding: 1rem;
+  border-radius: var(--cyberly-radius-control);
+  background: var(--cyberly-surface-primary);
+}
+
+.cy-about-supervisor {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr);
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.cy-about-team-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
+  gap: 1rem;
+}
+
+.cy-about-team-card {
+  display: grid;
+  align-content: start;
+  gap: 0.4rem;
+}
+
+.cy-about-avatar {
+  display: grid;
+  width: 3rem;
+  height: 3rem;
+  margin-bottom: 0.35rem;
+  place-items: center;
+  border-radius: 50%;
+  background: var(--cyberly-indigo-600);
+  color: var(--cyberly-surface-primary);
+  font-weight: 800;
+}
+
+.cy-about-team-role {
+  color: var(--cyberly-brand-primary);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+@media (max-width: 64rem) {
+  .cy-about-capability-grid {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cy-about-journey {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}
+
+@media (max-width: 40rem) {
+  .cy-about-header {
+    padding: 1.25rem;
+  }
+
+  .cy-about-capability-grid,
+  .cy-about-journey {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cy-about-objectives {
+    padding: 1.15rem;
+  }
+
+  .cy-about-objective-list li,
+  .cy-about-supervisor {
+    grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cy-about-avatar {
+    width: 2.75rem;
+    height: 2.75rem;
+  }
+}

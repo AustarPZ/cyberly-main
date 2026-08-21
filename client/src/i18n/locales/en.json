@@ -642,81 +642,84 @@
   "about": {
     "hero": {
       "eyebrow": "Capstone Project · Group 20 · Taylor's University",
-      "title": "Interactive Cyber Wellness Toolkit for Teens",
-      "description": "An AI-driven platform built to enhance cybersecurity awareness and promote safer digital behaviour among Malaysian teenagers aged 13–17.",
-      "collaboration": "In collaboration with Cybersecurity Hub DISS – Impact Lab"
+      "title": "Cyberly: a cyber wellness learning toolkit for teens",
+      "description": "Cyberly is an AI-supported interactive learning experience that helps Malaysian teenagers aged 13–17 build practical cyber-safety knowledge and make more informed digital decisions.",
+      "audience": "For Malaysian teens aged 13–17",
+      "collaboration": "Cybersecurity Hub DISS – IMPACT LAB",
+      "projectDetailsLabel": "Project details"
     },
     "why": {
-      "title": "Why this matters",
-      "description": "The cyber threat landscape facing Malaysian teenagers is serious and growing."
+      "title": "Why Cyberly",
+      "description": "Young people regularly interact with digital services, messages and media. Practical cyber-safety habits can help them pause, assess what they see and choose safer next steps.",
+      "practice": "Cyberly provides structured opportunities to learn, practise decisions and reflect on everyday online situations without promising that technology can remove every risk."
     },
-    "stats": {
-      "identifyScams": "of Malaysian teens say they can identify scams",
-      "scamVictim": "have already fallen victim to an online scam",
-      "noWorkshop": "of students never attended a scam awareness workshop",
-      "dailyOnline": "of teens aged 12–17 go online daily"
-    },
-    "built": {
-      "title": "What we built",
-      "description": "A modular, AI-powered toolkit with six core capabilities."
-    },
-    "features": {
-      "agentic": {
-        "title": "Agentic AI Guidance",
-        "description": "Autonomous, goal-oriented learning support with scenario-based decision assistance and real-time personalised recommendations."
+    "capabilities": {
+      "title": "What Learners Can Do",
+      "description": "Cyberly brings together a focused set of learning activities and support tools.",
+      "agenticLabel": "Learner-controlled assistance",
+      "agenticDescription": "When CyberGuard presents a supported action or proposal, the learner remains in control: confirmation and application safeguards are required before a protected action can proceed.",
+      "items": {
+        "assessment": {
+          "title": "Initial Assessment",
+          "description": "Complete an initial assessment to establish a cybersecurity learning baseline across key topics."
+        },
+        "recommendations": {
+          "title": "Assessment-informed Recommendations",
+          "description": "Use assessment results, learner profile information and current progress to identify a suitable next learning step."
+        },
+        "scenarios": {
+          "title": "Scenario Practice",
+          "description": "Practise decisions through guided cyber-safety scenarios and review feedback after each choice."
+        },
+        "cyberguard": {
+          "title": "CyberGuard",
+          "description": "Ask focused cyber-wellness questions and receive AI-supported guidance with sources or learner-controlled actions where available."
+        },
+        "progress": {
+          "title": "Progress Tracking",
+          "description": "Review assessment results, completed activities, current recommendations and learning progress."
+        },
+        "interactive": {
+          "title": "Interactive Learning",
+          "description": "Use assessments, scenario decisions, progress markers and badges to make learning more active and engaging."
+        }
       },
-      "chatbot": {
-        "title": "Cyber Wellness Chatbot",
-        "description": "Real-time conversational support that answers cybersecurity questions through natural language interaction."
-      },
-      "adaptive": {
-        "title": "Adaptive Difficulty",
-        "description": "Auto-selects difficulty based on the user's knowledge and progress for a more effective lesson experience."
-      },
-      "simulations": {
-        "title": "Cyber Threat Simulations",
-        "description": "Simulate phishing, scams, and misinformation scenarios to sharpen critical thinking and cybersecurity decisions."
-      },
-      "progress": {
-        "title": "Progress Tracking",
-        "description": "Monitors learning progress and engagement patterns to assess effectiveness and drive adaptive recommendations."
-      },
-      "gamified": {
-        "title": "Gamified Challenges",
-        "description": "Optional quizzes, achievements, and interactive activities to boost motivation, engagement, and knowledge retention."
-      }
+      "summary": "Current learner capabilities"
     },
     "how": {
-      "title": "How it works",
-      "description": "Every experience is shaped around the individual learner.",
+      "title": "How Cyberly Works",
+      "description": "A simple learning journey connects profile choices, a baseline assessment, practice and reflection.",
       "steps": {
-        "signUp": {
-          "title": "You sign up",
-          "description": "Complete a short onboarding profile — your age, language, familiarity, and learning goals."
+        "profile": {
+          "title": "Create your learner profile",
+          "description": "Set up your account and share learning preferences such as language, familiarity and topics of interest."
         },
-        "path": {
-          "title": "AI builds your path",
-          "description": "The Agentic AI module constructs a personalised learning path based on your responses."
+        "assessment": {
+          "title": "Complete the initial assessment",
+          "description": "Answer baseline questions so Cyberly can record your starting topic results."
         },
-        "learn": {
-          "title": "Learn your way",
-          "description": "Chat with CyberGuard AI, explore resources, and tackle simulations — all adapted to your level."
+        "explore": {
+          "title": "Explore and practise",
+          "description": "Open recommended resources and work through guided Scenario Practice."
         },
-        "track": {
-          "title": "Track your growth",
-          "description": "Your progress is tracked to continuously refine recommendations over time."
+        "continue": {
+          "title": "Review and continue",
+          "description": "Review your progress and continue learning with CyberGuard support when you need it."
         }
       }
     },
     "objectives": {
-      "title": "Project objectives",
-      "description": "Five goals that guide everything we build.",
+      "identity": "Original capstone direction",
+      "title": "Project Objectives",
+      "description": "Five goals shaped the direction of the Cyberly capstone project.",
+      "note": "These objectives describe the goals of the project. They are separate from the current learner capabilities described above and do not claim that every objective has been fully implemented or evaluated.",
+      "itemLabel": "Objective {{number}}",
       "items": {
-        "toolkit": "Design and develop an AI-driven Cyber Wellness Toolkit that enhances cybersecurity awareness among Malaysian teenagers aged 13–17.",
-        "chatbot": "Create an intelligent cybersecurity chatbot for real-time conversational learning in multiple languages.",
-        "agentic": "Build an Agentic AI module for personalised learning recommendations and adaptive difficulty adjustment.",
-        "gamified": "Incorporate optional gamified learning areas — quizzes, simulations, and real-life cyber threat scenarios.",
-        "evaluate": "Evaluate the system through user interaction analysis, pre/post assessments, and feedback collection."
+        "toolkit": "Develop a cyber wellness learning toolkit for Malaysian teenagers aged 13–17.",
+        "chatbot": "Provide multilingual conversational support for learning about cyber wellness.",
+        "agentic": "Explore AI-supported recommendations and controlled intelligent assistance.",
+        "gamified": "Use interactive learning experiences such as assessments and cyber-safety scenarios.",
+        "evaluate": "Evaluate the project through learner interaction, assessment and feedback."
       }
     },
     "team": {
@@ -729,23 +732,23 @@
       "members": {
         "jayron": {
           "role": "Web Developer",
-          "description": "Ensures logic and webpage usability are functional, and leads implementation of Agentic AI features and adaptive learning tools."
+          "description": "Worked on application logic, web usability and the implementation of controlled AI-supported learning features."
         },
         "jinHong": {
           "role": "UI/UX Designer",
-          "description": "Develops the core wireframe and low-fidelity prototype design, ensuring the interface is tailored to our teenage target demographic."
+          "description": "Contributed wireframes, prototype design and interface decisions focused on the teenage learner audience."
         },
         "edward": {
           "role": "System Architect & Chatbot Lead",
-          "description": "Handles backend architecture and AI workflow planning, ensuring components are streamlined for adaptive learning features."
+          "description": "Contributed to backend architecture, system integration and CyberGuard workflow planning."
         },
         "arman": {
-          "role": "Agentic AI Personalisation",
-          "description": "Builds Agentic AI analytics for personalised features and adaptive learning, focusing on user behaviour analysis."
+          "role": "AI-supported Personalisation",
+          "description": "Focused on personalisation concepts, learner context and the project approach to recommendation support."
         },
         "puah": {
           "role": "Agentic AI Module Lead",
-          "description": "Leads the implementation of system architecture and the Agentic AI module, with support in chatbot functionalities."
+          "description": "Contributed to system architecture, controlled Agentic AI work and CyberGuard functionality."
         }
       }
     }
