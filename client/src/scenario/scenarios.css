@@ -63,6 +63,7 @@
   display: flex;
   min-width: 0;
   min-height: 19rem;
+  padding: 1.25rem;
   flex-direction: column;
   overflow: clip;
   border: 1px solid var(--border-default);

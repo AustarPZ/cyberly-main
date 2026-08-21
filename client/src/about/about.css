@@ -104,6 +104,7 @@
 
 .cy-about-purpose {
   max-width: 72ch;
+  padding: 1rem 1.15rem;
   border-inline-start: 4px solid var(--cyberly-mint-500);
 }
 
@@ -128,6 +129,7 @@
   display: grid;
   align-content: start;
   gap: 0.65rem;
+  padding: 1.25rem;
 }
 
 .cy-about-capability-icon {
@@ -229,6 +231,7 @@
   align-items: center;
   gap: 1rem;
   margin-bottom: 1rem;
+  padding: 1.25rem;
 }
 
 .cy-about-team-grid {
@@ -241,6 +244,7 @@
   display: grid;
   align-content: start;
   gap: 0.4rem;
+  padding: 1.25rem;
 }
 
 .cy-about-avatar {
@@ -288,6 +292,10 @@
   .cy-about-objective-list li,
   .cy-about-supervisor {
     grid-template-columns: minmax(0, 1fr);
+  }
+
+  .cy-about-supervisor {
+    padding: 1rem;
   }
 
   .cy-about-avatar {
