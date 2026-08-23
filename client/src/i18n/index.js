@@ -11,6 +11,7 @@ import {
   isSupportedLocale,
   normalizeLocale,
 } from "./languageMappings";
+import { resolveLanguageAuthority } from "./languageAuthority";
 
 export const STORAGE_KEY =
   "cyberly.uiLanguage";
@@ -54,7 +55,9 @@ i18n
       },
     },
 
-    lng: storedLanguage || "en",
+    lng: storedLanguage || resolveLanguageAuthority({
+      browserLanguage: typeof navigator === "undefined" ? null : navigator.language,
+    }),
 
     fallbackLng: "en",
 

@@ -1,4 +1,4 @@
-import { render, screen, waitFor } from "@testing-library/react";
+import { render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "../App";
 import i18n from "../i18n";
@@ -96,32 +96,69 @@ async function renderRoute(route = "#/login") {
 
 async function enterRegistration() {
   await renderRoute("#/home");
-  await userEvent.click(screen.getByRole("button", { name: i18n.t("auth.getStarted") }));
+  await click(screen.getByRole("button", { name: i18n.t("auth.getStarted") }));
   await screen.findByRole("heading", { level: 1, name: i18n.t("auth.createAccount") });
+  return within(screen.getByRole("main"));
 }
 
-async function completeRegistrationChoices() {
-  await userEvent.type(document.querySelector('[data-field="email"]'), accountUser.email);
-  await userEvent.type(document.querySelector('[data-field="displayName"]'), accountUser.displayName);
-  await userEvent.type(document.querySelector('[data-field="age"]'), String(accountUser.age));
-  await userEvent.type(document.querySelector('[data-field="password"]'), "Secure123");
-  await userEvent.click(screen.getByRole("button", { name: i18n.t("onboarding.continue") }));
+function click(element) {
+  return userEvent.click(element, undefined, { skipHover: true });
+}
 
-  await userEvent.type(screen.getByPlaceholderText(i18n.t("onboarding.nicknamePlaceholder")), profile.aiNickname);
-  await userEvent.click(screen.getByRole("button", { name: i18n.t("onboarding.continue") }));
-  await userEvent.click(screen.getByRole("button", { name: i18n.t("profileOptions.education.form_3") }));
-  await userEvent.click(screen.getByRole("button", { name: i18n.t("onboarding.continue") }));
-  await userEvent.click(screen.getByRole("button", { name: i18n.t("profileOptions.language.english") }));
-  await userEvent.click(screen.getByRole("button", { name: i18n.t("onboarding.continue") }));
-  await userEvent.click(screen.getByRole("button", { name: /Beginner/i }));
-  await userEvent.click(screen.getByRole("button", { name: i18n.t("onboarding.continue") }));
+async function continueRegistration(registration) {
+  await click(registration.getByRole("button", { name: i18n.t("onboarding.continue") }));
+}
 
+async function fillAccountStep(registration) {
+  await userEvent.type(registration.getByLabelText(i18n.t("auth.email")), accountUser.email);
+  await userEvent.type(registration.getByLabelText(i18n.t("auth.displayName")), accountUser.displayName);
+  await userEvent.type(registration.getByLabelText(i18n.t("auth.age")), String(accountUser.age));
+  await userEvent.type(registration.getByLabelText(i18n.t("auth.password")), "Secure123");
+  await continueRegistration(registration);
+}
+
+async function completeNicknameStep(registration) {
+  await userEvent.type(registration.getByLabelText(i18n.t("onboarding.aiNickname")), profile.aiNickname);
+  await continueRegistration(registration);
+}
+
+async function completeEducationStep(registration) {
+  await click(registration.getByRole("button", { name: i18n.t("profileOptions.education.form_3") }));
+  await continueRegistration(registration);
+}
+
+async function completeLanguageStep(registration) {
+  await click(registration.getByRole("button", { name: i18n.t("profileOptions.language.english") }));
+  await continueRegistration(registration);
+}
+
+async function completeFamiliarityStep(registration) {
+  await click(registration.getByRole("button", { name: /Beginner/i }));
+  await continueRegistration(registration);
+}
+
+async function completeHelpTopicsStep(registration) {
   for (const key of profile.helpTopics) {
-    await userEvent.click(screen.getByRole("button", { name: i18n.t(`profileOptions.helpTopics.${key}`) }));
+    await click(registration.getByRole("button", { name: i18n.t(`profileOptions.helpTopics.${key}`) }));
   }
-  expect(screen.getByRole("button", { name: i18n.t("profileOptions.helpTopics.learning_cybersecurity") })).toBeDisabled();
-  await userEvent.click(screen.getByRole("button", { name: i18n.t("onboarding.continue") }));
-  await userEvent.click(screen.getByRole("button", { name: new RegExp(i18n.t("profileOptions.learningStyle.step_by_step"), "i") }));
+  expect(registration.getByRole("button", { name: i18n.t("profileOptions.helpTopics.learning_cybersecurity") })).toBeDisabled();
+  await continueRegistration(registration);
+}
+
+async function completeLearningStyleStep(registration) {
+  await click(registration.getByRole("button", {
+    name: new RegExp(i18n.t("profileOptions.learningStyle.step_by_step"), "i"),
+  }));
+}
+
+async function completeRegistrationChoices(registration) {
+  await fillAccountStep(registration);
+  await completeNicknameStep(registration);
+  await completeEducationStep(registration);
+  await completeLanguageStep(registration);
+  await completeFamiliarityStep(registration);
+  await completeHelpTopicsStep(registration);
+  await completeLearningStyleStep(registration);
 }
 
 describe("authentication and registration lifecycle", () => {
@@ -132,7 +169,7 @@ describe("authentication and registration lifecycle", () => {
 
   test("validates Login and preserves successful normalized navigation", async () => {
     await renderRoute();
-    await userEvent.click(screen.getByRole("button", { name: i18n.t("auth.signInButton") }));
+    await click(screen.getByRole("button", { name: i18n.t("auth.signInButton") }));
     expect(await screen.findByText(i18n.t("auth.emailInvalid"))).toHaveAttribute("role", "alert");
     expect(document.querySelector('[data-field="email"]')).toHaveFocus();
 
@@ -148,11 +185,11 @@ describe("authentication and registration lifecycle", () => {
   test("keeps all seven registration steps and account/profile payloads in order", async () => {
     register.mockResolvedValue({ ok: true, data: { user: accountUser, verification: { emailSent: true } } });
     saveProfile.mockResolvedValue({ ok: true, data: { profile } });
-    await enterRegistration();
+    const registration = await enterRegistration();
 
-    await completeRegistrationChoices();
-    expect(screen.getByText(i18n.t("onboarding.progress", { step: 7, total: 7, label: i18n.t("onboarding.learningStyle") }))).toBeVisible();
-    await userEvent.click(screen.getByRole("button", { name: i18n.t("onboarding.letsGo") }));
+    await completeRegistrationChoices(registration);
+    expect(registration.getByText(i18n.t("onboarding.progress", { step: 7, total: 7, label: i18n.t("onboarding.learningStyle") }))).toBeVisible();
+    await click(registration.getByRole("button", { name: i18n.t("onboarding.letsGo") }));
 
     await waitFor(() => expect(register).toHaveBeenCalledWith({
       email: accountUser.email,
@@ -161,25 +198,27 @@ describe("authentication and registration lifecycle", () => {
       password: "Secure123",
     }));
     expect(saveProfile).toHaveBeenCalledWith(profilePayload);
+    expect(register.mock.invocationCallOrder[0]).toBeLessThan(saveProfile.mock.invocationCallOrder[0]);
     await waitFor(() => expect(window.location.hash).toBe("#/assessment"));
-  });
+  }, 10000);
 
   test("retries only profile persistence after the account has already been created", async () => {
     register.mockResolvedValue({ ok: true, data: { user: accountUser, verification: { emailSent: true } } });
     saveProfile
       .mockResolvedValueOnce({ ok: false, data: { errors: { learningStyle: "Profile unavailable" } } })
       .mockResolvedValueOnce({ ok: true, data: { profile } });
-    await enterRegistration();
-    await completeRegistrationChoices();
+    const registration = await enterRegistration();
+    await completeRegistrationChoices(registration);
 
-    await userEvent.click(screen.getByRole("button", { name: i18n.t("onboarding.letsGo") }));
-    expect(await screen.findByText(i18n.t("onboarding.profileSaveFailed"))).toHaveAttribute("role", "alert");
-    await userEvent.click(screen.getByRole("button", { name: i18n.t("onboarding.retrySavingProfile") }));
+    await click(registration.getByRole("button", { name: i18n.t("onboarding.letsGo") }));
+    expect(await registration.findByText(i18n.t("onboarding.profileSaveFailed"))).toHaveAttribute("role", "alert");
+    await click(registration.getByRole("button", { name: i18n.t("onboarding.retrySavingProfile") }));
 
     await waitFor(() => expect(saveProfile).toHaveBeenCalledTimes(2));
     expect(register).toHaveBeenCalledTimes(1);
     expect(saveProfile).toHaveBeenNthCalledWith(1, profilePayload);
     expect(saveProfile).toHaveBeenNthCalledWith(2, profilePayload);
+    expect(register.mock.invocationCallOrder[0]).toBeLessThan(saveProfile.mock.invocationCallOrder[0]);
     await waitFor(() => expect(window.location.hash).toBe("#/assessment"));
-  });
+  }, 10000);
 });

@@ -48,6 +48,10 @@ import {
   confirmLearnerActionProposal,
   cancelLearnerActionProposal,
 } from "../chat/chatApi";
+import { getInitialAssessmentStatus } from "../api/assessmentApi";
+import { getProgress } from "../api/progressApi";
+import { getCurrentRecommendation } from "../api/recommendationApi";
+import { getRecommendedScenarios, getScenarioDashboard } from "../api/scenarioApi";
 
 const FIXED_CREATED_AT = "2026-07-28T04:00:00.000Z";
 
@@ -277,6 +281,11 @@ export function configureCyberGuardPilotMocks({
   mockResolved(verifyEmail, { ok: false, data: { error: { code: "EMAIL_VERIFICATION_TOKEN_INVALID" } } });
   mockResolved(resendVerificationEmail, { ok: true, data: { sent: false, emailTransportDisabled: true, emailSendFailed: false, cooldownSeconds: 60 } });
   mockResolved(logout, { ok: true });
+  mockResolved(getInitialAssessmentStatus, { ok: true, data: { status: "completed" } });
+  mockResolved(getProgress, { ok: true, data: {} });
+  mockResolved(getCurrentRecommendation, { ok: true, data: { recommendation: null } });
+  mockResolved(getRecommendedScenarios, { ok: true, data: { scenarios: [] } });
+  mockResolved(getScenarioDashboard, { ok: true, data: {} });
 
   const authMocks = {
     register,

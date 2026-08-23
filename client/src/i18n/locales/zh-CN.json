@@ -312,6 +312,8 @@
     }
   },
   "settings": {
+    "profileGroup": "个人资料",
+    "settingsGroup": "设置",
     "accountInformation": "账号信息",
     "learningPreferences": "学习偏好",
     "email": "电子邮箱",
@@ -346,6 +348,7 @@
     "profileSaved": "学习资料已保存。",
     "accountSaveFailed": "无法保存账号资料。",
     "profileSaveFailed": "无法保存学习者资料。",
+    "languageSaveFailed": "此设备上的语言已更改，但 Cyberly 无法将其保存到你的个人资料。",
     "identityNote": "显示名称与年龄属于账号资料。系统不会根据教育程度推断年龄，也不会将年龄或教育程度视为学习能力。",
     "ageGroups": {
       "child": "儿童（1–12 岁）",

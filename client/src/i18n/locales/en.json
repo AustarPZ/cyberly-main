@@ -312,6 +312,8 @@
     }
   },
   "settings": {
+    "profileGroup": "Profile",
+    "settingsGroup": "Settings",
     "accountInformation": "Account Information",
     "learningPreferences": "Learning Preferences",
     "email": "Email",
@@ -346,6 +348,7 @@
     "profileSaved": "Profile saved.",
     "accountSaveFailed": "Unable to save account information.",
     "profileSaveFailed": "Unable to save learner profile.",
+    "languageSaveFailed": "Your language changed on this device, but Cyberly could not save it to your profile.",
     "identityNote": "Display name and age belong to your account information. Age is not inferred from education level, and neither is treated as learning ability.",
     "ageGroups": {
       "child": "Child (1–12)",

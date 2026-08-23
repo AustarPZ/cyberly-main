@@ -17,6 +17,20 @@
   padding-top: 1rem;
 }
 
+.profile-group {
+  display: grid;
+  gap: 1rem;
+  min-width: 0;
+}
+
+.profile-group-title {
+  margin: 0;
+  color: var(--cyberly-text-primary);
+  font-family: "Space Grotesk", sans-serif;
+  font-size: 1.3rem;
+  line-height: 1.3;
+}
+
 .profile-identity-summary {
   display: flex;
   align-items: center;

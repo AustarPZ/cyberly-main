@@ -42,7 +42,8 @@ import PageState from "./design-system/feedback/PageState";
 import ResourceDetailDialog from "./resources/ResourceDetailDialog";
 import profileMappings from "./profileMappings";
 import i18n, { STORAGE_KEY as UI_LANGUAGE_STORAGE_KEY, getStoredUiLanguage} from "./i18n";
-import { normalizeLocale, profileLanguageToLocale } from "./i18n/languageMappings";
+import { normalizeLocale, localeToProfileLanguage, profileLanguageToLocale } from "./i18n/languageMappings";
+import { resolveLanguageAuthority } from "./i18n/languageAuthority";
 import { maskEmailAddress } from "./utils/maskEmailAddress";
 import {
   clearEmailVerificationResult,
@@ -58,7 +59,7 @@ import {
   restoreSession,
 } from "./api/authApi";
 import { saveAccount as saveAccountRequest } from "./api/accountApi";
-import { saveProfile as saveProfileRequest } from "./api/profileApi";
+import { getProfile as getProfileRequest, saveProfile as saveProfileRequest } from "./api/profileApi";
 import {
   createInitialAssessmentAttempt,
   getInitialAssessment,
@@ -426,6 +427,13 @@ body {
   .account-name { display: none; }
   .account-trigger { gap: 0.25rem; padding-right: 0.35rem; }
   .nav-language select { max-width: 72px; font-size: 0.78rem; }
+}
+
+@media (max-width: 360px) {
+  .navbar { gap: 0.25rem; padding: 0 0.25rem; }
+  .navbar-logo { height: 34px; }
+  .nav-utility { gap: 0.25rem; }
+  .account-trigger { min-height: 44px; }
 }
 
 /* ── Layout ── */
@@ -5264,6 +5272,17 @@ function RegisterPage({ onSwitch }) {
   );
 }
 
+async function dbGetProfile() {
+  try {
+    const result = await getProfileRequest();
+    const data = result.data || {};
+    if (!result.ok) return apiFailure(data, "errors.fallback.loadProfile");
+    return { ok: true, profile: data.profile };
+  } catch {
+    return networkFailure("errors.fallback.loadProfile");
+  }
+}
+
 // ─────────────────────────────────────────────────────────────────
 // LOGIN PAGE
 // ─────────────────────────────────────────────────────────────────
@@ -7830,13 +7849,13 @@ function ScenariosPage() {
 
 // ─── Page: Profile ───────────────────────────────────────────────
 function ProfilePage() {
-  const { t } = useTranslation();
+  const { t, i18n: activeI18n } = useTranslation();
 
   const {
     user,
     go,
-    updateProfile,
     updateAccount,
+    applyLanguagePreference,
   } = useApp();
 
   const [form, setForm] = useState(() => ({
@@ -7850,8 +7869,7 @@ function ProfilePage() {
       "",
 
     preferredLanguage:
-      user?.profile?.preferredLanguage ||
-      "",
+      localeToProfileLanguage(profileLanguageToLocale(user?.profile?.preferredLanguage)),
 
     familiarityLevel:
       user?.profile?.familiarityLevel ||
@@ -7895,6 +7913,16 @@ function ProfilePage() {
 
   const [saved, setSaved] =
     useState(false);
+
+  useEffect(() => {
+    const preferredLanguage = localeToProfileLanguage(
+      normalizeLocale(activeI18n.language)
+    );
+
+    setForm(current => current.preferredLanguage === preferredLanguage
+      ? current
+      : { ...current, preferredLanguage });
+  }, [activeI18n.language]);
 
   useEffect(() => {
     if (!accountSaved) return undefined;
@@ -7944,6 +7972,17 @@ function ProfilePage() {
         "helpTopics",
         [...selected, topicValue]
       );
+    }
+  }
+
+  async function changeProfileLanguage(value) {
+    set("preferredLanguage", value);
+    const result = await applyLanguagePreference(profileLanguageToLocale(value));
+    if (!result.ok) {
+      setErrors(current => ({
+        ...current,
+        preferredLanguage: result.error || t("settings.languageSaveFailed"),
+      }));
     }
   }
 
@@ -8016,11 +8055,15 @@ function ProfilePage() {
     setSaved(false);
     setErrors({});
 
-    const result =
-      await dbSaveProfile({
-        ...form,
-        onboardingCompleted: true,
-      });
+    const result = await applyLanguagePreference(
+      profileLanguageToLocale(form.preferredLanguage),
+      {
+        profileSnapshot: {
+          ...form,
+          onboardingCompleted: true,
+        },
+      }
+    );
 
     setSaving(false);
 
@@ -8037,7 +8080,6 @@ function ProfilePage() {
       return;
     }
 
-    updateProfile(result.profile);
     setSaved(true);
   }
 
@@ -8049,14 +8091,6 @@ function ProfilePage() {
       options: EDUCATION_LEVELS,
       translationGroup:
         "education",
-    },
-    {
-      key: "preferredLanguage",
-      labelKey:
-        "settings.preferredLanguage",
-      options: LANGUAGES,
-      translationGroup:
-        "language",
     },
     {
       key: "familiarityLevel",
@@ -8138,6 +8172,8 @@ function ProfilePage() {
         <PageBackButton className="profile-back" />
 
         <PageSection className="profile-content">
+          <section className="profile-group" aria-labelledby="profile-group-title">
+            <h2 id="profile-group-title" className="profile-group-title">{t("settings.profileGroup")}</h2>
           <Surface className="profile-identity-summary">
             <div className="profile-avatar" aria-hidden="true">{profileInitial}</div>
             <div className="profile-identity-copy">
@@ -8158,12 +8194,8 @@ function ProfilePage() {
           )}
 
           <Surface as="section" className="profile-panel" aria-labelledby="profile-account-title">
-            <h2 id="profile-account-title" className="profile-section-title">{t("settings.accountInformation")}</h2>
+            <h3 id="profile-account-title" className="profile-section-title">{t("settings.accountInformation")}</h3>
             <div className="profile-form-grid">
-              <div className="profile-field">
-                <label htmlFor="profile-email">{t("settings.email")}</label>
-                <input id="profile-email" className="profile-form-control" value={user?.email || ""} readOnly />
-              </div>
               <div className="profile-field">
                 <label htmlFor="profile-display-name">{t("settings.displayName")}</label>
                 <input
@@ -8210,7 +8242,7 @@ function ProfilePage() {
           </Surface>
 
           <Surface as="section" className="profile-panel" aria-labelledby="profile-preferences-title">
-            <h2 id="profile-preferences-title" className="profile-section-title">{t("settings.learningPreferences")}</h2>
+            <h3 id="profile-preferences-title" className="profile-section-title">{t("settings.learningPreferences")}</h3>
             <div className="profile-field profile-field-wide">
               <label htmlFor="profile-ai-nickname">{t("settings.aiNickname")}</label>
               <input
@@ -8285,6 +8317,35 @@ function ProfilePage() {
               {user.onboardingCompleted && <Button variant="quiet" onClick={() => go("dashboard")}>{t("nav.dashboard")}</Button>}
             </div>
             <p className="profile-identity-note">{t("settings.identityNote")}</p>
+          </Surface>
+          </section>
+
+          <Surface as="section" className="profile-panel profile-settings-panel" aria-labelledby="profile-settings-title">
+            <h2 id="profile-settings-title" className="profile-section-title">{t("settings.settingsGroup")}</h2>
+            <div className="profile-form-grid">
+              <div className="profile-field">
+                <label htmlFor="profile-preferredLanguage">{t("settings.preferredLanguage")}</label>
+                <select
+                  id="profile-preferredLanguage"
+                  className="profile-form-control"
+                  data-field="preferredLanguage"
+                  value={form.preferredLanguage}
+                  aria-invalid={Boolean(errors.preferredLanguage)}
+                  aria-describedby={errors.preferredLanguage ? "profile-preferredLanguage-error" : undefined}
+                  onChange={event => changeProfileLanguage(event.target.value)}
+                >
+                  {["english", "bahasa_melayu", "chinese"].map(value => {
+                    const option = LANGUAGES.find(language => language.value === value);
+                    return <option key={value} value={value}>{t(`profileOptions.language.${value}`, { defaultValue: option?.label || value })}</option>;
+                  })}
+                </select>
+                {errors.preferredLanguage && <div className="field-error" id="profile-preferredLanguage-error" role="alert">{errors.preferredLanguage}</div>}
+              </div>
+              <div className="profile-field">
+                <label htmlFor="profile-email">{t("settings.email")}</label>
+                <input id="profile-email" className="profile-form-control" value={user?.email || ""} readOnly />
+              </div>
+            </div>
           </Surface>
         </PageSection>
       </PageContainer>
@@ -10323,9 +10384,10 @@ const LANGUAGE_OPTIONS = [
 ];
 
 function LanguageSelector() {
-  const { requestGuardedAction, activityGuard } = useApp();
+  const { requestGuardedAction, activityGuard, applyLanguagePreference } = useApp();
   const { t } = useTranslation();
   const [locale, setLocale] = useState(normalizeLocale(i18n.language));
+  const [persistenceError, setPersistenceError] = useState(false);
   const selectRef = useRef(null);
 
   useEffect(() => {
@@ -10336,12 +10398,6 @@ function LanguageSelector() {
     return () => i18n.off("languageChanged", sync);
   }, []);
 
-  async function applyLocale(nextLocale) {
-    localStorage.setItem(UI_LANGUAGE_STORAGE_KEY, nextLocale);
-    document.documentElement.lang = nextLocale;
-    await i18n.changeLanguage(nextLocale);
-  }
-
   function changeLocale(event) {
     const nextLocale = normalizeLocale(event.target.value);
     const currentInterfaceLocale = normalizeLocale(i18n.language);
@@ -10349,10 +10405,11 @@ function LanguageSelector() {
 
     const execute = async () => {
       try {
-        await applyLocale(nextLocale);
+        const result = await applyLanguagePreference(nextLocale);
+        setPersistenceError(!result.ok);
       } catch (error) {
         console.error("Unable to change interface language", error);
-        setLocale(normalizeLocale(i18n.language));
+        setPersistenceError(true);
       }
     };
 
@@ -10393,14 +10450,17 @@ function LanguageSelector() {
   }
 
   return (
-    <label className="nav-language" title={t("nav.languageControlTitle")}>
-      <span aria-hidden="true">🌐</span>
-      <select ref={selectRef} value={locale} onChange={changeLocale} aria-label={t("nav.languageAriaLabel")}>
-        {LANGUAGE_OPTIONS.map(option => (
-          <option key={option.locale} value={option.locale}>{option.label}</option>
-        ))}
-      </select>
-    </label>
+    <div className="nav-language-wrap">
+      <label className="nav-language" title={t("nav.languageControlTitle")}>
+        <span aria-hidden="true">🌐</span>
+        <select ref={selectRef} value={locale} onChange={changeLocale} aria-label={t("nav.languageAriaLabel")}>
+          {LANGUAGE_OPTIONS.map(option => (
+            <option key={option.locale} value={option.locale}>{option.label}</option>
+          ))}
+        </select>
+      </label>
+      {persistenceError && <span className="sr-only" role="alert">{t("settings.languageSaveFailed")}</span>}
+    </div>
   );
 }
 
@@ -10635,6 +10695,16 @@ function AccountMenu({ user, onNavigate, onRequestLogout }) {
             role="menuitem"
             ref={element => { itemRefs.current[0] = element; }}
             onKeyDown={event => handleMenuKeyDown(event, 0)}
+            onClick={() => navigate("profile")}
+          >
+            {t("nav.accountMenu.profileSettings")}
+          </button>
+          <button
+            type="button"
+            className="account-menu-item"
+            role="menuitem"
+            ref={element => { itemRefs.current[1] = element; }}
+            onKeyDown={event => handleMenuKeyDown(event, 1)}
             onClick={() => navigate("dashboard")}
           >
             {t("nav.dashboard")}
@@ -10643,8 +10713,8 @@ function AccountMenu({ user, onNavigate, onRequestLogout }) {
             type="button"
             className="account-menu-item"
             role="menuitem"
-            ref={element => { itemRefs.current[1] = element; }}
-            onKeyDown={event => handleMenuKeyDown(event, 1)}
+            ref={element => { itemRefs.current[2] = element; }}
+            onKeyDown={event => handleMenuKeyDown(event, 2)}
             onClick={() => navigate("progress")}
           >
             <svg className="account-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
@@ -10655,16 +10725,6 @@ function AccountMenu({ user, onNavigate, onRequestLogout }) {
               <path d="M16 16v-3" />
             </svg>
             <span>{t("nav.accountMenu.personalProgress")}</span>
-          </button>
-          <button
-            type="button"
-            className="account-menu-item"
-            role="menuitem"
-            ref={element => { itemRefs.current[2] = element; }}
-            onKeyDown={event => handleMenuKeyDown(event, 2)}
-            onClick={() => navigate("profile")}
-          >
-            {t("nav.accountMenu.profileSettings")}
           </button>
           {user?.role === "admin" && (
             <button
@@ -10683,8 +10743,8 @@ function AccountMenu({ user, onNavigate, onRequestLogout }) {
             type="button"
             className="account-menu-item danger"
             role="menuitem"
-            ref={element => { itemRefs.current[4] = element; }}
-            onKeyDown={event => handleMenuKeyDown(event, 4)}
+            ref={element => { itemRefs.current[user?.role === "admin" ? 4 : 3] = element; }}
+            onKeyDown={event => handleMenuKeyDown(event, user?.role === "admin" ? 4 : 3)}
             onClick={requestLogout}
           >
             {t("nav.accountMenu.logOut")}
@@ -10862,6 +10922,8 @@ export default function App() {
   const [activityGuard, setActivityGuard] = useState(null);
   const [pendingNavigation, setPendingNavigation] = useState(null);
   const appUserIdRef = useRef(null);
+  const explicitLocaleRef = useRef(null);
+  const profileRevisionRef = useRef(0);
   const suppressHashGuardRef = useRef(null);
   const acceptedHashRef = useRef(acceptedHash);
   const activityGuardRef = useRef(null);
@@ -11038,38 +11100,21 @@ export default function App() {
   }, [activityGuard]);
 
   useEffect(() => {
+    if (checkingSession) return;
     if (!userId) return;
 
-    const storedLocale =
-      getStoredUiLanguage();
+    const authoritativeLocale = resolveLanguageAuthority({
+      explicitLocale: explicitLocaleRef.current,
+      profileLanguage: userProfilePreferredLanguage || userPreferredLanguage,
+      storedLocale: getStoredUiLanguage(),
+      browserLanguage: typeof navigator === "undefined" ? null : navigator.language,
+    });
 
-    if (storedLocale) {
-      if (
-        normalizeLocale(i18n.language) !==
-        storedLocale
-      ) {
-        i18n.changeLanguage(storedLocale);
-      }
-
-      return;
-    }
-
-    const profilePreference =
-      userProfilePreferredLanguage ||
-      userPreferredLanguage;
-
-    const profileLocale =
-      profileLanguageToLocale(
-        profilePreference
-      );
-
-    if (
-      normalizeLocale(i18n.language) !==
-      profileLocale
-    ) {
-      i18n.changeLanguage(profileLocale);
+    if (normalizeLocale(i18n.language) !== authoritativeLocale) {
+      i18n.changeLanguage(authoritativeLocale);
     }
   }, [
+    checkingSession,
     userId,
     userProfilePreferredLanguage,
     userPreferredLanguage,
@@ -11082,7 +11127,47 @@ export default function App() {
     commitHashRoute(`/${preferredPage || (nextUser.onboardingCompleted ? "dashboard" : "profile")}`, { replace: true });
   }
   function updateProfile(profileData) {
+    profileRevisionRef.current += 1;
     setUser(current => current ? normalizeSessionUser(current, profileData) : current);
+  }
+
+  async function applyLanguagePreference(nextLocale, options = {}) {
+    const locale = normalizeLocale(nextLocale);
+    explicitLocaleRef.current = locale;
+    localStorage.setItem(UI_LANGUAGE_STORAGE_KEY, locale);
+    document.documentElement.lang = locale;
+    await i18n.changeLanguage(locale);
+
+    const requestUserId = appUserIdRef.current;
+    if (!requestUserId) return { ok: true, locale };
+
+    const startingRevision = profileRevisionRef.current;
+    let profileSnapshot = options.profileSnapshot;
+    if (!profileSnapshot) {
+      const profileResult = await dbGetProfile();
+      if (!profileResult.ok) return profileResult;
+      if (
+        requestUserId !== appUserIdRef.current
+        || startingRevision !== profileRevisionRef.current
+      ) {
+        return { ok: false, stale: true };
+      }
+      profileSnapshot = profileResult.profile;
+    }
+
+    const result = await dbSaveProfile({
+      ...profileSnapshot,
+      preferredLanguage: localeToProfileLanguage(locale),
+    });
+    if (!result.ok) return result;
+    if (
+      requestUserId !== appUserIdRef.current
+      || startingRevision !== profileRevisionRef.current
+    ) {
+      return { ok: false, stale: true };
+    }
+    updateProfile(result.profile);
+    return { ...result, locale };
   }
   function updateAccount(accountData) {
     setUser(current => {
@@ -11337,6 +11422,7 @@ export default function App() {
     setAuthMode,
     openAuth,
     updateProfile,
+    applyLanguagePreference,
     updateAccount,
     refreshCurrentUserState,
     applyVerifiedEmailResult,

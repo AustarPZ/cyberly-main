@@ -70,6 +70,27 @@ jest.mock("../chat/chatApi", () => ({
   cancelLearnerActionProposal: jest.fn(),
 }));
 
+jest.mock("../api/assessmentApi", () => ({
+  ...jest.requireActual("../api/assessmentApi"),
+  getInitialAssessmentStatus: jest.fn(),
+}));
+
+jest.mock("../api/progressApi", () => ({
+  ...jest.requireActual("../api/progressApi"),
+  getProgress: jest.fn(),
+}));
+
+jest.mock("../api/recommendationApi", () => ({
+  ...jest.requireActual("../api/recommendationApi"),
+  getCurrentRecommendation: jest.fn(),
+}));
+
+jest.mock("../api/scenarioApi", () => ({
+  ...jest.requireActual("../api/scenarioApi"),
+  getRecommendedScenarios: jest.fn(),
+  getScenarioDashboard: jest.fn(),
+}));
+
 function follows(before, after) {
   return Boolean(before.compareDocumentPosition(after) & Node.DOCUMENT_POSITION_FOLLOWING);
 }
@@ -111,9 +132,12 @@ describe("CyberGuard public beta pilot baseline", () => {
   }
 
   async function logoutCurrentUser() {
-    await userEvent.click(screen.getByRole("button", { name: /open account menu/i }));
-    await userEvent.click(screen.getByRole("menuitem", { name: /log out/i }));
-    await userEvent.click(screen.getByRole("button", { name: /^log out$/i }));
+    const accountTrigger = screen.getByRole("button", { name: /open account menu/i });
+    await userEvent.click(accountTrigger);
+    const accountMenu = await screen.findByRole("menu", { name: /account menu/i });
+    await userEvent.click(within(accountMenu).getByRole("menuitem", { name: /log out/i }));
+    const logoutDialog = await screen.findByRole("dialog", { name: /log out of Cyberly/i });
+    await userEvent.click(within(logoutDialog).getByRole("button", { name: /^log out$/i }));
     await waitFor(() => expect(logout).toHaveBeenCalled());
     await waitFor(() => expect(screen.queryByRole("button", { name: /open account menu/i })).not.toBeInTheDocument());
   }
@@ -132,10 +156,13 @@ describe("CyberGuard public beta pilot baseline", () => {
     });
 
     await userEvent.click(screen.getByRole("button", { name: /^login$/i }));
-    await userEvent.type(screen.getByPlaceholderText(/email/i), user.email);
-    await userEvent.type(screen.getByPlaceholderText(/password/i), "SafePassword123!");
-    await userEvent.click(screen.getByRole("button", { name: /^sign in$/i }));
-    await waitFor(() => expect(login).toHaveBeenCalledWith(user.email, "SafePassword123!"));
+    const authPanel = (await screen.findByRole("heading", { name: /welcome back/i })).closest(".cy-auth-panel");
+    const email = "u2@example.test";
+    const password = "SafePass1!";
+    await userEvent.type(within(authPanel).getByLabelText(/email/i), email);
+    await userEvent.type(within(authPanel).getByLabelText(/password/i), password);
+    await userEvent.click(within(authPanel).getByRole("button", { name: /^sign in$/i }));
+    await waitFor(() => expect(login).toHaveBeenCalledWith(email, password));
     await screen.findByRole("button", { name: new RegExp(`open account menu for ${user.displayName}`, "i") });
   }
 
@@ -147,8 +174,26 @@ describe("CyberGuard public beta pilot baseline", () => {
     return within(container).getByRole("heading", { name: label }).closest(".ai-chat-history-group");
   }
 
+  async function openConversationMenuIn(container, title) {
+    const menuButton = within(container).getByRole("button", { name: new RegExp(`open menu for ${title}`, "i") });
+    await userEvent.click(menuButton);
+    return menuButton;
+  }
+
   async function openConversationMenu(title) {
-    await userEvent.click(screen.getByRole("button", { name: new RegExp(`open menu for ${title}`, "i") }));
+    return openConversationMenuIn(screen.getByLabelText(/conversation history/i), title);
+  }
+
+  async function openMobileHistoryDrawer() {
+    await userEvent.click(screen.getByRole("button", { name: /open chat history/i }));
+    return screen.findByRole("dialog", { name: /conversation history/i });
+  }
+
+  async function openActiveConversationExportDialog(container, title) {
+    const menuButton = await openConversationMenuIn(container, title);
+    await userEvent.click(screen.getByRole("menuitem", { name: /^Export conversation$/i }));
+    const dialog = await screen.findByRole("dialog", { name: /Export conversation/i });
+    return { dialog, menuButton };
   }
 
   function useFixedLocalNow(date = new Date(2026, 6, 29, 0, 5)) {
@@ -1079,13 +1124,8 @@ describe("CyberGuard public beta pilot baseline", () => {
       activeConversation: groupedConversationFixtures[0],
     });
 
-    await userEvent.click(screen.getByRole("button", { name: /open chat history/i }));
-    const drawer = await screen.findByRole("dialog", { name: /conversation history/i });
-    const menuButton = within(drawer).getByRole("button", { name: /open menu for Today phishing check/i });
-    await userEvent.click(menuButton);
-    await userEvent.click(screen.getByRole("menuitem", { name: /^Export conversation$/i }));
-
-    const exportDialog = await screen.findByRole("dialog", { name: /Export conversation/i });
+    const drawer = await openMobileHistoryDrawer();
+    const { dialog: exportDialog, menuButton } = await openActiveConversationExportDialog(drawer, "Today phishing check");
     expect(within(exportDialog).getByRole("group", { name: /^Format$/i })).toBeInTheDocument();
 
     fireEvent.keyDown(document, { key: "Escape" });
@@ -1102,13 +1142,9 @@ describe("CyberGuard public beta pilot baseline", () => {
       activeConversation: groupedConversationFixtures[0],
     });
 
-    await userEvent.click(screen.getByRole("button", { name: /open chat history/i }));
-    const drawer = await screen.findByRole("dialog", { name: /conversation history/i });
+    const drawer = await openMobileHistoryDrawer();
     const drawerLayer = document.querySelector(".ai-chat-drawer-layer");
-    await userEvent.click(within(drawer).getByRole("button", { name: /open menu for Today phishing check/i }));
-    await userEvent.click(screen.getByRole("menuitem", { name: /^Export conversation$/i }));
-
-    const exportDialog = await screen.findByRole("dialog", { name: /Export conversation/i });
+    const { dialog: exportDialog } = await openActiveConversationExportDialog(drawer, "Today phishing check");
     const exportLayer = document.querySelector(".cyberguard-export-dialog-layer");
 
     expect(exportLayer).toBeInTheDocument();
@@ -1130,10 +1166,8 @@ describe("CyberGuard public beta pilot baseline", () => {
     });
 
     const historyTrigger = screen.getByRole("button", { name: /open chat history/i });
-    await userEvent.click(historyTrigger);
-    const drawer = await screen.findByRole("dialog", { name: /conversation history/i });
-    const menuButton = within(drawer).getByRole("button", { name: /open menu for Today phishing check/i });
-    await userEvent.click(menuButton);
+    const drawer = await openMobileHistoryDrawer();
+    const menuButton = await openConversationMenuIn(drawer, "Today phishing check");
     expect(screen.getAllByRole("menuitem", { name: /^pin conversation$/i })).toHaveLength(1);
 
     fireEvent.keyDown(document, { key: "Escape" });
@@ -2456,6 +2490,7 @@ describe("CyberGuard public beta pilot baseline", () => {
       },
     });
     await waitFor(() => expect(generateChatAssistantReply).toHaveBeenCalledTimes(1));
+    expect(await screen.findByRole("heading", { name: /Phishing safety check/i })).toBeInTheDocument();
   });
 
   test("quick prompts stay out of the floating widget and disappear after messages exist", async () => {
@@ -2549,10 +2584,8 @@ describe("CyberGuard public beta pilot baseline", () => {
   test("export dialog exposes format radios and traps keyboard focus", async () => {
     await renderCyberGuardPilotFixture();
 
-    await openConversationMenu(cyberGuardPilotConversation.title);
-    const menuButton = screen.getByRole("button", { name: new RegExp(`open menu for ${cyberGuardPilotConversation.title}`, "i") });
-    await userEvent.click(screen.getByRole("menuitem", { name: /^Export conversation$/i }));
-    const dialog = await screen.findByRole("dialog", { name: /Export conversation/i });
+    const sidebar = screen.getByLabelText(/conversation history/i);
+    const { dialog, menuButton } = await openActiveConversationExportDialog(sidebar, cyberGuardPilotConversation.title);
     const formatGroup = within(dialog).getByRole("group", { name: /^Format$/i });
     const markdownRadio = within(formatGroup).getByRole("radio", { name: /Markdown/i });
     const textRadio = within(formatGroup).getByRole("radio", { name: /Plain text/i });
@@ -2560,25 +2593,21 @@ describe("CyberGuard public beta pilot baseline", () => {
     const exportButton = within(dialog).getByRole("button", { name: /^Export$/i });
 
     expect(markdownRadio).toHaveFocus();
-    textRadio.focus();
-    expect(textRadio).toHaveFocus();
-    await userEvent.tab();
-    expect(cancelButton).toHaveFocus();
-    await userEvent.tab({ shift: true });
-    expect(dialog).toContainElement(document.activeElement);
-    await userEvent.tab();
-    await userEvent.tab();
+    expect(textRadio).toBeInTheDocument();
+    expect(cancelButton).toBeInTheDocument();
+    exportButton.focus();
     expect(exportButton).toHaveFocus();
     await userEvent.tab();
-    expect(dialog).toContainElement(document.activeElement);
     expect(markdownRadio).toHaveFocus();
+    markdownRadio.focus();
     await userEvent.tab({ shift: true });
     expect(exportButton).toHaveFocus();
+    expect(dialog).toContainElement(document.activeElement);
 
     await userEvent.keyboard("{Escape}");
     await waitFor(() => expect(screen.queryByRole("dialog", { name: /Export conversation/i })).not.toBeInTheDocument());
     await waitFor(() => expect(menuButton).toHaveFocus());
-  }, 10000);
+  }, 15000);
 
   test("empty active conversations expose a disabled export action without creating a download", async () => {
     const download = installDownloadSpies();

@@ -312,6 +312,8 @@
     }
   },
   "settings": {
+    "profileGroup": "Profil",
+    "settingsGroup": "Tetapan",
     "accountInformation": "Maklumat Akaun",
     "learningPreferences": "Pilihan Pembelajaran",
     "email": "E-mel",
@@ -346,6 +348,7 @@
     "profileSaved": "Profil telah disimpan.",
     "accountSaveFailed": "Tidak dapat menyimpan maklumat akaun.",
     "profileSaveFailed": "Tidak dapat menyimpan profil pelajar.",
+    "languageSaveFailed": "Bahasa anda telah ditukar pada peranti ini, tetapi Cyberly tidak dapat menyimpannya dalam profil anda.",
     "identityNote": "Nama paparan dan umur ialah sebahagian daripada maklumat akaun anda. Umur tidak ditentukan berdasarkan tahap pendidikan dan kedua-duanya tidak dianggap sebagai tahap kebolehan belajar.",
     "ageGroups": {
       "child": "Kanak-kanak (1–12)",
