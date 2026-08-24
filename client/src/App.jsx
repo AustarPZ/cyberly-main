@@ -7063,6 +7063,7 @@ function AssessmentPage() {
                 ))}
               </div>
               <p className="assessment-measurement-note">{t("assessment.measurementNote")}</p>
+              <p className="assessment-measurement-note">{t("assessment.doLaterDescription")}</p>
               <div className="assessment-actions">
                 <Button variant="primary" onClick={start} disabled={loading}>
                   {attempt ? t("assessment.resume") : t("assessment.start")}
@@ -7151,6 +7152,7 @@ function AssessmentPage() {
               maxScore: attemptResult?.maximumScore,
             })}
           </p>
+          <p className="section-sub">{t("assessment.resultNextStep")}</p>
           <div className="assessment-result-metrics">
             <div className="assessment-result-metric">
               <div className="assessment-result-label">{t("assessment.measuredLevel")}</div>

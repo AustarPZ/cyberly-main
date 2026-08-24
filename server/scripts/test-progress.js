@@ -9,7 +9,8 @@ const {
 const {
   buildLearningPathProgressFromMetrics,
 } = require('../src/progress/learning-path-progress.service');
-const { getLevelForPercentage, selectRecommendation } = require('../src/progress/progress.rules');
+const { getLevelForPercentage, reasonTextFor, selectRecommendation } = require('../src/progress/progress.rules');
+const { buildRecommendationReasonText } = require('../src/progress/recommendationMessages');
 
 const PORT = process.env.PROGRESS_TEST_PORT || '5106';
 const BASE_URL = `http://127.0.0.1:${PORT}`;
@@ -239,7 +240,27 @@ async function run() {
   assert.equal(getLevelForPercentage(85), 'advanced');
   assert.equal(getLevelForPercentage(100), 'advanced');
 
-  assert.equal(selectRecommendation([]).reasonCode, 'assessment_pending');
+  const pendingRecommendation = selectRecommendation([]);
+  assert.equal(pendingRecommendation.reasonCode, 'assessment_pending');
+  assert.equal(pendingRecommendation.topicCode, null);
+  assert.equal(pendingRecommendation.recommendedLevel, null);
+  assert.equal(pendingRecommendation.sourceType, 'assessment_pending');
+  assert.equal(
+    reasonTextFor(null, null, pendingRecommendation.reasonCode),
+    'Take the initial cyber-wellness assessment when you’re ready to give Cyberly a starting baseline for more specific topic recommendations.',
+  );
+  assert.equal(
+    buildRecommendationReasonText({ reason_code: 'assessment_pending' }, 'en'),
+    'Take the initial cyber-wellness assessment when you’re ready to give Cyberly a starting baseline for more specific topic recommendations.',
+  );
+  assert.equal(
+    buildRecommendationReasonText({ reason_code: 'assessment_pending' }, 'ms'),
+    'Ambil penilaian awal kesejahteraan siber apabila anda bersedia untuk memberi Cyberly asas permulaan bagi cadangan topik yang lebih khusus.',
+  );
+  assert.equal(
+    buildRecommendationReasonText({ reason_code: 'assessment_pending' }, 'zh-CN'),
+    '准备好后完成初始网络健康测评，为 Cyberly 提供起始基线，以便给出更具体的主题建议。',
+  );
   const tied = selectRecommendation([
     { topicCode: 'password_and_account_security', percentage: 40 },
     { topicCode: 'phishing_and_scams', percentage: 40 },
@@ -268,6 +289,11 @@ async function run() {
     result = await request('GET', '/api/recommendations/current', undefined, cookieA);
     assert.equal(result.response.status, 200);
     assert.equal(result.json.recommendation.reasonCode, 'assessment_pending');
+    assert.equal(result.json.recommendation.target, null);
+    assert.equal(
+      result.json.recommendation.reasonText,
+      'Take the initial cyber-wellness assessment when you’re ready to give Cyberly a starting baseline for more specific topic recommendations.',
+    );
 
     const { attemptId } = await completeAssessment(pool, cookieA);
 

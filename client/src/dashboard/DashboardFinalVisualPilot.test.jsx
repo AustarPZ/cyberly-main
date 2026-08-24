@@ -236,7 +236,9 @@ describe("Dashboard final visual migration", () => {
     await screen.findByText(i18n.t("dashboard.assessment.pending"));
     const pending = pendingRender.container.querySelector("#dashboard-initial-assessment");
     expect(within(pending).getByText(i18n.t("dashboard.assessment.pending"))).toBeVisible();
+    await waitFor(() => expect(within(pending).getByText(i18n.t("dashboard.assessment.pendingDescription"))).toBeVisible());
     expect(within(pending).getByRole("button", { name: i18n.t("dashboard.assessment.start") })).toBeVisible();
+    expect(pending).not.toHaveTextContent(/unlock/i);
     expect(pending).not.toHaveTextContent(/skipped/i);
     pendingRender.unmount();
 
@@ -246,6 +248,7 @@ describe("Dashboard final visual migration", () => {
     await screen.findByText(i18n.t("dashboard.assessment.inProgress"));
     const inProgress = inProgressRender.container.querySelector("#dashboard-initial-assessment");
     expect(within(inProgress).getByText(i18n.t("dashboard.assessment.inProgress"))).toBeVisible();
+    await waitFor(() => expect(within(inProgress).getByText(i18n.t("dashboard.assessment.resumeDescription"))).toBeVisible());
     expect(within(inProgress).getByRole("button", { name: i18n.t("dashboard.assessment.resume") })).toBeVisible();
   });
 
@@ -259,6 +262,7 @@ describe("Dashboard final visual migration", () => {
     const assessment = container.querySelector("#dashboard-initial-assessment");
 
     expect(within(assessment).getByText(i18n.t("dashboard.assessment.completed"))).toBeVisible();
+    expect(within(assessment).getByText(i18n.t("dashboard.assessment.completedDescription"))).toBeVisible();
     expect(within(assessment).getByText(/67%/)).toBeVisible();
     expect(within(assessment).getByText(i18n.t("topics.phishing", { defaultValue: "Phishing" }), { exact: false })).toBeVisible();
     expect(within(assessment).getByRole("button", { name: i18n.t("dashboard.assessment.viewResults") })).toBeVisible();

@@ -46,7 +46,7 @@ const LEVEL_LABELS = {
 
 const TEMPLATES = {
   en: {
-    assessment_pending: () => 'Complete the initial cyber wellness assessment to unlock measured progress and recommendations.',
+    assessment_pending: () => 'Take the initial cyber-wellness assessment when you’re ready to give Cyberly a starting baseline for more specific topic recommendations.',
     lowest_topic_score: ({ topic, level }) => `Your ${topic} score was the lowest, so ${level}-level reading and practice is recommended next.`,
     weak_topic: ({ topic, level }) => `Your ${topic} score was the lowest, so ${level}-level reading and practice is recommended next.`,
     developing_topic: ({ topic, level }) => `Your ${topic} score was the lowest, so ${level}-level reading and practice is recommended next.`,
@@ -54,7 +54,7 @@ const TEMPLATES = {
     high_mastery_challenge: ({ topic, level }) => `You already show strong ${topic} knowledge, so an ${level}-level challenge is recommended next.`,
   },
   ms: {
-    assessment_pending: () => 'Lengkapkan penilaian awal kesejahteraan siber untuk membuka kemajuan terukur dan cadangan.',
+    assessment_pending: () => 'Ambil penilaian awal kesejahteraan siber apabila anda bersedia untuk memberi Cyberly asas permulaan bagi cadangan topik yang lebih khusus.',
     lowest_topic_score: ({ topic, level }) => `Skor ${topic} anda paling rendah, jadi bacaan dan latihan tahap ${level} dicadangkan seterusnya.`,
     weak_topic: ({ topic, level }) => `Skor ${topic} anda paling rendah, jadi bacaan dan latihan tahap ${level} dicadangkan seterusnya.`,
     developing_topic: ({ topic, level }) => `Skor ${topic} anda paling rendah, jadi bacaan dan latihan tahap ${level} dicadangkan seterusnya.`,
@@ -62,7 +62,7 @@ const TEMPLATES = {
     high_mastery_challenge: ({ topic, level }) => `Anda sudah menunjukkan pengetahuan ${topic} yang kukuh, jadi cabaran tahap ${level} dicadangkan seterusnya.`,
   },
   'zh-CN': {
-    assessment_pending: () => '完成初始网络健康评估，以解锁可衡量的进度和建议。',
+    assessment_pending: () => '准备好后完成初始网络健康测评，为 Cyberly 提供起始基线，以便给出更具体的主题建议。',
     lowest_topic_score: ({ topic, level }) => `你的${topic}分数最低，建议接下来阅读并练习${level}等级内容。`,
     weak_topic: ({ topic, level }) => `你的${topic}分数最低，建议接下来阅读并练习${level}等级内容。`,
     developing_topic: ({ topic, level }) => `你的${topic}分数最低，建议接下来阅读并练习${level}等级内容。`,

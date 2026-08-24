@@ -11,6 +11,9 @@ import {
   submitAssessmentAttempt,
 } from "../api/assessmentApi";
 import { listChatConversations } from "../chat/chatApi";
+import { getProgress } from "../api/progressApi";
+import { getCurrentRecommendation } from "../api/recommendationApi";
+import { getRecommendedScenarios, getScenarioDashboard } from "../api/scenarioApi";
 
 jest.mock("react-markdown", () => ({ __esModule: true, default: ({ children }) => <div>{children}</div> }));
 jest.mock("remark-gfm", () => ({ __esModule: true, default: () => null }));
@@ -21,6 +24,15 @@ jest.mock("../api/authApi", () => ({
 jest.mock("../api/assessmentApi", () => ({
   getInitialAssessment: jest.fn(), createInitialAssessmentAttempt: jest.fn(), getInitialAssessmentStatus: jest.fn(),
   saveAssessmentAnswer: jest.fn(), submitAssessmentAttempt: jest.fn(),
+}));
+jest.mock("../api/progressApi", () => ({ getProgress: jest.fn() }));
+jest.mock("../api/recommendationApi", () => ({
+  getCurrentRecommendation: jest.fn(), markRecommendationCompleted: jest.fn(), markRecommendationViewed: jest.fn(),
+}));
+jest.mock("../api/scenarioApi", () => ({
+  listScenarios: jest.fn(), getRecommendedScenarios: jest.fn(), getScenarioDashboard: jest.fn(),
+  getScenarioBySlug: jest.fn(), startScenarioAttempt: jest.fn(), getScenarioAttempt: jest.fn(),
+  saveScenarioDecision: jest.fn(), completeScenarioAttempt: jest.fn(), getScenarioAttemptResult: jest.fn(),
 }));
 jest.mock("../chat/chatApi", () => ({
   listChatConversations: jest.fn(), createChatConversation: jest.fn(), getChatConversation: jest.fn(),
@@ -108,6 +120,10 @@ describe("Assessment final visual migration", () => {
     });
     getInitialAssessment.mockResolvedValue({ ok: true, data: { assessment: { id: 1, title: i18n.t("assessment.title") }, questions } });
     getInitialAssessmentStatus.mockResolvedValue({ ok: true, data: { status: "pending" } });
+    getProgress.mockResolvedValue({ ok: true, data: { learningPathProgress: { percentage: 0, components: [] }, assessmentTopicResults: [] } });
+    getCurrentRecommendation.mockResolvedValue({ ok: true, data: { recommendation: null } });
+    getRecommendedScenarios.mockResolvedValue({ ok: true, data: { scenarios: [] } });
+    getScenarioDashboard.mockResolvedValue({ ok: true, data: { completedCount: 0, inProgress: null } });
     listChatConversations.mockResolvedValue({ ok: true, data: { conversations: [] } });
   });
 
@@ -126,8 +142,20 @@ describe("Assessment final visual migration", () => {
     await waitFor(() => expect(container.querySelector(".assessment-intro")).toBeInTheDocument());
     expect(screen.getByText(i18n.t("assessment.introduction"))).toBeVisible();
     expect(screen.getByText(i18n.t("assessment.measurementNote"))).toBeVisible();
-    expect(screen.getByRole("button", { name: i18n.t("assessment.start") })).toBeVisible();
-    expect(screen.getByRole("button", { name: i18n.t("assessment.doLater") })).toBeVisible();
+    expect(screen.getByText(i18n.t("assessment.doLaterDescription"))).toBeVisible();
+    expect(screen.getByRole("button", { name: i18n.t("assessment.start") })).toHaveClass("cy-button-primary");
+    expect(screen.getByRole("button", { name: i18n.t("assessment.doLater") })).toHaveClass("cy-button-quiet");
+    expect(createInitialAssessmentAttempt).not.toHaveBeenCalled();
+    expect(saveAssessmentAnswer).not.toHaveBeenCalled();
+    expect(submitAssessmentAttempt).not.toHaveBeenCalled();
+  });
+
+  test("returns to the Dashboard without mutating the pending assessment when the learner chooses later", async () => {
+    render(<App />);
+
+    await userEvent.click(await screen.findByRole("button", { name: i18n.t("assessment.doLater") }));
+
+    await waitFor(() => expect(window.location.hash).toBe("#/dashboard"));
     expect(createInitialAssessmentAttempt).not.toHaveBeenCalled();
     expect(saveAssessmentAnswer).not.toHaveBeenCalled();
     expect(submitAssessmentAttempt).not.toHaveBeenCalled();
@@ -170,11 +198,16 @@ describe("Assessment final visual migration", () => {
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(hero).toBeInTheDocument();
     expect(container.querySelector(".assessment-result-summary")).toBeInTheDocument();
+    expect(screen.getAllByText(i18n.t("assessment.resultSummary", { score: 8, maxScore: 12 }))).toHaveLength(2);
+    expect(screen.getByText(i18n.t("assessment.resultNextStep"))).toBeVisible();
+    expect(screen.getByText(i18n.t("assessment.measuredLevel"))).toBeVisible();
     expect(screen.getByText("Developing")).toBeVisible();
     expect(screen.getAllByText("67%").length).toBeGreaterThan(0);
     expect(container.querySelectorAll(".assessment-topic-result")).toHaveLength(2);
     expect(screen.getByText(i18n.t("assessment.strengths"))).toBeVisible();
     expect(screen.getByText(i18n.t("assessment.areasToImprove"))).toBeVisible();
+    expect(screen.getByText(i18n.t("assessment.relativeStrength"))).toBeVisible();
+    expect(screen.getByText(i18n.t("assessment.areaToImprove"))).toBeVisible();
     expect(container.querySelectorAll(".assessment-review-card")).toHaveLength(2);
     expect(screen.getByText(i18n.t("assessment.correct"))).toBeVisible();
     expect(screen.getByText(i18n.t("assessment.incorrect"))).toBeVisible();

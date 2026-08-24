@@ -28,7 +28,7 @@ function getReasonCodeForPercentage(percentage) {
 
 function reasonTextFor(topicCode, level, reasonCode) {
   if (reasonCode === 'assessment_pending') {
-    return 'Complete the initial cyber wellness assessment to unlock measured progress and recommendations.';
+    return 'Take the initial cyber-wellness assessment when you’re ready to give Cyberly a starting baseline for more specific topic recommendations.';
   }
 
   const topic = TOPIC_LABELS[topicCode] || topicCode;
