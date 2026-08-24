@@ -206,7 +206,7 @@
     "measuredProgress": "学习活动",
     "welcomeBack": "欢迎回来，{{name}}",
     "beginner": "初学者",
-    "levelDisplay": "{{level}}级",
+    "levelDisplay": "{{level}}",
     "learningProfile": "你的学习资料",
     "learningProfileDescription": "学习概况描述",
     "profileSavedDescription": "学习偏好已保存到你的资料中，并会在刷新页面或重新登录后恢复。",

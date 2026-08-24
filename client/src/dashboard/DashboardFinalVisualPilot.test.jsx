@@ -98,6 +98,34 @@ describe("Dashboard final visual migration", () => {
     expect(screen.getByRole("complementary", { name: i18n.t("dashboard.sectionNav.ariaLabel") })).toHaveClass("cy-section-nav");
   });
 
+  test.each([
+    ["beginner", "初学者"],
+    ["intermediate", "中级"],
+    ["advanced", "高级"],
+  ])("renders the self-contained Simplified Chinese %s familiarity label", async (familiarityLevel, expectedLabel) => {
+    await i18n.changeLanguage("zh-CN");
+    restoreSession.mockResolvedValue({
+      ok: true,
+      data: {
+        user: {
+          id: 41, email: "dashboard@example.test", displayName: "Alya", age: 15, role: "user",
+          accountStatus: "active", emailVerified: true,
+          profile: { helpTopics: ["phishing"] },
+        },
+        profile: {
+          exists: true, onboardingCompleted: true, familiarityLevel, educationLevel: "form_3",
+          preferredLanguage: "chinese", learningStyle: "visual", helpTopics: ["phishing"],
+        },
+      },
+    });
+
+    render(<App />);
+
+    expect(await screen.findByText(expectedLabel)).toBeVisible();
+    expect(screen.queryByText(`${expectedLabel}级`)).not.toBeInTheDocument();
+    expect(screen.queryByText(`profileOptions.familiarity.${familiarityLevel}.label`)).not.toBeInTheDocument();
+  });
+
   test("keeps representative Dashboard content and conditional navigation aligned", async () => {
     const { container } = render(<App />);
     await screen.findByRole("heading", { level: 1, name: /Welcome back, Alya/i });
