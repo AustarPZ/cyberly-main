@@ -57,6 +57,7 @@ const profile = {
   familiarityLevel: "beginner",
   helpTopics: ["staying_safe_online", "protecting_privacy"],
   learningStyle: "step_by_step",
+  avatarPreset: null,
 };
 
 function restoreProfile(overrides = {}) {
@@ -107,6 +108,83 @@ describe("Learner Profile final visual migration", () => {
     expect(screen.getByLabelText(i18n.t("settings.learningStyle"))).toHaveValue(profile.learningStyle);
     expect(saveAccount).not.toHaveBeenCalled();
     expect(saveProfile).not.toHaveBeenCalled();
+  });
+
+  test("offers one initials choice and six localized preset radios with a local preview", async () => {
+    const { container } = render(<App />);
+    await screen.findByRole("heading", { level: 1, name: i18n.t("settings.title") });
+
+    const group = screen.getByRole("group", { name: i18n.t("settings.avatar.legend") });
+    expect(screen.getByRole("heading", { level: 3, name: i18n.t("settings.avatar.title") })).toBeVisible();
+    const radios = within(group).getAllByRole("radio");
+    expect(radios).toHaveLength(7);
+    expect(radios.map(radio => radio.value)).toEqual([
+      "initials",
+      "explorer_orbit",
+      "explorer_peak",
+      "explorer_compass",
+      "explorer_spark",
+      "explorer_wave",
+      "explorer_horizon",
+    ]);
+    expect(within(group).getByRole("radio", { name: i18n.t("settings.avatar.useInitials") })).toBeChecked();
+
+    await userEvent.click(within(group).getByRole("radio", { name: i18n.t("settings.avatar.options.explorer_peak") }));
+    expect(container.querySelector(".profile-avatar .avatar-visual--explorer_peak")).toBeInTheDocument();
+    expect(container.querySelector(".nav-avatar .avatar-visual--explorer_peak")).not.toBeInTheDocument();
+    expect(saveProfile).not.toHaveBeenCalled();
+  });
+
+  test("saves a preset and updates Profile and navbar only from the successful persisted response", async () => {
+    saveProfile.mockImplementation(payload => Promise.resolve({ ok: true, data: { profile: { ...payload, exists: true } } }));
+    const { container } = render(<App />);
+    const preset = await screen.findByRole("radio", { name: i18n.t("settings.avatar.options.explorer_orbit") });
+
+    await userEvent.click(preset);
+    expect(container.querySelector(".profile-avatar .avatar-visual--explorer_orbit")).toBeInTheDocument();
+    expect(container.querySelector(".nav-avatar .avatar-visual--explorer_orbit")).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: i18n.t("settings.saveProfile") }));
+
+    await waitFor(() => expect(saveProfile).toHaveBeenCalledWith(expect.objectContaining({ avatarPreset: "explorer_orbit" })));
+    await waitFor(() => expect(container.querySelector(".nav-avatar .avatar-visual--explorer_orbit")).toBeInTheDocument());
+  });
+
+  test("sends null for initials and preserves a pending preset preview when saving fails", async () => {
+    restoreProfile({ profile: { avatarPreset: "explorer_wave" } });
+    getProfile.mockResolvedValue({ ok: true, data: { profile: { ...profile, avatarPreset: "explorer_wave" } } });
+    saveProfile.mockResolvedValue({ ok: false, error: "Unable to save learner profile." });
+    const { container } = render(<App />);
+
+    const initials = await screen.findByRole("radio", { name: i18n.t("settings.avatar.useInitials") });
+    const spark = screen.getByRole("radio", { name: i18n.t("settings.avatar.options.explorer_spark") });
+    expect(container.querySelector(".nav-avatar .avatar-visual--explorer_wave")).toBeInTheDocument();
+
+    await userEvent.click(spark);
+    await userEvent.click(screen.getByRole("button", { name: i18n.t("settings.saveProfile") }));
+    expect(await screen.findByRole("alert")).toHaveTextContent("Unable to save learner profile.");
+    expect(spark).toBeChecked();
+    expect(container.querySelector(".profile-avatar .avatar-visual--explorer_spark")).toBeInTheDocument();
+    expect(container.querySelector(".nav-avatar .avatar-visual--explorer_wave")).toBeInTheDocument();
+
+    saveProfile.mockResolvedValue({ ok: true, data: { profile: { ...profile, avatarPreset: null } } });
+    await userEvent.click(initials);
+    await userEvent.click(screen.getByRole("button", { name: i18n.t("settings.saveProfile") }));
+    await waitFor(() => expect(saveProfile).toHaveBeenLastCalledWith(expect.objectContaining({ avatarPreset: null })));
+  });
+
+  test("restores a persisted preset and falls back to canonical initials for an invalid server value", async () => {
+    restoreProfile({ profile: { avatarPreset: "explorer_horizon" } });
+    const { container, unmount } = render(<App />);
+    expect(await screen.findByRole("radio", { name: i18n.t("settings.avatar.options.explorer_horizon") })).toBeChecked();
+    expect(container.querySelector(".profile-avatar .avatar-visual--explorer_horizon")).toBeInTheDocument();
+    expect(container.querySelector(".nav-avatar .avatar-visual--explorer_horizon")).toBeInTheDocument();
+    unmount();
+
+    restoreProfile({ user: { displayName: "陈小明" }, profile: { avatarPreset: "https://example.test/avatar.png" } });
+    render(<App />);
+    await screen.findByRole("heading", { level: 1, name: i18n.t("settings.title") });
+    expect(screen.getAllByText("陈").length).toBeGreaterThanOrEqual(2);
+    expect(document.querySelector(".profile-avatar .avatar-visual, .nav-avatar .avatar-visual")).not.toBeInTheDocument();
   });
 
   test("orders the learner account menu as Profile & Settings, Dashboard, Personal Progress, Log out", async () => {
@@ -174,6 +252,7 @@ describe("Learner Profile final visual migration", () => {
       familiarityLevel: profile.familiarityLevel,
       helpTopics: profile.helpTopics,
       learningStyle: profile.learningStyle,
+      avatarPreset: null,
       onboardingCompleted: true,
     }));
   });
@@ -268,6 +347,7 @@ describe("Learner Profile final visual migration", () => {
       familiarityLevel: "beginner",
       helpTopics: ["staying_safe_online", "protecting_privacy"],
       learningStyle: "step_by_step",
+      avatarPreset: null,
       onboardingCompleted: true,
     });
   });

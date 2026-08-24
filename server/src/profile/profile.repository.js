@@ -9,6 +9,7 @@ const PROFILE_COLUMNS = `
   familiarity_level,
   help_topics,
   learning_style,
+  avatar_preset,
   onboarding_completed,
   onboarding_completed_at,
   profile_last_confirmed_at,
@@ -29,6 +30,8 @@ function createProfileRepository(pool) {
   }
 
   async function upsertForUser(userId, profile) {
+    const hasAvatarPreset = Object.prototype.hasOwnProperty.call(profile, 'avatarPreset');
+
     await pool.query(
       `INSERT INTO learner_profiles (
           user_id,
@@ -38,11 +41,12 @@ function createProfileRepository(pool) {
           familiarity_level,
           help_topics,
           learning_style,
+          avatar_preset,
           onboarding_completed,
           onboarding_completed_at,
           profile_last_confirmed_at
        )
-       VALUES (?, ?, ?, ?, ?, CAST(? AS JSON), ?, ?, IF(? = TRUE, CURRENT_TIMESTAMP, NULL), CURRENT_TIMESTAMP)
+       VALUES (?, ?, ?, ?, ?, CAST(? AS JSON), ?, ?, ?, IF(? = TRUE, CURRENT_TIMESTAMP, NULL), CURRENT_TIMESTAMP)
        ON DUPLICATE KEY UPDATE
           ai_nickname = VALUES(ai_nickname),
           education_level = VALUES(education_level),
@@ -50,6 +54,10 @@ function createProfileRepository(pool) {
           familiarity_level = VALUES(familiarity_level),
           help_topics = VALUES(help_topics),
           learning_style = VALUES(learning_style),
+          avatar_preset = CASE
+            WHEN ? = TRUE THEN VALUES(avatar_preset)
+            ELSE learner_profiles.avatar_preset
+          END,
           onboarding_completed = VALUES(onboarding_completed),
           onboarding_completed_at = CASE
             WHEN learner_profiles.onboarding_completed_at IS NULL AND VALUES(onboarding_completed) = TRUE
@@ -65,8 +73,10 @@ function createProfileRepository(pool) {
         profile.familiarityLevel || null,
         JSON.stringify(profile.helpTopics || []),
         profile.learningStyle || null,
+        hasAvatarPreset ? profile.avatarPreset : null,
         profile.onboardingCompleted,
         profile.onboardingCompleted,
+        hasAvatarPreset,
       ]
     );
 

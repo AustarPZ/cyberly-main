@@ -19,7 +19,7 @@ function runReadOnlyContractTests() {
 }
 
 function runContentContractTests() {
-  assert.equal(CONTENT_CONTRACT.migrations, 27);
+  assert.equal(CONTENT_CONTRACT.migrations, 28);
   assert.equal(CONTENT_CONTRACT.assessment.questions, 12);
   assert.equal(CONTENT_CONTRACT.assessment.topics.length, 4);
   assert.equal(CONTENT_CONTRACT.scenarios.definitions, 8);

@@ -2,6 +2,8 @@ const assert = require('node:assert/strict');
 const { spawn } = require('node:child_process');
 const path = require('node:path');
 const { createPool } = require('../src/database/pool');
+const { SUPPORTED_AVATAR_PRESETS, isSupportedAvatarPreset } = require('../src/profile/avatarPresets');
+const { mapProfileRow } = require('../src/profile/profile.mapper');
 const { validateProfileInput } = require('../src/profile/profile.validation');
 
 const PORT = process.env.PROFILE_TEST_PORT || '5103';
@@ -132,6 +134,18 @@ function assertSafeProfileShape(profile) {
 }
 
 async function run() {
+  assert.deepEqual(SUPPORTED_AVATAR_PRESETS, [
+    'explorer_orbit',
+    'explorer_peak',
+    'explorer_compass',
+    'explorer_spark',
+    'explorer_wave',
+    'explorer_horizon',
+  ]);
+  assert.equal(Object.isFrozen(SUPPORTED_AVATAR_PRESETS), true);
+  assert.equal(isSupportedAvatarPreset('explorer_orbit'), true);
+  assert.equal(isSupportedAvatarPreset('Explorer_orbit'), false);
+
   assert.equal(validateProfileInput({ educationLevel: 'form_4' }).ok, true);
   assert.equal(validateProfileInput({ educationLevel: 'college' }).ok, false);
   assert.equal(validateProfileInput({ preferredLanguage: 'bahasa_melayu' }).ok, true);
@@ -140,6 +154,30 @@ async function run() {
   assert.equal(validateProfileInput({ helpTopics: ['avoiding_scams', 'avoiding_scams'] }).ok, false);
   assert.equal(validateProfileInput({ helpTopics: ['unknown_topic'] }).ok, false);
   assert.equal(validateProfileInput({ onboardingCompleted: true }).ok, false);
+  assert.equal(validateProfileInput({ avatarPreset: 'explorer_orbit' }).ok, true);
+  assert.equal(validateProfileInput({ avatarPreset: null }).ok, true);
+  assert.equal(validateProfileInput({}).ok, true);
+  for (const invalidAvatarPreset of [
+    '',
+    ' explorer_orbit ',
+    'unknown_preset',
+    'https://example.com/avatar.png',
+    'data:image/svg+xml,<svg></svg>',
+    '../avatar.svg',
+    'javascript:alert(1)',
+    {},
+    [],
+    1,
+    true,
+  ]) {
+    const validation = validateProfileInput({ avatarPreset: invalidAvatarPreset });
+    assert.equal(validation.ok, false);
+    assert.equal(validation.errors.avatarPreset, 'Avatar preset is invalid.');
+  }
+
+  assert.equal(mapProfileRow(null).avatarPreset, null);
+  assert.equal(mapProfileRow({ avatar_preset: 'explorer_peak' }).avatarPreset, 'explorer_peak');
+  assert.equal(mapProfileRow({ avatar_preset: 'unknown_stored_value' }).avatarPreset, null);
 
   const pool = createPool();
   const child = startServer();
@@ -164,6 +202,7 @@ async function run() {
     assert.equal(result.response.status, 200);
     assert.equal(result.json.profile.exists, false);
     assert.equal(result.json.profile.onboardingCompleted, false);
+    assert.equal(result.json.profile.avatarPreset, null);
 
     result = await request('PUT', '/api/profile', {
       aiNickname: 'Alex',
@@ -180,15 +219,30 @@ async function run() {
     assert.equal(result.json.profile.exists, true);
     assert.equal(result.json.profile.aiNickname, 'Alex');
     assert.equal(result.json.profile.onboardingCompleted, true);
+    assert.equal(result.json.profile.avatarPreset, null);
     const firstCompletedAt = result.json.profile.onboardingCompletedAt;
     assert.ok(firstCompletedAt);
 
     const [[profileCount]] = await pool.query('SELECT COUNT(*) AS count FROM learner_profiles WHERE user_id = ?', [userA.json.user.id]);
     assert.equal(profileCount.count, 1);
 
-    const [[storedProfile]] = await pool.query('SELECT JSON_EXTRACT(help_topics, "$") AS help_topics FROM learner_profiles WHERE user_id = ?', [userA.json.user.id]);
+    const [[storedProfile]] = await pool.query('SELECT JSON_EXTRACT(help_topics, "$") AS help_topics, avatar_preset FROM learner_profiles WHERE user_id = ?', [userA.json.user.id]);
     const storedTopics = typeof storedProfile.help_topics === 'string' ? JSON.parse(storedProfile.help_topics) : storedProfile.help_topics;
     assert.deepEqual(storedTopics, ['avoiding_scams', 'protecting_privacy']);
+    assert.equal(storedProfile.avatar_preset, null);
+
+    result = await request('PUT', '/api/profile', {
+      aiNickname: 'Alex',
+      educationLevel: 'form_4',
+      preferredLanguage: 'english',
+      familiarityLevel: 'beginner',
+      helpTopics: ['avoiding_scams', 'protecting_privacy'],
+      learningStyle: 'short_explanations',
+      onboardingCompleted: true,
+      avatarPreset: 'explorer_orbit',
+    }, cookieA);
+    assert.equal(result.response.status, 200);
+    assert.equal(result.json.profile.avatarPreset, 'explorer_orbit');
 
     result = await request('GET', '/api/profile', undefined, cookieB);
     assert.equal(result.response.status, 200);
@@ -202,10 +256,12 @@ async function run() {
       helpTopics: ['staying_safe_online'],
       learningStyle: 'step_by_step',
       onboardingCompleted: true,
+      avatarPreset: null,
       userId: userA.json.user.id,
     }, cookieB);
     assert.equal(result.response.status, 200);
     assert.equal(result.json.profile.aiNickname, 'Bee');
+    assert.equal(result.json.profile.avatarPreset, null);
 
     const [[profileCounts]] = await pool.query(
       `SELECT
@@ -225,11 +281,13 @@ async function run() {
     const cookieAfterLogin = result.cookieHeader;
     assert.equal(result.json.profile.aiNickname, 'Alex');
     assert.equal(result.json.profile.onboardingCompleted, true);
+    assert.equal(result.json.profile.avatarPreset, 'explorer_orbit');
 
     result = await request('GET', '/api/auth/me', undefined, cookieAfterLogin);
     assert.equal(result.response.status, 200);
     assert.equal(result.json.profile.aiNickname, 'Alex');
     assert.equal(result.json.profile.helpTopics.length, 2);
+    assert.equal(result.json.profile.avatarPreset, 'explorer_orbit');
 
     await delay(1100);
     result = await request('PUT', '/api/profile', {
@@ -245,10 +303,48 @@ async function run() {
     assert.equal(result.json.profile.aiNickname, 'Alex Updated');
     assert.equal(result.json.profile.onboardingCompletedAt, firstCompletedAt);
     assert.notEqual(result.json.profile.profileLastConfirmedAt, null);
+    assert.equal(result.json.profile.avatarPreset, 'explorer_orbit');
 
     result = await request('GET', '/api/profile', undefined, cookieAfterLogin);
     assert.equal(result.response.status, 200);
     assert.equal(result.json.profile.preferredLanguage, 'bahasa_melayu');
+    assert.equal(result.json.profile.avatarPreset, 'explorer_orbit');
+
+    result = await request('PUT', '/api/profile', {
+      aiNickname: 'Alex Updated',
+      educationLevel: 'form_5',
+      preferredLanguage: 'bahasa_melayu',
+      familiarityLevel: 'intermediate',
+      helpTopics: ['learning_cybersecurity'],
+      learningStyle: 'quizzes_and_challenges',
+      onboardingCompleted: true,
+      avatarPreset: null,
+    }, cookieAfterLogin);
+    assert.equal(result.response.status, 200);
+    assert.equal(result.json.profile.avatarPreset, null);
+
+    result = await request('GET', '/api/profile', undefined, cookieAfterLogin);
+    assert.equal(result.response.status, 200);
+    assert.equal(result.json.profile.avatarPreset, null);
+
+    for (const invalidAvatarPreset of [
+      '',
+      'unknown_preset',
+      'https://example.com/avatar.png',
+      'data:image/svg+xml,<svg></svg>',
+      '../avatar.svg',
+      'javascript:alert(1)',
+      {},
+      [],
+      1,
+      false,
+    ]) {
+      result = await request('PUT', '/api/profile', { avatarPreset: invalidAvatarPreset }, cookieAfterLogin);
+      assert.equal(result.response.status, 400);
+      assert.equal(result.json.code, 'PROFILE_INVALID');
+      assert.equal(result.json.message, 'Learner profile details are invalid.');
+      assert.equal(result.json.errors.avatarPreset, 'Avatar preset is invalid.');
+    }
 
     await cleanup(pool);
     const [[remainingUsers]] = await pool.query('SELECT COUNT(*) AS count FROM users WHERE email IN (?, ?)', [USER_A_EMAIL, USER_B_EMAIL]);

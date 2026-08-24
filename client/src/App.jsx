@@ -40,6 +40,13 @@ import Surface from "./design-system/primitives/Surface";
 import Badge from "./design-system/primitives/Badge";
 import PageState from "./design-system/feedback/PageState";
 import ResourceDetailDialog from "./resources/ResourceDetailDialog";
+import AvatarVisual from "./profile/AvatarVisual";
+import {
+  AVATAR_PRESET_IDS,
+  getInitialAvatarText,
+  normalizeAvatarPreset,
+  resolveAvatarModel,
+} from "./profile/avatarModel";
 import profileMappings from "./profileMappings";
 import i18n, { STORAGE_KEY as UI_LANGUAGE_STORAGE_KEY, getStoredUiLanguage} from "./i18n";
 import { normalizeLocale, localeToProfileLanguage, profileLanguageToLocale } from "./i18n/languageMappings";
@@ -428,6 +435,7 @@ body {
   .account-trigger { gap: 0.25rem; padding-right: 0.35rem; }
   .nav-language select { max-width: 72px; font-size: 0.78rem; }
 }
+.nav-avatar .avatar-visual { width: 100%; height: 100%; }
 
 @media (max-width: 360px) {
   .navbar { gap: 0.25rem; padding: 0 0.25rem; }
@@ -3829,6 +3837,7 @@ function normalizeProfile(profileData) {
     familiarityLevel: profile.familiarityLevel || "",
     helpTopics: Array.isArray(profile.helpTopics) ? profile.helpTopics : [],
     learningStyle: profile.learningStyle || "",
+    avatarPreset: normalizeAvatarPreset(profile.avatarPreset),
     onboardingCompleted: Boolean(profile.onboardingCompleted),
     onboardingCompletedAt: profile.onboardingCompletedAt || null,
     profileLastConfirmedAt: profile.profileLastConfirmedAt || null,
@@ -7882,6 +7891,9 @@ function ProfilePage() {
     learningStyle:
       user?.profile?.learningStyle ||
       "",
+
+    avatarPreset:
+      normalizeAvatarPreset(user?.profile?.avatarPreset),
   }));
 
   const [accountForm, setAccountForm] =
@@ -8158,7 +8170,10 @@ function ProfilePage() {
     ? t(`profileOptions.familiarity.${familiarity.value}.label`, { defaultValue: familiarity.label })
     : t("settings.chooseOne");
   const displayName = accountForm.displayName || user.displayName || user.name || "";
-  const profileInitial = displayName.trim().charAt(0).toUpperCase() || "C";
+  const profileAvatar = resolveAvatarModel({
+    avatarPreset: form.avatarPreset,
+    displayName,
+  });
 
   return (
     <div className="profile-page">
@@ -8175,7 +8190,11 @@ function ProfilePage() {
           <section className="profile-group" aria-labelledby="profile-group-title">
             <h2 id="profile-group-title" className="profile-group-title">{t("settings.profileGroup")}</h2>
           <Surface className="profile-identity-summary">
-            <div className="profile-avatar" aria-hidden="true">{profileInitial}</div>
+            <div className="profile-avatar" aria-hidden="true">
+              {profileAvatar.type === "preset"
+                ? <AvatarVisual presetId={profileAvatar.presetId} />
+                : profileAvatar.text}
+            </div>
             <div className="profile-identity-copy">
               <div className="profile-identity-name">{displayName}</div>
               <div className="profile-identity-badges">
@@ -8184,6 +8203,41 @@ function ProfilePage() {
                 <Badge>{translatedFamiliarity}</Badge>
               </div>
             </div>
+          </Surface>
+
+          <Surface as="section" className="profile-avatar-panel" aria-labelledby="profile-avatar-title">
+            <h3 id="profile-avatar-title" className="profile-section-title">{t("settings.avatar.title")}</h3>
+            <fieldset className="profile-avatar-selector" aria-describedby="profile-avatar-description">
+              <legend>{t("settings.avatar.legend")}</legend>
+              <p id="profile-avatar-description" className="profile-avatar-description">{t("settings.avatar.description")}</p>
+              <div className="profile-avatar-grid">
+                {[null, ...AVATAR_PRESET_IDS].map(presetId => {
+                  const selected = form.avatarPreset === presetId;
+                  const value = presetId || "initials";
+                  const label = presetId
+                    ? t(`settings.avatar.options.${presetId}`)
+                    : t("settings.avatar.useInitials");
+                  return (
+                    <label className="profile-avatar-option" key={value}>
+                      <input
+                        type="radio"
+                        name="avatarPreset"
+                        value={value}
+                        checked={selected}
+                        onChange={() => set("avatarPreset", presetId)}
+                      />
+                      <span className="profile-avatar-option-visual" aria-hidden="true">
+                        {presetId
+                          ? <AvatarVisual presetId={presetId} />
+                          : <span className="profile-avatar-option-initials">{getInitialAvatarText(displayName)}</span>}
+                      </span>
+                      <span className="profile-avatar-option-label">{label}</span>
+                      {selected && <span className="profile-avatar-selected" aria-hidden="true">{t("settings.avatar.selected")}</span>}
+                    </label>
+                  );
+                })}
+              </div>
+            </fieldset>
           </Surface>
 
           {!user.onboardingCompleted && (
@@ -10600,6 +10654,10 @@ function AccountMenu({ user, onNavigate, onRequestLogout }) {
   const itemRefs = useRef([]);
   const menuId = "account-navigation-menu";
   const displayName = user?.displayName || user?.name || t("nav.accountMenu.userFallback");
+  const avatarModel = resolveAvatarModel({
+    avatarPreset: user?.profile?.avatarPreset,
+    displayName,
+  });
   const email = user?.email;
 
   useEffect(() => {
@@ -10678,7 +10736,11 @@ function AccountMenu({ user, onNavigate, onRequestLogout }) {
         aria-controls={menuId}
         aria-label={t("nav.accountMenu.triggerAriaLabel", { name: displayName })}
       >
-        <span className="nav-avatar" aria-hidden="true">{displayName[0]?.toUpperCase() || "U"}</span>
+        <span className="nav-avatar" aria-hidden="true">
+          {avatarModel.type === "preset"
+            ? <AvatarVisual presetId={avatarModel.presetId} />
+            : avatarModel.text}
+        </span>
         <span className="account-name">{displayName}</span>
         <span className="account-chevron" aria-hidden="true">▾</span>
       </button>

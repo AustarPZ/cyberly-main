@@ -1,3 +1,5 @@
+const { isSupportedAvatarPreset } = require('./avatarPresets');
+
 const EDUCATION_LEVELS = new Set([
   'form_1',
   'form_2',
@@ -86,6 +88,7 @@ function validateHelpTopics(value, isCompleting, errors) {
 
 function validateProfileInput(input = {}) {
   const errors = {};
+  const hasAvatarPreset = Object.prototype.hasOwnProperty.call(input, 'avatarPreset');
   const onboardingCompleted = input.onboardingCompleted === true;
   const aiNickname = cleanOptionalString(input.aiNickname);
 
@@ -98,6 +101,14 @@ function validateProfileInput(input = {}) {
   const familiarityLevel = validateEnum(input.familiarityLevel, FAMILIARITY_LEVELS, 'familiarityLevel', errors);
   const learningStyle = validateEnum(input.learningStyle, LEARNING_STYLES, 'learningStyle', errors);
   const helpTopics = validateHelpTopics(input.helpTopics, onboardingCompleted, errors);
+
+  if (
+    hasAvatarPreset
+    && input.avatarPreset !== null
+    && !isSupportedAvatarPreset(input.avatarPreset)
+  ) {
+    errors.avatarPreset = 'Avatar preset is invalid.';
+  }
 
   if (onboardingCompleted) {
     if (!aiNickname) errors.aiNickname = 'AI nickname is required to complete onboarding.';
@@ -118,6 +129,7 @@ function validateProfileInput(input = {}) {
       helpTopics,
       learningStyle,
       onboardingCompleted,
+      ...(hasAvatarPreset ? { avatarPreset: input.avatarPreset } : {}),
     },
   };
 }

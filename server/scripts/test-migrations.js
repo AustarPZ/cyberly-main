@@ -133,6 +133,25 @@ async function assertFreshSchema(connection) {
     foreignKeyExists(connection, 'learner_profiles', 'fk_learner_profiles_user')
   );
   await assertExists(
+    'learner_profiles avatar preset column',
+    columnExists(connection, 'learner_profiles', 'avatar_preset')
+  );
+  const [[avatarPresetColumn]] = await connection.query(
+    `SELECT DATA_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, COLUMN_DEFAULT
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'learner_profiles'
+       AND COLUMN_NAME = 'avatar_preset'`
+  );
+  if (
+    avatarPresetColumn?.DATA_TYPE !== 'varchar'
+    || Number(avatarPresetColumn?.CHARACTER_MAXIMUM_LENGTH) !== 32
+    || avatarPresetColumn?.IS_NULLABLE !== 'YES'
+    || avatarPresetColumn?.COLUMN_DEFAULT !== null
+  ) {
+    throw new Error('learner_profiles.avatar_preset must be nullable VARCHAR(32) with a NULL default.');
+  }
+  await assertExists(
     'chat messages conversation foreign key',
     foreignKeyExists(connection, 'chat_messages', 'fk_chat_messages_conversation')
   );
@@ -163,6 +182,10 @@ async function assertFreshSchema(connection) {
   await assertExists(
     'migration 027 recorded',
     migrationRecorded(connection, '027_add_email_verification_foundation.sql')
+  );
+  await assertExists(
+    'migration 028 recorded',
+    migrationRecorded(connection, '028_add_avatar_preset_to_learner_profiles.sql')
   );
 
   const migrationFiles = listMigrationFilesThrough();

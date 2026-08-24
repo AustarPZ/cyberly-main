@@ -22,6 +22,15 @@ describe("Learner Profile responsive CSS", () => {
     expect(css).toMatch(/\.profile-actions[\s\S]*flex-direction\s*:\s*column/);
   });
 
+  test("keeps the avatar selector touch friendly, visibly selected and bounded to two mobile columns", () => {
+    expect(css).toMatch(/\.profile-avatar-selector[\s\S]*border\s*:\s*0/);
+    expect(css).toMatch(/\.profile-avatar-grid[\s\S]*grid-template-columns\s*:\s*repeat\(auto-fit,\s*minmax\(min\(100%,\s*8rem\),\s*1fr\)\)/);
+    expect(css).toMatch(/\.profile-avatar-option[\s\S]*min-height\s*:\s*44px/);
+    expect(css).toMatch(/\.profile-avatar-option:has\(input:checked\)/);
+    expect(css).toMatch(/\.profile-avatar-selected/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*40rem\)[\s\S]*\.profile-avatar-grid[\s\S]*grid-template-columns\s*:\s*repeat\(2,\s*minmax\(0,\s*1fr\)\)/);
+  });
+
   test("does not retain the legacy Profile gradient or introduce unbounded movement", () => {
     expect(css).not.toMatch(/linear-gradient/);
     expect(css).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)/);

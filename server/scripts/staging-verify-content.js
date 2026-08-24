@@ -5,7 +5,7 @@ const { createPool } = require('../src/database/pool');
 const { listMigrationFiles } = require('../src/database/migration-utils');
 
 const CONTENT_CONTRACT = Object.freeze({
-  migrations: 27,
+  migrations: 28,
   locales: Object.freeze(['en', 'ms', 'zh-CN']),
   assessment: Object.freeze({
     slug: 'initial-cyber-wellness-v1',

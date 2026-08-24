@@ -1,3 +1,5 @@
+const { isSupportedAvatarPreset } = require('./avatarPresets');
+
 function parseJsonArray(value) {
   if (!value) return [];
   if (Array.isArray(value)) return value;
@@ -26,6 +28,7 @@ function emptyProfile() {
     familiarityLevel: null,
     helpTopics: [],
     learningStyle: null,
+    avatarPreset: null,
     onboardingCompleted: false,
     onboardingCompletedAt: null,
     profileLastConfirmedAt: null,
@@ -43,6 +46,7 @@ function mapProfileRow(row) {
     familiarityLevel: row.familiarity_level || null,
     helpTopics: parseJsonArray(row.help_topics),
     learningStyle: row.learning_style || null,
+    avatarPreset: isSupportedAvatarPreset(row.avatar_preset) ? row.avatar_preset : null,
     onboardingCompleted: Boolean(row.onboarding_completed),
     onboardingCompletedAt: toIso(row.onboarding_completed_at),
     profileLastConfirmedAt: toIso(row.profile_last_confirmed_at),

@@ -62,7 +62,7 @@ function runMigration012ContractTests() {
 function runPendingMigrationCompatibilityTests() {
   const pendingFiles = listMigrationFiles(migrationsDir).filter((filename) => {
     const migrationId = Number(filename.slice(0, 3));
-    return migrationId >= 12 && migrationId <= 27;
+    return migrationId >= 12 && migrationId <= 28;
   });
 
   for (const filename of pendingFiles) {

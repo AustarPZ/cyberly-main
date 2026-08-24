@@ -1,4 +1,5 @@
 const assert = require('assert');
+const fs = require('fs');
 const path = require('path');
 
 const {
@@ -85,7 +86,16 @@ function runMigrationOrderingTests() {
   const migrationsDir = path.resolve(__dirname, '../migrations');
   const all = listMigrationFilesThrough({ migrationsDir });
   assert.equal(all[0], '001_create_schema_migrations.sql');
-  assert.equal(all[all.length - 1], '027_add_email_verification_foundation.sql');
+  assert.equal(all[all.length - 1], '028_add_avatar_preset_to_learner_profiles.sql');
+
+  const avatarMigration = fs.readFileSync(
+    path.join(migrationsDir, '028_add_avatar_preset_to_learner_profiles.sql'),
+    'utf8'
+  );
+  assert.match(
+    avatarMigration,
+    /ALTER TABLE learner_profiles\s+ADD COLUMN avatar_preset VARCHAR\(32\) NULL DEFAULT NULL AFTER learning_style;/i
+  );
 
   const through020 = listMigrationFilesThrough({
     migrationsDir,

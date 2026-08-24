@@ -350,6 +350,21 @@
     "profileSaveFailed": "Unable to save learner profile.",
     "languageSaveFailed": "Your language changed on this device, but Cyberly could not save it to your profile.",
     "identityNote": "Display name and age belong to your account information. Age is not inferred from education level, and neither is treated as learning ability.",
+    "avatar": {
+      "title": "Avatar",
+      "legend": "Choose your Explorer avatar",
+      "description": "Choose a safe Cyberly preset or keep your display-name initial.",
+      "useInitials": "Use initials",
+      "selected": "Selected",
+      "options": {
+        "explorer_orbit": "Orbit",
+        "explorer_peak": "Peak",
+        "explorer_compass": "Compass",
+        "explorer_spark": "Spark",
+        "explorer_wave": "Wave",
+        "explorer_horizon": "Horizon"
+      }
+    },
     "ageGroups": {
       "child": "Child (1–12)",
       "teen": "Teen (13–17)",
