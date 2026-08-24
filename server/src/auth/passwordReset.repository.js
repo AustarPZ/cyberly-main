@@ -17,6 +17,17 @@ function mapToken(row) {
   };
 }
 
+function mapRecoveryUser(row) {
+  if (!row) return null;
+  return {
+    id: Number(row.id),
+    email: row.email,
+    role: row.role,
+    accountStatus: row.account_status,
+    emailVerifiedAt: row.email_verified_at || null,
+  };
+}
+
 const TOKEN_COLUMNS = `id, user_id, token_type, token_hash, target_email, expires_at,
   used_at, revoked_at, created_at, request_ip, request_user_agent`;
 
@@ -96,12 +107,48 @@ function createScopedRepository(connection) {
     return findTokenById(tokenId);
   }
 
+  async function findAccountByEmail(email) {
+    const [rows] = await connection.query(
+      `SELECT id, email, role, account_status, email_verified_at
+       FROM users
+       WHERE email = ?
+       LIMIT 1`,
+      [email]
+    );
+    return mapRecoveryUser(rows[0]);
+  }
+
+  async function findUserForPasswordResetForUpdate(userId) {
+    const [rows] = await connection.query(
+      `SELECT id, email, role, account_status, email_verified_at
+       FROM users
+       WHERE id = ?
+       LIMIT 1
+       FOR UPDATE`,
+      [Number(userId)]
+    );
+    return mapRecoveryUser(rows[0]);
+  }
+
+  async function updatePasswordHash(userId, passwordHash) {
+    const [result] = await connection.query(
+      `UPDATE users
+       SET password_hash = ?
+       WHERE id = ?`,
+      [passwordHash, Number(userId)]
+    );
+    return result.affectedRows === 1;
+  }
+
   return {
     revokeActiveTokens,
     createToken,
     findTokenByHash,
     findTokenByHashForUpdate,
     markTokenUsedIfActive,
+    findAccountByEmail,
+    findUserForPasswordResetForUpdate,
+    updatePasswordHash,
     getSessionVersion: sessionVersions.getSessionVersion,
     incrementSessionVersion: sessionVersions.incrementSessionVersion,
   };
@@ -130,4 +177,5 @@ function createPasswordResetRepository(pool) {
 
 module.exports = {
   createPasswordResetRepository,
+  mapRecoveryUser,
 };

@@ -19,10 +19,13 @@ const { getAgeGroup } = require('./src/database/age-group');
 const {
     isValidEmail,
     normalizeEmail,
+    validatePassword,
     validateRegistration,
 } = require('./src/auth/validation');
 const MySqlSessionStore = require('./src/auth/mysql-session-store');
 const { applyAuthenticatedSession } = require('./src/auth/sessionVersion');
+const { createPasswordResetRepository } = require('./src/auth/passwordReset.repository');
+const { createPasswordResetTokenService } = require('./src/auth/passwordResetToken.service');
 const { requireAuth } = require('./src/auth/middleware');
 const { createRequireVerifiedEmail } = require('./src/auth/emailVerification.middleware');
 const { createEmailVerificationRepository } = require('./src/auth/emailVerification.repository');
@@ -97,6 +100,8 @@ const profileRepository = createProfileRepository(pool);
 const profileService = createProfileService(profileRepository);
 const emailVerificationRepository = createEmailVerificationRepository(pool);
 const emailVerificationTokenService = createEmailVerificationTokenService(emailVerificationRepository);
+const passwordResetRepository = createPasswordResetRepository(pool);
+const passwordResetTokenService = createPasswordResetTokenService(passwordResetRepository);
 const emailVerificationSender = createEmailVerificationSender({
     transport: process.env.EMAIL_TRANSPORT || 'disabled',
     fromName: process.env.EMAIL_FROM_NAME || 'Cyberly',
@@ -191,7 +196,16 @@ const {
     registration: registrationRateLimit,
     loginIp: loginIpRateLimit,
     loginAccount: loginAccountRateLimit,
+    forgotPasswordIp: forgotPasswordIpRateLimit,
+    forgotPasswordAccount: forgotPasswordAccountRateLimit,
+    resetPasswordIp: resetPasswordIpRateLimit,
+    resetPasswordToken: resetPasswordTokenRateLimit,
 } = createAuthRateLimiters();
+
+const PASSWORD_RESET_ACCEPTED_RESPONSE = {
+    accepted: true,
+    message: 'If an account matches that email, we’ll send a password reset link. Check your inbox and spam folder.',
+};
 
 function buildSafeUser(row) {
     return {
@@ -432,6 +446,90 @@ app.post('/api/auth/login', loginIpRateLimit, loginAccountRateLimit, async (req,
         next(error);
     }
 });
+
+app.post(
+    '/api/auth/forgot-password',
+    forgotPasswordIpRateLimit,
+    forgotPasswordAccountRateLimit,
+    async (req, res) => {
+        const email = normalizeEmail(req.body?.email);
+        if (!isValidEmail(email)) {
+            return res.status(400).json({
+                code: ERROR_CODES.PASSWORD_RESET_EMAIL_INVALID,
+                message: 'Please enter a valid email address.',
+            });
+        }
+
+        try {
+            const account = await passwordResetRepository.findAccountByEmail(email);
+            if (account?.role === 'user' && account.accountStatus === 'active') {
+                await passwordResetTokenService.issuePasswordResetToken({
+                    userId: account.id,
+                    requestIp: req.ip || req.socket?.remoteAddress || null,
+                    requestUserAgent: req.get('user-agent') || null,
+                });
+            }
+        } catch {
+            console.error('Password reset request failed: PASSWORD_RESET_REQUEST_FAILED');
+        }
+
+        return res.status(202).json(PASSWORD_RESET_ACCEPTED_RESPONSE);
+    }
+);
+
+app.post(
+    '/api/auth/reset-password',
+    resetPasswordIpRateLimit,
+    resetPasswordTokenRateLimit,
+    async (req, res, next) => {
+        try {
+            const rawToken = String(req.body?.token || '').trim();
+            if (!rawToken) {
+                return res.status(400).json({
+                    code: ERROR_CODES.PASSWORD_RESET_TOKEN_REQUIRED,
+                    message: 'Password reset token is required.',
+                });
+            }
+
+            const password = String(req.body?.password || '');
+            const passwordError = validatePassword(password);
+            if (passwordError) {
+                return res.status(400).json({
+                    code: ERROR_CODES.PASSWORD_RESET_PASSWORD_INVALID,
+                    message: 'Password does not meet the required policy.',
+                    errors: { password: passwordError },
+                });
+            }
+
+            const passwordHash = await bcrypt.hash(password, 10);
+            const reset = await passwordResetTokenService.completePasswordReset(rawToken, passwordHash);
+
+            if (reset.status === 'expired') {
+                return res.status(410).json({
+                    code: ERROR_CODES.PASSWORD_RESET_TOKEN_EXPIRED,
+                    message: 'Password reset link has expired.',
+                });
+            }
+
+            if (reset.status !== 'reset') {
+                return res.status(400).json({
+                    code: ERROR_CODES.PASSWORD_RESET_TOKEN_INVALID_OR_UNAVAILABLE,
+                    message: 'Password reset link is invalid or no longer available.',
+                });
+            }
+
+            await destroySession(req);
+            res.clearCookie(sessionName, {
+                httpOnly: true,
+                sameSite: sessionCookieSameSite,
+                secure: sessionCookieSecure,
+            });
+            return res.json({ reset: true, authenticated: false });
+        } catch (error) {
+            return next(error);
+        }
+    }
+);
 
 app.get('/api/auth/me', requireAuth, async (req, res, next) => {
     try {

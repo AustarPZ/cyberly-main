@@ -78,10 +78,44 @@ function createPasswordResetTokenService(repository, options = {}) {
     });
   }
 
+  async function completePasswordReset(rawToken, passwordHash) {
+    return repository.transaction(async (repo) => {
+      const token = await repo.findTokenByHashForUpdate(
+        hashPasswordResetToken(rawToken),
+        PASSWORD_RESET_TOKEN_TYPE
+      );
+      const status = classifyPasswordResetToken(token, now());
+      if (status !== 'active') return { status, token };
+
+      const user = await repo.findUserForPasswordResetForUpdate(token.userId);
+      if (!user || user.role !== 'user' || user.accountStatus !== 'active') {
+        return { status: 'ineligible', token };
+      }
+
+      const updated = await repo.updatePasswordHash(user.id, passwordHash);
+      if (!updated) throw new Error('Password could not be updated.');
+
+      const usedAt = now();
+      const consumed = await repo.markTokenUsedIfActive(token.id, usedAt);
+      if (!consumed) throw new Error('Password reset token could not be consumed.');
+
+      const sessionVersion = await repo.incrementSessionVersion(user.id);
+      if (sessionVersion === null) throw new Error('Session version could not be incremented.');
+
+      return {
+        status: 'reset',
+        token: consumed,
+        user,
+        sessionVersion,
+      };
+    });
+  }
+
   return {
     issuePasswordResetToken,
     inspectPasswordResetToken,
     consumePasswordResetToken,
+    completePasswordReset,
   };
 }
 

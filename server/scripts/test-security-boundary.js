@@ -192,6 +192,51 @@ function testApplicationRateLimitPolicies() {
   assert.equal(loginAccountLimited.res.statusCode, 429);
   assert.deepEqual(loginAccountLimited.res.body, registrationLimited.res.body);
 
+  const forgotIpRequest = { ip: '203.0.113.30', socket: {}, body: { email: 'learner@example.test' } };
+  for (let index = 0; index < 10; index += 1) {
+    assert.equal(invoke(auth.forgotPasswordIp, forgotIpRequest).nextCalled, true);
+  }
+  assert.equal(invoke(auth.forgotPasswordIp, forgotIpRequest).res.statusCode, 429);
+
+  for (let index = 0; index < 5; index += 1) {
+    assert.equal(invoke(auth.forgotPasswordAccount, {
+      ip: `198.51.100.${index}`,
+      socket: {},
+      body: { email: ' Learner@Example.test ' },
+    }).nextCalled, true);
+  }
+  const forgotAccountLimited = invoke(auth.forgotPasswordAccount, {
+    ip: '198.51.100.99', socket: {}, body: { email: 'learner@example.test' },
+  });
+  assert.equal(forgotAccountLimited.res.statusCode, 429);
+
+  const resetIpRequest = { ip: '203.0.113.31', socket: {}, body: { token: 'raw-reset-token' } };
+  for (let index = 0; index < 20; index += 1) {
+    assert.equal(invoke(auth.resetPasswordIp, resetIpRequest).nextCalled, true);
+  }
+  assert.equal(invoke(auth.resetPasswordIp, resetIpRequest).res.statusCode, 429);
+
+  for (let index = 0; index < 5; index += 1) {
+    assert.equal(invoke(auth.resetPasswordToken, {
+      ip: `192.0.2.${index}`,
+      socket: {},
+      body: { token: 'raw-reset-token' },
+    }).nextCalled, true);
+  }
+  const resetTokenLimited = invoke(auth.resetPasswordToken, {
+    ip: '192.0.2.99', socket: {}, body: { token: 'raw-reset-token' },
+  });
+  assert.equal(resetTokenLimited.res.statusCode, 429);
+
+  const forgotKey = createHashedBodyKey('email', { prefix: 'forgot-password-account' })({
+    body: { email: 'learner@example.test' },
+  });
+  const resetKey = createHashedBodyKey('token', { prefix: 'reset-password-token' })({
+    body: { token: 'raw-reset-token' },
+  });
+  assert.doesNotMatch(forgotKey, /learner|example/i);
+  assert.doesNotMatch(resetKey, /raw-reset-token/i);
+
   const agentLimiter = createAgentActionRateLimiter({ now });
   const agentRequest = { session: { userId: 42 } };
   for (let index = 0; index < 30; index += 1) {

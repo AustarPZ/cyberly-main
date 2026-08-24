@@ -9,12 +9,30 @@ const {
 
 function createMemoryRepository() {
   const tokens = [];
+  const users = new Map([
+    [7, {
+      id: 7,
+      role: 'user',
+      accountStatus: 'active',
+      passwordHash: 'old-password-hash',
+      sessionVersion: 3,
+    }],
+  ]);
   let nextId = 1;
 
   const repository = {
     tokens,
     async transaction(work) {
-      return work(repository);
+      const tokenSnapshot = tokens.map(token => ({ ...token }));
+      const userSnapshot = new Map(Array.from(users, ([id, user]) => [id, { ...user }]));
+      try {
+        return await work(repository);
+      } catch (error) {
+        tokens.splice(0, tokens.length, ...tokenSnapshot);
+        users.clear();
+        for (const [id, user] of userSnapshot) users.set(id, user);
+        throw error;
+      }
     },
     async revokeActiveTokens(userId, tokenType, revokedAt) {
       for (const token of tokens) {
@@ -40,8 +58,24 @@ function createMemoryRepository() {
       token.usedAt = usedAt;
       return token;
     },
+    async findUserForPasswordResetForUpdate(userId) {
+      return users.get(Number(userId)) || null;
+    },
+    async updatePasswordHash(userId, passwordHash) {
+      const user = users.get(Number(userId));
+      if (!user) return false;
+      user.passwordHash = passwordHash;
+      return true;
+    },
+    async incrementSessionVersion(userId) {
+      const user = users.get(Number(userId));
+      if (!user) return null;
+      user.sessionVersion += 1;
+      return user.sessionVersion;
+    },
   };
 
+  repository.users = users;
   return repository;
 }
 
@@ -76,6 +110,31 @@ async function run() {
   assert.equal((await service.inspectPasswordResetToken(second.rawToken)).status, 'active');
   assert.equal((await service.inspectPasswordResetToken('unknown-token')).status, 'missing');
   assert.equal((await service.inspectPasswordResetToken(verificationRawToken)).status, 'missing');
+
+  const completionRepository = createMemoryRepository();
+  const completionService = createPasswordResetTokenService(completionRepository, { now: () => issuedAt });
+  const completionToken = await completionService.issuePasswordResetToken({ userId: 7 });
+  const completion = await completionService.completePasswordReset(completionToken.rawToken, 'new-password-hash');
+  assert.equal(completion.status, 'reset');
+  assert.equal(completionRepository.users.get(7).passwordHash, 'new-password-hash');
+  assert.equal(completionRepository.users.get(7).sessionVersion, 4);
+  assert.ok(completionRepository.tokens.find(token => token.tokenHash === hashPasswordResetToken(completionToken.rawToken)).usedAt);
+
+  for (const failure of ['password', 'consume', 'session']) {
+    const failureRepository = createMemoryRepository();
+    const failureService = createPasswordResetTokenService(failureRepository, { now: () => issuedAt });
+    const failureToken = await failureService.issuePasswordResetToken({ userId: 7 });
+    if (failure === 'password') failureRepository.updatePasswordHash = async () => false;
+    if (failure === 'consume') failureRepository.markTokenUsedIfActive = async () => null;
+    if (failure === 'session') failureRepository.incrementSessionVersion = async () => null;
+
+    await assert.rejects(
+      failureService.completePasswordReset(failureToken.rawToken, 'new-password-hash')
+    );
+    assert.equal(failureRepository.users.get(7).passwordHash, 'old-password-hash');
+    assert.equal(failureRepository.users.get(7).sessionVersion, 3);
+    assert.equal(failureRepository.tokens[0].usedAt, null);
+  }
 
   const usedResult = await service.consumePasswordResetToken(second.rawToken, async () => 'updated');
   assert.equal(usedResult.status, 'used');

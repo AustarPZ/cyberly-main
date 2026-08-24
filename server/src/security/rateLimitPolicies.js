@@ -32,6 +32,34 @@ function createAuthRateLimiters({ now = Date.now } = {}) {
       now,
       ...AUTH_LIMIT_RESPONSE,
     }),
+    forgotPasswordIp: createFixedWindowRateLimiter({
+      windowMs: 15 * 60 * 1000,
+      max: 10,
+      keyGenerator: req => `forgot-password-ip:${requestIp(req)}`,
+      now,
+      ...AUTH_LIMIT_RESPONSE,
+    }),
+    forgotPasswordAccount: createFixedWindowRateLimiter({
+      windowMs: 15 * 60 * 1000,
+      max: 5,
+      keyGenerator: createHashedBodyKey('email', { prefix: 'forgot-password-account' }),
+      now,
+      ...AUTH_LIMIT_RESPONSE,
+    }),
+    resetPasswordIp: createFixedWindowRateLimiter({
+      windowMs: 15 * 60 * 1000,
+      max: 20,
+      keyGenerator: req => `reset-password-ip:${requestIp(req)}`,
+      now,
+      ...AUTH_LIMIT_RESPONSE,
+    }),
+    resetPasswordToken: createFixedWindowRateLimiter({
+      windowMs: 15 * 60 * 1000,
+      max: 5,
+      keyGenerator: createHashedBodyKey('token', { prefix: 'reset-password-token' }),
+      now,
+      ...AUTH_LIMIT_RESPONSE,
+    }),
   };
 }
 
