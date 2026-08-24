@@ -108,6 +108,7 @@ async function assertFreshSchema(connection) {
     'account_status',
     'email_verified_at',
     'email_verification_sent_at',
+    'session_version',
   ];
 
   for (const column of expectedUserColumns) {
@@ -187,6 +188,26 @@ async function assertFreshSchema(connection) {
     'migration 028 recorded',
     migrationRecorded(connection, '028_add_avatar_preset_to_learner_profiles.sql')
   );
+  await assertExists(
+    'migration 029 recorded',
+    migrationRecorded(connection, '029_add_session_version_to_users.sql')
+  );
+
+  const [[sessionVersionColumn]] = await connection.query(
+    `SELECT DATA_TYPE, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'users'
+       AND COLUMN_NAME = 'session_version'`
+  );
+  if (
+    sessionVersionColumn?.DATA_TYPE !== 'int'
+    || !String(sessionVersionColumn?.COLUMN_TYPE || '').includes('unsigned')
+    || sessionVersionColumn?.IS_NULLABLE !== 'NO'
+    || Number(sessionVersionColumn?.COLUMN_DEFAULT) !== 0
+  ) {
+    throw new Error('users.session_version must be INT UNSIGNED NOT NULL DEFAULT 0.');
+  }
 
   const migrationFiles = listMigrationFilesThrough();
   const [rows] = await connection.query('SELECT COUNT(*) AS count FROM schema_migrations');

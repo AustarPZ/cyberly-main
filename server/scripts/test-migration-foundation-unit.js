@@ -86,7 +86,16 @@ function runMigrationOrderingTests() {
   const migrationsDir = path.resolve(__dirname, '../migrations');
   const all = listMigrationFilesThrough({ migrationsDir });
   assert.equal(all[0], '001_create_schema_migrations.sql');
-  assert.equal(all[all.length - 1], '028_add_avatar_preset_to_learner_profiles.sql');
+  assert.equal(all[all.length - 1], '029_add_session_version_to_users.sql');
+
+  const sessionVersionMigration = fs.readFileSync(
+    path.join(migrationsDir, '029_add_session_version_to_users.sql'),
+    'utf8'
+  );
+  assert.match(
+    sessionVersionMigration,
+    /ALTER TABLE users\s+ADD COLUMN session_version INT UNSIGNED NOT NULL DEFAULT 0/i
+  );
 
   const avatarMigration = fs.readFileSync(
     path.join(migrationsDir, '028_add_avatar_preset_to_learner_profiles.sql'),

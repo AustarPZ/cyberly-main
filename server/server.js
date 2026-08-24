@@ -22,6 +22,7 @@ const {
     validateRegistration,
 } = require('./src/auth/validation');
 const MySqlSessionStore = require('./src/auth/mysql-session-store');
+const { applyAuthenticatedSession } = require('./src/auth/sessionVersion');
 const { requireAuth } = require('./src/auth/middleware');
 const { createRequireVerifiedEmail } = require('./src/auth/emailVerification.middleware');
 const { createEmailVerificationRepository } = require('./src/auth/emailVerification.repository');
@@ -209,7 +210,7 @@ function buildSafeUser(row) {
 async function findSafeUserById(userId) {
     const [rows] = await pool.query(
         `SELECT id, email, display_name, age, age_group, role, account_status,
-                email_verified_at
+                email_verified_at, session_version
          FROM users
          WHERE id = ?
          LIMIT 1`,
@@ -248,8 +249,7 @@ function saveSession(req) {
 
 async function establishSession(req, user) {
     await regenerateSession(req);
-    req.session.userId = user.id;
-    req.session.role = user.role;
+    applyAuthenticatedSession(req.session, user);
     await saveSession(req);
 }
 
@@ -394,7 +394,7 @@ app.post('/api/auth/login', loginIpRateLimit, loginAccountRateLimit, async (req,
 
         const [rows] = await pool.query(
             `SELECT id, email, display_name, age, age_group, password_hash, role, account_status,
-                    email_verified_at
+                    email_verified_at, session_version
              FROM users
              WHERE email = ?
              LIMIT 1`,

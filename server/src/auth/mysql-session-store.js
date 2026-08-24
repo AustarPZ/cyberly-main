@@ -15,9 +15,21 @@ class MySqlSessionStore extends session.Store {
 
   get(sid, callback) {
     this.pool.query('SELECT data FROM sessions WHERE sid = ? AND expires > NOW() LIMIT 1', [sid])
-      .then(([rows]) => {
+      .then(async ([rows]) => {
         if (rows.length === 0) return callback(null, null);
         const data = typeof rows[0].data === 'string' ? JSON.parse(rows[0].data) : rows[0].data;
+        if (data?.userId) {
+          const [users] = await this.pool.query(
+            'SELECT session_version FROM users WHERE id = ? LIMIT 1',
+            [data.userId]
+          );
+          const storedVersion = Number(data.sessionVersion ?? 0);
+          const currentVersion = users[0] ? Number(users[0].session_version) : null;
+          if (currentVersion === null || storedVersion !== currentVersion) {
+            await this.pool.query('DELETE FROM sessions WHERE sid = ?', [sid]);
+            return callback(null, null);
+          }
+        }
         callback(null, data);
       })
       .catch((error) => callback(error));
