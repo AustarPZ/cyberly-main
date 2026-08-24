@@ -5,7 +5,10 @@ const { createPool } = require('../src/database/pool');
 const { listMigrationFiles } = require('../src/database/migration-utils');
 
 const CONTENT_CONTRACT = Object.freeze({
-  migrations: 28,
+  repositoryMigrationCount: 29,
+  allowedPendingMigrationFiles: Object.freeze([
+    '029_add_session_version_to_users.sql',
+  ]),
   locales: Object.freeze(['en', 'ms', 'zh-CN']),
   assessment: Object.freeze({
     slug: 'initial-cyber-wellness-v1',
@@ -141,9 +144,44 @@ function numericRow(row) {
   return Object.fromEntries(Object.entries(row || {}).map(([key, value]) => [key, Number(value)]));
 }
 
+function verifyMigrationState(appliedMigrationFiles, repositoryMigrationFiles = listMigrationFiles()) {
+  assert.equal(
+    repositoryMigrationFiles.length,
+    CONTENT_CONTRACT.repositoryMigrationCount,
+    'repository migration inventory does not match the content contract'
+  );
+
+  const uniqueApplied = new Set(appliedMigrationFiles);
+  assert.equal(uniqueApplied.size, appliedMigrationFiles.length, 'duplicate applied migration record');
+  assert.ok(
+    appliedMigrationFiles.length <= repositoryMigrationFiles.length,
+    'more applied migrations than repository migrations'
+  );
+
+  const expectedAppliedPrefix = repositoryMigrationFiles.slice(0, appliedMigrationFiles.length);
+  assert.deepEqual(
+    appliedMigrationFiles,
+    expectedAppliedPrefix,
+    'applied migration sequence does not match repository order'
+  );
+
+  const pending = repositoryMigrationFiles.slice(appliedMigrationFiles.length);
+  const allowedPending = new Set(CONTENT_CONTRACT.allowedPendingMigrationFiles);
+  assert.ok(
+    pending.every((filename) => allowedPending.has(filename)),
+    `unexpected pending migration: ${pending.join(', ') || '(none)'}`
+  );
+
+  return {
+    repositoryCount: repositoryMigrationFiles.length,
+    appliedCount: appliedMigrationFiles.length,
+    highestApplied: appliedMigrationFiles.at(-1) || null,
+    pending,
+  };
+}
+
 function verifyContentRows(rows, expectedMigrationFiles = listMigrationFiles()) {
-  assert.equal(expectedMigrationFiles.length, CONTENT_CONTRACT.migrations);
-  assert.deepEqual(rows.migrationFiles, expectedMigrationFiles, 'all repository migrations must be applied');
+  const migrations = verifyMigrationState(rows.migrationFiles, expectedMigrationFiles);
 
   const assessment = numericRow(rows.assessment);
   assert.equal(assessment.definitions, 1);
@@ -199,7 +237,7 @@ function verifyContentRows(rows, expectedMigrationFiles = listMigrationFiles()) 
     throw new Error('RAG tables are in an unexpected partial or inconsistent state.');
   }
 
-  return { assessment, scenario, resource, rag: { ...rag, expectedDocuments }, ragState };
+  return { migrations, assessment, scenario, resource, rag: { ...rag, expectedDocuments }, ragState };
 }
 
 async function collectContentRows(pool) {
@@ -226,6 +264,12 @@ async function run() {
   try {
     const result = verifyContentRows(await collectContentRows(pool));
     console.log('Staging content verification passed.');
+    const highestMigration = result.migrations.highestApplied?.split('_')[0] || 'none';
+    const pendingMigrations = result.migrations.pending.map((filename) => filename.split('_')[0]);
+    console.log(
+      `Migrations: repository ${result.migrations.repositoryCount}, applied ${result.migrations.appliedCount}, `
+      + `highest ${highestMigration}, pending ${pendingMigrations.join(', ') || 'none'}.`
+    );
     console.log(`Assessment: ${result.assessment.questions} questions across ${result.assessment.topics} topics.`);
     console.log(`Scenarios: ${result.scenario.definitions} published definitions, ${result.scenario.steps} steps.`);
     console.log(`Resources: ${result.resource.articles} published, ${result.resource.ragEligibleArticles} RAG eligible.`);
@@ -247,5 +291,6 @@ module.exports = {
   CONTENT_QUERIES,
   assertReadOnlyQueries,
   collectContentRows,
+  verifyMigrationState,
   verifyContentRows,
 };
