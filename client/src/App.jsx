@@ -1,4 +1,4 @@
-import { Fragment, useState, createContext, useContext, useRef, useEffect, useCallback, useMemo } from "react";
+import { Fragment, useState, createContext, useContext, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
 import { useTranslation } from "react-i18next";
@@ -61,6 +61,8 @@ import {
   login as loginAccount,
   logout as logoutSession,
   register as registerAccount,
+  requestPasswordReset,
+  resetPassword,
   resendVerificationEmail,
   verifyEmail,
   restoreSession,
@@ -2426,7 +2428,7 @@ const CHAT_ACTIVE_STORAGE_PREFIX = "cyberly.chat.activeConversation.v1";
 const CHAT_NOTICE_STORAGE_PREFIX = "cyberly.chat.backendMigrationNotice.v1";
 const CHAT_GENERATION_POLL_INTERVAL_MS = 2000;
 const CHAT_GENERATION_POLL_MAX_MS = 30000;
-const PUBLIC_PAGES = new Set(["home", "resources", "about", "login"]);
+const PUBLIC_PAGES = new Set(["home", "resources", "about", "login", "forgot-password", "reset-password"]);
 const PROTECTED_PAGES = new Set(["dashboard", "assessment", "scenarios", "progress", "profile", "ai-chat", "admin"]);
 const VERIFICATION_PAGES = new Set(["verify-email"]);
 const VALID_PAGES = new Set([...PUBLIC_PAGES, ...PROTECTED_PAGES]);
@@ -5450,6 +5452,10 @@ function LoginPage({ onSwitch }) {
           )}
         </div>
 
+        <a className="cy-auth-forgot-link" href="#/forgot-password">
+          {t("auth.passwordReset.forgotLink")}
+        </a>
+
         {errors.form && (
           <div
             className="field-error cy-auth-form-error"
@@ -5513,6 +5519,187 @@ function AuthGate() {
       }
       </PageContainer>
     </div>
+  );
+}
+
+function PasswordResetShell({ children }) {
+  const { t } = useTranslation();
+  return (
+    <div className="cy-auth-route cy-auth-password-reset-route">
+      <PageContainer width="reading" className="cy-auth-route-container">
+        <a className="cy-auth-back cy-auth-text-link" href="#/login">
+          {t("auth.passwordReset.backToLogin")}
+        </a>
+        <div className="cy-auth-shell">
+          <Surface className="cy-auth-panel cy-auth-login cy-auth-password-reset">
+            {children}
+          </Surface>
+        </div>
+      </PageContainer>
+    </div>
+  );
+}
+
+function passwordResetErrorCode(result) {
+  return result?.data?.error?.code || result?.data?.code || null;
+}
+
+function ForgotPasswordPage() {
+  const { t, i18n: translation } = useTranslation();
+  const [email, setEmail] = useState("");
+  const [status, setStatus] = useState("initial");
+  const [errorKey, setErrorKey] = useState(null);
+
+  async function submit(event) {
+    event.preventDefault();
+    if (status === "submitting") return;
+    const normalizedEmail = email.trim();
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalizedEmail)) {
+      setErrorKey("auth.passwordReset.invalidEmail");
+      return;
+    }
+    setStatus("submitting");
+    setErrorKey(null);
+    try {
+      const result = await requestPasswordReset(normalizedEmail, normalizeLocale(translation.resolvedLanguage || translation.language));
+      if (result.ok) {
+        setStatus("accepted");
+        return;
+      }
+      const code = passwordResetErrorCode(result);
+      setErrorKey(code === "PASSWORD_RESET_EMAIL_INVALID"
+        ? "auth.passwordReset.invalidEmail"
+        : code === "AUTH_RATE_LIMITED" || result.status === 429
+          ? "auth.passwordReset.rateLimited"
+          : "auth.passwordReset.genericError");
+      setStatus("error");
+    } catch {
+      setErrorKey("auth.passwordReset.genericError");
+      setStatus("error");
+    }
+  }
+
+  if (status === "accepted") {
+    return (
+      <PasswordResetShell>
+        <PageIdentity label={t("auth.passwordReset.forgotLink")} icon="◇" className="cy-auth-identity" />
+        <h1 className="cy-auth-step-title">{t("auth.passwordReset.requestAcceptedTitle")}</h1>
+        <p className="cy-auth-step-description" aria-live="polite">{t("auth.passwordReset.requestAcceptedDescription")}</p>
+        <div className="cy-auth-actions"><a className="cy-button cy-button-primary cy-auth-action-link" href="#/login">{t("auth.passwordReset.backToLogin")}</a></div>
+      </PasswordResetShell>
+    );
+  }
+
+  return (
+    <PasswordResetShell>
+      <PageIdentity label={t("auth.passwordReset.forgotLink")} icon="◇" className="cy-auth-identity" />
+      <h1 className="cy-auth-step-title">{t("auth.passwordReset.forgotTitle")}</h1>
+      <p className="cy-auth-step-description">{t("auth.passwordReset.forgotDescription")}</p>
+      <form onSubmit={submit} noValidate>
+        <div className="cy-auth-field">
+          <label htmlFor="forgot-password-email">{t("auth.passwordReset.emailLabel")}</label>
+          <input id="forgot-password-email" type="email" autoComplete="email" value={email}
+            aria-invalid={Boolean(errorKey)} aria-describedby={errorKey ? "forgot-password-error" : undefined}
+            onChange={event => { setEmail(event.target.value); setErrorKey(null); }} />
+          {errorKey && <div id="forgot-password-error" className="field-error" role="alert">{t(errorKey)}</div>}
+        </div>
+        <div className="cy-auth-actions cy-auth-login-actions">
+          <Button type="submit" variant="primary" loading={status === "submitting"} loadingLabel={t("auth.passwordReset.requesting")}>{t("auth.passwordReset.requestButton")}</Button>
+        </div>
+      </form>
+    </PasswordResetShell>
+  );
+}
+
+function ResetPasswordPage({ resetTokenRef }) {
+  const { t } = useTranslation();
+  const { clearAuthAfterPasswordReset } = useApp();
+  const [form, setForm] = useState({ password: "", confirmation: "" });
+  const [status, setStatus] = useState(resetTokenRef.current ? "initial" : "missing");
+  const [errorKey, setErrorKey] = useState(null);
+
+  async function submit(event) {
+    event.preventDefault();
+    if (status === "submitting") return;
+    if (!/^(?=.*[A-Za-z])(?=.*\d).{8,}$/.test(form.password)) {
+      setErrorKey("auth.passwordReset.passwordRules");
+      return;
+    }
+    if (form.password !== form.confirmation) {
+      setErrorKey("auth.passwordReset.passwordMismatch");
+      return;
+    }
+    setStatus("submitting");
+    setErrorKey(null);
+    try {
+      const result = await resetPassword(resetTokenRef.current, form.password);
+      if (result.ok) {
+        resetTokenRef.current = "";
+        clearAuthAfterPasswordReset();
+        setStatus("success");
+        return;
+      }
+      const code = passwordResetErrorCode(result);
+      if (code === "PASSWORD_RESET_TOKEN_EXPIRED") setStatus("expired");
+      else if (code === "PASSWORD_RESET_TOKEN_INVALID_OR_UNAVAILABLE") setStatus("unavailable");
+      else {
+        setErrorKey(code === "PASSWORD_RESET_PASSWORD_INVALID"
+          ? "auth.passwordReset.passwordRules"
+          : code === "AUTH_RATE_LIMITED" || result.status === 429
+            ? "auth.passwordReset.rateLimited"
+            : "auth.passwordReset.genericError");
+        setStatus("error");
+      }
+    } catch {
+      setErrorKey("auth.passwordReset.genericError");
+      setStatus("error");
+    }
+  }
+
+  const resultStates = {
+    missing: ["missingTitle", "missingDescription"],
+    expired: ["expiredTitle", "expiredDescription"],
+    unavailable: ["unavailableTitle", "unavailableDescription"],
+    success: ["successTitle", "successDescription"],
+  };
+  if (resultStates[status]) {
+    const [title, description] = resultStates[status];
+    const destination = status === "success" ? "#/login" : "#/forgot-password";
+    const label = status === "success" ? "goToLogin" : "requestNewLink";
+    return (
+      <PasswordResetShell>
+        <PageIdentity label={t("auth.passwordReset.resetTitle")} icon="◇" className="cy-auth-identity" />
+        <h1 className="cy-auth-step-title">{t(`auth.passwordReset.${title}`)}</h1>
+        <p className="cy-auth-step-description" aria-live="polite">{t(`auth.passwordReset.${description}`)}</p>
+        <div className="cy-auth-actions"><a className="cy-button cy-button-primary cy-auth-action-link" href={destination}>{t(`auth.passwordReset.${label}`)}</a></div>
+      </PasswordResetShell>
+    );
+  }
+
+  return (
+    <PasswordResetShell>
+      <PageIdentity label={t("auth.passwordReset.resetTitle")} icon="◇" className="cy-auth-identity" />
+      <h1 className="cy-auth-step-title">{t("auth.passwordReset.resetTitle")}</h1>
+      <p className="cy-auth-step-description">{t("auth.passwordReset.resetDescription")}</p>
+      <form onSubmit={submit} noValidate>
+        <div className="cy-auth-field">
+          <label htmlFor="reset-password-new">{t("auth.passwordReset.newPassword")}</label>
+          <input id="reset-password-new" type="password" autoComplete="new-password" value={form.password}
+            aria-describedby="reset-password-rules" onChange={event => { setForm(current => ({ ...current, password: event.target.value })); setErrorKey(null); }} />
+          <p id="reset-password-rules" className="cy-auth-password-rules">{t("auth.passwordReset.passwordRules")}</p>
+        </div>
+        <div className="cy-auth-field">
+          <label htmlFor="reset-password-confirmation">{t("auth.passwordReset.confirmPassword")}</label>
+          <input id="reset-password-confirmation" type="password" autoComplete="new-password" value={form.confirmation}
+            aria-invalid={Boolean(errorKey)} aria-describedby={errorKey ? "reset-password-error" : undefined}
+            onChange={event => { setForm(current => ({ ...current, confirmation: event.target.value })); setErrorKey(null); }} />
+          {errorKey && <div id="reset-password-error" className="field-error" role="alert">{t(errorKey)}</div>}
+        </div>
+        <div className="cy-auth-actions cy-auth-login-actions">
+          <Button type="submit" variant="primary" loading={status === "submitting"} loadingLabel={t("auth.passwordReset.resetting")}>{t("auth.passwordReset.resetButton")}</Button>
+        </div>
+      </form>
+    </PasswordResetShell>
   );
 }
 
@@ -10976,6 +11163,11 @@ export default function App() {
   const { t } = useTranslation();
   const [acceptedHash, setAcceptedHash] = useState(() => normalizeHashRoute(typeof window === "undefined" ? "#/home" : window.location.hash));
   const [page, setPage] = useState(() => parseHashPage(acceptedHash));
+  const resetPasswordTokenRef = useRef(undefined);
+  if (page === "reset-password" && resetPasswordTokenRef.current === undefined) {
+    const query = acceptedHash.includes("?") ? acceptedHash.slice(acceptedHash.indexOf("?")) : "";
+    resetPasswordTokenRef.current = new URLSearchParams(query).get("token") || "";
+  }
   const [user, setUser] = useState(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [resourceFocusTopic, setResourceFocusTopic] = useState(null);
@@ -11001,6 +11193,16 @@ export default function App() {
     user?.profile?.preferredLanguage;
   const userPreferredLanguage =
     user?.preferredLanguage;
+
+  useLayoutEffect(() => {
+    if (page !== "reset-password") {
+      resetPasswordTokenRef.current = undefined;
+      return;
+    }
+    if (window.location.hash.includes("?")) {
+      window.history.replaceState({ ...(window.history.state || {}), route: "#/reset-password" }, "", "#/reset-password");
+    }
+  }, [page]);
 
   useEffect(() => {
     appUserIdRef.current = user?.id || null;
@@ -11312,6 +11514,12 @@ export default function App() {
     setResourceFocusTopic(null);
     go("login", { authMode: mode });
   }
+  function clearAuthAfterPasswordReset() {
+    appUserIdRef.current = null;
+    setUser(null);
+    setActivityGuard(null);
+    setPendingNavigation(null);
+  }
   function completeNavigation(nextPage, replace = false, requestedAuthMode) {
     if (nextPage !== "resources") {
       setResourceFocusTopic(null);
@@ -11507,6 +11715,7 @@ export default function App() {
     completeGuardedActivity,
     requestGuardedAction,
     requestLogoutWithGuard,
+    clearAuthAfterPasswordReset,
     activityGuard,
     hasActivityGuard: Boolean(activityGuard),
   };
@@ -11523,6 +11732,8 @@ export default function App() {
     profile:   <ProfilePage />,
     admin:     <AdminPage acceptedHash={acceptedHash} />,
     login:     <AuthGate />,
+    "forgot-password": <ForgotPasswordPage />,
+    "reset-password": <ResetPasswordPage resetTokenRef={resetPasswordTokenRef} />,
     "verify-email": <EmailVerificationPage />,
   };
 

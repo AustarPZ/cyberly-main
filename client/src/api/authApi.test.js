@@ -1,10 +1,12 @@
 import {
   login,
   logout,
+  requestPasswordReset,
   register,
   resendVerificationEmail,
   refreshCurrentUser,
   restoreSession,
+  resetPassword,
   verifyEmail,
 } from "./authApi";
 import {
@@ -65,6 +67,41 @@ describe("auth, profile, and account API wrappers", () => {
       ["http://localhost:5000/api/auth/resend-verification-email", "POST", undefined],
       ["http://localhost:5000/api/auth/me", "GET", undefined],
     ]);
+  });
+
+  test("sends password reset request payloads through the shared auth transport", async () => {
+    await requestPasswordReset("learner@example.test", "ms");
+    await resetPassword("synthetic-reset-token", "Secure123");
+
+    expect(global.fetch.mock.calls.map(call => [call[0], call[1]])).toEqual([
+      ["http://localhost:5000/api/auth/forgot-password", expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ email: "learner@example.test", locale: "ms" }),
+      })],
+      ["http://localhost:5000/api/auth/reset-password", expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: "synthetic-reset-token", password: "Secure123" }),
+      })],
+    ]);
+  });
+
+  test.each([
+    [requestPasswordReset, ["learner@example.test", "en"], 202, "PASSWORD_RESET_EMAIL_INVALID"],
+    [requestPasswordReset, ["learner@example.test", "en"], 429, "AUTH_RATE_LIMITED"],
+    [resetPassword, ["synthetic-reset-token", "Secure123"], 400, "PASSWORD_RESET_TOKEN_EXPIRED"],
+    [resetPassword, ["synthetic-reset-token", "Secure123"], 400, "PASSWORD_RESET_TOKEN_INVALID_OR_UNAVAILABLE"],
+    [resetPassword, ["synthetic-reset-token", "short"], 400, "PASSWORD_RESET_PASSWORD_INVALID"],
+    [resetPassword, ["synthetic-reset-token", "Secure123"], 500, "INTERNAL_SERVER_ERROR"],
+  ])("preserves structured password reset response metadata", async (request, args, status, code) => {
+    global.fetch.mockResolvedValueOnce(jsonResponse(status, { error: { code, message: "Safe error" } }));
+
+    const result = await request(...args);
+
+    expect(result).toMatchObject({ ok: status < 400, status, data: { error: { code } } });
   });
 
   test("preserves resend cooldown error metadata", async () => {

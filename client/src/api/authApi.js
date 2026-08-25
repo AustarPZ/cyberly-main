@@ -38,6 +38,20 @@ export function resendVerificationEmail() {
   return apiRequest("/api/auth/resend-verification-email", { method: "POST" });
 }
 
+export function requestPasswordReset(email, locale) {
+  return apiRequest("/api/auth/forgot-password", {
+    method: "POST",
+    body: { email, locale },
+  });
+}
+
+export function resetPassword(token, password) {
+  return apiRequest("/api/auth/reset-password", {
+    method: "POST",
+    body: { token, password },
+  });
+}
+
 export function logout() {
   return apiRequest("/api/auth/logout", { method: "POST" });
 }

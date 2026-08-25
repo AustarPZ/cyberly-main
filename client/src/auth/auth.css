@@ -250,6 +250,48 @@
   margin-top: 0.5rem;
 }
 
+.cy-auth-forgot-link,
+.cy-auth-text-link {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  color: var(--cyberly-brand-primary);
+  font-weight: 700;
+  overflow-wrap: anywhere;
+}
+
+.cy-auth-forgot-link:focus-visible,
+.cy-auth-text-link:focus-visible,
+.cy-auth-action-link:focus-visible {
+  outline: 3px solid color-mix(in srgb, var(--cyberly-brand-primary) 24%, transparent);
+  outline-offset: 2px;
+}
+
+.cy-auth-password-reset-route {
+  padding-block: clamp(1rem, 6vw, 4rem);
+}
+
+.cy-auth-password-reset {
+  margin-inline: auto;
+}
+
+.cy-auth-password-rules {
+  margin: 0.45rem 0 0;
+  color: var(--cyberly-text-secondary);
+  font-size: 0.82rem;
+  line-height: 1.45;
+}
+
+.cy-auth-action-link {
+  display: inline-flex;
+  max-width: 100%;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  text-decoration: none;
+  overflow-wrap: anywhere;
+}
+
 .cy-auth-verification-route {
   padding-block: clamp(2rem, 8vw, 5rem);
 }
