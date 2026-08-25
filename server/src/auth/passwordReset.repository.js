@@ -107,6 +107,17 @@ function createScopedRepository(connection) {
     return findTokenById(tokenId);
   }
 
+  async function revokeTokenByIdIfActive(tokenId, tokenType, revokedAt) {
+    const [result] = await connection.query(
+      `UPDATE account_verification_tokens
+       SET revoked_at = ?
+       WHERE id = ? AND token_type = ?
+         AND used_at IS NULL AND revoked_at IS NULL`,
+      [revokedAt, Number(tokenId), tokenType]
+    );
+    return result.affectedRows === 1;
+  }
+
   async function findAccountByEmail(email) {
     const [rows] = await connection.query(
       `SELECT id, email, role, account_status, email_verified_at
@@ -146,6 +157,7 @@ function createScopedRepository(connection) {
     findTokenByHash,
     findTokenByHashForUpdate,
     markTokenUsedIfActive,
+    revokeTokenByIdIfActive,
     findAccountByEmail,
     findUserForPasswordResetForUpdate,
     updatePasswordHash,

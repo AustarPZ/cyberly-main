@@ -26,6 +26,8 @@ const MySqlSessionStore = require('./src/auth/mysql-session-store');
 const { applyAuthenticatedSession } = require('./src/auth/sessionVersion');
 const { createPasswordResetRepository } = require('./src/auth/passwordReset.repository');
 const { createPasswordResetTokenService } = require('./src/auth/passwordResetToken.service');
+const { createPasswordResetSender } = require('./src/auth/passwordResetEmail.service');
+const { createPasswordResetRecoveryService } = require('./src/auth/passwordResetRecovery.service');
 const { requireAuth } = require('./src/auth/middleware');
 const { createRequireVerifiedEmail } = require('./src/auth/emailVerification.middleware');
 const { createEmailVerificationRepository } = require('./src/auth/emailVerification.repository');
@@ -102,7 +104,7 @@ const emailVerificationRepository = createEmailVerificationRepository(pool);
 const emailVerificationTokenService = createEmailVerificationTokenService(emailVerificationRepository);
 const passwordResetRepository = createPasswordResetRepository(pool);
 const passwordResetTokenService = createPasswordResetTokenService(passwordResetRepository);
-const emailVerificationSender = createEmailVerificationSender({
+const emailSenderOptions = {
     transport: process.env.EMAIL_TRANSPORT || 'disabled',
     fromName: process.env.EMAIL_FROM_NAME || 'Cyberly',
     fromAddress: process.env.EMAIL_FROM_ADDRESS || '',
@@ -114,6 +116,14 @@ const emailVerificationSender = createEmailVerificationSender({
         user: process.env.SMTP_USER || '',
         password: process.env.SMTP_PASSWORD || '',
     },
+};
+const emailVerificationSender = createEmailVerificationSender(emailSenderOptions);
+const passwordResetSender = createPasswordResetSender(emailSenderOptions);
+const passwordResetRecoveryService = createPasswordResetRecoveryService({
+    repository: passwordResetRepository,
+    tokenService: passwordResetTokenService,
+    sender: passwordResetSender,
+    clientBaseUrl: clientBaseUrl || clientOrigin || 'http://localhost:3000',
 });
 const accountRepository = createAccountRepository(pool);
 const accountService = createAccountService(accountRepository);
@@ -461,14 +471,12 @@ app.post(
         }
 
         try {
-            const account = await passwordResetRepository.findAccountByEmail(email);
-            if (account?.role === 'user' && account.accountStatus === 'active') {
-                await passwordResetTokenService.issuePasswordResetToken({
-                    userId: account.id,
-                    requestIp: req.ip || req.socket?.remoteAddress || null,
-                    requestUserAgent: req.get('user-agent') || null,
-                });
-            }
+            await passwordResetRecoveryService.requestPasswordReset({
+                email,
+                locale: getRequestLocale(req),
+                requestIp: req.ip || req.socket?.remoteAddress || null,
+                requestUserAgent: req.get('user-agent') || null,
+            });
         } catch {
             console.error('Password reset request failed: PASSWORD_RESET_REQUEST_FAILED');
         }

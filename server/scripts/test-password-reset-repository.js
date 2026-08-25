@@ -22,7 +22,10 @@ async function run() {
       return [{ affectedRows: 1, insertId: 4 }];
     },
   };
-  const pool = { async getConnection() { return connection; } };
+  const pool = {
+    query: connection.query.bind(connection),
+    async getConnection() { return connection; },
+  };
   const repository = createPasswordResetRepository(pool);
 
   await repository.transaction(async (repo) => {
@@ -32,14 +35,25 @@ async function run() {
     assert.ok(await repo.markTokenUsedIfActive(4, new Date('2026-08-24T08:05:00.000Z')));
   });
 
+  assert.equal(
+    await repository.revokeTokenByIdIfActive(4, 'password_reset', new Date('2026-08-24T08:06:00.000Z')),
+    true
+  );
+
   assert.ok(calls.some(call => /FOR UPDATE$/.test(call.sql)));
   assert.ok(calls.some(call => /used_at IS NULL AND revoked_at IS NULL/.test(call.sql)));
   assert.ok(calls.some(call => /session_version = session_version \+ 1/.test(call.sql)));
+  assert.ok(calls.some(call => (
+    /WHERE id = \? AND token_type = \?/.test(call.sql)
+    && /used_at IS NULL/.test(call.sql)
+    && /revoked_at IS NULL/.test(call.sql)
+    && call.params[2] === 'password_reset'
+  )));
   assert.deepEqual(calls.filter(call => ['BEGIN', 'COMMIT', 'ROLLBACK', 'RELEASE'].includes(call.sql)).map(call => call.sql), [
     'BEGIN', 'COMMIT', 'RELEASE',
   ]);
 
-  console.log('Password reset repository transaction tests passed: 7 assertions.');
+  console.log('Password reset repository transaction tests passed: 9 assertions.');
 }
 
 run().catch((error) => {

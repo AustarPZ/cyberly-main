@@ -21,6 +21,7 @@ const emails = {
   unverified: `${PREFIX}.unverified@example.test`,
   admin: `${PREFIX}.admin@example.test`,
   disabled: `${PREFIX}.disabled@example.test`,
+  other: `${PREFIX}.other@example.test`,
   missing: `${PREFIX}.missing@example.test`,
 };
 
@@ -43,10 +44,18 @@ function cookieFrom(response) {
   return String(response.headers.get('set-cookie') || '').split(';')[0];
 }
 
-function startServer() {
+function startServer(envOverrides = {}) {
   const child = spawn(process.execPath, [path.join(__dirname, '..', 'server.js')], {
     cwd: path.join(__dirname, '..'),
-    env: { ...process.env, PORT, NODE_ENV: 'test', CLIENT_ORIGIN: 'http://localhost:3000' },
+    env: {
+      ...process.env,
+      PORT,
+      NODE_ENV: 'test',
+      CLIENT_ORIGIN: 'http://localhost:3000',
+      CLIENT_BASE_URL: 'http://localhost:3000',
+      EMAIL_TRANSPORT: 'disabled',
+      ...envOverrides,
+    },
     stdio: ['ignore', 'pipe', 'pipe'],
   });
   child.stderr.on('data', chunk => process.stderr.write(chunk));
@@ -103,7 +112,7 @@ async function run() {
   const pool = createPool();
   const repository = createPasswordResetRepository(pool);
   const tokenService = createPasswordResetTokenService(repository);
-  const child = startServer();
+  let child = startServer();
 
   try {
     await clean(pool);
@@ -111,6 +120,7 @@ async function run() {
     const unverifiedId = await createUser(pool, { email: emails.unverified, verified: false });
     const adminId = await createUser(pool, { email: emails.admin, role: 'admin' });
     const disabledId = await createUser(pool, { email: emails.disabled, status: 'disabled' });
+    const otherId = await createUser(pool, { email: emails.other });
     await waitForHealth(child);
 
     let result = await request('POST', '/api/auth/forgot-password', { email: 'not-an-email' });
@@ -266,7 +276,56 @@ async function run() {
     const [[roleChangedToken]] = await pool.query(`SELECT used_at FROM account_verification_tokens WHERE token_hash = ?`, [hashPasswordResetToken(roleChanged.rawToken)]);
     assert.equal(roleChangedToken.used_at, null);
 
-    console.log('Password reset auth integration tests passed: 40 contract checks.');
+    await stopServer(child);
+    child = startServer({ EMAIL_TRANSPORT: 'test-success' });
+    await waitForHealth(child);
+    const successDelivery = await request('POST', '/api/auth/forgot-password', {
+      email: emails.verified,
+      locale: 'zh-CN',
+    });
+    assert.equal(successDelivery.response.status, 202);
+    assert.deepEqual(successDelivery.json, NEUTRAL_RESPONSE);
+    const [[successfulToken]] = await pool.query(
+      `SELECT id, revoked_at FROM account_verification_tokens
+       WHERE user_id = ? AND token_type = 'password_reset' ORDER BY id DESC LIMIT 1`,
+      [verifiedId]
+    );
+    assert.equal(successfulToken.revoked_at, null);
+
+    const otherReset = await issue(tokenService, otherId);
+    await stopServer(child);
+    child = startServer({ EMAIL_TRANSPORT: 'test-fail' });
+    await waitForHealth(child);
+    const failedDelivery = await request('POST', '/api/auth/forgot-password', {
+      email: emails.verified,
+      locale: 'ms',
+    });
+    assert.equal(failedDelivery.response.status, 202);
+    assert.deepEqual(failedDelivery.json, NEUTRAL_RESPONSE);
+    assert.equal(Object.hasOwn(failedDelivery.json, 'token'), false);
+
+    const [[failedToken]] = await pool.query(
+      `SELECT id, used_at, revoked_at FROM account_verification_tokens
+       WHERE user_id = ? AND token_type = 'password_reset' ORDER BY id DESC LIMIT 1`,
+      [verifiedId]
+    );
+    assert.notEqual(Number(failedToken.id), Number(successfulToken.id));
+    assert.equal(failedToken.used_at, null);
+    assert.ok(failedToken.revoked_at);
+
+    const [[otherToken]] = await pool.query(
+      `SELECT revoked_at FROM account_verification_tokens WHERE token_hash = ?`,
+      [hashPasswordResetToken(otherReset.rawToken)]
+    );
+    assert.equal(otherToken.revoked_at, null);
+    const [[verificationAfterFailure]] = await pool.query(
+      `SELECT used_at, revoked_at FROM account_verification_tokens WHERE token_hash = ?`,
+      [verificationHash]
+    );
+    assert.equal(verificationAfterFailure.used_at, null);
+    assert.equal(verificationAfterFailure.revoked_at, null);
+
+    console.log('Password reset auth integration tests passed: 54 contract checks.');
   } finally {
     await stopServer(child);
     await clean(pool);
