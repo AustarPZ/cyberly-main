@@ -361,8 +361,6 @@ function testRouteAndScopeContracts() {
     /app\.post\(\s*['"]\/api\/auth\/email-change\/request['"],[\s\S]*?requireAuth,[\s\S]*?emailChangeIpRateLimit,[\s\S]*?emailChangeUserRateLimit/
   );
   assert.match(serverSource, /userId:\s*req\.session\.userId/);
-  assert.doesNotMatch(serverSource, /email-change\/confirm/);
-  assert.doesNotMatch(serverSource, /verify-email-change['"]\s*,/);
   const requestServiceSource = fs.readFileSync(
     path.resolve(__dirname, '../src/auth/emailChangeRequest.service.js'),
     'utf8'

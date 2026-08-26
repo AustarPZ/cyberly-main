@@ -47,6 +47,14 @@ if (!emailChangeRequestOk) {
   process.exit();
 }
 
+const emailChangeConfirmOk = run(process.execPath, ['scripts/test-email-change-confirm.js'], {
+  cwd: __dirname + '/..',
+});
+
+if (!emailChangeConfirmOk) {
+  process.exit();
+}
+
 if (hasExplicitMigrationTestConfig()) {
   run(process.execPath, ['scripts/test-migrations.js'], {
     cwd: __dirname + '/..',

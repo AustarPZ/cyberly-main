@@ -246,6 +246,29 @@ function testApplicationRateLimitPolicies() {
   assert.equal(emailChangeUserLimited.res.statusCode, 429);
   assert.equal(emailChangeUserLimited.res.body.code, 'AUTH_RATE_LIMITED');
 
+  const emailChangeConfirmRequest = {
+    ip: '203.0.113.33',
+    socket: {},
+    body: { token: 'private-confirm-token' },
+  };
+  for (let index = 0; index < 20; index += 1) {
+    assert.equal(invoke(auth.emailChangeConfirmIp, emailChangeConfirmRequest).nextCalled, true);
+  }
+  assert.equal(invoke(auth.emailChangeConfirmIp, emailChangeConfirmRequest).res.statusCode, 429);
+
+  for (let index = 0; index < 5; index += 1) {
+    assert.equal(invoke(auth.emailChangeConfirmToken, {
+      ...emailChangeConfirmRequest,
+      ip: `198.51.100.${index}`,
+    }).nextCalled, true);
+  }
+  const emailChangeConfirmTokenLimited = invoke(auth.emailChangeConfirmToken, {
+    ...emailChangeConfirmRequest,
+    ip: '198.51.100.99',
+  });
+  assert.equal(emailChangeConfirmTokenLimited.res.statusCode, 429);
+  assert.equal(emailChangeConfirmTokenLimited.res.body.code, 'AUTH_RATE_LIMITED');
+
   for (let index = 0; index < 5; index += 1) {
     assert.equal(invoke(auth.resetPasswordToken, {
       ip: `192.0.2.${index}`,

@@ -91,6 +91,26 @@ function createScopedRepository(connection) {
     return rows[0] ? { id: Number(rows[0].id) } : null;
   }
 
+  async function updateLearnerCanonicalEmail({
+    userId,
+    newEmailNormalized,
+    confirmedAt,
+    previousSessionVersion,
+  }) {
+    const [result] = await connection.query(
+      `UPDATE users
+       SET email = ?,
+           email_verified_at = ?,
+           session_version = session_version + 1
+       WHERE id = ?
+         AND session_version = ?`,
+      [newEmailNormalized, confirmedAt, Number(userId), Number(previousSessionVersion)]
+    );
+    return result.affectedRows === 1
+      ? { sessionVersion: Number(previousSessionVersion) + 1 }
+      : null;
+  }
+
   async function revokeExpiredActiveRequests({
     userId,
     newEmailNormalized,
@@ -229,6 +249,7 @@ function createScopedRepository(connection) {
     revokeByIdIfActive,
     revokeExpiredActiveRequests,
     revokeOtherActiveForUser,
+    updateLearnerCanonicalEmail,
   };
 }
 

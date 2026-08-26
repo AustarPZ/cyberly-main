@@ -32,6 +32,8 @@ const { createEmailChangeRepository } = require('./src/auth/emailChange.reposito
 const { createEmailChangeToken } = require('./src/auth/emailChangeToken.service');
 const { createEmailChangeSender } = require('./src/auth/emailChangeEmail.service');
 const { createEmailChangeRequestService } = require('./src/auth/emailChangeRequest.service');
+const { createEmailChangeConfirmService } = require('./src/auth/emailChangeConfirm.service');
+const { createEmailChangeNoticeSender } = require('./src/auth/emailChangeNoticeEmail.service');
 const { requireAuth } = require('./src/auth/middleware');
 const { createRequireVerifiedEmail } = require('./src/auth/emailVerification.middleware');
 const { createEmailVerificationRepository } = require('./src/auth/emailVerification.repository');
@@ -125,12 +127,17 @@ const emailVerificationSender = createEmailVerificationSender(emailSenderOptions
 const passwordResetSender = createPasswordResetSender(emailSenderOptions);
 const emailChangeRepository = createEmailChangeRepository(pool);
 const emailChangeSender = createEmailChangeSender(emailSenderOptions);
+const emailChangeNoticeSender = createEmailChangeNoticeSender(emailSenderOptions);
 const emailChangeRequestService = createEmailChangeRequestService({
     repository: emailChangeRepository,
     passwordComparer: bcrypt.compare,
     tokenFactory: createEmailChangeToken,
     sender: emailChangeSender,
     clientBaseUrl: clientBaseUrl || clientOrigin || 'http://localhost:3000',
+});
+const emailChangeConfirmService = createEmailChangeConfirmService({
+    repository: emailChangeRepository,
+    noticeSender: emailChangeNoticeSender,
 });
 const passwordResetRecoveryService = createPasswordResetRecoveryService({
     repository: passwordResetRepository,
@@ -225,6 +232,8 @@ const {
     resetPasswordToken: resetPasswordTokenRateLimit,
     emailChangeIp: emailChangeIpRateLimit,
     emailChangeUser: emailChangeUserRateLimit,
+    emailChangeConfirmIp: emailChangeConfirmIpRateLimit,
+    emailChangeConfirmToken: emailChangeConfirmTokenRateLimit,
 } = createAuthRateLimiters();
 
 const PASSWORD_RESET_ACCEPTED_RESPONSE = {
@@ -728,6 +737,34 @@ app.post(
                 locale: getRequestLocale(req),
             });
             return res.status(202).json(result);
+        } catch (error) {
+            return next(error);
+        }
+    }
+);
+
+app.post(
+    '/api/auth/email-change/confirm',
+    emailChangeConfirmIpRateLimit,
+    emailChangeConfirmTokenRateLimit,
+    async (req, res, next) => {
+        const sessionUserId = req.session?.userId || null;
+        const sessionVersion = req.session?.sessionVersion;
+        try {
+            const result = await emailChangeConfirmService.confirmEmailChange({
+                rawToken: req.body?.token,
+                sessionUserId,
+                sessionVersion,
+                continueSession: sessionUserId ? async authenticated => {
+                    await regenerateSession(req);
+                    applyAuthenticatedSession(req.session, authenticated);
+                    await saveSession(req);
+                } : undefined,
+                destroySession: sessionUserId ? async () => {
+                    await destroySession(req);
+                } : undefined,
+            });
+            return res.json(result);
         } catch (error) {
             return next(error);
         }

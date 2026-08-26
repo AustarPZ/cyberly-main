@@ -76,6 +76,20 @@ function createAuthRateLimiters({ now = Date.now } = {}) {
       now,
       ...AUTH_LIMIT_RESPONSE,
     }),
+    emailChangeConfirmIp: createFixedWindowRateLimiter({
+      windowMs: 15 * 60 * 1000,
+      max: 20,
+      keyGenerator: req => `email-change-confirm-ip:${requestIp(req)}`,
+      now,
+      ...AUTH_LIMIT_RESPONSE,
+    }),
+    emailChangeConfirmToken: createFixedWindowRateLimiter({
+      windowMs: 15 * 60 * 1000,
+      max: 5,
+      keyGenerator: createHashedBodyKey('token', { prefix: 'email-change-confirm-token' }),
+      now,
+      ...AUTH_LIMIT_RESPONSE,
+    }),
   };
 }
 
