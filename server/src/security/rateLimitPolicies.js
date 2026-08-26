@@ -60,6 +60,22 @@ function createAuthRateLimiters({ now = Date.now } = {}) {
       now,
       ...AUTH_LIMIT_RESPONSE,
     }),
+    emailChangeIp: createFixedWindowRateLimiter({
+      windowMs: 15 * 60 * 1000,
+      max: 10,
+      keyGenerator: req => `email-change-ip:${requestIp(req)}`,
+      now,
+      ...AUTH_LIMIT_RESPONSE,
+    }),
+    emailChangeUser: createFixedWindowRateLimiter({
+      windowMs: 15 * 60 * 1000,
+      max: 5,
+      keyGenerator: req => req.session?.userId
+        ? `email-change-user:${req.session.userId}`
+        : null,
+      now,
+      ...AUTH_LIMIT_RESPONSE,
+    }),
   };
 }
 

@@ -45,6 +45,17 @@ function isActiveReservationConflict(error = {}) {
 }
 
 function createScopedRepository(connection) {
+  async function findLearnerCredentialSnapshot(userId) {
+    const [rows] = await connection.query(
+      `SELECT id, email, password_hash, role, account_status, email_verified_at
+       FROM users
+       WHERE id = ?
+       LIMIT 1`,
+      [Number(userId)]
+    );
+    return mapEmailChangeLearner(rows[0]);
+  }
+
   async function findById(requestId) {
     const [rows] = await connection.query(
       `SELECT ${REQUEST_COLUMNS}
@@ -210,6 +221,7 @@ function createScopedRepository(connection) {
     findByTokenHash,
     findByTokenHashForUpdate,
     findCanonicalEmailOwner,
+    findLearnerCredentialSnapshot,
     listActiveForUser,
     lockLearnerForUpdate,
     markUsedIfActive,

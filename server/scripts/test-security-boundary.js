@@ -216,6 +216,36 @@ function testApplicationRateLimitPolicies() {
   }
   assert.equal(invoke(auth.resetPasswordIp, resetIpRequest).res.statusCode, 429);
 
+  const emailChangeIpRequest = {
+    ip: '203.0.113.32',
+    socket: {},
+    session: { userId: 42 },
+    body: { newEmail: 'private@example.test', currentPassword: 'not-a-key' },
+  };
+  for (let index = 0; index < 10; index += 1) {
+    assert.equal(invoke(auth.emailChangeIp, emailChangeIpRequest).nextCalled, true);
+  }
+  const emailChangeIpLimited = invoke(auth.emailChangeIp, emailChangeIpRequest);
+  assert.equal(emailChangeIpLimited.res.statusCode, 429);
+  assert.equal(emailChangeIpLimited.res.body.code, 'AUTH_RATE_LIMITED');
+
+  for (let index = 0; index < 5; index += 1) {
+    assert.equal(invoke(auth.emailChangeUser, {
+      ...emailChangeIpRequest,
+      ip: `198.51.100.${index}`,
+      body: {
+        newEmail: `private-${index}@example.test`,
+        currentPassword: `not-a-key-${index}`,
+      },
+    }).nextCalled, true);
+  }
+  const emailChangeUserLimited = invoke(auth.emailChangeUser, {
+    ...emailChangeIpRequest,
+    ip: '198.51.100.99',
+  });
+  assert.equal(emailChangeUserLimited.res.statusCode, 429);
+  assert.equal(emailChangeUserLimited.res.body.code, 'AUTH_RATE_LIMITED');
+
   for (let index = 0; index < 5; index += 1) {
     assert.equal(invoke(auth.resetPasswordToken, {
       ip: `192.0.2.${index}`,

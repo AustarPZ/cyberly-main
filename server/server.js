@@ -28,6 +28,10 @@ const { createPasswordResetRepository } = require('./src/auth/passwordReset.repo
 const { createPasswordResetTokenService } = require('./src/auth/passwordResetToken.service');
 const { createPasswordResetSender } = require('./src/auth/passwordResetEmail.service');
 const { createPasswordResetRecoveryService } = require('./src/auth/passwordResetRecovery.service');
+const { createEmailChangeRepository } = require('./src/auth/emailChange.repository');
+const { createEmailChangeToken } = require('./src/auth/emailChangeToken.service');
+const { createEmailChangeSender } = require('./src/auth/emailChangeEmail.service');
+const { createEmailChangeRequestService } = require('./src/auth/emailChangeRequest.service');
 const { requireAuth } = require('./src/auth/middleware');
 const { createRequireVerifiedEmail } = require('./src/auth/emailVerification.middleware');
 const { createEmailVerificationRepository } = require('./src/auth/emailVerification.repository');
@@ -119,6 +123,15 @@ const emailSenderOptions = {
 };
 const emailVerificationSender = createEmailVerificationSender(emailSenderOptions);
 const passwordResetSender = createPasswordResetSender(emailSenderOptions);
+const emailChangeRepository = createEmailChangeRepository(pool);
+const emailChangeSender = createEmailChangeSender(emailSenderOptions);
+const emailChangeRequestService = createEmailChangeRequestService({
+    repository: emailChangeRepository,
+    passwordComparer: bcrypt.compare,
+    tokenFactory: createEmailChangeToken,
+    sender: emailChangeSender,
+    clientBaseUrl: clientBaseUrl || clientOrigin || 'http://localhost:3000',
+});
 const passwordResetRecoveryService = createPasswordResetRecoveryService({
     repository: passwordResetRepository,
     tokenService: passwordResetTokenService,
@@ -210,6 +223,8 @@ const {
     forgotPasswordAccount: forgotPasswordAccountRateLimit,
     resetPasswordIp: resetPasswordIpRateLimit,
     resetPasswordToken: resetPasswordTokenRateLimit,
+    emailChangeIp: emailChangeIpRateLimit,
+    emailChangeUser: emailChangeUserRateLimit,
 } = createAuthRateLimiters();
 
 const PASSWORD_RESET_ACCEPTED_RESPONSE = {
@@ -698,6 +713,26 @@ app.post('/api/auth/resend-verification-email', requireAuth, async (req, res, ne
         next(error);
     }
 });
+
+app.post(
+    '/api/auth/email-change/request',
+    requireAuth,
+    emailChangeIpRateLimit,
+    emailChangeUserRateLimit,
+    async (req, res, next) => {
+        try {
+            const result = await emailChangeRequestService.requestEmailChange({
+                userId: req.session.userId,
+                newEmail: req.body?.newEmail,
+                currentPassword: req.body?.currentPassword,
+                locale: getRequestLocale(req),
+            });
+            return res.status(202).json(result);
+        } catch (error) {
+            return next(error);
+        }
+    }
+);
 
 app.post('/api/auth/logout', async (req, res, next) => {
     try {
