@@ -1,3 +1,4 @@
+const assert = require('node:assert/strict');
 const mysql = require('mysql2/promise');
 const {
   buildAdminDatabaseConfig,
@@ -90,6 +91,7 @@ async function assertFreshSchema(connection) {
     'rag_chunks',
     'agentic_execution_traces',
     'account_verification_tokens',
+    'email_change_requests',
   ];
 
   for (const table of expectedTables) {
@@ -192,6 +194,79 @@ async function assertFreshSchema(connection) {
     'migration 029 recorded',
     migrationRecorded(connection, '029_add_session_version_to_users.sql')
   );
+  await assertExists(
+    'migration 030 recorded',
+    migrationRecorded(connection, '030_create_email_change_requests.sql')
+  );
+  await assertExists(
+    'email change token hash uniqueness',
+    indexExists(connection, 'email_change_requests', 'uq_email_change_requests_token_hash')
+  );
+  await assertExists(
+    'email change active user uniqueness',
+    indexExists(connection, 'email_change_requests', 'uq_email_change_requests_active_user')
+  );
+  await assertExists(
+    'email change active candidate uniqueness',
+    indexExists(connection, 'email_change_requests', 'uq_email_change_requests_active_email')
+  );
+  await assertExists(
+    'email change user/created index',
+    indexExists(connection, 'email_change_requests', 'idx_email_change_requests_user_created')
+  );
+  await assertExists(
+    'email change expiry index',
+    indexExists(connection, 'email_change_requests', 'idx_email_change_requests_expires')
+  );
+  await assertExists(
+    'email change user foreign key',
+    foreignKeyExists(connection, 'email_change_requests', 'fk_email_change_requests_user')
+  );
+
+  const [emailChangeColumns] = await connection.query(
+    `SELECT COLUMN_NAME, DATA_TYPE, COLUMN_TYPE, CHARACTER_MAXIMUM_LENGTH,
+            IS_NULLABLE, COLUMN_DEFAULT, EXTRA, GENERATION_EXPRESSION
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'email_change_requests'`
+  );
+  const emailChangeByName = new Map(emailChangeColumns.map(column => [column.COLUMN_NAME, column]));
+  assert.equal(emailChangeByName.get('user_id')?.COLUMN_TYPE, 'int unsigned');
+  assert.equal(Number(emailChangeByName.get('new_email_normalized')?.CHARACTER_MAXIMUM_LENGTH), 254);
+  assert.equal(Number(emailChangeByName.get('token_hash')?.CHARACTER_MAXIMUM_LENGTH), 64);
+  assert.equal(Number(emailChangeByName.get('locale')?.CHARACTER_MAXIMUM_LENGTH), 8);
+  assert.equal(emailChangeByName.get('locale')?.COLUMN_DEFAULT, 'en');
+  const activeMarker = emailChangeByName.get('active_marker');
+  assert.equal(activeMarker?.DATA_TYPE, 'tinyint');
+  assert.equal(activeMarker?.IS_NULLABLE, 'YES');
+  assert.match(String(activeMarker?.EXTRA), /STORED GENERATED/i);
+  assert.match(String(activeMarker?.GENERATION_EXPRESSION), /used_at/i);
+  assert.match(String(activeMarker?.GENERATION_EXPRESSION), /revoked_at/i);
+
+  const [emailChangeIndexes] = await connection.query(
+    `SELECT INDEX_NAME, COLUMN_NAME, SEQ_IN_INDEX
+     FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'email_change_requests'
+       AND INDEX_NAME IN (
+         'uq_email_change_requests_active_user',
+         'uq_email_change_requests_active_email'
+       )
+     ORDER BY INDEX_NAME, SEQ_IN_INDEX`
+  );
+  const indexColumns = emailChangeIndexes.reduce((result, index) => {
+    if (!result[index.INDEX_NAME]) result[index.INDEX_NAME] = [];
+    result[index.INDEX_NAME].push(index.COLUMN_NAME);
+    return result;
+  }, {});
+  assert.deepEqual(indexColumns.uq_email_change_requests_active_user, [
+    'user_id',
+    'active_marker',
+  ]);
+  assert.deepEqual(indexColumns.uq_email_change_requests_active_email, [
+    'new_email_normalized',
+    'active_marker',
+  ]);
 
   const [[sessionVersionColumn]] = await connection.query(
     `SELECT DATA_TYPE, COLUMN_TYPE, IS_NULLABLE, COLUMN_DEFAULT
@@ -227,6 +302,8 @@ async function run() {
 
     const connection = await createTestConnection(testConfig, databaseName);
     try {
+      await runMigrations({ connection });
+      await assertFreshSchema(connection);
       await runMigrations({ connection });
       await assertFreshSchema(connection);
     } finally {

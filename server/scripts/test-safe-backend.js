@@ -31,6 +31,14 @@ if (!ok) {
   process.exit();
 }
 
+const emailChangeOk = run(process.execPath, ['scripts/test-email-change-foundation.js'], {
+  cwd: __dirname + '/..',
+});
+
+if (!emailChangeOk) {
+  process.exit();
+}
+
 if (hasExplicitMigrationTestConfig()) {
   run(process.execPath, ['scripts/test-migrations.js'], {
     cwd: __dirname + '/..',
@@ -38,4 +46,3 @@ if (hasExplicitMigrationTestConfig()) {
 } else {
   console.log('Skipping isolated migration DB test: TEST_DB_* configuration is not set.');
 }
-

@@ -86,7 +86,7 @@ function runMigrationOrderingTests() {
   const migrationsDir = path.resolve(__dirname, '../migrations');
   const all = listMigrationFilesThrough({ migrationsDir });
   assert.equal(all[0], '001_create_schema_migrations.sql');
-  assert.equal(all[all.length - 1], '029_add_session_version_to_users.sql');
+  assert.equal(all[all.length - 1], '030_create_email_change_requests.sql');
 
   const sessionVersionMigration = fs.readFileSync(
     path.join(migrationsDir, '029_add_session_version_to_users.sql'),
