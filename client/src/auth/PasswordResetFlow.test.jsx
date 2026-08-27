@@ -61,18 +61,31 @@ describe("forgot and reset password flow", () => {
     listChatConversations.mockResolvedValue({ ok: true, data: { conversations: [] } });
   });
 
-  test("login exposes a semantic forgot-password route and generic accepted state", async () => {
+  test("login exposes both recovery links through the same neutral forgot-password flow", async () => {
     requestPasswordReset.mockResolvedValue({ ok: true, status: 202, data: { accepted: true } });
     await renderRoute("#/login");
-    const link = await screen.findByRole("link", { name: i18n.t("auth.passwordReset.forgotLink") });
-    expect(link).toHaveAttribute("href", "#/forgot-password");
-    await userEvent.click(link);
+    const forgotPasswordLink = await screen.findByRole("link", { name: i18n.t("auth.passwordReset.forgotLink") });
+    const findAccountLink = screen.getByRole("link", { name: i18n.t("auth.passwordReset.findAccountLink") });
+    expect(forgotPasswordLink).toHaveAttribute("href", "#/forgot-password");
+    expect(findAccountLink).toHaveAttribute("href", "#/forgot-password");
+    await userEvent.click(findAccountLink);
     expect(await screen.findByRole("heading", { name: i18n.t("auth.passwordReset.forgotTitle") })).toBeVisible();
+    expect(screen.getByText(i18n.t("auth.passwordReset.findAccountGuidance"))).toBeVisible();
     await userEvent.type(screen.getByLabelText(i18n.t("auth.passwordReset.emailLabel")), "learner@example.test");
     await userEvent.click(screen.getByRole("button", { name: i18n.t("auth.passwordReset.requestButton") }));
     expect(requestPasswordReset).toHaveBeenCalledWith("learner@example.test", "en");
     expect(await screen.findByRole("heading", { name: i18n.t("auth.passwordReset.requestAcceptedTitle") })).toBeVisible();
     expect(screen.queryByText(/account exists|account found|not registered/i)).not.toBeInTheDocument();
+  });
+
+  test.each(["en", "ms", "zh-CN"])("localizes safe account-finding guidance in %s", async locale => {
+    await renderRoute("#/login", { locale });
+    const link = await screen.findByRole("link", { name: i18n.t("auth.passwordReset.findAccountLink") });
+    expect(link).toHaveAttribute("href", "#/forgot-password");
+    await userEvent.click(link);
+    expect(await screen.findByText(i18n.t("auth.passwordReset.findAccountGuidance"))).toBeVisible();
+    expect(document.body).not.toHaveTextContent("auth.passwordReset.findAccount");
+    expect(document.body).not.toHaveTextContent(/account found|account not found|registered email/i);
   });
 
   test("forgot-password validates malformed email without a request", async () => {

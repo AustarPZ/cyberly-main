@@ -5454,9 +5454,14 @@ function LoginPage({ onSwitch }) {
           )}
         </div>
 
-        <a className="cy-auth-forgot-link" href="#/forgot-password">
-          {t("auth.passwordReset.forgotLink")}
-        </a>
+        <div className="cy-auth-recovery-links">
+          <a className="cy-auth-forgot-link" href="#/forgot-password">
+            {t("auth.passwordReset.forgotLink")}
+          </a>
+          <a className="cy-auth-forgot-link" href="#/forgot-password">
+            {t("auth.passwordReset.findAccountLink")}
+          </a>
+        </div>
 
         {errors.form && (
           <div
@@ -5597,6 +5602,7 @@ function ForgotPasswordPage() {
       <PageIdentity label={t("auth.passwordReset.forgotLink")} icon="◇" className="cy-auth-identity" />
       <h1 className="cy-auth-step-title">{t("auth.passwordReset.forgotTitle")}</h1>
       <p className="cy-auth-step-description">{t("auth.passwordReset.forgotDescription")}</p>
+      <p className="cy-auth-step-description">{t("auth.passwordReset.findAccountGuidance")}</p>
       <form onSubmit={submit} noValidate>
         <div className="cy-auth-field">
           <label htmlFor="forgot-password-email">{t("auth.passwordReset.emailLabel")}</label>

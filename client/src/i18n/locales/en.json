@@ -105,6 +105,8 @@
     },
     "passwordReset": {
       "forgotLink": "Forgot password?",
+      "findAccountLink": "Not sure which email you used?",
+      "findAccountGuidance": "Not sure which email you used? Try each email address you control. For security, we won't confirm whether an account exists.",
       "forgotTitle": "Reset your password",
       "forgotDescription": "Enter your account email to request a password reset link.",
       "emailLabel": "Email",

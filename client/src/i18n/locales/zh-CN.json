@@ -105,6 +105,8 @@
     },
     "passwordReset": {
       "forgotLink": "忘记密码？",
+      "findAccountLink": "不确定你使用了哪个邮箱？",
+      "findAccountGuidance": "不确定你使用了哪个邮箱？可以依次尝试你自己控制的邮箱地址。为保护账户安全，我们不会确认某个账户是否存在。",
       "forgotTitle": "重置你的密码",
       "forgotDescription": "输入你的账号邮箱以申请密码重置链接。",
       "emailLabel": "电子邮箱",

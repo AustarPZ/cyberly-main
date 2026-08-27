@@ -105,6 +105,8 @@
     },
     "passwordReset": {
       "forgotLink": "Lupa kata laluan?",
+      "findAccountLink": "Tidak pasti e-mel mana yang anda gunakan?",
+      "findAccountGuidance": "Tidak pasti e-mel mana yang anda gunakan? Cuba setiap alamat e-mel yang anda kawal. Demi keselamatan, kami tidak akan mengesahkan sama ada akaun wujud.",
       "forgotTitle": "Tetapkan semula kata laluan anda",
       "forgotDescription": "Masukkan e-mel akaun anda untuk meminta pautan tetapan semula kata laluan.",
       "emailLabel": "E-mel",
