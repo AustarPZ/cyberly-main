@@ -36,4 +36,13 @@ describe("Learner Profile responsive CSS", () => {
     expect(css).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)/);
     expect(css).toMatch(/transition\s*:\s*none/);
   });
+
+  test("keeps the Email Change secure operation scoped, touch friendly and responsive", () => {
+    expect(css).toMatch(/\.profile-email-change\s*\{/);
+    expect(css).toMatch(/\.profile-email-change[\s\S]*min-width\s*:\s*0/);
+    expect(css).toMatch(/\.profile-email-change[\s\S]*\.cy-button[\s\S]*min-height\s*:\s*44px/);
+    expect(css).toMatch(/\.profile-email-change[\s\S]*:focus-visible/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*40rem\)[\s\S]*\.profile-email-change[\s\S]*\.cy-button[\s\S]*width\s*:\s*100%/);
+    expect(css).not.toMatch(/\.profile-email-change[^}]*overflow-x\s*:\s*hidden/);
+  });
 });

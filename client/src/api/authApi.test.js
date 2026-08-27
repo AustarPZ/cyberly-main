@@ -1,6 +1,8 @@
 import {
+  confirmEmailChange,
   login,
   logout,
+  requestEmailChange,
   requestPasswordReset,
   register,
   resendVerificationEmail,
@@ -85,6 +87,30 @@ describe("auth, profile, and account API wrappers", () => {
         credentials: "include",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ token: "synthetic-reset-token", password: "Secure123" }),
+      })],
+    ]);
+  });
+
+  test("sends email change request and confirmation through the shared auth transport", async () => {
+    await requestEmailChange("new@example.test", "Current123", "zh-CN");
+    await confirmEmailChange("synthetic-email-change-token");
+
+    expect(global.fetch.mock.calls.map(call => [call[0], call[1]])).toEqual([
+      ["http://localhost:5000/api/auth/email-change/request", expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          newEmail: "new@example.test",
+          currentPassword: "Current123",
+          locale: "zh-CN",
+        }),
+      })],
+      ["http://localhost:5000/api/auth/email-change/confirm", expect.objectContaining({
+        method: "POST",
+        credentials: "include",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ token: "synthetic-email-change-token" }),
       })],
     ]);
   });

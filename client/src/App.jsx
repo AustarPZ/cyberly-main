@@ -61,6 +61,8 @@ import {
   login as loginAccount,
   logout as logoutSession,
   register as registerAccount,
+  requestEmailChange,
+  confirmEmailChange,
   requestPasswordReset,
   resetPassword,
   resendVerificationEmail,
@@ -2430,7 +2432,7 @@ const CHAT_GENERATION_POLL_INTERVAL_MS = 2000;
 const CHAT_GENERATION_POLL_MAX_MS = 30000;
 const PUBLIC_PAGES = new Set(["home", "resources", "about", "login", "forgot-password", "reset-password"]);
 const PROTECTED_PAGES = new Set(["dashboard", "assessment", "scenarios", "progress", "profile", "ai-chat", "admin"]);
-const VERIFICATION_PAGES = new Set(["verify-email"]);
+const VERIFICATION_PAGES = new Set(["verify-email", "verify-email-change"]);
 const VALID_PAGES = new Set([...PUBLIC_PAGES, ...PROTECTED_PAGES]);
 VERIFICATION_PAGES.forEach(page => VALID_PAGES.add(page));
 
@@ -5703,6 +5705,97 @@ function ResetPasswordPage({ resetTokenRef }) {
   );
 }
 
+function EmailChangeConfirmationPage({ confirmationTokenRef }) {
+  const { t } = useTranslation();
+  const { refreshCurrentUserState, clearLocalAuthenticatedUserState } = useApp();
+  const headingRef = useRef(null);
+  const requestStartedRef = useRef(false);
+  const [attempt, setAttempt] = useState(0);
+  const [status, setStatus] = useState(confirmationTokenRef.current ? "confirming" : "missing");
+
+  useEffect(() => {
+    let active = true;
+    const token = confirmationTokenRef.current;
+    if (!token || requestStartedRef.current) return () => { active = false; };
+    requestStartedRef.current = true;
+    setStatus("confirming");
+
+    confirmEmailChange(token).then(async result => {
+      if (!active) return;
+      if (result.ok && result.data?.status === "confirmed") {
+        const sessionStatus = result.data.sessionStatus;
+        if (sessionStatus === "continued") {
+          const refreshed = await refreshCurrentUserState?.();
+          if (!active) return;
+          if (!refreshed?.ok) {
+            setStatus("signed_out");
+            clearLocalAuthenticatedUserState?.();
+            return;
+          }
+          setStatus("continued");
+          return;
+        }
+        if (sessionStatus === "unrelated") {
+          setStatus("unrelated");
+          return;
+        }
+        setStatus("signed_out");
+        clearLocalAuthenticatedUserState?.();
+        return;
+      }
+
+      const code = result.data?.error?.code || result.data?.code;
+      if (code === "EMAIL_CHANGE_TOKEN_INVALID_OR_UNAVAILABLE") setStatus("unavailable");
+      else if (code === "EMAIL_CHANGE_EMAIL_UNAVAILABLE") setStatus("conflict");
+      else if (code === "AUTH_RATE_LIMITED" || result.status === 429) setStatus("rate_limited");
+      else setStatus("generic_error");
+    }).catch(() => {
+      if (active) setStatus("generic_error");
+    });
+
+    return () => { active = false; };
+  }, [attempt, clearLocalAuthenticatedUserState, confirmationTokenRef, refreshCurrentUserState]);
+
+  useEffect(() => {
+    if (status !== "confirming") headingRef.current?.focus();
+  }, [status]);
+
+  const stateContent = {
+    missing: ["unavailableTitle", "unavailableDescription"],
+    unavailable: ["unavailableTitle", "unavailableDescription"],
+    conflict: ["conflictTitle", "conflictDescription"],
+    rate_limited: ["rateLimitedTitle", "rateLimitedDescription"],
+    generic_error: ["genericErrorTitle", "genericFailure"],
+    continued: ["confirmedTitle", "continuedDescription"],
+    signed_out: ["confirmedTitle", "signedOutDescription"],
+    unrelated: ["confirmedTitle", "unrelatedDescription"],
+  };
+  const [titleKey, descriptionKey] = stateContent[status] || ["confirmingTitle", "confirmingDescription"];
+  const retry = () => {
+    requestStartedRef.current = false;
+    setAttempt(current => current + 1);
+  };
+
+  return (
+    <PasswordResetShell>
+      <PageIdentity label={t("auth.emailChange.changeAction")} icon="ID" className="cy-auth-identity" />
+      <h1 ref={headingRef} tabIndex="-1" className="cy-auth-step-title">{t(`auth.emailChange.${titleKey}`)}</h1>
+      <p className="cy-auth-step-description" role={status === "generic_error" ? "alert" : "status"} aria-live="polite">
+        {t(`auth.emailChange.${descriptionKey}`)}
+      </p>
+      <div className="cy-auth-actions">
+        {status === "generic_error" && <Button type="button" variant="primary" onClick={retry}>{t("auth.emailChange.retry")}</Button>}
+        {status === "continued" && <a className="cy-button cy-button-primary cy-auth-action-link" href="#/profile">{t("auth.emailChange.returnToProfile")}</a>}
+        {status === "signed_out" && <a className="cy-button cy-button-primary cy-auth-action-link" href="#/login">{t("auth.emailChange.signIn")}</a>}
+        {status === "unrelated" && <a className="cy-button cy-button-primary cy-auth-action-link" href="#/profile">{t("auth.emailChange.returnToProfile")}</a>}
+        {(status === "missing" || status === "unavailable" || status === "conflict") && (
+          <a className="cy-button cy-button-primary cy-auth-action-link" href="#/login">{t("auth.emailChange.signIn")}</a>
+        )}
+      </div>
+    </PasswordResetShell>
+  );
+}
+
 // ─── Page: Home ───────────────────────────────────────────────────
 function HomePage() {
   const { t } = useTranslation();
@@ -8115,6 +8208,14 @@ function ProfilePage() {
   const [saved, setSaved] =
     useState(false);
 
+  const [emailChangeOpen, setEmailChangeOpen] = useState(false);
+  const [emailChangeStatus, setEmailChangeStatus] = useState("initial");
+  const [emailChangeForm, setEmailChangeForm] = useState({ newEmail: "", currentPassword: "" });
+  const [emailChangeErrors, setEmailChangeErrors] = useState({});
+  const [emailChangeExpiry, setEmailChangeExpiry] = useState(3600);
+  const emailChangeInputRef = useRef(null);
+  const emailChangeResultRef = useRef(null);
+
   useEffect(() => {
     const preferredLanguage = localeToProfileLanguage(
       normalizeLocale(activeI18n.language)
@@ -8137,10 +8238,23 @@ function ProfilePage() {
     return () => window.clearTimeout(timeout);
   }, [saved]);
 
+  useEffect(() => {
+    if (emailChangeOpen && emailChangeStatus === "initial") emailChangeInputRef.current?.focus();
+  }, [emailChangeOpen, emailChangeStatus]);
+
+  useEffect(() => {
+    if (emailChangeStatus === "accepted") emailChangeResultRef.current?.focus();
+  }, [emailChangeStatus]);
+
   if (!user) {
     go("login");
     return null;
   }
+
+  const emailChangeEligible =
+    user.role === "user"
+    && user.accountStatus === "active"
+    && user.emailVerified === true;
 
   function set(key, value) {
     setForm(current => ({
@@ -8282,6 +8396,68 @@ function ProfilePage() {
     }
 
     setSaved(true);
+  }
+
+  function closeEmailChange() {
+    setEmailChangeOpen(false);
+    setEmailChangeStatus("initial");
+    setEmailChangeForm({ newEmail: "", currentPassword: "" });
+    setEmailChangeErrors({});
+  }
+
+  function updateEmailChangeField(field, value) {
+    setEmailChangeForm(current => ({ ...current, [field]: value }));
+    setEmailChangeErrors(current => ({ ...current, [field]: undefined, form: undefined }));
+  }
+
+  async function submitEmailChange(event) {
+    event.preventDefault();
+    if (emailChangeStatus === "submitting") return;
+    const newEmail = emailChangeForm.newEmail.trim();
+    const nextErrors = {};
+    if (!newEmail) nextErrors.newEmail = t("auth.emailChange.emailRequired");
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(newEmail)) nextErrors.newEmail = t("auth.emailChange.invalidEmail");
+    if (!emailChangeForm.currentPassword) nextErrors.currentPassword = t("auth.emailChange.passwordRequired");
+    if (Object.keys(nextErrors).length) {
+      setEmailChangeErrors(nextErrors);
+      return;
+    }
+
+    setEmailChangeStatus("submitting");
+    setEmailChangeErrors({});
+    try {
+      const locale = normalizeLocale(activeI18n.resolvedLanguage || activeI18n.language);
+      const result = await requestEmailChange(newEmail, emailChangeForm.currentPassword, locale);
+      if (result.ok && result.status === 202 && result.data?.status === "accepted") {
+        setEmailChangeExpiry(Number(result.data.expiresInSeconds) || 3600);
+        setEmailChangeForm({ newEmail: "", currentPassword: "" });
+        setEmailChangeStatus("accepted");
+        return;
+      }
+
+      const code = result.data?.error?.code || result.data?.code;
+      const fieldErrors = {
+        EMAIL_CHANGE_EMAIL_INVALID: { newEmail: t("auth.emailChange.invalidEmail") },
+        EMAIL_CHANGE_EMAIL_UNAVAILABLE: { newEmail: t("auth.emailChange.emailUnavailable") },
+        EMAIL_CHANGE_PASSWORD_REQUIRED: { currentPassword: t("auth.emailChange.passwordRequired") },
+        EMAIL_CHANGE_PASSWORD_INVALID: { currentPassword: t("auth.emailChange.passwordInvalid") },
+      };
+      const formKeys = {
+        EMAIL_VERIFICATION_REQUIRED: "verificationRequired",
+        AUTH_REQUIRED: "sessionExpired",
+        AUTH_FORBIDDEN: "accountUnavailable",
+        AUTH_ACCOUNT_DISABLED: "accountUnavailable",
+        AUTH_RATE_LIMITED: "rateLimited",
+        EMAIL_SEND_FAILED: "deliveryFailed",
+      };
+      setEmailChangeErrors(fieldErrors[code] || {
+        form: t(`auth.emailChange.${formKeys[code] || "genericFailure"}`),
+      });
+      setEmailChangeStatus("initial");
+    } catch {
+      setEmailChangeErrors({ form: t("auth.emailChange.genericFailure") });
+      setEmailChangeStatus("initial");
+    }
   }
 
   const fieldSet = [
@@ -8589,6 +8765,54 @@ function ProfilePage() {
                 <input id="profile-email" className="profile-form-control" value={user?.email || ""} readOnly />
               </div>
             </div>
+            {emailChangeEligible && <div className="profile-email-change">
+              {!emailChangeOpen && (
+                <Button type="button" variant="secondary" onClick={() => setEmailChangeOpen(true)}>
+                  {t("auth.emailChange.changeAction")}
+                </Button>
+              )}
+              {emailChangeOpen && emailChangeStatus === "accepted" && (
+                <div className="profile-email-change-result" role="status" aria-live="polite">
+                  <h3 ref={emailChangeResultRef} tabIndex="-1" className="profile-section-title">{t("auth.emailChange.acceptedTitle")}</h3>
+                  <p>{t("auth.emailChange.acceptedDescription")}</p>
+                  <p>{t("auth.emailChange.expiryGuidance", { minutes: Math.max(1, Math.round(emailChangeExpiry / 60)) })}</p>
+                  <p>{t("auth.emailChange.canonicalUnchanged")}</p>
+                  <div className="profile-actions">
+                    <Button type="button" variant="quiet" onClick={closeEmailChange}>{t("common.close")}</Button>
+                  </div>
+                </div>
+              )}
+              {emailChangeOpen && emailChangeStatus !== "accepted" && (
+                <form className="profile-email-change-form" onSubmit={submitEmailChange} noValidate>
+                  <h3 className="profile-section-title">{t("auth.emailChange.formTitle")}</h3>
+                  <p id="email-change-description" className="profile-email-change-description">{t("auth.emailChange.secureDescription")}</p>
+                  <p>{t("auth.emailChange.canonicalUnchanged")}</p>
+                  <div className="profile-form-grid">
+                    <div className="profile-field">
+                      <label htmlFor="email-change-new">{t("auth.emailChange.newEmail")}</label>
+                      <input ref={emailChangeInputRef} id="email-change-new" className="profile-form-control" type="email" autoComplete="email"
+                        value={emailChangeForm.newEmail} aria-invalid={Boolean(emailChangeErrors.newEmail)}
+                        aria-describedby={emailChangeErrors.newEmail ? "email-change-new-error" : "email-change-description"}
+                        onChange={event => updateEmailChangeField("newEmail", event.target.value)} />
+                      {emailChangeErrors.newEmail && <div id="email-change-new-error" className="field-error" role="alert">{emailChangeErrors.newEmail}</div>}
+                    </div>
+                    <div className="profile-field">
+                      <label htmlFor="email-change-password">{t("auth.emailChange.currentPassword")}</label>
+                      <input id="email-change-password" className="profile-form-control" type="password" autoComplete="current-password"
+                        value={emailChangeForm.currentPassword} aria-invalid={Boolean(emailChangeErrors.currentPassword)}
+                        aria-describedby={emailChangeErrors.currentPassword ? "email-change-password-error" : undefined}
+                        onChange={event => updateEmailChangeField("currentPassword", event.target.value)} />
+                      {emailChangeErrors.currentPassword && <div id="email-change-password-error" className="field-error" role="alert">{emailChangeErrors.currentPassword}</div>}
+                    </div>
+                  </div>
+                  {emailChangeErrors.form && <div className="field-error profile-form-message" role="alert">{emailChangeErrors.form}</div>}
+                  <div className="profile-actions">
+                    <Button type="submit" variant="primary" loading={emailChangeStatus === "submitting"} loadingLabel={t("auth.emailChange.submitting")}>{t("auth.emailChange.submit")}</Button>
+                    <Button type="button" variant="quiet" disabled={emailChangeStatus === "submitting"} onClick={closeEmailChange}>{t("common.cancel")}</Button>
+                  </div>
+                </form>
+              )}
+            </div>}
           </Surface>
         </PageSection>
       </PageContainer>
@@ -11168,6 +11392,11 @@ export default function App() {
     const query = acceptedHash.includes("?") ? acceptedHash.slice(acceptedHash.indexOf("?")) : "";
     resetPasswordTokenRef.current = new URLSearchParams(query).get("token") || "";
   }
+  const emailChangeTokenRef = useRef(undefined);
+  if (page === "verify-email-change" && emailChangeTokenRef.current === undefined) {
+    const query = acceptedHash.includes("?") ? acceptedHash.slice(acceptedHash.indexOf("?")) : "";
+    emailChangeTokenRef.current = new URLSearchParams(query).get("token") || "";
+  }
   const [user, setUser] = useState(null);
   const [checkingSession, setCheckingSession] = useState(true);
   const [resourceFocusTopic, setResourceFocusTopic] = useState(null);
@@ -11201,6 +11430,16 @@ export default function App() {
     }
     if (window.location.hash.includes("?")) {
       window.history.replaceState({ ...(window.history.state || {}), route: "#/reset-password" }, "", "#/reset-password");
+    }
+  }, [page]);
+
+  useLayoutEffect(() => {
+    if (page !== "verify-email-change") {
+      emailChangeTokenRef.current = undefined;
+      return;
+    }
+    if (window.location.hash.includes("?")) {
+      window.history.replaceState({ ...(window.history.state || {}), route: "#/verify-email-change" }, "", "#/verify-email-change");
     }
   }, [page]);
 
@@ -11520,6 +11759,12 @@ export default function App() {
     setActivityGuard(null);
     setPendingNavigation(null);
   }
+  function clearLocalAuthenticatedUserState() {
+    appUserIdRef.current = null;
+    setUser(null);
+    setActivityGuard(null);
+    setPendingNavigation(null);
+  }
   function completeNavigation(nextPage, replace = false, requestedAuthMode) {
     if (nextPage !== "resources") {
       setResourceFocusTopic(null);
@@ -11716,6 +11961,7 @@ export default function App() {
     requestGuardedAction,
     requestLogoutWithGuard,
     clearAuthAfterPasswordReset,
+    clearLocalAuthenticatedUserState,
     activityGuard,
     hasActivityGuard: Boolean(activityGuard),
   };
@@ -11735,6 +11981,7 @@ export default function App() {
     "forgot-password": <ForgotPasswordPage />,
     "reset-password": <ResetPasswordPage resetTokenRef={resetPasswordTokenRef} />,
     "verify-email": <EmailVerificationPage />,
+    "verify-email-change": <EmailChangeConfirmationPage confirmationTokenRef={emailChangeTokenRef} />,
   };
 
   return (

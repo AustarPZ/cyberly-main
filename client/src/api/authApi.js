@@ -52,6 +52,20 @@ export function resetPassword(token, password) {
   });
 }
 
+export function requestEmailChange(newEmail, currentPassword, locale) {
+  return apiRequest("/api/auth/email-change/request", {
+    method: "POST",
+    body: { newEmail, currentPassword, locale },
+  });
+}
+
+export function confirmEmailChange(token) {
+  return apiRequest("/api/auth/email-change/confirm", {
+    method: "POST",
+    body: { token },
+  });
+}
+
 export function logout() {
   return apiRequest("/api/auth/logout", { method: "POST" });
 }

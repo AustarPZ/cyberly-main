@@ -370,6 +370,43 @@
   min-width: 11.25rem;
 }
 
+.profile-email-change {
+  min-width: 0;
+  margin-top: 1rem;
+  padding-top: 1rem;
+  border-top: 1px solid var(--cyberly-border-soft);
+}
+
+.profile-email-change-form,
+.profile-email-change-result {
+  min-width: 0;
+  padding: 1rem;
+  border-radius: var(--cyberly-radius-control);
+  background: var(--cyberly-surface-secondary);
+}
+
+.profile-email-change .profile-section-title {
+  margin-bottom: 0.5rem;
+}
+
+.profile-email-change-description,
+.profile-email-change-result p,
+.profile-email-change-form > p {
+  max-width: 65ch;
+  color: var(--cyberly-text-secondary);
+  line-height: 1.55;
+  overflow-wrap: anywhere;
+}
+
+.profile-email-change .cy-button {
+  min-height: 44px;
+}
+
+.profile-email-change :focus-visible {
+  outline: none;
+  box-shadow: var(--cyberly-focus-ring);
+}
+
 .profile-identity-note {
   margin-top: 1rem;
   color: var(--cyberly-text-secondary);
@@ -410,6 +447,10 @@
   .profile-actions .cy-button {
     width: 100%;
     min-width: 0;
+  }
+
+  .profile-email-change .cy-button {
+    width: 100%;
   }
 }
 
