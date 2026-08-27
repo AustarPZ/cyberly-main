@@ -1,5 +1,7 @@
 const assert = require('node:assert/strict');
+const { spawn } = require('node:child_process');
 const fs = require('node:fs');
+const net = require('node:net');
 const path = require('node:path');
 const bcrypt = require('bcrypt');
 const mysql = require('mysql2/promise');
@@ -254,6 +256,204 @@ function storeDestroy(store, sid) {
   return new Promise((resolve, reject) => store.destroy(sid, error => error ? reject(error) : resolve()));
 }
 
+class CookieJar {
+  constructor(cookies = new Map()) {
+    this.cookies = new Map(cookies);
+  }
+
+  clone() {
+    return new CookieJar(this.cookies);
+  }
+
+  header() {
+    return [...this.cookies.entries()].map(([name, value]) => `${name}=${value}`).join('; ');
+  }
+
+  value(name = 'cyberly.sid') {
+    return this.cookies.get(name) || '';
+  }
+
+  adopt(headers) {
+    const values = typeof headers.getSetCookie === 'function'
+      ? headers.getSetCookie()
+      : (headers.get('set-cookie') ? [headers.get('set-cookie')] : []);
+    for (const value of values) {
+      const [pair] = String(value).split(';');
+      const separator = pair.indexOf('=');
+      if (separator <= 0) continue;
+      const name = pair.slice(0, separator).trim();
+      const cookieValue = pair.slice(separator + 1).trim();
+      if (cookieValue) this.cookies.set(name, cookieValue);
+      else this.cookies.delete(name);
+    }
+    return values.length > 0;
+  }
+}
+
+async function http(baseUrl, method, pathname, jar, body) {
+  const headers = { Origin: baseUrl };
+  const cookie = jar.header();
+  if (cookie) headers.Cookie = cookie;
+  if (body !== undefined) headers['Content-Type'] = 'application/json';
+  const response = await fetch(`${baseUrl}${pathname}`, {
+    method,
+    headers,
+    body: body === undefined ? undefined : JSON.stringify(body),
+  });
+  const hadSetCookie = jar.adopt(response.headers);
+  const text = await response.text();
+  let json = null;
+  try { json = text ? JSON.parse(text) : null; } catch {}
+  return { status: response.status, json, hadSetCookie };
+}
+
+function sessionIdFromCookie(cookie) {
+  const decoded = decodeURIComponent(String(cookie || ''));
+  const signed = decoded.startsWith('s:') ? decoded.slice(2) : decoded;
+  return signed.split('.')[0] || '';
+}
+
+function getAvailablePort() {
+  return new Promise((resolve, reject) => {
+    const server = net.createServer();
+    server.once('error', reject);
+    server.listen(0, '127.0.0.1', () => {
+      const address = server.address();
+      server.close(error => error ? reject(error) : resolve(address.port));
+    });
+  });
+}
+
+function startRouteServer(databaseConfig, port) {
+  const child = spawn(process.execPath, ['server.js'], {
+    cwd: path.resolve(__dirname, '..'),
+    env: {
+      ...process.env,
+      NODE_ENV: 'development',
+      PORT: String(port),
+      DB_HOST: databaseConfig.host,
+      DB_PORT: String(databaseConfig.port),
+      DB_USER: databaseConfig.user,
+      DB_PASSWORD: databaseConfig.password,
+      DB_NAME: databaseConfig.database,
+      DB_SSL_MODE: 'disabled',
+      CLIENT_ORIGIN: `http://127.0.0.1:${port}`,
+      CLIENT_BASE_URL: `http://127.0.0.1:${port}`,
+      SESSION_SECRET: 'email-change-route-test-session-secret',
+      EMAIL_TRANSPORT: 'disabled',
+      AI_PROVIDER: 'openai',
+      AI_DEFAULT_PROVIDER: 'openai',
+      AI_PROVIDER_CYBERGUARD: 'openai',
+      OPENAI_API_KEY: '',
+    },
+    stdio: ['ignore', 'pipe', 'pipe'],
+  });
+  let output = '';
+  const ready = new Promise((resolve, reject) => {
+    const timeout = setTimeout(() => reject(new Error('Local route server startup timed out.')), 10_000);
+    const inspect = chunk => {
+      output += String(chunk);
+      if (output.includes(`Server running on port ${port}`)) {
+        clearTimeout(timeout);
+        resolve();
+      }
+    };
+    child.stdout.on('data', inspect);
+    child.stderr.on('data', inspect);
+    child.once('exit', code => {
+      clearTimeout(timeout);
+      reject(new Error(`Local route server exited before readiness (${code}).`));
+    });
+  });
+  return { child, ready };
+}
+
+async function stopRouteServer(child) {
+  if (!child || child.exitCode !== null) return;
+  const exited = new Promise(resolve => child.once('exit', resolve));
+  child.kill();
+  await exited;
+}
+
+async function testRealHttpSessionContinuation({ pool, databaseConfig, repository, passwordHash }) {
+  const routeNow = new Date();
+  const oldEmail = 'route-old@example.test';
+  const newEmail = 'route-new@example.test';
+  const password = 'CurrentPass9';
+  const [userResult] = await pool.query(
+    `INSERT INTO users (email, display_name, age, age_group, password_hash, role, account_status, email_verified_at, session_version)
+     VALUES (?, 'Route Learner', 16, 'teen', ?, 'user', 'active', ?, 0)`,
+    [oldEmail, passwordHash, routeNow]
+  );
+  const userId = Number(userResult.insertId);
+  const issued = createEmailChangeToken({ now: routeNow });
+  await repository.createRequest({
+    userId,
+    newEmailNormalized: newEmail,
+    tokenHash: issued.tokenHash,
+    locale: 'en',
+    expiresAt: issued.expiresAt,
+    createdAt: routeNow,
+  });
+
+  const port = await getAvailablePort();
+  const baseUrl = `http://127.0.0.1:${port}`;
+  const { child, ready } = startRouteServer(databaseConfig, port);
+  try {
+    await ready;
+    const sessionA = new CookieJar();
+    const loginA = await http(baseUrl, 'POST', '/api/auth/login', sessionA, { email: oldEmail, password });
+    assert.equal(loginA.status, 200);
+    assert.equal(loginA.hadSetCookie, true);
+    assert.equal((await http(baseUrl, 'GET', '/api/auth/me', sessionA)).status, 200);
+    const preConfirmCookie = sessionA.value();
+    const oldSessionA = sessionA.clone();
+
+    const sessionB = new CookieJar();
+    assert.equal((await http(baseUrl, 'POST', '/api/auth/login', sessionB, { email: oldEmail, password })).status, 200);
+    assert.equal((await http(baseUrl, 'GET', '/api/auth/me', sessionB)).status, 200);
+
+    const confirmation = await http(baseUrl, 'POST', '/api/auth/email-change/confirm', sessionA, {
+      token: issued.rawToken,
+    });
+    assert.equal(confirmation.status, 200);
+    assert.deepEqual(confirmation.json, { status: 'confirmed', sessionStatus: 'continued' });
+    assert.equal(confirmation.hadSetCookie, true);
+    const replacementCookie = sessionA.value();
+    assert.notEqual(replacementCookie, preConfirmCookie);
+    assert.equal(sessionA.cookies.size, 1);
+
+    const replacementSid = sessionIdFromCookie(replacementCookie);
+    const [[replacementRow]] = await pool.query('SELECT data FROM sessions WHERE sid = ? LIMIT 1', [replacementSid]);
+    assert.ok(replacementRow, 'replacement session must be persisted');
+    const replacementData = typeof replacementRow.data === 'string'
+      ? JSON.parse(replacementRow.data)
+      : replacementRow.data;
+    assert.equal(replacementData.userId, userId, 'replacement session must retain the authenticated userId');
+    assert.equal(Number(replacementData.sessionVersion), 1);
+
+    const continued = await http(baseUrl, 'GET', '/api/auth/me', sessionA);
+    assert.equal(continued.status, 200);
+    assert.equal(Number(continued.json?.user?.id), userId);
+    assert.equal(continued.json?.user?.email, newEmail);
+    assert.equal(continued.json?.user?.emailVerified, true);
+
+    assert.equal((await http(baseUrl, 'GET', '/api/auth/me', oldSessionA)).status, 401);
+    assert.equal((await http(baseUrl, 'GET', '/api/auth/me', sessionB)).status, 401);
+    assert.equal((await http(baseUrl, 'POST', '/api/auth/login', new CookieJar(), { email: oldEmail, password })).status, 401);
+    assert.equal((await http(baseUrl, 'POST', '/api/auth/login', new CookieJar(), { email: newEmail, password })).status, 200);
+
+    const replay = await http(baseUrl, 'POST', '/api/auth/email-change/confirm', sessionA, {
+      token: issued.rawToken,
+    });
+    assert.equal(replay.status, 400);
+    assert.equal(replay.json?.code, 'EMAIL_CHANGE_TOKEN_INVALID_OR_UNAVAILABLE');
+  } finally {
+    issued.rawToken = null;
+    await stopRouteServer(child);
+  }
+}
+
 async function testRealMySql(config) {
   const databaseName = createIsolatedDatabaseName('email_change_i03');
   const admin = await mysql.createConnection(buildAdminDatabaseConfig(config));
@@ -269,13 +469,14 @@ async function testRealMySql(config) {
     assert.match(String(version.version), /^8\./);
     assert.equal(Number(migrationCount.count), 30);
     const passwordHash = await bcrypt.hash('CurrentPass9', 4);
+    const repository = createEmailChangeRepository(pool);
+    await testRealHttpSessionContinuation({ pool, databaseConfig, repository, passwordHash });
     const [userResult] = await pool.query(
       `INSERT INTO users (email, display_name, age, age_group, password_hash, role, account_status, email_verified_at)
        VALUES ('old-real@example.test', 'I03 Learner', 16, 'teen', ?, 'user', 'active', ?)`,
       [passwordHash, NOW]
     );
     const userId = Number(userResult.insertId);
-    const repository = createEmailChangeRepository(pool);
     const sessionStore = new MySqlSessionStore(pool, 3600);
     const sessionData = { cookie: {}, userId, role: 'user', sessionVersion: 0 };
     await storeSet(sessionStore, 'i03-old-session-a', sessionData);

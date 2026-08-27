@@ -757,7 +757,11 @@ app.post(
                 sessionVersion,
                 continueSession: sessionUserId ? async authenticated => {
                     await regenerateSession(req);
-                    applyAuthenticatedSession(req.session, authenticated);
+                    applyAuthenticatedSession(req.session, {
+                        id: authenticated.userId,
+                        role: authenticated.role,
+                        sessionVersion: authenticated.sessionVersion,
+                    });
                     await saveSession(req);
                 } : undefined,
                 destroySession: sessionUserId ? async () => {
