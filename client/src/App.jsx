@@ -2430,10 +2430,17 @@ const CHAT_ACTIVE_STORAGE_PREFIX = "cyberly.chat.activeConversation.v1";
 const CHAT_NOTICE_STORAGE_PREFIX = "cyberly.chat.backendMigrationNotice.v1";
 const CHAT_GENERATION_POLL_INTERVAL_MS = 2000;
 const CHAT_GENERATION_POLL_MAX_MS = 30000;
+const MIN_LEARNER_AGE = 13;
+const MAX_LEARNER_AGE = 17;
 const PUBLIC_PAGES = new Set(["home", "resources", "about", "login", "forgot-password", "reset-password"]);
 const PROTECTED_PAGES = new Set(["dashboard", "assessment", "scenarios", "progress", "profile", "ai-chat", "admin"]);
 const VERIFICATION_PAGES = new Set(["verify-email", "verify-email-change"]);
 const VALID_PAGES = new Set([...PUBLIC_PAGES, ...PROTECTED_PAGES]);
+
+function isSupportedLearnerAge(value) {
+  const age = Number(value);
+  return Number.isInteger(age) && age >= MIN_LEARNER_AGE && age <= MAX_LEARNER_AGE;
+}
 VERIFICATION_PAGES.forEach(page => VALID_PAGES.add(page));
 
 const {
@@ -4486,12 +4493,14 @@ function StepCredentials({ data, onChange, errors }) {
           id="register-age"
           data-field="age"
           type="number"
+          min={MIN_LEARNER_AGE}
+          max={MAX_LEARNER_AGE}
           placeholder={t(
             "auth.agePlaceholder"
           )}
           value={data.age}
           aria-invalid={Boolean(errors.age)}
-          aria-describedby={errors.age ? "register-age-error" : undefined}
+          aria-describedby={`register-age-guidance${errors.age ? " register-age-error" : ""}`}
           onChange={event =>
             onChange(
               "age",
@@ -4499,6 +4508,10 @@ function StepCredentials({ data, onChange, errors }) {
             )
           }
         />
+
+        <div id="register-age-guidance" className="cy-auth-field-hint">
+          {t("auth.ageGuidance")}
+        </div>
 
         {errors.age && (
           <div className="field-error" id="register-age-error" role="alert">
@@ -4930,13 +4943,7 @@ function RegisterPage({ onSwitch }) {
           t("auth.displayNameRequired");
       }
 
-      if (
-        !form.age ||
-        Number.isNaN(Number(form.age)) ||
-        !Number.isInteger(Number(form.age)) ||
-        Number(form.age) < 1 ||
-        Number(form.age) > 120
-      ) {
+      if (!form.age || !isSupportedLearnerAge(form.age)) {
         validationErrors.age =
           t("auth.ageInvalid");
       }
@@ -8326,6 +8333,13 @@ function ProfilePage() {
   async function saveAccount() {
     if (accountSaving) return;
 
+    if (!isSupportedLearnerAge(accountForm.age)) {
+      setAccountSaved(false);
+      setAccountErrors({ age: t("settings.ageInvalid") });
+      focusFirstNamedField(["age"]);
+      return;
+    }
+
     setAccountSaving(true);
     setAccountSaved(false);
     setAccountErrors({});
@@ -8643,8 +8657,8 @@ function ProfilePage() {
                   className="profile-form-control"
                   data-field="age"
                   type="number"
-                  min="1"
-                  max="120"
+                  min={MIN_LEARNER_AGE}
+                  max={MAX_LEARNER_AGE}
                   value={accountForm.age}
                   aria-invalid={Boolean(accountErrors.age)}
                   aria-describedby={accountErrors.age ? "account-age-error" : undefined}

@@ -22,10 +22,18 @@ function validatePassword(password) {
   return null;
 }
 
+const MIN_LEARNER_AGE = 13;
+const MAX_LEARNER_AGE = 17;
+const AGE_VALIDATION_MESSAGE = 'Age must be a whole number from 13 to 17.';
+
 function validateAge(age) {
   const value = Number(age);
-  if (!Number.isInteger(value) || value < 1 || value > 120) {
-    return 'Age must be a whole number from 1 to 120.';
+  if (
+    !Number.isInteger(value) ||
+    value < MIN_LEARNER_AGE ||
+    value > MAX_LEARNER_AGE
+  ) {
+    return AGE_VALIDATION_MESSAGE;
   }
   return null;
 }
@@ -51,6 +59,9 @@ function validateRegistration(input) {
 }
 
 module.exports = {
+  AGE_VALIDATION_MESSAGE,
+  MAX_LEARNER_AGE,
+  MIN_LEARNER_AGE,
   isValidEmail,
   normalizeEmail,
   validateAge,

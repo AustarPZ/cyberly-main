@@ -71,7 +71,8 @@
     "signInButton": "Log masuk",
     "goToRegister": "Cipta akaun",
     "displayNameRequired": "Nama paparan mesti antara 2 hingga 50 aksara.",
-    "ageInvalid": "Sila masukkan umur dalam nombor bulat dari 1 hingga 120.",
+    "ageInvalid": "Sila masukkan umur dalam nombor bulat dari 13 hingga 17.",
+    "ageGuidance": "Cyberly v1 adalah untuk pelajar berumur 13 hingga 17 tahun.",
     "emailVerification": {
       "bannerTitle": "Sahkan e-mel anda",
       "bannerDescription": "Pengesahan diperlukan sebelum CyberGuard boleh menjana balasan baharu.",
@@ -408,7 +409,7 @@
     "preferencesSaved": "Pilihan disimpan.",
     "cancel": "Batal",
     "displayNameRequired": "Nama paparan mesti antara 2 hingga 50 aksara.",
-    "ageInvalid": "Masukkan umur nombor bulat dari 1 hingga 120.",
+    "ageInvalid": "Masukkan umur nombor bulat dari 13 hingga 17.",
     "nicknameRequired": "Masukkan nama panggilan untuk AI gunakan.",
     "chooseOne": "Pilih satu",
     "learnerProfile": "Profil Pelajar",

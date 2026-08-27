@@ -1,4 +1,5 @@
 const { getAgeGroup } = require("../database/age-group");
+const { validateAge } = require("../auth/validation");
 
 const ALLOWED_ACCOUNT_FIELDS = new Set([
   "displayName",
@@ -50,14 +51,13 @@ function validateAccountUpdate(input = {}) {
 
   if (Object.prototype.hasOwnProperty.call(input, "age")) {
     const age = Number(input.age);
-    const ageGroup = getAgeGroup(age);
+    const ageError = validateAge(input.age);
 
-    if (!Number.isInteger(age) || !ageGroup) {
-      errors.age =
-        "Age must be a whole number from 1 to 120.";
+    if (ageError) {
+      errors.age = ageError;
     } else {
       value.age = age;
-      value.ageGroup = ageGroup;
+      value.ageGroup = getAgeGroup(age);
     }
   }
 

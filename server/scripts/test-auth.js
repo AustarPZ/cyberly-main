@@ -144,7 +144,7 @@ async function run() {
   assert.equal(getAgeGroup(0), null);
   assert.equal(getAgeGroup(13), 'teen');
   assert.equal(getAgeGroup(20), 'young_adult');
-  assert.equal(validateAge(121), 'Age must be a whole number from 1 to 120.');
+  assert.equal(validateAge(18), 'Age must be a whole number from 13 to 17.');
   assert.equal(validatePassword('short1'), 'Password must be at least 8 characters.');
   assert.equal(validatePassword('NoNumbers'), 'Password must contain at least one letter and one number.');
   assert.equal(validatePassword('12345678'), 'Password must contain at least one letter and one number.');

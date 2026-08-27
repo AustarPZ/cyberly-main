@@ -71,7 +71,8 @@
     "signInButton": "Sign in",
     "goToRegister": "Create an account",
     "displayNameRequired": "Display name must be 2 to 50 characters.",
-    "ageInvalid": "Please enter a whole-number age from 1 to 120.",
+    "ageInvalid": "Please enter a whole-number age from 13 to 17.",
+    "ageGuidance": "Cyberly v1 is for learners aged 13 to 17.",
     "emailVerification": {
       "bannerTitle": "Verify your email",
       "bannerDescription": "Verification is required before CyberGuard can generate new replies.",
@@ -408,7 +409,7 @@
     "preferencesSaved": "Preferences saved.",
     "cancel": "Cancel",
     "displayNameRequired": "Display name must be 2 to 50 characters.",
-    "ageInvalid": "Please enter a whole-number age from 1 to 120.",
+    "ageInvalid": "Please enter a whole-number age from 13 to 17.",
     "nicknameRequired": "Please enter a nickname for the AI to use.",
     "chooseOne": "Choose one",
     "learnerProfile": "Learner Profile",

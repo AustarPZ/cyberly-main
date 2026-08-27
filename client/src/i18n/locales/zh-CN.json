@@ -71,7 +71,8 @@
     "signInButton": "登录",
     "goToRegister": "创建账号",
     "displayNameRequired": "显示名称必须是 2 到 50 个字符。",
-    "ageInvalid": "请输入 1 到 120 之间的整数年龄。",
+    "ageInvalid": "请输入 13 到 17 之间的整数年龄。",
+    "ageGuidance": "Cyberly v1 适用于 13 至 17 岁的学习者。",
     "emailVerification": {
       "bannerTitle": "验证你的电子邮箱",
       "bannerDescription": "你需要先完成邮箱验证，CyberGuard 才能生成新的回复。",
@@ -408,7 +409,7 @@
     "preferencesSaved": "偏好已保存。",
     "cancel": "取消",
     "displayNameRequired": "显示名称必须是 2 到 50 个字符。",
-    "ageInvalid": "请输入 1 到 120 之间的整数年龄。",
+    "ageInvalid": "请输入 13 到 17 之间的整数年龄。",
     "nicknameRequired": "请输入 AI 要使用的昵称。",
     "chooseOne": "请选择",
     "learnerProfile": "学习者资料",

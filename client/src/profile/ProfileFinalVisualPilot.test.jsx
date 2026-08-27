@@ -329,6 +329,37 @@ describe("Learner Profile final visual migration", () => {
     expect(within(section).getByLabelText(i18n.t("settings.displayName"))).toHaveValue("Alya Rahman (verified)");
   });
 
+  test.each([12, 18])("blocks unsupported account age %i before the API call", async ageValue => {
+    render(<App />);
+    const section = (await screen.findByRole("heading", { level: 3, name: i18n.t("settings.accountInformation") })).closest("section");
+    const age = within(section).getByLabelText(i18n.t("settings.age"));
+    await userEvent.clear(age);
+    await userEvent.type(age, String(ageValue));
+    await userEvent.click(within(section).getByRole("button", { name: i18n.t("settings.saveAccount") }));
+
+    expect(await within(section).findByText(i18n.t("settings.ageInvalid"))).toHaveAttribute("role", "alert");
+    expect(age).toHaveFocus();
+    expect(saveAccount).not.toHaveBeenCalled();
+  });
+
+  test.each([13, 17])("allows supported account age %i", async ageValue => {
+    saveAccount.mockResolvedValue({
+      ok: true,
+      data: { account: { ...learner, age: ageValue } },
+    });
+    render(<App />);
+    const section = (await screen.findByRole("heading", { level: 3, name: i18n.t("settings.accountInformation") })).closest("section");
+    const age = within(section).getByLabelText(i18n.t("settings.age"));
+
+    expect(age).toHaveAttribute("min", "13");
+    expect(age).toHaveAttribute("max", "17");
+    await userEvent.clear(age);
+    await userEvent.type(age, String(ageValue));
+    await userEvent.click(within(section).getByRole("button", { name: i18n.t("settings.saveAccount") }));
+
+    await waitFor(() => expect(saveAccount).toHaveBeenCalledWith({ displayName: learner.displayName, age: ageValue }));
+  });
+
   test("preserves the exact learner-profile payload", async () => {
     saveProfile.mockResolvedValue({ ok: true, data: { profile: { ...profile, aiNickname: "Nova" } } });
     render(<App />);
@@ -394,15 +425,15 @@ describe("Learner Profile final visual migration", () => {
   test("keeps server age validation visible and moves focus to the age field", async () => {
     saveAccount.mockResolvedValue({
       ok: false,
-      data: { error: "Please check your account details.", errors: { age: "Age must be a whole number from 1 to 120." } },
+      data: { error: "Please check your account details.", errors: { age: "Age must be a whole number from 13 to 17." } },
     });
     render(<App />);
     const section = (await screen.findByRole("heading", { level: 3, name: i18n.t("settings.accountInformation") })).closest("section");
     await userEvent.clear(within(section).getByLabelText(i18n.t("settings.age")));
-    await userEvent.type(within(section).getByLabelText(i18n.t("settings.age")), "121");
+    await userEvent.type(within(section).getByLabelText(i18n.t("settings.age")), "16");
     await userEvent.click(within(section).getByRole("button", { name: i18n.t("settings.saveAccount") }));
 
-    expect(await screen.findByText("Age must be a whole number from 1 to 120.")).toHaveAttribute("role", "alert");
+    expect(await screen.findByText("Age must be a whole number from 13 to 17.")).toHaveAttribute("role", "alert");
     await waitFor(() => expect(within(section).getByLabelText(i18n.t("settings.age"))).toHaveFocus());
   });
 
