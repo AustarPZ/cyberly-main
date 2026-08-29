@@ -1221,6 +1221,123 @@
       "retryMessages": "Retry loading chat messages"
     }
   },
+  "privacyNotice": {
+    "identity": "Your information",
+    "title": "Privacy Notice",
+    "linkLabel": "Privacy Notice",
+    "introduction": [
+      "This Privacy Notice explains the information Cyberly currently handles, how that information supports the learning experience, and the choices that are currently available to learners.",
+      "Cyberly is an AI-enabled learning platform. Some features use learner account information, learning activity, progress information, conversations, and relevant learning context so that Cyberly can provide learning content, recommendations, account functions, and AI-assisted learning support."
+    ],
+    "sections": [
+      {
+        "title": "Information Cyberly collects",
+        "paragraphs": [
+          "Cyberly may store information that learners provide when creating and using an account, including an email address, display name, age, derived age group, and account status information.",
+          "Cyberly may also store learner profile information such as AI nickname, education level, preferred language, familiarity with topics, help topics, learning preferences, learning style, avatar selection, and onboarding progress.",
+          "For account security, Cyberly stores authentication and verification information. Passwords are stored as password hashes rather than as plaintext passwords.",
+          "Cyberly also records information created through use of the platform, including assessment activity, learning progress, scenario activity, conversations with Cyberly, and related technical records needed to operate these features."
+        ]
+      },
+      {
+        "title": "How Cyberly uses information",
+        "paragraphs": [
+          "Cyberly uses account and learner information to provide and maintain learner accounts, personalise the learning experience, show relevant learning content, track learning progress, support assessment and scenario activities, provide recommendations, maintain account security, and deliver account-related communications.",
+          "Information may also be used to operate, troubleshoot, and improve the reliability of Cyberly’s current features.",
+          "The current Cyberly implementation does not include advertising or cross-site marketing tracking."
+        ]
+      },
+      {
+        "title": "Learning and progress information",
+        "paragraphs": [
+          "Cyberly may store assessment attempts, selected answers, correctness, scores, measured learning levels, topic progress, mastery-related information, activity history, and learning recommendations.",
+          "Cyberly may also store scenario attempts, learner decisions, outcomes, scores, and related progress events.",
+          "This information helps Cyberly show learners what they have completed, identify relevant next steps, and support personalised learning guidance."
+        ]
+      },
+      {
+        "title": "CyberGuard and AI learning features",
+        "paragraphs": [
+          "Cyberly uses AI-enabled features to support learning activities and learner conversations.",
+          "When a learner uses AI learning features, Cyberly may send the learner’s message together with relevant learning context to the current AI provider so that a learning response can be generated.",
+          "Cyberly currently uses OpenAI for these AI learning functions.",
+          "Cyberly may also store conversation content, conversation titles, language information, assistant responses, source references, citations, learner-action proposals, and limited technical records related to AI generation and execution.",
+          "Cyberly does not present technical settings such as a provider request option as a guarantee about all provider retention, training, or downstream processing practices."
+        ]
+      },
+      {
+        "title": "Account security and recovery",
+        "paragraphs": [
+          "Cyberly uses security information to support account verification, authentication, password recovery, email changes, and session security.",
+          "Security and recovery records may include verification status, security timestamps, hashed verification or recovery tokens, expiry information, request IP information, user-agent information, and other bounded security metadata.",
+          "Cyberly does not intentionally store plaintext passwords, raw password-reset tokens, or raw email-change tokens in browser local storage or session storage."
+        ]
+      },
+      {
+        "title": "Services that support Cyberly",
+        "paragraphs": ["Cyberly uses external services to support the operation of the platform.", "Current supporting services include:"],
+        "items": [
+          "Render for application hosting;",
+          "Aiven MySQL for the staging database environment;",
+          "transactional email transport for account-related email;",
+          "OpenAI for current AI learning features; and",
+          "Cloudflare for DNS, network infrastructure, and routing email sent to Cyberly’s privacy contact."
+        ],
+        "trailingParagraphs": ["These services support different parts of Cyberly’s technical operation. Their involvement does not mean that every service receives every category of learner information."]
+      },
+      {
+        "title": "Cookies and browser storage",
+        "paragraphs": [
+          "Cyberly uses a first-party session cookie to support authenticated sessions. In the deployed secure environment, the session cookie uses security protections including httpOnly, Secure, and SameSite settings.",
+          "Cyberly may also use browser local storage for interface and preference information such as language selection, active conversation state, migration acknowledgement, sidebar preferences, and pinned or archived conversation state.",
+          "Session storage may be used for temporary interface or action state.",
+          "Cyberly does not intentionally store plaintext passwords, raw password-reset tokens, or raw email-change tokens in local storage or session storage."
+        ]
+      },
+      {
+        "title": "How long information is kept",
+        "paragraphs": [
+          "Different Cyberly records have different technical lifecycles.",
+          "Some security links or credentials expire after a defined period. For example, current verification tokens expire after approximately 24 hours, password-reset tokens after approximately 30 minutes, and email-change tokens after approximately 60 minutes.",
+          "These expiry periods control whether a security link or credential can still be used. They do not mean that the related database record is automatically deleted at the moment it expires.",
+          "Cyberly does not currently have one uniform fixed automatic deletion period for all account, profile, learning, chat, AI-generation, and security-history records."
+        ]
+      },
+      {
+        "title": "Your current choices and controls",
+        "paragraphs": [
+          "Depending on the feature, learners can currently manage information such as their display name, supported age, language, avatar, learning preferences, help topics, and verified account email.",
+          "Cyberly also provides current conversation controls where available, including conversation title management, export, and deletion.",
+          "Cyberly does not currently provide a whole-account deletion feature, complete personal-data deletion workflow, complete account-wide data export, or formal privacy-request ticket workflow.",
+          "Those capabilities are not represented in this notice as existing features."
+        ]
+      },
+      {
+        "title": "Learners aged 13–17",
+        "paragraphs": [
+          "Cyberly v1 is designed for learners aged 13–17.",
+          "Registration is available only to learners within this age range.",
+          "Cyberly currently stores the learner’s age and derives the relevant age group from that information.",
+          "Cyberly does not currently provide a Guardian Link, guardian-consent workflow, or parental privacy-control feature as part of Cyberly v1."
+        ]
+      },
+      {
+        "title": "Changes to this notice",
+        "paragraphs": [
+          "Cyberly may update this Privacy Notice when its product features, supporting services, or information practices change.",
+          "The current version of the notice will be made available through Cyberly’s canonical Privacy Notice page."
+        ]
+      },
+      {
+        "title": "Contact about privacy",
+        "contact": { "before": "For questions about privacy, contact ", "after": "." },
+        "paragraphs": [
+          "Cyberly has verified that messages sent to this address can be received through its managed privacy-contact routing.",
+          "This contact address does not imply a specific response-time guarantee, Data Protection Officer designation, statutory request portal, or guaranteed ability to send replies directly from the privacy@cyberly.my address."
+        ]
+      }
+    ]
+  },
   "footer": {
     "builtWithCare": "Built with care",
     "description": "Cyber wellness education for everyone."

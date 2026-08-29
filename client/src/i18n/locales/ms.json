@@ -1221,6 +1221,123 @@
       "retryMessages": "Cuba lagi memuatkan mesej sembang"
     }
   },
+  "privacyNotice": {
+    "identity": "Maklumat anda",
+    "title": "Notis Privasi",
+    "linkLabel": "Notis Privasi",
+    "introduction": [
+      "Notis Privasi ini menerangkan maklumat yang dikendalikan oleh Cyberly pada masa ini, cara maklumat tersebut menyokong pengalaman pembelajaran, dan pilihan yang tersedia kepada pelajar pada masa ini.",
+      "Cyberly ialah platform pembelajaran yang diperkasakan AI. Sesetengah ciri menggunakan maklumat akaun pelajar, aktiviti pembelajaran, maklumat kemajuan, perbualan dan konteks pembelajaran yang berkaitan supaya Cyberly dapat menyediakan kandungan pembelajaran, cadangan, fungsi akaun dan sokongan pembelajaran berbantukan AI."
+    ],
+    "sections": [
+      {
+        "title": "Maklumat yang dikumpulkan oleh Cyberly",
+        "paragraphs": [
+          "Cyberly mungkin menyimpan maklumat yang diberikan oleh pelajar semasa mencipta dan menggunakan akaun, termasuk alamat e-mel, nama paparan, umur, kumpulan umur yang ditentukan berdasarkan umur dan maklumat status akaun.",
+          "Cyberly juga mungkin menyimpan maklumat profil pelajar seperti nama panggilan AI, tahap pendidikan, bahasa pilihan, tahap kebiasaan dengan topik, topik bantuan, pilihan pembelajaran, gaya pembelajaran, pilihan avatar dan kemajuan pengenalan.",
+          "Untuk keselamatan akaun, Cyberly menyimpan maklumat pengesahan identiti dan pengesahan akaun. Kata laluan disimpan sebagai hash kata laluan dan bukannya kata laluan teks biasa.",
+          "Cyberly juga merekodkan maklumat yang terhasil melalui penggunaan platform, termasuk aktiviti penilaian, kemajuan pembelajaran, aktiviti senario, perbualan dengan Cyberly dan rekod teknikal berkaitan yang diperlukan untuk mengendalikan ciri ini."
+        ]
+      },
+      {
+        "title": "Cara Cyberly menggunakan maklumat",
+        "paragraphs": [
+          "Cyberly menggunakan maklumat akaun dan pelajar untuk menyediakan dan menyelenggara akaun pelajar, memperibadikan pengalaman pembelajaran, memaparkan kandungan pembelajaran yang berkaitan, menjejaki kemajuan pembelajaran, menyokong aktiviti penilaian dan senario, memberikan cadangan, mengekalkan keselamatan akaun dan menyampaikan komunikasi berkaitan akaun.",
+          "Maklumat juga mungkin digunakan untuk mengendalikan, menyelesaikan masalah dan meningkatkan kebolehpercayaan ciri Cyberly semasa.",
+          "Pelaksanaan Cyberly semasa tidak merangkumi pengiklanan atau penjejakan pemasaran merentas laman."
+        ]
+      },
+      {
+        "title": "Maklumat pembelajaran dan kemajuan",
+        "paragraphs": [
+          "Cyberly mungkin menyimpan percubaan penilaian, jawapan yang dipilih, ketepatan, skor, tahap pembelajaran yang diukur, kemajuan topik, maklumat berkaitan penguasaan, sejarah aktiviti dan cadangan pembelajaran.",
+          "Cyberly juga mungkin menyimpan percubaan senario, keputusan pelajar, hasil, skor dan peristiwa kemajuan berkaitan.",
+          "Maklumat ini membantu Cyberly menunjukkan perkara yang telah diselesaikan oleh pelajar, mengenal pasti langkah seterusnya yang berkaitan dan menyokong panduan pembelajaran yang diperibadikan."
+        ]
+      },
+      {
+        "title": "CyberGuard dan ciri pembelajaran AI",
+        "paragraphs": [
+          "Cyberly menggunakan ciri yang diperkasakan AI untuk menyokong aktiviti pembelajaran dan perbualan pelajar.",
+          "Apabila pelajar menggunakan ciri pembelajaran AI, Cyberly mungkin menghantar mesej pelajar bersama konteks pembelajaran yang berkaitan kepada penyedia AI semasa supaya respons pembelajaran dapat dijana.",
+          "Cyberly kini menggunakan OpenAI untuk fungsi pembelajaran AI ini.",
+          "Cyberly juga mungkin menyimpan kandungan perbualan, tajuk perbualan, maklumat bahasa, respons pembantu, rujukan sumber, petikan, cadangan tindakan pelajar dan rekod teknikal terhad berkaitan penjanaan dan pelaksanaan AI.",
+          "Cyberly tidak mempersembahkan tetapan teknikal seperti pilihan permintaan penyedia sebagai jaminan tentang semua amalan penyimpanan, latihan atau pemprosesan lanjutan penyedia."
+        ]
+      },
+      {
+        "title": "Keselamatan dan pemulihan akaun",
+        "paragraphs": [
+          "Cyberly menggunakan maklumat keselamatan untuk menyokong pengesahan akaun, pengesahan identiti, pemulihan kata laluan, perubahan e-mel dan keselamatan sesi.",
+          "Rekod keselamatan dan pemulihan mungkin merangkumi status pengesahan, cap masa keselamatan, token pengesahan atau pemulihan yang di-hash, maklumat tamat tempoh, maklumat IP permintaan, maklumat ejen pengguna dan metadata keselamatan terhad yang lain.",
+          "Cyberly tidak menyimpan kata laluan teks biasa, token tetapan semula kata laluan mentah atau token perubahan e-mel mentah secara sengaja dalam storan setempat atau storan sesi pelayar."
+        ]
+      },
+      {
+        "title": "Perkhidmatan yang menyokong Cyberly",
+        "paragraphs": ["Cyberly menggunakan perkhidmatan luaran untuk menyokong operasi platform.", "Perkhidmatan sokongan semasa termasuk:"],
+        "items": [
+          "Render untuk pengehosan aplikasi;",
+          "Aiven MySQL untuk persekitaran pangkalan data pementasan;",
+          "pengangkutan e-mel transaksi untuk e-mel berkaitan akaun;",
+          "OpenAI untuk ciri pembelajaran AI semasa; dan",
+          "Cloudflare untuk DNS, infrastruktur rangkaian dan penghalaan e-mel yang dihantar kepada alamat hubungan privasi Cyberly."
+        ],
+        "trailingParagraphs": ["Perkhidmatan ini menyokong bahagian berlainan dalam operasi teknikal Cyberly. Penglibatan mereka tidak bermakna setiap perkhidmatan menerima setiap kategori maklumat pelajar."]
+      },
+      {
+        "title": "Kuki dan storan pelayar",
+        "paragraphs": [
+          "Cyberly menggunakan kuki sesi pihak pertama untuk menyokong sesi yang disahkan. Dalam persekitaran selamat yang digunakan, kuki sesi menggunakan perlindungan keselamatan termasuk tetapan httpOnly, Secure dan SameSite.",
+          "Cyberly juga mungkin menggunakan storan setempat pelayar untuk maklumat antara muka dan pilihan seperti pilihan bahasa, keadaan perbualan aktif, pengakuan migrasi, pilihan bar sisi dan keadaan perbualan yang disemat atau diarkibkan.",
+          "Storan sesi mungkin digunakan untuk keadaan antara muka atau tindakan sementara.",
+          "Cyberly tidak menyimpan kata laluan teks biasa, token tetapan semula kata laluan mentah atau token perubahan e-mel mentah secara sengaja dalam storan setempat atau storan sesi."
+        ]
+      },
+      {
+        "title": "Tempoh maklumat disimpan",
+        "paragraphs": [
+          "Rekod Cyberly yang berlainan mempunyai kitar hayat teknikal yang berlainan.",
+          "Sesetengah pautan atau bukti kelayakan keselamatan tamat tempoh selepas tempoh yang ditetapkan. Contohnya, token pengesahan semasa tamat tempoh selepas kira-kira 24 jam, token tetapan semula kata laluan selepas kira-kira 30 minit dan token perubahan e-mel selepas kira-kira 60 minit.",
+          "Tempoh tamat ini mengawal sama ada pautan atau bukti kelayakan keselamatan masih boleh digunakan. Tempoh tersebut tidak bermakna rekod pangkalan data berkaitan dipadam secara automatik pada saat ia tamat tempoh.",
+          "Cyberly pada masa ini tidak mempunyai satu tempoh pemadaman automatik tetap yang seragam untuk semua rekod akaun, profil, pembelajaran, sembang, penjanaan AI dan sejarah keselamatan."
+        ]
+      },
+      {
+        "title": "Pilihan dan kawalan semasa anda",
+        "paragraphs": [
+          "Bergantung pada ciri, pelajar kini boleh mengurus maklumat seperti nama paparan, umur yang disokong, bahasa, avatar, pilihan pembelajaran, topik bantuan dan e-mel akaun yang disahkan.",
+          "Cyberly juga menyediakan kawalan perbualan semasa jika tersedia, termasuk pengurusan tajuk perbualan, eksport dan pemadaman.",
+          "Cyberly pada masa ini tidak menyediakan ciri pemadaman seluruh akaun, aliran kerja pemadaman lengkap data peribadi, eksport data seluruh akaun yang lengkap atau aliran kerja tiket permintaan privasi rasmi.",
+          "Keupayaan tersebut tidak dinyatakan dalam notis ini sebagai ciri yang sedia ada."
+        ]
+      },
+      {
+        "title": "Pelajar berumur 13–17 tahun",
+        "paragraphs": [
+          "Cyberly v1 direka untuk pelajar berumur 13–17 tahun.",
+          "Pendaftaran hanya tersedia kepada pelajar dalam lingkungan umur ini.",
+          "Cyberly pada masa ini menyimpan umur pelajar dan menentukan kumpulan umur yang berkaitan berdasarkan maklumat tersebut.",
+          "Cyberly pada masa ini tidak menyediakan Guardian Link, aliran kerja persetujuan penjaga atau ciri kawalan privasi ibu bapa sebagai sebahagian daripada Cyberly v1."
+        ]
+      },
+      {
+        "title": "Perubahan pada notis ini",
+        "paragraphs": [
+          "Cyberly mungkin mengemas kini Notis Privasi ini apabila ciri produk, perkhidmatan sokongan atau amalan maklumatnya berubah.",
+          "Versi semasa notis akan disediakan melalui halaman Notis Privasi kanonik Cyberly."
+        ]
+      },
+      {
+        "title": "Hubungi kami tentang privasi",
+        "contact": { "before": "Untuk pertanyaan tentang privasi, hubungi ", "after": "." },
+        "paragraphs": [
+          "Cyberly telah mengesahkan bahawa mesej yang dihantar ke alamat ini boleh diterima melalui penghalaan hubungan privasi yang diuruskan.",
+          "Alamat hubungan ini tidak membayangkan jaminan masa respons tertentu, pelantikan Pegawai Perlindungan Data, portal permintaan berkanun atau keupayaan yang dijamin untuk menghantar balasan terus daripada alamat privacy@cyberly.my."
+        ]
+      }
+    ]
+  },
   "footer": {
     "builtWithCare": "Dibina dengan teliti",
     "description": "Pendidikan kesihatan siber untuk semua."

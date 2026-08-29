@@ -16,6 +16,7 @@ import "./profile/profile.css";
 import "./home/home.css";
 import "./auth/auth.css";
 import "./about/about.css";
+import "./privacy/privacy.css";
 import CyberGuardWorkspaceHeader from "./cyberguard/CyberGuardWorkspaceHeader";
 import CyberGuardAiNotice from "./cyberguard/CyberGuardAiNotice";
 import CyberGuardChatShell from "./cyberguard/CyberGuardChatShell";
@@ -41,6 +42,7 @@ import Badge from "./design-system/primitives/Badge";
 import PageState from "./design-system/feedback/PageState";
 import ResourceDetailDialog from "./resources/ResourceDetailDialog";
 import AvatarVisual from "./profile/AvatarVisual";
+import PrivacyNoticePage from "./privacy/PrivacyNoticePage";
 import {
   AVATAR_PRESET_IDS,
   getInitialAvatarText,
@@ -2432,7 +2434,7 @@ const CHAT_GENERATION_POLL_INTERVAL_MS = 2000;
 const CHAT_GENERATION_POLL_MAX_MS = 30000;
 const MIN_LEARNER_AGE = 13;
 const MAX_LEARNER_AGE = 17;
-const PUBLIC_PAGES = new Set(["home", "resources", "about", "login", "forgot-password", "reset-password"]);
+const PUBLIC_PAGES = new Set(["home", "resources", "about", "privacy", "login", "forgot-password", "reset-password"]);
 const PROTECTED_PAGES = new Set(["dashboard", "assessment", "scenarios", "progress", "profile", "ai-chat", "admin"]);
 const VERIFICATION_PAGES = new Set(["verify-email", "verify-email-change"]);
 const VALID_PAGES = new Set([...PUBLIC_PAGES, ...PROTECTED_PAGES]);
@@ -5287,6 +5289,9 @@ function RegisterPage({ onSwitch }) {
             {t("auth.goToLogin")}
           </Button>
         </div>
+        <p className="cy-auth-privacy-entry">
+          <a className="cy-auth-privacy-link" href="#/privacy">{t("privacyNotice.linkLabel")}</a>
+        </p>
       </Surface>
     </div>
   );
@@ -5503,6 +5508,9 @@ function LoginPage({ onSwitch }) {
             {t("auth.goToRegister")}
           </Button>
         </div>
+        <p className="cy-auth-privacy-entry">
+          <a className="cy-auth-privacy-link" href="#/privacy">{t("privacyNotice.linkLabel")}</a>
+        </p>
       </Surface>
     </div>
   );
@@ -11398,6 +11406,9 @@ function Footer() {
       <p style={{ marginTop: "0.4rem", fontSize: "0.78rem" }}>
         {t("footer.description")}
       </p>
+      <div className="cy-footer-links">
+        <a className="cy-footer-privacy-link" href="#/privacy">{t("privacyNotice.linkLabel")}</a>
+      </div>
     </footer>
   );
 }
@@ -11418,7 +11429,7 @@ export default function App() {
     emailChangeTokenRef.current = new URLSearchParams(query).get("token") || "";
   }
   const [user, setUser] = useState(null);
-  const [checkingSession, setCheckingSession] = useState(true);
+  const [checkingSession, setCheckingSession] = useState(() => page !== "privacy");
   const [resourceFocusTopic, setResourceFocusTopic] = useState(null);
   const [pendingResourceTarget, setPendingResourceTarget] = useState(null);
   const [pendingScenarioTarget, setPendingScenarioTarget] = useState(null);
@@ -11432,6 +11443,8 @@ export default function App() {
   const suppressHashGuardRef = useRef(null);
   const acceptedHashRef = useRef(acceptedHash);
   const activityGuardRef = useRef(null);
+  const sessionRestorePromiseRef = useRef(null);
+  const sessionRestoreCompletedRef = useRef(false);
   const historyIndexRef = useRef(
     typeof window === "undefined" || !Number.isInteger(window.history.state?.cyberlyHistoryIndex)
       ? 0
@@ -11469,11 +11482,13 @@ export default function App() {
 
   const acceptHashRoute = useCallback((hashValue, historyIndex = historyIndexRef.current) => {
     const nextHash = normalizeHashRoute(hashValue);
-    if (parseHashPage(nextHash) !== "verify-email") clearEmailVerificationResult();
+    const nextPage = parseHashPage(nextHash);
+    if (nextPage !== "verify-email") clearEmailVerificationResult();
+    if (nextPage !== "privacy" && !sessionRestoreCompletedRef.current) setCheckingSession(true);
     acceptedHashRef.current = nextHash;
     historyIndexRef.current = Number.isInteger(historyIndex) ? historyIndex : historyIndexRef.current;
     setAcceptedHash(nextHash);
-    setPage(parseHashPage(nextHash));
+    setPage(nextPage);
   }, []);
 
   const commitHashRoute = useCallback((hashValue, options = {}) => {
@@ -11519,9 +11534,16 @@ export default function App() {
   }, [acceptHashRoute]);
 
   useEffect(() => {
+    if (sessionRestoreCompletedRef.current) return undefined;
+    if (page === "privacy" && !sessionRestorePromiseRef.current) return undefined;
+
+    if (!sessionRestorePromiseRef.current) {
+      sessionRestorePromiseRef.current = dbMe();
+    }
     let active = true;
-    dbMe().then(result => {
+    sessionRestorePromiseRef.current.then(result => {
       if (!active) return;
+      sessionRestoreCompletedRef.current = true;
       if (result.ok) {
         const restoredUser = normalizeSessionUser(result.user, result.profile);
         const currentHash = normalizeHashRoute(window.location.hash);
@@ -11555,7 +11577,7 @@ export default function App() {
       setCheckingSession(false);
     });
     return () => { active = false; };
-  }, [commitHashRoute]);
+  }, [commitHashRoute, page]);
 
   useEffect(() => {
     function handleHashChange() {
@@ -11597,7 +11619,7 @@ export default function App() {
       }
 
       const nextPage = parseHashPage(nextHash);
-      if (!user && PROTECTED_PAGES.has(nextPage)) {
+      if (!user && sessionRestoreCompletedRef.current && PROTECTED_PAGES.has(nextPage)) {
         commitHashRoute("/home", { replace: true });
         return;
       }
@@ -11994,6 +12016,7 @@ export default function App() {
     resources: <ResourcesPage />,
     "ai-chat": <AIChatPage />,
     about:     <AboutPage />,
+    privacy:   <PrivacyNoticePage />,
     progress:  <ProgressPage />,
     profile:   <ProfilePage />,
     admin:     <AdminPage acceptedHash={acceptedHash} />,
@@ -12014,7 +12037,7 @@ export default function App() {
           footer={page !== "ai-chat" ? <Footer /> : null}
           floating={!checkingSession && page !== "ai-chat" ? <ChatWidget /> : null}
         >
-          {checkingSession ? (
+          {checkingSession && page !== "privacy" ? (
             <div className="section">
               <p className="section-title">{t("app.loadingTitle")}</p>
               <p className="section-sub">{t("app.checkingSession")}</p>
