@@ -1308,9 +1308,14 @@
         "paragraphs": [
           "Depending on the feature, learners can currently manage information such as their display name, supported age, language, avatar, learning preferences, help topics, and verified account email.",
           "Cyberly also provides current conversation controls where available, including conversation title management, export, and deletion.",
-          "Cyberly does not currently provide a whole-account deletion feature, complete personal-data deletion workflow, complete account-wide data export, or formal privacy-request ticket workflow.",
-          "Those capabilities are not represented in this notice as existing features."
-        ]
+          "Cyberly provides an authenticated Privacy Request workflow for unsupported correction requests and deletion requests. Learners receive a reference and can view the status of their requests.",
+          "Submitting a deletion request does not immediately delete a learner’s account or learner data. Cyberly does not currently provide immediate self-service whole-account deletion, an automatic complete personal-data deletion workflow, or complete account-wide data export.",
+          "Submitting a Privacy Request does not by itself guarantee removal from every supporting service or every backup. This notice does not state a guaranteed processing time, service level, or statutory deadline for a request."
+        ],
+        "action": {
+          "label": "Manage privacy requests",
+          "href": "#/privacy-requests"
+        }
       },
       {
         "title": "Learners aged 13–17",

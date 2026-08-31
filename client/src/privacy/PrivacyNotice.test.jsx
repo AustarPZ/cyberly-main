@@ -6,6 +6,12 @@ import { restoreSession } from "../api/authApi";
 import { getProfile } from "../api/profileApi";
 import { saveAccount } from "../api/accountApi";
 import { listChatConversations } from "../chat/chatApi";
+import {
+  cancelPrivacyRequest,
+  createPrivacyRequest,
+  getPrivacyRequest,
+  listPrivacyRequests,
+} from "./privacyRequest.api";
 
 jest.mock("react-markdown", () => ({ __esModule: true, default: ({ children }) => <div>{children}</div> }));
 jest.mock("remark-gfm", () => ({ __esModule: true, default: () => null }));
@@ -22,6 +28,12 @@ jest.mock("../chat/chatApi", () => ({
   createChatConversation: jest.fn(), getChatConversation: jest.fn(), renameChatConversation: jest.fn(),
   deleteChatConversation: jest.fn(), createChatUserMessage: jest.fn(), generateChatAssistantReply: jest.fn(),
   createLearnerActionProposal: jest.fn(), confirmLearnerActionProposal: jest.fn(), cancelLearnerActionProposal: jest.fn(),
+}));
+jest.mock("./privacyRequest.api", () => ({
+  cancelPrivacyRequest: jest.fn(),
+  createPrivacyRequest: jest.fn(),
+  getPrivacyRequest: jest.fn(),
+  listPrivacyRequests: jest.fn(),
 }));
 
 const REQUIRED_ENGLISH_HEADINGS = [
@@ -47,6 +59,20 @@ const PROHIBITED_CLAIMS = [
   "OpenAI never trains on data",
   "Cyberly does not sell learner data",
   "24-hour privacy response SLA",
+  "all backups are erased",
+  "all provider copies are deleted",
+  "automatic whole-account deletion",
+];
+
+const SECTION_NINE_FIRST_TWO = [
+  "Depending on the feature, learners can currently manage information such as their display name, supported age, language, avatar, learning preferences, help topics, and verified account email.",
+  "Cyberly also provides current conversation controls where available, including conversation title management, export, and deletion.",
+];
+
+const SECTION_NINE_C02 = [
+  "Cyberly provides an authenticated Privacy Request workflow for unsupported correction requests and deletion requests. Learners receive a reference and can view the status of their requests.",
+  "Submitting a deletion request does not immediately delete a learner’s account or learner data. Cyberly does not currently provide immediate self-service whole-account deletion, an automatic complete personal-data deletion workflow, or complete account-wide data export.",
+  "Submitting a Privacy Request does not by itself guarantee removal from every supporting service or every backup. This notice does not state a guaranteed processing time, service level, or statutory deadline for a request.",
 ];
 
 function prepareRoute(route, locale = "en") {
@@ -104,6 +130,10 @@ describe("Privacy Notice", () => {
     expect(screen.getByRole("article")).toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(12);
     expect(restoreSession).not.toHaveBeenCalled();
+    expect(listPrivacyRequests).not.toHaveBeenCalled();
+    expect(createPrivacyRequest).not.toHaveBeenCalled();
+    expect(getPrivacyRequest).not.toHaveBeenCalled();
+    expect(cancelPrivacyRequest).not.toHaveBeenCalled();
   });
 
   test("defers session restoration until navigation leaves direct Privacy and attempts it once", async () => {
@@ -187,10 +217,54 @@ describe("Privacy Notice", () => {
     });
     expect(article).toHaveTextContent("do not mean that the related database record is automatically deleted");
     expect(article).toHaveTextContent("does not currently have one uniform fixed automatic deletion period");
-    expect(article).toHaveTextContent("does not currently provide a whole-account deletion feature");
+    SECTION_NINE_C02.forEach(paragraph => expect(article).toHaveTextContent(paragraph));
+    expect(article).not.toHaveTextContent("does not currently provide a whole-account deletion feature, complete personal-data deletion workflow, complete account-wide data export, or formal privacy-request ticket workflow");
     expect(article).toHaveTextContent("does not currently provide a Guardian Link");
     expect(screen.getByRole("link", { name: "privacy@cyberly.my" })).toHaveAttribute("href", "mailto:privacy@cyberly.my");
     PROHIBITED_CLAIMS.forEach(claim => expect(article).not.toHaveTextContent(claim));
+  });
+
+  test("integrates only the frozen Section 9 replacement and public Privacy Request CTA", async () => {
+    await renderDirectPrivacy();
+    const section = screen.getByRole("heading", { level: 2, name: "Your current choices and controls" }).closest("section");
+    const paragraphs = within(section).getAllByText((_, node) => node.tagName === "P").map(node => node.textContent);
+
+    expect(paragraphs).toEqual([...SECTION_NINE_FIRST_TWO, ...SECTION_NINE_C02]);
+    expect(within(section).getByRole("link", { name: "Manage privacy requests" })).toHaveAttribute("href", "#/privacy-requests");
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(12);
+    expect(restoreSession).not.toHaveBeenCalled();
+    expect(listPrivacyRequests).not.toHaveBeenCalled();
+    expect(createPrivacyRequest).not.toHaveBeenCalled();
+    expect(getPrivacyRequest).not.toHaveBeenCalled();
+    expect(cancelPrivacyRequest).not.toHaveBeenCalled();
+  });
+
+  test("sends a logged-out CTA visitor through the bounded Privacy Request continuation", async () => {
+    restoreSession.mockResolvedValue({ ok: false, error: "Not authenticated" });
+    await renderDirectPrivacy();
+
+    await userEvent.click(screen.getByRole("link", { name: "Manage privacy requests" }));
+
+    await screen.findByRole("heading", { level: 1, name: i18n.t("auth.welcomeBack") });
+    expect(window.location.hash).toBe("#/login");
+    expect(restoreSession).toHaveBeenCalledTimes(1);
+    expect(screen.queryByRole("heading", { level: 1, name: i18n.t("privacyRequests.title") })).not.toBeInTheDocument();
+  });
+
+  test("opens Privacy Requests from the CTA without a second restore for an authenticated learner", async () => {
+    await prepareRoute("#/home", "en");
+    restoreSession.mockResolvedValue(authenticatedSession("en"));
+    render(<App />);
+    await waitFor(() => expect(restoreSession).toHaveBeenCalledTimes(1));
+    navigateTo("#/privacy");
+    await screen.findByRole("heading", { level: 1, name: i18n.t("privacyNotice.title") });
+
+    await userEvent.click(screen.getByRole("link", { name: "Manage privacy requests" }));
+
+    expect(await screen.findByRole("heading", { level: 1, name: i18n.t("privacyRequests.title") })).toBeVisible();
+    expect(window.location.hash).toBe("#/privacy-requests");
+    expect(restoreSession).toHaveBeenCalledTimes(1);
   });
 
   test("preserves the frozen services list and concluding paragraph order", async () => {
@@ -202,14 +276,22 @@ describe("Privacy Notice", () => {
     expect(content.indexOf("Cloudflare for DNS")).toBeLessThan(content.indexOf("These services support different parts"));
   });
 
-  test.each(["en", "ms", "zh-CN"])("provides complete semantic structure in %s", async locale => {
+  test.each([
+    ["en", "Manage privacy requests", "does not immediately delete"],
+    ["ms", "Urus permintaan privasi", "tidak memadamkan akaun atau data pelajar dengan serta-merta"],
+    ["zh-CN", "管理隐私请求", "不会立即删除学习者的账户或数据"],
+  ])("provides complete semantic structure in %s", async (locale, actionLabel, requestBoundary) => {
     await renderDirectPrivacy({ locale });
     const article = screen.getByRole("article");
 
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(screen.getAllByRole("heading", { level: 2 })).toHaveLength(12);
     expect(article).toHaveTextContent("OpenAI");
     expect(article).toHaveTextContent("13–17");
     expect(article).toHaveTextContent("privacy@cyberly.my");
+    expect(article).toHaveTextContent(requestBoundary);
+    expect(screen.getByRole("link", { name: actionLabel })).toHaveAttribute("href", "#/privacy-requests");
+    expect(article.textContent).not.toMatch(/privacyNotice\.|privacyRequests\./);
     expect(screen.getByRole("link", { name: "privacy@cyberly.my" })).toBeInTheDocument();
   });
 

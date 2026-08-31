@@ -34,6 +34,9 @@ export default function PrivacyNoticePage() {
                 </ul>
               )}
               {section.trailingParagraphs?.map(paragraph => <p key={paragraph}>{paragraph}</p>)}
+              {section.action?.href === "#/privacy-requests" && (
+                <a href="#/privacy-requests">{section.action.label}</a>
+              )}
             </section>
           ))}
         </article>

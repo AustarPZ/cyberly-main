@@ -1308,9 +1308,14 @@
         "paragraphs": [
           "Bergantung pada ciri, pelajar kini boleh mengurus maklumat seperti nama paparan, umur yang disokong, bahasa, avatar, pilihan pembelajaran, topik bantuan dan e-mel akaun yang disahkan.",
           "Cyberly juga menyediakan kawalan perbualan semasa jika tersedia, termasuk pengurusan tajuk perbualan, eksport dan pemadaman.",
-          "Cyberly pada masa ini tidak menyediakan ciri pemadaman seluruh akaun, aliran kerja pemadaman lengkap data peribadi, eksport data seluruh akaun yang lengkap atau aliran kerja tiket permintaan privasi rasmi.",
-          "Keupayaan tersebut tidak dinyatakan dalam notis ini sebagai ciri yang sedia ada."
-        ]
+          "Cyberly menyediakan aliran kerja Permintaan Privasi yang memerlukan pengesahan identiti untuk permintaan pembetulan yang tidak disokong dan permintaan pemadaman. Pelajar menerima rujukan dan boleh melihat status permintaan mereka.",
+          "Penghantaran permintaan pemadaman tidak memadamkan akaun atau data pelajar dengan serta-merta. Cyberly pada masa ini tidak menyediakan pemadaman layan diri seluruh akaun dengan serta-merta, aliran kerja automatik untuk pemadaman lengkap data peribadi, atau eksport lengkap data seluruh akaun.",
+          "Penghantaran Permintaan Privasi dengan sendirinya tidak menjamin penghapusan daripada setiap perkhidmatan sokongan atau setiap sandaran. Notis ini tidak menyatakan masa pemprosesan yang dijamin, tahap perkhidmatan, atau tarikh akhir berkanun untuk sesuatu permintaan."
+        ],
+        "action": {
+          "label": "Urus permintaan privasi",
+          "href": "#/privacy-requests"
+        }
       },
       {
         "title": "Pelajar berumur 13–17 tahun",
