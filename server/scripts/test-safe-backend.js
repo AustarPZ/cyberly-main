@@ -55,6 +55,14 @@ if (!emailChangeConfirmOk) {
   process.exit();
 }
 
+const privacyRequestOk = run(process.execPath, ['scripts/test-privacy-requests.js'], {
+  cwd: __dirname + '/..',
+});
+
+if (!privacyRequestOk) {
+  process.exit();
+}
+
 if (hasExplicitMigrationTestConfig()) {
   run(process.execPath, ['scripts/test-migrations.js'], {
     cwd: __dirname + '/..',

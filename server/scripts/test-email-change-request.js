@@ -10,7 +10,10 @@ const {
   createIsolatedDatabaseName,
   validateTestDatabaseEnvironment,
 } = require('../src/database/migration-test-safety');
-const { runMigrations } = require('../src/database/migration-runner');
+const {
+  listMigrationFilesThrough,
+  runMigrations,
+} = require('../src/database/migration-runner');
 const {
   createEmailChangeRequestService,
 } = require('../src/auth/emailChangeRequest.service');
@@ -449,7 +452,9 @@ async function testRealMySql(config) {
     const [[version]] = await pool.query('SELECT VERSION() AS version');
     const [[migrationCount]] = await pool.query('SELECT COUNT(*) AS count FROM schema_migrations');
     assert.match(String(version.version), /^8\./);
-    assert.equal(Number(migrationCount.count), 30);
+    const expectedMigrations = listMigrationFilesThrough();
+    assert.ok(expectedMigrations.includes('031_create_privacy_requests.sql'));
+    assert.equal(Number(migrationCount.count), expectedMigrations.length);
 
     const passwordHash = await bcrypt.hash(PASSWORD, 4);
     const repository = require('../src/auth/emailChange.repository').createEmailChangeRepository(pool);
@@ -601,9 +606,11 @@ async function testRealMySql(config) {
         },
         stdio: 'inherit',
       });
-      assert.equal(child.status, 0, `${script} must pass against fresh schema 030`);
+      assert.equal(child.status, 0, `${script} must pass against the fully migrated current schema`);
     }
-    console.log(`Email change request disposable MySQL passed: version ${version.version}, migrations 30.`);
+    console.log(
+      `Email change request disposable MySQL passed: version ${version.version}, migrations ${expectedMigrations.length}.`
+    );
   } finally {
     await pool.end();
     await dropDatabase(config, databaseName);

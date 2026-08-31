@@ -15,11 +15,7 @@ const SYSTEM_DATABASES = new Set([
   'sys',
 ]);
 
-const DEPLOYED_HOST_PATTERNS = [
-  /\.aivencloud\.com$/i,
-  /\.render\.com$/i,
-  /\.onrender\.com$/i,
-];
+const LOOPBACK_HOSTS = new Set(['127.0.0.1', '::1']);
 
 function assertSafeTestDatabaseName(databaseName) {
   const value = String(databaseName || '').trim();
@@ -40,8 +36,8 @@ function assertSafeTestHost(host) {
   if (!value) {
     throw new Error('TEST_DB_HOST is required for migration tests.');
   }
-  if (DEPLOYED_HOST_PATTERNS.some((pattern) => pattern.test(value))) {
-    throw new Error('Refusing to run migration tests against a deployed/prototype database host.');
+  if (!LOOPBACK_HOSTS.has(value)) {
+    throw new Error('Refusing to run migration tests against a non-loopback database host.');
   }
   return value;
 }
@@ -120,4 +116,3 @@ module.exports = {
   redactConfigForError,
   validateTestDatabaseEnvironment,
 };
-

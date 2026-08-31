@@ -92,6 +92,8 @@ async function assertFreshSchema(connection) {
     'agentic_execution_traces',
     'account_verification_tokens',
     'email_change_requests',
+    'privacy_requests',
+    'privacy_request_events',
   ];
 
   for (const table of expectedTables) {
@@ -222,6 +224,128 @@ async function assertFreshSchema(connection) {
     'email change user foreign key',
     foreignKeyExists(connection, 'email_change_requests', 'fk_email_change_requests_user')
   );
+  await assertExists(
+    'migration 031 recorded',
+    migrationRecorded(connection, '031_create_privacy_requests.sql')
+  );
+  for (const [label, table, name] of [
+    ['privacy request public reference uniqueness', 'privacy_requests', 'uq_privacy_requests_public_reference'],
+    ['privacy request client id uniqueness', 'privacy_requests', 'uq_privacy_requests_user_client_request'],
+    ['privacy request active scope uniqueness', 'privacy_requests', 'uq_privacy_requests_active_scope'],
+    ['privacy request user/created index', 'privacy_requests', 'idx_privacy_requests_user_created'],
+    ['privacy request status/created index', 'privacy_requests', 'idx_privacy_requests_status_created'],
+    ['privacy request event timeline index', 'privacy_request_events', 'idx_privacy_request_events_request_created'],
+  ]) await assertExists(label, indexExists(connection, table, name));
+  await assertExists(
+    'privacy request user foreign key',
+    foreignKeyExists(connection, 'privacy_requests', 'fk_privacy_requests_user')
+  );
+  await assertExists(
+    'privacy request event foreign key',
+    foreignKeyExists(connection, 'privacy_request_events', 'fk_privacy_request_events_request')
+  );
+
+  const [privacyColumns] = await connection.query(
+    `SELECT COLUMN_NAME, DATA_TYPE, COLUMN_TYPE, CHARACTER_MAXIMUM_LENGTH,
+            IS_NULLABLE, COLUMN_DEFAULT, EXTRA, GENERATION_EXPRESSION
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'privacy_requests'`
+  );
+  const privacyByName = new Map(privacyColumns.map(column => [column.COLUMN_NAME, column]));
+  assert.equal(privacyByName.get('id')?.COLUMN_TYPE, 'bigint unsigned');
+  assert.equal(privacyByName.get('user_id')?.COLUMN_TYPE, 'int unsigned');
+  assert.equal(privacyByName.get('user_id')?.IS_NULLABLE, 'YES');
+  assert.equal(Number(privacyByName.get('public_reference')?.CHARACTER_MAXIMUM_LENGTH), 26);
+  assert.equal(Number(privacyByName.get('client_request_id')?.CHARACTER_MAXIMUM_LENGTH), 36);
+  assert.match(String(privacyByName.get('request_type')?.COLUMN_TYPE), /'CORRECTION','DELETION'/i);
+  assert.match(String(privacyByName.get('status')?.COLUMN_TYPE), /'NEEDS_INFORMATION'/i);
+  assert.match(String(privacyByName.get('active_scope_key')?.EXTRA), /STORED GENERATED/i);
+  assert.match(String(privacyByName.get('active_scope_key')?.GENERATION_EXPRESSION), /CORRECTION/i);
+  assert.match(String(privacyByName.get('active_marker')?.EXTRA), /STORED GENERATED/i);
+  assert.match(String(privacyByName.get('active_marker')?.GENERATION_EXPRESSION), /SUBMITTED/i);
+
+  const [privacyIndexRows] = await connection.query(
+    `SELECT INDEX_NAME, COLUMN_NAME, SEQ_IN_INDEX
+     FROM INFORMATION_SCHEMA.STATISTICS
+     WHERE TABLE_SCHEMA = DATABASE()
+       AND TABLE_NAME = 'privacy_requests'
+       AND INDEX_NAME = 'uq_privacy_requests_active_scope'
+     ORDER BY SEQ_IN_INDEX`
+  );
+  assert.deepEqual(privacyIndexRows.map(row => row.COLUMN_NAME), [
+    'user_id', 'active_scope_key', 'active_marker',
+  ]);
+
+  const [foreignKeyRules] = await connection.query(
+    `SELECT CONSTRAINT_NAME, DELETE_RULE
+     FROM INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS
+     WHERE CONSTRAINT_SCHEMA = DATABASE()
+       AND CONSTRAINT_NAME IN ('fk_privacy_requests_user', 'fk_privacy_request_events_request')`
+  );
+  const ruleByName = new Map(foreignKeyRules.map(rule => [rule.CONSTRAINT_NAME, rule.DELETE_RULE]));
+  assert.equal(ruleByName.get('fk_privacy_requests_user'), 'SET NULL');
+  assert.equal(ruleByName.get('fk_privacy_request_events_request'), 'CASCADE');
+
+  await connection.beginTransaction();
+  try {
+    const [learnerResult] = await connection.query(
+      `INSERT INTO users (
+         email, display_name, age, age_group, password_hash, role,
+         account_status, email_verified_at
+       ) VALUES ('privacy-migration@example.test', 'Privacy Migration', 16, 'teen',
+                 'not-a-real-password-hash', 'user', 'active', CURRENT_TIMESTAMP)`
+    );
+    const userId = Number(learnerResult.insertId);
+    const insertRequest = (reference, subtype, clientId, status = 'SUBMITTED') => connection.query(
+      `INSERT INTO privacy_requests (
+         public_reference, user_id, request_type, request_subtype, request_detail,
+         status, client_request_id
+       ) VALUES (?, ?, 'CORRECTION', ?, 'Synthetic isolated migration row', ?, ?)`,
+      [reference, userId, subtype, status, clientId]
+    );
+    await insertRequest('CY-PR-00000000000000000001', 'ACCOUNT_OR_PROFILE_RECORD', '550e8400-e29b-41d4-a716-446655440001');
+    await assert.rejects(
+      insertRequest('CY-PR-00000000000000000002', 'ACCOUNT_OR_PROFILE_RECORD', '550e8400-e29b-41d4-a716-446655440002'),
+      error => error.code === 'ER_DUP_ENTRY'
+    );
+    await insertRequest('CY-PR-00000000000000000003', 'CHAT_OR_AI_RECORD', '550e8400-e29b-41d4-a716-446655440003');
+    await insertRequest('CY-PR-00000000000000000004', 'ACCOUNT_OR_PROFILE_RECORD', '550e8400-e29b-41d4-a716-446655440004', 'CANCELLED');
+    await insertRequest('CY-PR-00000000000000000005', 'ACCOUNT_OR_PROFILE_RECORD', '550e8400-e29b-41d4-a716-446655440005', 'COMPLETED');
+    await connection.query(
+      `INSERT INTO privacy_requests (
+         public_reference, user_id, request_type, request_subtype, data_category,
+         request_detail, status, client_request_id
+       ) VALUES
+         ('CY-PR-00000000000000000007', ?, 'DELETION', 'WHOLE_ACCOUNT_AND_ASSOCIATED_DATA',
+          NULL, NULL, 'SUBMITTED', '550e8400-e29b-41d4-a716-446655440007')`, [userId]
+    );
+    await assert.rejects(
+      connection.query(
+        `INSERT INTO privacy_requests (
+           public_reference, user_id, request_type, request_subtype, data_category,
+           request_detail, status, client_request_id
+         ) VALUES
+           ('CY-PR-00000000000000000008', ?, 'DELETION', 'SELECTED_PERSONAL_DATA',
+            'CHAT', 'Synthetic isolated migration row', 'SUBMITTED',
+            '550e8400-e29b-41d4-a716-446655440008')`, [userId]
+      ),
+      error => error.code === 'ER_DUP_ENTRY'
+    );
+    await assert.rejects(
+      insertRequest('CY-PR-00000000000000000006', 'OTHER_PERSONAL_DATA', '550e8400-e29b-41d4-a716-446655440001'),
+      error => error.code === 'ER_DUP_ENTRY'
+    );
+    const [generatedRows] = await connection.query(
+      `SELECT active_scope_key, active_marker FROM privacy_requests
+       WHERE user_id = ? ORDER BY id`, [userId]
+    );
+    assert.equal(generatedRows[0].active_scope_key, 'CORRECTION:ACCOUNT_OR_PROFILE_RECORD');
+    assert.equal(Number(generatedRows[0].active_marker), 1);
+    assert.equal(generatedRows[2].active_marker, null);
+  } finally {
+    await connection.rollback();
+  }
 
   const [emailChangeColumns] = await connection.query(
     `SELECT COLUMN_NAME, DATA_TYPE, COLUMN_TYPE, CHARACTER_MAXIMUM_LENGTH,

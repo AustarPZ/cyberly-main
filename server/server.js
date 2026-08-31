@@ -91,6 +91,12 @@ const {
     createSecurityHeadersMiddleware,
 } = require('./src/security/httpSecurity');
 const { createAuthRateLimiters } = require('./src/security/rateLimitPolicies');
+const { applicationErrorMiddleware } = require('./src/errors/applicationError.middleware');
+const { createPrivacyRequestRepository } = require('./src/privacy/privacyRequest.repository');
+const { createPrivacyRequestService } = require('./src/privacy/privacyRequest.service');
+const { createPrivacyRequestReferenceGenerator } = require('./src/privacy/privacyRequest.reference');
+const { createPrivacyRequestRateLimiters } = require('./src/privacy/privacyRequest.rateLimits');
+const { createPrivacyRequestRouter } = require('./src/privacy/privacyRequest.routes');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -106,6 +112,13 @@ const sessionCookieSecure = isProduction || sessionCookieSameSite === 'none';
 const pool = createPool();
 const profileRepository = createProfileRepository(pool);
 const profileService = createProfileService(profileRepository);
+const privacyRequestRepository = createPrivacyRequestRepository(pool);
+const privacyRequestService = createPrivacyRequestService({
+    repository: privacyRequestRepository,
+    passwordComparer: bcrypt.compare,
+    referenceGenerator: createPrivacyRequestReferenceGenerator(),
+});
+const privacyRequestRateLimits = createPrivacyRequestRateLimiters();
 const emailVerificationRepository = createEmailVerificationRepository(pool);
 const emailVerificationTokenService = createEmailVerificationTokenService(emailVerificationRepository);
 const passwordResetRepository = createPasswordResetRepository(pool);
@@ -211,6 +224,7 @@ app.use(session({
 }));
 app.use('/api/profile', createProfileRouter(profileService));
 app.use("/api/account", createAccountRouter(accountService));
+app.use('/api/privacy', createPrivacyRequestRouter(privacyRequestService, privacyRequestRateLimits));
 app.use(createAssessmentRouter(assessmentService));
 app.use(createProgressRouter(progressService));
 app.use(createScenarioRouter(scenarioService));
@@ -797,19 +811,6 @@ function normalizeSameSite(value) {
     return isProduction ? 'none' : 'lax';
 }
 
-app.use((error, _req, res, _next) => {
-    console.error('Server error:', error.code || error.message);
-    if (error.status && error.status < 600 && error.code) {
-        return res.status(error.status).json({
-            code: error.code || ERROR_CODES.INTERNAL_SERVER_ERROR,
-            message: error.message,
-            ...(error.errors ? { errors: error.errors } : {}),
-        });
-    }
-    res.status(500).json({
-        code: ERROR_CODES.INTERNAL_SERVER_ERROR,
-        message: 'Server error.',
-    });
-});
+app.use(applicationErrorMiddleware);
 
 app.listen(port, () => console.log(`Server running on port ${port}`));

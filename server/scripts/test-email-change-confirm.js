@@ -11,7 +11,10 @@ const {
   createIsolatedDatabaseName,
   validateTestDatabaseEnvironment,
 } = require('../src/database/migration-test-safety');
-const { runMigrations } = require('../src/database/migration-runner');
+const {
+  listMigrationFilesThrough,
+  runMigrations,
+} = require('../src/database/migration-runner');
 const { createEmailChangeRepository } = require('../src/auth/emailChange.repository');
 const { createEmailChangeToken } = require('../src/auth/emailChangeToken.service');
 const { createEmailChangeConfirmService } = require('../src/auth/emailChangeConfirm.service');
@@ -467,7 +470,9 @@ async function testRealMySql(config) {
     const [[version]] = await pool.query('SELECT VERSION() AS version');
     const [[migrationCount]] = await pool.query('SELECT COUNT(*) AS count FROM schema_migrations');
     assert.match(String(version.version), /^8\./);
-    assert.equal(Number(migrationCount.count), 30);
+    const expectedMigrations = listMigrationFilesThrough();
+    assert.ok(expectedMigrations.includes('031_create_privacy_requests.sql'));
+    assert.equal(Number(migrationCount.count), expectedMigrations.length);
     const passwordHash = await bcrypt.hash('CurrentPass9', 4);
     const repository = createEmailChangeRepository(pool);
     await testRealHttpSessionContinuation({ pool, databaseConfig, repository, passwordHash });
@@ -639,7 +644,9 @@ async function testRealMySql(config) {
     assert.equal(failureLearner.email, 'continuation-confirmed@example.test');
     assert.equal(Number(failureLearner.session_version), 1);
     assert.ok((await repository.findById(failureRequest.id)).usedAt);
-    console.log(`Email change confirm disposable MySQL passed: version ${version.version}, migrations 30.`);
+    console.log(
+      `Email change confirm disposable MySQL passed: version ${version.version}, migrations ${expectedMigrations.length}.`
+    );
   } finally {
     await pool.end();
     const cleanup = await mysql.createConnection(buildAdminDatabaseConfig(config));

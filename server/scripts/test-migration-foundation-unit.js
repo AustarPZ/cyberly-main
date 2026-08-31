@@ -3,6 +3,7 @@ const fs = require('fs');
 const path = require('path');
 
 const {
+  assertSafeTestHost,
   assertSafeTestDatabaseName,
   buildTestDatabaseConfig,
   createIsolatedDatabaseName,
@@ -58,6 +59,19 @@ function runSafetyTests() {
   assert.equal(assertSafeTestDatabaseName('cyberly_test_migrations_123'), 'cyberly_test_migrations_123');
   assert.match(createIsolatedDatabaseName('migrations'), /^cyberly_test_migrations_\d{8}_\d{6}_[a-f0-9]{6}$/);
 
+  assert.equal(assertSafeTestHost('127.0.0.1'), '127.0.0.1');
+  assert.equal(assertSafeTestHost('::1'), '::1');
+  for (const host of [
+    '', 'localhost', '10.0.0.1', '192.168.1.10', '172.16.0.10', '8.8.8.8',
+    'example.com', 'db.internal', 'example.aivencloud.com', 'service.onrender.com',
+  ]) {
+    assertThrowsMessage(
+      () => assertSafeTestHost(host),
+      /loopback|TEST_DB_HOST|refusing/i,
+      `non-loopback test database host ${host || '(empty)'} must be rejected`
+    );
+  }
+
   const env = {
     TEST_DB_HOST: '127.0.0.1',
     TEST_DB_PORT: '3306',
@@ -86,7 +100,7 @@ function runMigrationOrderingTests() {
   const migrationsDir = path.resolve(__dirname, '../migrations');
   const all = listMigrationFilesThrough({ migrationsDir });
   assert.equal(all[0], '001_create_schema_migrations.sql');
-  assert.equal(all[all.length - 1], '030_create_email_change_requests.sql');
+  assert.equal(all[all.length - 1], '031_create_privacy_requests.sql');
 
   const sessionVersionMigration = fs.readFileSync(
     path.join(migrationsDir, '029_add_session_version_to_users.sql'),

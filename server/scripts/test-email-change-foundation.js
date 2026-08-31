@@ -6,7 +6,10 @@ const {
   createIsolatedDatabaseName,
   validateTestDatabaseEnvironment,
 } = require('../src/database/migration-test-safety');
-const { runMigrations } = require('../src/database/migration-runner');
+const {
+  listMigrationFilesThrough,
+  runMigrations,
+} = require('../src/database/migration-runner');
 const { normalizeEmail } = require('../src/auth/validation');
 const {
   createEmailChangeToken,
@@ -103,7 +106,9 @@ async function assertDatabaseFoundation(config) {
     const [[versionRow]] = await pool.query('SELECT VERSION() AS version');
     const [[migrationRow]] = await pool.query('SELECT COUNT(*) AS count FROM schema_migrations');
     assert.match(String(versionRow.version), /^8\./);
-    assert.equal(Number(migrationRow.count), 30);
+    const expectedMigrations = listMigrationFilesThrough();
+    assert.ok(expectedMigrations.includes('031_create_privacy_requests.sql'));
+    assert.equal(Number(migrationRow.count), expectedMigrations.length);
 
     const repository = createEmailChangeRepository(pool);
     const now = new Date('2026-08-26T02:00:00.000Z');
@@ -256,7 +261,9 @@ async function assertDatabaseFoundation(config) {
     );
     assert.equal(Number(cascadeRow.count), 0);
 
-    console.log(`Email change disposable MySQL passed: version ${versionRow.version}, migrations 30.`);
+    console.log(
+      `Email change disposable MySQL passed: version ${versionRow.version}, migrations ${expectedMigrations.length}.`
+    );
   } finally {
     await pool.end();
     await dropDatabase(config, databaseName);
