@@ -2526,6 +2526,57 @@
     "proficient": "熟练",
     "strong": "表现优秀"
   },
+  "privacyRequests": {
+    "identity": "你的信息",
+    "title": "隐私申请",
+    "overview": "你可以在这里申请更正 Cyberly 现有控件无法直接修改的信息，或提交删除申请。",
+    "deletionBoundary": "提交删除申请不会立即删除你的账户或学习数据。申请处理期间，你的账户仍可使用。",
+    "guidance": {
+      "title": "先直接更新可修改的信息",
+      "description": "如果 Cyberly 现有控件支持你所需的更改，请先使用这些控件。只有无法自行修改的信息才需要提交更正申请。",
+      "profile": "个人资料和账户信息", "preferences": "语言、偏好和头像", "email": "已验证邮箱变更", "password": "密码恢复"
+    },
+    "actions": {
+      "manage": "管理隐私请求",
+      "newCorrection": "新建更正申请", "newDeletion": "删除申请", "submitCorrection": "提交更正申请", "submitDeletion": "提交删除申请",
+      "submitting": "正在提交申请", "viewDetails": "查看申请详情", "backToList": "返回申请列表", "openExisting": "打开现有申请",
+      "withdraw": "撤回申请", "confirmWithdraw": "确认撤回"
+    },
+    "list": { "title": "你的申请" },
+    "empty": { "title": "尚无隐私申请", "description": "新申请会在这里显示其编号和状态。" },
+    "loading": { "list": "正在加载你的隐私申请", "detail": "正在加载申请详情" },
+    "correction": { "title": "新建更正申请", "description": "此表单适用于无法通过 Cyberly 现有自助控件更正的信息。" },
+    "deletion": { "title": "删除申请", "warning": "这将提交删除申请，并不会立即删除账户或学习数据。账户仍可使用；你需要确认当前密码，Cyberly 将提供申请编号和状态。" },
+    "confirmation": { "title": "已收到隐私申请", "description": "请保存此申请编号。你可以在 Cyberly 查看申请及其当前状态。" },
+    "detail": { "title": "申请详情" },
+    "cancellation": { "title": "撤回此申请？", "description": "撤回只会取消此申请，不会恢复已删除的数据、撤销已完成的操作或逆转服务提供方的处理。" },
+    "fields": {
+      "reference": "申请编号", "type": "申请类型", "status": "状态", "subtype": "申请范围", "dataCategory": "数据类别",
+      "detail": "申请详情", "submitted": "提交时间", "updated": "更新时间", "currentPassword": "当前密码",
+      "correctionSubtype": "更正类型", "deletionScope": "删除申请范围", "chooseCategory": "选择数据类别", "characterCount": "{{count}} / {{max}} 个字符"
+    },
+    "type": { "CORRECTION": "更正申请", "DELETION": "删除申请" },
+    "subtype": {
+      "ACCOUNT_OR_PROFILE_RECORD": "账户或个人资料记录", "LEARNING_ACTIVITY_RECORD": "学习活动记录", "CHAT_OR_AI_RECORD": "聊天或 AI 记录",
+      "OTHER_PERSONAL_DATA": "其他个人数据", "WHOLE_ACCOUNT_AND_ASSOCIATED_DATA": "整个账户及相关数据", "SELECTED_PERSONAL_DATA": "选定的个人数据"
+    },
+    "category": { "PROFILE": "个人资料", "LEARNING_ACTIVITY": "学习活动", "CHAT": "聊天", "SECURITY_OR_RECOVERY": "安全或恢复", "OTHER": "其他" },
+    "status": {
+      "SUBMITTED": "已收到申请", "UNDER_REVIEW": "审核中", "NEEDS_INFORMATION": "需要更多信息", "COMPLETED": "已完成获批操作",
+      "DECLINED": "未获批准或无法按申请完成", "CANCELLED": "申请已撤回"
+    },
+    "errors": {
+      "accountUnavailable": "此账户无法使用隐私申请功能。", "validation": "请检查申请详情后重试。",
+      "detailRequired": "请填写申请详情。", "detailTooLong": "申请详情不得超过 1000 个字符。", "categoryRequired": "请选择个人数据类别。",
+      "passwordRequired": "请输入当前密码。", "passwordInvalid": "当前密码不正确。", "activeDuplicate": "此范围已有一项进行中的申请。",
+      "idempotencyConflict": "此申请在先前提交后已更改。请检查后重新提交。", "rateLimited": "申请过于频繁，请稍后再试。",
+      "rateLimitedSeconds": "申请过于频繁，请约 {{seconds}} 秒后再试。", "submitFailed": "无法安全提交此申请。",
+      "network": "Cyberly 无法确认提交结果。请在不更改表单的情况下重试，以复用同一申请 ID。",
+      "listFailed": "无法加载你的隐私申请。", "detailFailed": "无法加载申请详情。", "notFound": "找不到此隐私申请。",
+      "notCancellable": "此申请已无法撤回。", "cancelFailed": "无法撤回此申请。"
+    },
+    "notAvailable": "不可用"
+  },
   "topics": {
     "phishing_and_scams": "诈骗与社会工程",
     "password_and_account_security": "密码与账户安全",

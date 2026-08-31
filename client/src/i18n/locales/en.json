@@ -2526,6 +2526,71 @@
     "proficient": "Proficient",
     "strong": "Strong"
   },
+  "privacyRequests": {
+    "identity": "Your information",
+    "title": "Privacy requests",
+    "overview": "Use this space to request a correction that is not available through Cyberly's existing controls, or to submit a deletion request.",
+    "deletionBoundary": "Submitting a deletion request does not immediately delete your account or learner data. Your account remains usable while the request is considered.",
+    "guidance": {
+      "title": "Update what you can directly",
+      "description": "Use Cyberly's existing controls first when they support the change you need. Submit a correction request only for information you cannot update there.",
+      "profile": "Profile and account details",
+      "preferences": "Language, preferences and avatar",
+      "email": "Verified email change",
+      "password": "Password recovery"
+    },
+    "actions": {
+      "manage": "Manage privacy requests",
+      "newCorrection": "New correction request",
+      "newDeletion": "Deletion request",
+      "submitCorrection": "Submit correction request",
+      "submitDeletion": "Submit deletion request",
+      "submitting": "Submitting request",
+      "viewDetails": "View request details",
+      "backToList": "Back to request list",
+      "openExisting": "Open existing request",
+      "withdraw": "Withdraw request",
+      "confirmWithdraw": "Confirm withdrawal"
+    },
+    "list": { "title": "Your requests" },
+    "empty": { "title": "No privacy requests yet", "description": "New requests will appear here with their reference and status." },
+    "loading": { "list": "Loading your privacy requests", "detail": "Loading request details" },
+    "correction": { "title": "New correction request", "description": "Use this form for information you cannot correct through Cyberly's existing self-service controls." },
+    "deletion": { "title": "Deletion request", "warning": "This submits a deletion request. It does not immediately delete your account or learner data. Your account remains usable, current-password confirmation is required, and Cyberly will provide a reference and status." },
+    "confirmation": { "title": "Privacy request received", "description": "Keep this reference. You can view the request and its current status in Cyberly." },
+    "detail": { "title": "Request details" },
+    "cancellation": { "title": "Withdraw this request?", "description": "Withdrawal cancels this request only. It does not restore deleted data, undo completed actions, or reverse provider processing." },
+    "fields": {
+      "reference": "Reference", "type": "Request type", "status": "Status", "subtype": "Request scope",
+      "dataCategory": "Data category", "detail": "Request details", "submitted": "Submitted", "updated": "Updated",
+      "currentPassword": "Current password", "correctionSubtype": "Correction type", "deletionScope": "Deletion scope",
+      "chooseCategory": "Choose a data category", "characterCount": "{{count}} of {{max}} characters"
+    },
+    "type": { "CORRECTION": "Correction request", "DELETION": "Deletion request" },
+    "subtype": {
+      "ACCOUNT_OR_PROFILE_RECORD": "Account or profile record", "LEARNING_ACTIVITY_RECORD": "Learning activity record",
+      "CHAT_OR_AI_RECORD": "Chat or AI record", "OTHER_PERSONAL_DATA": "Other personal data",
+      "WHOLE_ACCOUNT_AND_ASSOCIATED_DATA": "Whole account and associated data", "SELECTED_PERSONAL_DATA": "Selected personal data"
+    },
+    "category": { "PROFILE": "Profile", "LEARNING_ACTIVITY": "Learning activity", "CHAT": "Chat", "SECURITY_OR_RECOVERY": "Security or recovery", "OTHER": "Other" },
+    "status": {
+      "SUBMITTED": "Request received", "UNDER_REVIEW": "Under review", "NEEDS_INFORMATION": "More information needed",
+      "COMPLETED": "Approved action completed", "DECLINED": "Not approved or could not be completed", "CANCELLED": "Request withdrawn"
+    },
+    "errors": {
+      "accountUnavailable": "Privacy requests are unavailable for this account.", "validation": "Review the request details and try again.",
+      "detailRequired": "Request details are required.", "detailTooLong": "Request details must not exceed 1000 characters.",
+      "categoryRequired": "Choose the personal-data category.", "passwordRequired": "Enter your current password.",
+      "passwordInvalid": "The current password is incorrect.", "activeDuplicate": "An active request already exists for this scope.",
+      "idempotencyConflict": "This request changed after an earlier submission. Review it and submit again.",
+      "rateLimited": "Too many requests. Please try again later.", "rateLimitedSeconds": "Too many requests. Try again in about {{seconds}} seconds.",
+      "submitFailed": "The request could not be submitted safely.", "network": "Cyberly could not confirm the result. Retry without changing the form to reuse the same request ID.",
+      "listFailed": "Your privacy requests could not be loaded.", "detailFailed": "The request details could not be loaded.",
+      "notFound": "This privacy request was not found.", "notCancellable": "This request can no longer be withdrawn.",
+      "cancelFailed": "The request could not be withdrawn."
+    },
+    "notAvailable": "Not available"
+  },
   "topics": {
     "phishing_and_scams": "Scams & Social Engineering",
     "password_and_account_security": "Passwords & Account Security",

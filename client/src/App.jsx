@@ -43,6 +43,8 @@ import PageState from "./design-system/feedback/PageState";
 import ResourceDetailDialog from "./resources/ResourceDetailDialog";
 import AvatarVisual from "./profile/AvatarVisual";
 import PrivacyNoticePage from "./privacy/PrivacyNoticePage";
+import PrivacyRequestPage from "./privacy/PrivacyRequestPage";
+import { privacyLoginTarget } from "./privacy/privacyRequest.model";
 import {
   AVATAR_PRESET_IDS,
   getInitialAvatarText,
@@ -2435,7 +2437,7 @@ const CHAT_GENERATION_POLL_MAX_MS = 30000;
 const MIN_LEARNER_AGE = 13;
 const MAX_LEARNER_AGE = 17;
 const PUBLIC_PAGES = new Set(["home", "resources", "about", "privacy", "login", "forgot-password", "reset-password"]);
-const PROTECTED_PAGES = new Set(["dashboard", "assessment", "scenarios", "progress", "profile", "ai-chat", "admin"]);
+const PROTECTED_PAGES = new Set(["dashboard", "assessment", "scenarios", "progress", "profile", "privacy-requests", "ai-chat", "admin"]);
 const VERIFICATION_PAGES = new Set(["verify-email", "verify-email-change"]);
 const VALID_PAGES = new Set([...PUBLIC_PAGES, ...PROTECTED_PAGES]);
 
@@ -8841,6 +8843,13 @@ function ProfilePage() {
                 </form>
               )}
             </div>}
+            <div className="profile-privacy-requests">
+              <h3 className="profile-section-title">{t("privacyRequests.title")}</h3>
+              <p>{t("privacyRequests.overview")}</p>
+              <Button type="button" variant="secondary" onClick={() => go("privacy-requests")}>
+                {t("privacyRequests.actions.manage")}
+              </Button>
+            </div>
           </Surface>
         </PageSection>
       </PageContainer>
@@ -11445,6 +11454,7 @@ export default function App() {
   const activityGuardRef = useRef(null);
   const sessionRestorePromiseRef = useRef(null);
   const sessionRestoreCompletedRef = useRef(false);
+  const pendingAuthTargetRef = useRef(page === "privacy-requests" ? "privacy-requests" : null);
   const historyIndexRef = useRef(
     typeof window === "undefined" || !Number.isInteger(window.history.state?.cyberlyHistoryIndex)
       ? 0
@@ -11567,7 +11577,13 @@ export default function App() {
         const currentHash = normalizeHashRoute(window.location.hash);
         const restoredPage = parseHashPage(currentHash);
         if (PROTECTED_PAGES.has(restoredPage)) {
-          commitHashRoute("/home", { replace: true });
+          if (restoredPage === "privacy-requests") {
+            pendingAuthTargetRef.current = "privacy-requests";
+            setAuthMode("login");
+            commitHashRoute("/login", { replace: true });
+          } else {
+            commitHashRoute("/home", { replace: true });
+          }
         } else if (VERIFICATION_PAGES.has(restoredPage)) {
           commitHashRoute(currentHash, { replace: true });
         } else {
@@ -11619,8 +11635,17 @@ export default function App() {
       }
 
       const nextPage = parseHashPage(nextHash);
+      if (nextPage !== "login" && nextPage !== "privacy-requests") {
+        pendingAuthTargetRef.current = null;
+      }
       if (!user && sessionRestoreCompletedRef.current && PROTECTED_PAGES.has(nextPage)) {
-        commitHashRoute("/home", { replace: true });
+        if (nextPage === "privacy-requests") {
+          pendingAuthTargetRef.current = "privacy-requests";
+          setAuthMode("login");
+          commitHashRoute("/login", { replace: true });
+        } else {
+          commitHashRoute("/home", { replace: true });
+        }
         return;
       }
       const nextIndex = Number.isInteger(requestedIndex) ? requestedIndex : acceptedIndex;
@@ -11669,9 +11694,13 @@ export default function App() {
 
   function login(userData, profileData, preferredPage) {
     const nextUser = normalizeSessionUser(userData, profileData);
+    const continuation = nextUser.onboardingCompleted
+      ? privacyLoginTarget(pendingAuthTargetRef.current)
+      : null;
+    pendingAuthTargetRef.current = null;
     appUserIdRef.current = nextUser.id || null;
     setUser(nextUser);
-    commitHashRoute(`/${preferredPage || (nextUser.onboardingCompleted ? "dashboard" : "profile")}`, { replace: true });
+    commitHashRoute(`/${preferredPage || continuation || (nextUser.onboardingCompleted ? "dashboard" : "profile")}`, { replace: true });
   }
   function updateProfile(profileData) {
     profileRevisionRef.current += 1;
@@ -11766,6 +11795,7 @@ export default function App() {
   }
   async function logout() {
     appUserIdRef.current = null;
+    pendingAuthTargetRef.current = null;
     clearEmailVerificationResult();
     await dbLogout();
     setUser(null);
@@ -11816,6 +11846,8 @@ export default function App() {
     if (nextPage !== "progress") setPendingProgressSection(null);
     if (nextPage === "login") {
       setAuthMode(requestedAuthMode === "register" ? "register" : "login");
+    } else if (nextPage !== "privacy-requests") {
+      pendingAuthTargetRef.current = null;
     }
     const safePage = VALID_PAGES.has(nextPage) ? nextPage : "home";
     if (!user && PROTECTED_PAGES.has(safePage)) {
@@ -12017,6 +12049,7 @@ export default function App() {
     "ai-chat": <AIChatPage />,
     about:     <AboutPage />,
     privacy:   <PrivacyNoticePage />,
+    "privacy-requests": <PrivacyRequestPage onNavigate={go} />,
     progress:  <ProgressPage />,
     profile:   <ProfilePage />,
     admin:     <AdminPage acceptedHash={acceptedHash} />,

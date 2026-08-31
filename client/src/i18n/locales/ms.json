@@ -2526,6 +2526,63 @@
     "proficient": "Mahir",
     "strong": "Kukuh"
   },
+  "privacyRequests": {
+    "identity": "Maklumat anda",
+    "title": "Permintaan privasi",
+    "overview": "Gunakan ruang ini untuk meminta pembetulan yang tidak tersedia melalui kawalan Cyberly sedia ada, atau untuk menghantar permintaan penghapusan.",
+    "deletionBoundary": "Menghantar permintaan penghapusan tidak serta-merta menghapuskan akaun atau data pembelajaran anda. Akaun anda kekal boleh digunakan semasa permintaan dipertimbangkan.",
+    "guidance": {
+      "title": "Kemas kini perkara yang boleh diubah secara langsung",
+      "description": "Gunakan kawalan Cyberly sedia ada terlebih dahulu. Hantar permintaan pembetulan hanya untuk maklumat yang tidak boleh anda kemas kini di situ.",
+      "profile": "Butiran profil dan akaun", "preferences": "Bahasa, pilihan dan avatar",
+      "email": "Perubahan e-mel yang disahkan", "password": "Pemulihan kata laluan"
+    },
+    "actions": {
+      "manage": "Urus permintaan privasi",
+      "newCorrection": "Permintaan pembetulan baharu", "newDeletion": "Permintaan penghapusan",
+      "submitCorrection": "Hantar permintaan pembetulan", "submitDeletion": "Hantar permintaan penghapusan",
+      "submitting": "Menghantar permintaan", "viewDetails": "Lihat butiran permintaan", "backToList": "Kembali ke senarai permintaan",
+      "openExisting": "Buka permintaan sedia ada", "withdraw": "Tarik balik permintaan", "confirmWithdraw": "Sahkan penarikan balik"
+    },
+    "list": { "title": "Permintaan anda" },
+    "empty": { "title": "Belum ada permintaan privasi", "description": "Permintaan baharu akan dipaparkan di sini bersama rujukan dan statusnya." },
+    "loading": { "list": "Memuatkan permintaan privasi anda", "detail": "Memuatkan butiran permintaan" },
+    "correction": { "title": "Permintaan pembetulan baharu", "description": "Gunakan borang ini untuk maklumat yang tidak boleh dibetulkan melalui kawalan layan diri Cyberly sedia ada." },
+    "deletion": { "title": "Permintaan penghapusan", "warning": "Ini menghantar permintaan penghapusan. Ia tidak serta-merta menghapuskan akaun atau data pembelajaran anda. Akaun kekal boleh digunakan, pengesahan kata laluan semasa diperlukan, dan Cyberly akan memberikan rujukan serta status." },
+    "confirmation": { "title": "Permintaan privasi diterima", "description": "Simpan rujukan ini. Anda boleh melihat permintaan dan status semasanya dalam Cyberly." },
+    "detail": { "title": "Butiran permintaan" },
+    "cancellation": { "title": "Tarik balik permintaan ini?", "description": "Penarikan balik hanya membatalkan permintaan ini. Ia tidak memulihkan data yang telah dihapuskan, membatalkan tindakan yang selesai, atau menterbalikkan pemprosesan penyedia." },
+    "fields": {
+      "reference": "Rujukan", "type": "Jenis permintaan", "status": "Status", "subtype": "Skop permintaan",
+      "dataCategory": "Kategori data", "detail": "Butiran permintaan", "submitted": "Dihantar", "updated": "Dikemas kini",
+      "currentPassword": "Kata laluan semasa", "correctionSubtype": "Jenis pembetulan", "deletionScope": "Skop penghapusan",
+      "chooseCategory": "Pilih kategori data", "characterCount": "{{count}} daripada {{max}} aksara"
+    },
+    "type": { "CORRECTION": "Permintaan pembetulan", "DELETION": "Permintaan penghapusan" },
+    "subtype": {
+      "ACCOUNT_OR_PROFILE_RECORD": "Rekod akaun atau profil", "LEARNING_ACTIVITY_RECORD": "Rekod aktiviti pembelajaran",
+      "CHAT_OR_AI_RECORD": "Rekod sembang atau AI", "OTHER_PERSONAL_DATA": "Data peribadi lain",
+      "WHOLE_ACCOUNT_AND_ASSOCIATED_DATA": "Seluruh akaun dan data berkaitan", "SELECTED_PERSONAL_DATA": "Data peribadi terpilih"
+    },
+    "category": { "PROFILE": "Profil", "LEARNING_ACTIVITY": "Aktiviti pembelajaran", "CHAT": "Sembang", "SECURITY_OR_RECOVERY": "Keselamatan atau pemulihan", "OTHER": "Lain-lain" },
+    "status": {
+      "SUBMITTED": "Permintaan diterima", "UNDER_REVIEW": "Sedang disemak", "NEEDS_INFORMATION": "Maklumat lanjut diperlukan",
+      "COMPLETED": "Tindakan yang diluluskan telah selesai", "DECLINED": "Tidak diluluskan atau tidak dapat diselesaikan", "CANCELLED": "Permintaan ditarik balik"
+    },
+    "errors": {
+      "accountUnavailable": "Permintaan privasi tidak tersedia untuk akaun ini.", "validation": "Semak butiran permintaan dan cuba lagi.",
+      "detailRequired": "Butiran permintaan diperlukan.", "detailTooLong": "Butiran tidak boleh melebihi 1000 aksara.",
+      "categoryRequired": "Pilih kategori data peribadi.", "passwordRequired": "Masukkan kata laluan semasa anda.",
+      "passwordInvalid": "Kata laluan semasa tidak betul.", "activeDuplicate": "Permintaan aktif sudah wujud untuk skop ini.",
+      "idempotencyConflict": "Permintaan ini berubah selepas penghantaran terdahulu. Semak dan hantar semula.",
+      "rateLimited": "Terlalu banyak permintaan. Cuba lagi kemudian.", "rateLimitedSeconds": "Terlalu banyak permintaan. Cuba lagi dalam kira-kira {{seconds}} saat.",
+      "submitFailed": "Permintaan tidak dapat dihantar dengan selamat.", "network": "Cyberly tidak dapat mengesahkan keputusan. Cuba semula tanpa mengubah borang untuk menggunakan ID permintaan yang sama.",
+      "listFailed": "Permintaan privasi anda tidak dapat dimuatkan.", "detailFailed": "Butiran permintaan tidak dapat dimuatkan.",
+      "notFound": "Permintaan privasi ini tidak ditemui.", "notCancellable": "Permintaan ini tidak lagi boleh ditarik balik.",
+      "cancelFailed": "Permintaan tidak dapat ditarik balik."
+    },
+    "notAvailable": "Tidak tersedia"
+  },
   "topics": {
     "phishing_and_scams": "Penipuan & Kejuruteraan Sosial",
     "password_and_account_security": "Kata Laluan & Keselamatan Akaun",
