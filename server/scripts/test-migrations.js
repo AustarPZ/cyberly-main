@@ -94,6 +94,8 @@ async function assertFreshSchema(connection) {
     'email_change_requests',
     'privacy_requests',
     'privacy_request_events',
+    'guardian_relationships',
+    'guardian_relationship_events',
   ];
 
   for (const table of expectedTables) {
@@ -244,6 +246,45 @@ async function assertFreshSchema(connection) {
     'privacy request event foreign key',
     foreignKeyExists(connection, 'privacy_request_events', 'fk_privacy_request_events_request')
   );
+  await assertExists(
+    'migration 032 recorded',
+    migrationRecorded(connection, '032_create_guardian_relationships.sql')
+  );
+  for (const [label, table, name] of [
+    ['guardian public reference uniqueness', 'guardian_relationships', 'uq_guardian_relationships_public_reference'],
+    ['guardian token hash uniqueness', 'guardian_relationships', 'uq_guardian_relationships_invite_token_hash'],
+    ['guardian active learner uniqueness', 'guardian_relationships', 'uq_guardian_relationships_active_learner'],
+    ['guardian learner timeline index', 'guardian_relationships', 'idx_guardian_relationships_learner_created'],
+    ['guardian expiry index', 'guardian_relationships', 'idx_guardian_relationships_status_expiry'],
+    ['guardian event timeline index', 'guardian_relationship_events', 'idx_guardian_relationship_events_relationship_created'],
+  ]) await assertExists(label, indexExists(connection, table, name));
+  await assertExists('guardian learner foreign key',
+    foreignKeyExists(connection, 'guardian_relationships', 'fk_guardian_relationships_learner'));
+  await assertExists('guardian event foreign key',
+    foreignKeyExists(connection, 'guardian_relationship_events', 'fk_guardian_relationship_events_relationship'));
+
+  const [guardianColumns] = await connection.query(
+    `SELECT COLUMN_NAME, COLUMN_TYPE, CHARACTER_MAXIMUM_LENGTH, IS_NULLABLE, EXTRA, GENERATION_EXPRESSION
+     FROM INFORMATION_SCHEMA.COLUMNS
+     WHERE TABLE_SCHEMA = DATABASE() AND TABLE_NAME = 'guardian_relationships'`
+  );
+  const guardianByName = new Map(guardianColumns.map(column => [column.COLUMN_NAME, column]));
+  assert.equal(guardianByName.get('id')?.COLUMN_TYPE, 'bigint unsigned');
+  assert.equal(guardianByName.get('learner_user_id')?.COLUMN_TYPE, 'int unsigned');
+  assert.equal(guardianByName.get('learner_user_id')?.IS_NULLABLE, 'YES');
+  assert.equal(Number(guardianByName.get('public_reference')?.CHARACTER_MAXIMUM_LENGTH), 26);
+  assert.equal(Number(guardianByName.get('invite_token_hash')?.CHARACTER_MAXIMUM_LENGTH), 64);
+  assert.match(String(guardianByName.get('active_marker')?.EXTRA), /STORED GENERATED/i);
+  assert.match(String(guardianByName.get('active_marker')?.GENERATION_EXPRESSION), /PENDING_VERIFICATION/i);
+
+  const [guardianRules] = await connection.query(
+    `SELECT CONSTRAINT_NAME, DELETE_RULE FROM INFORMATION_SCHEMA.REFERENTIAL_CONSTRAINTS
+     WHERE CONSTRAINT_SCHEMA = DATABASE()
+       AND CONSTRAINT_NAME IN ('fk_guardian_relationships_learner','fk_guardian_relationship_events_relationship')`
+  );
+  const guardianRuleByName = new Map(guardianRules.map(rule => [rule.CONSTRAINT_NAME, rule.DELETE_RULE]));
+  assert.equal(guardianRuleByName.get('fk_guardian_relationships_learner'), 'SET NULL');
+  assert.equal(guardianRuleByName.get('fk_guardian_relationship_events_relationship'), 'RESTRICT');
 
   const [privacyColumns] = await connection.query(
     `SELECT COLUMN_NAME, DATA_TYPE, COLUMN_TYPE, CHARACTER_MAXIMUM_LENGTH,

@@ -63,6 +63,14 @@ if (!privacyRequestOk) {
   process.exit();
 }
 
+const guardianLinkOk = run(process.execPath, ['scripts/test-guardian-links.js'], {
+  cwd: __dirname + '/..',
+});
+
+if (!guardianLinkOk) {
+  process.exit();
+}
+
 if (hasExplicitMigrationTestConfig()) {
   run(process.execPath, ['scripts/test-migrations.js'], {
     cwd: __dirname + '/..',

@@ -97,6 +97,12 @@ const { createPrivacyRequestService } = require('./src/privacy/privacyRequest.se
 const { createPrivacyRequestReferenceGenerator } = require('./src/privacy/privacyRequest.reference');
 const { createPrivacyRequestRateLimiters } = require('./src/privacy/privacyRequest.rateLimits');
 const { createPrivacyRequestRouter } = require('./src/privacy/privacyRequest.routes');
+const { createGuardianLinkRepository } = require('./src/guardian/guardianLink.repository');
+const { createGuardianLinkService } = require('./src/guardian/guardianLink.service');
+const { createGuardianLinkReferenceGenerator } = require('./src/guardian/guardianLink.reference');
+const { createGuardianLinkRateLimiters } = require('./src/guardian/guardianLink.rateLimits');
+const { createGuardianLinkRouter } = require('./src/guardian/guardianLink.routes');
+const { createGuardianLinkSender } = require('./src/guardian/guardianLinkEmail.service');
 
 const app = express();
 const port = process.env.PORT || 5000;
@@ -138,6 +144,16 @@ const emailSenderOptions = {
 };
 const emailVerificationSender = createEmailVerificationSender(emailSenderOptions);
 const passwordResetSender = createPasswordResetSender(emailSenderOptions);
+const guardianLinkRepository = createGuardianLinkRepository(pool);
+const guardianLinkSender = createGuardianLinkSender(emailSenderOptions);
+const guardianLinkService = createGuardianLinkService({
+    repository: guardianLinkRepository,
+    passwordComparer: bcrypt.compare,
+    referenceGenerator: createGuardianLinkReferenceGenerator(),
+    emailSender: guardianLinkSender,
+    clientBaseUrl: clientBaseUrl || clientOrigin || 'http://localhost:3000',
+});
+const guardianLinkRateLimits = createGuardianLinkRateLimiters();
 const emailChangeRepository = createEmailChangeRepository(pool);
 const emailChangeSender = createEmailChangeSender(emailSenderOptions);
 const emailChangeNoticeSender = createEmailChangeNoticeSender(emailSenderOptions);
@@ -225,6 +241,9 @@ app.use(session({
 app.use('/api/profile', createProfileRouter(profileService));
 app.use("/api/account", createAccountRouter(accountService));
 app.use('/api/privacy', createPrivacyRequestRouter(privacyRequestService, privacyRequestRateLimits));
+app.use('/api/guardian-link', createGuardianLinkRouter(guardianLinkService, guardianLinkRateLimits, {
+    requireVerifiedEmail: createRequireVerifiedEmail(pool),
+}));
 app.use(createAssessmentRouter(assessmentService));
 app.use(createProgressRouter(progressService));
 app.use(createScenarioRouter(scenarioService));

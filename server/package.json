@@ -15,6 +15,8 @@
     "test:email-change-request": "node scripts/test-email-change-request.js",
     "test:email-change-confirm": "node scripts/test-email-change-confirm.js",
     "test:privacy-requests": "node scripts/test-privacy-requests.js",
+    "test:guardian-link": "node scripts/test-guardian-links.js",
+    "test:guardian-link-migration": "node scripts/test-guardian-link-migration.js",
     "test:database-tls-config": "node scripts/test-database-tls-config.js",
     "test:staging-env-loader": "node scripts/test-staging-env-loader.js",
     "test:backup-staging": "node scripts/test-backup-staging-mysql.js",
