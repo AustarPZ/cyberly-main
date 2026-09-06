@@ -1323,7 +1323,9 @@
           "Cyberly v1 is designed for learners aged 13–17.",
           "Registration is available only to learners within this age range.",
           "Cyberly currently stores the learner’s age and derives the relevant age group from that information.",
-          "Cyberly does not currently provide a Guardian Link, guardian-consent workflow, or parental privacy-control feature as part of Cyberly v1."
+          "Guardian Link is an optional, learner-initiated feature. A learner may voluntarily provide one Guardian contact email address at a time. Cyberly uses the Guardian contact email to send Guardian Link invitations, resent invitations, acceptance confirmations and revocation notices, perform the email-control verification flow, and operate the Guardian Link lifecycle.",
+          "Cyberly uses the selected communication language only to localize Guardian Link communications and user-facing Guardian Link text where applicable. Cyberly maintains relationship and lifecycle records to represent Guardian Link state, support Accept, Decline, Resend, Revoke and Expiry actions, and maintain the bounded lifecycle and security record of the feature.",
+          "Email verification confirms control of the invited email address only. It does not verify legal guardianship, parenthood, custody or consent authority. Guardian Link does not create a Guardian account or give the Guardian contact access to the learner’s account, profile, learning information, recovery or security controls, or Privacy Requests. Cyberly does not state a fixed Guardian Link retention period in this notice. Sending or accepting a Guardian Link does not give the Guardian contact authority to act on the learner’s account or exercise Privacy Request rights for the learner."
         ]
       },
       {

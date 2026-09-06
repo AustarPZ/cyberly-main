@@ -75,6 +75,24 @@ const SECTION_NINE_C02 = [
   "Submitting a Privacy Request does not by itself guarantee removal from every supporting service or every backup. This notice does not state a guaranteed processing time, service level, or statutory deadline for a request.",
 ];
 
+const GUARDIAN_PRIVACY_COPY = {
+  en: [
+    "Guardian Link is an optional, learner-initiated feature.",
+    "Cyberly uses the selected communication language only to localize Guardian Link communications",
+    "Cyberly does not state a fixed Guardian Link retention period in this notice.",
+  ],
+  ms: [
+    "Pautan Penjaga ialah ciri pilihan yang dimulakan oleh pelajar.",
+    "Cyberly menggunakan bahasa komunikasi yang dipilih hanya untuk menyetempatkan komunikasi Pautan Penjaga",
+    "Cyberly tidak menyatakan tempoh penyimpanan tetap untuk Pautan Penjaga dalam notis ini.",
+  ],
+  "zh-CN": [
+    "监护人关联是一项由学习者主动发起的可选功能。",
+    "Cyberly 仅使用所选通信语言对监护人关联通信及适用的用户界面文本进行本地化。",
+    "本通知不声明监护人关联的固定保留期限。",
+  ],
+};
+
 function prepareRoute(route, locale = "en") {
   window.localStorage.clear();
   window.sessionStorage.clear();
@@ -219,7 +237,9 @@ describe("Privacy Notice", () => {
     expect(article).toHaveTextContent("does not currently have one uniform fixed automatic deletion period");
     SECTION_NINE_C02.forEach(paragraph => expect(article).toHaveTextContent(paragraph));
     expect(article).not.toHaveTextContent("does not currently provide a whole-account deletion feature, complete personal-data deletion workflow, complete account-wide data export, or formal privacy-request ticket workflow");
-    expect(article).toHaveTextContent("does not currently provide a Guardian Link");
+    GUARDIAN_PRIVACY_COPY.en.forEach(copy => expect(article).toHaveTextContent(copy));
+    expect(article).not.toHaveTextContent("does not currently provide a Guardian Link");
+    expect(article).toHaveTextContent("request IP information, user-agent information, and other bounded security metadata");
     expect(screen.getByRole("link", { name: "privacy@cyberly.my" })).toHaveAttribute("href", "mailto:privacy@cyberly.my");
     PROHIBITED_CLAIMS.forEach(claim => expect(article).not.toHaveTextContent(claim));
   });
@@ -290,6 +310,9 @@ describe("Privacy Notice", () => {
     expect(article).toHaveTextContent("13–17");
     expect(article).toHaveTextContent("privacy@cyberly.my");
     expect(article).toHaveTextContent(requestBoundary);
+    GUARDIAN_PRIVACY_COPY[locale].forEach(copy => expect(article).toHaveTextContent(copy));
+    expect(article.textContent).not.toMatch(/does not currently provide a Guardian Link|tidak menyediakan Guardian Link|目前不提供 Guardian Link/);
+    if (locale === "zh-CN") expect(article).not.toHaveTextContent("监护人链接");
     expect(screen.getByRole("link", { name: actionLabel })).toHaveAttribute("href", "#/privacy-requests");
     expect(article.textContent).not.toMatch(/privacyNotice\.|privacyRequests\./);
     expect(screen.getByRole("link", { name: "privacy@cyberly.my" })).toBeInTheDocument();

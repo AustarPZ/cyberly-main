@@ -1323,7 +1323,9 @@
           "Cyberly v1 direka untuk pelajar berumur 13–17 tahun.",
           "Pendaftaran hanya tersedia kepada pelajar dalam lingkungan umur ini.",
           "Cyberly pada masa ini menyimpan umur pelajar dan menentukan kumpulan umur yang berkaitan berdasarkan maklumat tersebut.",
-          "Cyberly pada masa ini tidak menyediakan Guardian Link, aliran kerja persetujuan penjaga atau ciri kawalan privasi ibu bapa sebagai sebahagian daripada Cyberly v1."
+          "Pautan Penjaga ialah ciri pilihan yang dimulakan oleh pelajar. Pelajar boleh memberikan secara sukarela satu alamat e-mel kenalan Penjaga pada satu-satu masa. Cyberly menggunakan e-mel kenalan Penjaga untuk menghantar jemputan Pautan Penjaga, jemputan semula, pengesahan penerimaan dan notis pembatalan, melaksanakan aliran pengesahan kawalan e-mel, serta mengendalikan kitar hayat Pautan Penjaga.",
+          "Cyberly menggunakan bahasa komunikasi yang dipilih hanya untuk menyetempatkan komunikasi Pautan Penjaga dan teks Pautan Penjaga yang dipaparkan kepada pengguna, jika berkenaan. Cyberly menyimpan rekod hubungan dan kitar hayat untuk menunjukkan status Pautan Penjaga, menyokong tindakan Terima, Tolak, Hantar Semula, Batalkan dan Tamat Tempoh, serta mengekalkan rekod kitar hayat dan keselamatan terhad bagi ciri tersebut.",
+          "Pengesahan e-mel hanya mengesahkan kawalan alamat e-mel yang dijemput. Ia tidak mengesahkan penjagaan sah, status ibu atau bapa, hak penjagaan atau kuasa memberikan persetujuan. Pautan Penjaga tidak mewujudkan akaun Penjaga atau memberi kenalan Penjaga akses kepada akaun, profil, maklumat pembelajaran, kawalan pemulihan atau keselamatan, atau Permintaan Privasi pelajar. Cyberly tidak menyatakan tempoh penyimpanan tetap untuk Pautan Penjaga dalam notis ini. Menghantar atau menerima Pautan Penjaga tidak memberi kenalan Penjaga kuasa untuk bertindak pada akaun pelajar atau menggunakan hak Permintaan Privasi bagi pihak pelajar."
         ]
       },
       {
