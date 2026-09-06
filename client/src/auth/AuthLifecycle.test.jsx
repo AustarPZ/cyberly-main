@@ -14,6 +14,7 @@ jest.mock("../api/authApi", () => ({
   verifyEmail: jest.fn(), resendVerificationEmail: jest.fn(), logout: jest.fn(),
 }));
 jest.mock("../api/profileApi", () => ({ getProfile: jest.fn(), saveProfile: jest.fn() }));
+jest.mock("../guardian/guardianLink.api", () => ({ getGuardianLink: jest.fn().mockResolvedValue({ ok: true, data: { relationship: null } }) }));
 jest.mock("../api/assessmentApi", () => ({
   getInitialAssessment: jest.fn(), createInitialAssessmentAttempt: jest.fn(),
   getInitialAssessmentStatus: jest.fn(), saveAssessmentAnswer: jest.fn(), submitAssessmentAttempt: jest.fn(),

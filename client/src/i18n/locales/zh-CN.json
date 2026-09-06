@@ -2531,6 +2531,16 @@
     "proficient": "熟练",
     "strong": "表现优秀"
   },
+  "guardianLink": {
+    "title": "监护人关联", "description": "监护人关联是可选功能。你每次可以邀请一个监护人联系人电子邮箱，Cyberly 会向该联系人发送验证邀请。验证仅确认该电子邮箱的控制权；它不证明法定监护关系，不会创建监护人账户，也不会让该联系人访问你的 Cyberly 账户、学习信息或隐私申请。你可以随时移除此关联。", "loading": "正在加载监护人关联", "empty": "目前没有已关联或等待决定的监护人联系人。",
+    "fields": { "email": "监护人联系人电子邮件", "password": "当前密码", "reference": "参考编号", "invited": "邀请时间", "expires": "邀请到期时间", "terminalAt": "状态更新时间", "updated": "最后更新时间" },
+    "actions": { "invite": "邀请监护人联系人", "inviteNew": "邀请新的监护人联系人", "send": "发送邀请", "resend": "重新发送邀请", "revoke": "移除监护人关联", "confirmRevoke": "确认移除" },
+    "status": { "PENDING_VERIFICATION": "邀请正在等待决定", "LINKED": "监护人联系人已关联", "DECLINED": "邀请已拒绝", "EXPIRED": "邀请已过期", "REVOKED": "监护人关联已移除" },
+    "revoke": { "title": "移除此监护人关联？", "description": "这将终止现有联系或待处理邀请。请输入当前密码以继续。" },
+    "messages": { "invited": "监护人邀请已发送。", "resent": "新的监护人邀请已发送。", "revoked": "监护人关联已移除。" },
+    "errors": { "load": "无法加载监护人关联。", "create": "无法安全发送邀请。", "resend": "无法重新发送邀请。", "revoke": "无法移除监护人关联。", "GUARDIAN_LINK_INVALID": "请检查监护人联系电子邮件后重试。", "GUARDIAN_LINK_PASSWORD_REQUIRED": "请输入当前密码。", "GUARDIAN_LINK_PASSWORD_INVALID": "当前密码不正确。", "GUARDIAN_LINK_ACTIVE_EXISTS": "已有活跃的监护人关联。最新状态如下。", "GUARDIAN_LINK_NOT_RESENDABLE": "此邀请无法再重新发送。", "GUARDIAN_LINK_NOT_REVOCABLE": "此监护人关联无法再移除。", "GUARDIAN_LINK_RATE_LIMITED": "请求过多。请稍后再试。", "EMAIL_VERIFICATION_REQUIRED": "请先验证您的账户电子邮件，再发送或重新发送监护人邀请。", "EMAIL_SEND_FAILED": "电子邮件无法送达。最新安全状态如下。", "rateLimitedSeconds": "请求过多。请在大约 {{seconds}} 秒后重试。" },
+    "verify": { "loadingTitle": "正在检查监护人关联邀请", "loading": "正在安全检查此邀请。", "title": "监护人关联邀请", "invitedBy": "{{name}} 邀请你通过监护人关联成为其监护人联系人。", "expires": "邀请将于 {{date}} 到期。", "boundary": "接受邀请仅确认你控制受邀电子邮箱，并建立一个有限的监护人关联。Cyberly 不验证法定监护关系、亲子关系、监护权或同意授权。系统不会创建监护人账户，你也不会获得学习者 Cyberly 账户、学习信息或隐私申请的访问权限。你可以接受或拒绝此邀请。", "accept": "接受邀请", "decline": "拒绝邀请", "submitting": "正在保存你的决定。", "acceptedTitle": "已接受监护人关联", "acceptedDescription": "已验证的电子邮件联系现已启用。", "declinedTitle": "已拒绝监护人关联", "declinedDescription": "此邀请已被拒绝。", "unavailableTitle": "监护人关联不可用", "information": { "VERIFIED_EMAIL_NOT_LEGAL_GUARDIANSHIP": "已验证的电子邮件联系不能证明法定监护关系。" }, "errors": { "missing": "此邀请链接不完整。", "invalid": "此邀请无效或已不可用。", "network": "Cyberly 无法检查此邀请。请在网络恢复后重试。", "GUARDIAN_LINK_RATE_LIMITED": "请求过多。请稍后再试。", "GUARDIAN_LINK_TOKEN_REQUIRED": "此邀请链接不完整。", "GUARDIAN_LINK_TOKEN_INVALID_OR_UNAVAILABLE": "此邀请无效或已不可用。", "GUARDIAN_LINK_TOKEN_EXPIRED": "此邀请已过期。", "GUARDIAN_LINK_TOKEN_TERMINAL": "此邀请的决定已被记录。" } }
+  },
   "privacyRequests": {
     "identity": "你的信息",
     "title": "隐私申请",

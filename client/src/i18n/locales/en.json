@@ -2531,6 +2531,26 @@
     "proficient": "Proficient",
     "strong": "Strong"
   },
+  "guardianLink": {
+    "title": "Guardian Link",
+    "description": "Guardian Link is optional. You can invite one Guardian contact email at a time. Cyberly will send that contact a verification invitation. Verification confirms control of the email address only; it does not prove legal guardianship, create a Guardian account, or give the contact access to your Cyberly account, learning information, or Privacy Requests. You can remove the link at any time.",
+    "loading": "Loading Guardian Link",
+    "empty": "No Guardian contact is linked or awaiting a decision.",
+    "fields": { "email": "Guardian contact email", "password": "Current password", "reference": "Reference", "invited": "Invited", "expires": "Invitation expires", "terminalAt": "Status updated", "updated": "Last updated" },
+    "actions": { "invite": "Invite a Guardian contact", "inviteNew": "Invite a new Guardian contact", "send": "Send invitation", "resend": "Resend invitation", "revoke": "Remove Guardian Link", "confirmRevoke": "Confirm removal" },
+    "status": { "PENDING_VERIFICATION": "Invitation awaiting a decision", "LINKED": "Guardian contact linked", "DECLINED": "Invitation declined", "EXPIRED": "Invitation expired", "REVOKED": "Guardian Link removed" },
+    "revoke": { "title": "Remove this Guardian Link?", "description": "This ends the connection or pending invitation. Enter your current password to continue." },
+    "messages": { "invited": "Guardian invitation sent.", "resent": "A new Guardian invitation was sent.", "revoked": "Guardian Link removed." },
+    "errors": {
+      "load": "Guardian Link could not be loaded.", "create": "The invitation could not be sent safely.", "resend": "The invitation could not be resent.", "revoke": "The Guardian Link could not be removed.",
+      "GUARDIAN_LINK_INVALID": "Check the Guardian contact email and try again.", "GUARDIAN_LINK_PASSWORD_REQUIRED": "Enter your current password.", "GUARDIAN_LINK_PASSWORD_INVALID": "The current password is incorrect.", "GUARDIAN_LINK_ACTIVE_EXISTS": "An active Guardian Link already exists. The latest status is shown below.", "GUARDIAN_LINK_NOT_RESENDABLE": "This invitation can no longer be resent.", "GUARDIAN_LINK_NOT_REVOCABLE": "This Guardian Link can no longer be removed.", "GUARDIAN_LINK_RATE_LIMITED": "Too many requests. Wait before trying again.", "EMAIL_VERIFICATION_REQUIRED": "Verify your account email before sending or resending a Guardian invitation.", "EMAIL_SEND_FAILED": "The email could not be delivered. The latest safe status is shown below.", "rateLimitedSeconds": "Too many requests. Try again in about {{seconds}} seconds."
+    },
+    "verify": {
+      "loadingTitle": "Checking Guardian Link invitation", "loading": "Checking this invitation safely.", "title": "Guardian Link invitation", "invitedBy": "{{name}} invited you to become their Guardian contact through Guardian Link.", "expires": "Invitation expires {{date}}.", "boundary": "Accepting confirms that you control the invited email address and creates only a limited Guardian Link. Cyberly does not verify legal guardianship, parenthood, custody or consent authority. No Guardian account is created, and you will not receive access to the learner’s Cyberly account, learning information or Privacy Requests. You may accept or decline this invitation.", "accept": "Accept invitation", "decline": "Decline invitation", "submitting": "Saving your decision.", "acceptedTitle": "Guardian Link accepted", "acceptedDescription": "The verified email connection is now active.", "declinedTitle": "Guardian Link declined", "declinedDescription": "The invitation has been declined.", "unavailableTitle": "Guardian Link unavailable",
+      "information": { "VERIFIED_EMAIL_NOT_LEGAL_GUARDIANSHIP": "A verified email connection is not proof of legal guardianship." },
+      "errors": { "missing": "This invitation link is incomplete.", "invalid": "This invitation is invalid or no longer available.", "network": "Cyberly could not check this invitation. Try again when your connection is available.", "GUARDIAN_LINK_RATE_LIMITED": "Too many requests. Wait before trying again.", "GUARDIAN_LINK_TOKEN_REQUIRED": "This invitation link is incomplete.", "GUARDIAN_LINK_TOKEN_INVALID_OR_UNAVAILABLE": "This invitation is invalid or no longer available.", "GUARDIAN_LINK_TOKEN_EXPIRED": "This invitation has expired.", "GUARDIAN_LINK_TOKEN_TERMINAL": "A decision has already been recorded for this invitation." }
+    }
+  },
   "privacyRequests": {
     "identity": "Your information",
     "title": "Privacy requests",

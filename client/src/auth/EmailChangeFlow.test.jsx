@@ -20,6 +20,7 @@ jest.mock("../api/authApi", () => ({
   confirmEmailChange: jest.fn(),
 }));
 jest.mock("../api/profileApi", () => ({ getProfile: jest.fn(), saveProfile: jest.fn() }));
+jest.mock("../guardian/guardianLink.api", () => ({ getGuardianLink: jest.fn().mockResolvedValue({ ok: true, data: { relationship: null } }) }));
 jest.mock("../api/accountApi", () => ({ getAccount: jest.fn(), saveAccount: jest.fn() }));
 jest.mock("../api/assessmentApi", () => ({
   getInitialAssessment: jest.fn(), createInitialAssessmentAttempt: jest.fn(),

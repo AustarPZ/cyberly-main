@@ -45,6 +45,9 @@ import AvatarVisual from "./profile/AvatarVisual";
 import PrivacyNoticePage from "./privacy/PrivacyNoticePage";
 import PrivacyRequestPage from "./privacy/PrivacyRequestPage";
 import { privacyLoginTarget } from "./privacy/privacyRequest.model";
+import GuardianLinkSection from "./guardian/GuardianLinkSection";
+import GuardianLinkVerifyPage from "./guardian/GuardianLinkVerifyPage";
+import { clearGuardianBootstrapToken, prepareGuardianRouteBootstrap } from "./guardian/guardianLink.model";
 import {
   AVATAR_PRESET_IDS,
   getInitialAvatarText,
@@ -2436,7 +2439,7 @@ const CHAT_GENERATION_POLL_INTERVAL_MS = 2000;
 const CHAT_GENERATION_POLL_MAX_MS = 30000;
 const MIN_LEARNER_AGE = 13;
 const MAX_LEARNER_AGE = 17;
-const PUBLIC_PAGES = new Set(["home", "resources", "about", "privacy", "login", "forgot-password", "reset-password"]);
+const PUBLIC_PAGES = new Set(["home", "resources", "about", "privacy", "guardian-link-verify", "login", "forgot-password", "reset-password"]);
 const PROTECTED_PAGES = new Set(["dashboard", "assessment", "scenarios", "progress", "profile", "privacy-requests", "ai-chat", "admin"]);
 const VERIFICATION_PAGES = new Set(["verify-email", "verify-email-change"]);
 const VALID_PAGES = new Set([...PUBLIC_PAGES, ...PROTECTED_PAGES]);
@@ -2458,6 +2461,7 @@ const {
 } = profileMappings;
 
 function parseHashPage(hashValue = typeof window === "undefined" ? "#/home" : window.location.hash) {
+  if (normalizeHashRoute(hashValue).replace(/^#\/?/, "").startsWith("guardian-link/verify")) return "guardian-link-verify";
   const raw = normalizeHashRoute(hashValue).replace(/^#\/?/, "").split(/[/?#]/)[0];
   return VALID_PAGES.has(raw) ? raw : "home";
 }
@@ -8850,6 +8854,7 @@ function ProfilePage() {
                 {t("privacyRequests.actions.manage")}
               </Button>
             </div>
+            <GuardianLinkSection locale={normalizeLocale(activeI18n.language)} />
           </Surface>
         </PageSection>
       </PageContainer>
@@ -11425,7 +11430,10 @@ function Footer() {
 // ─── Root App ─────────────────────────────────────────────────────
 export default function App() {
   const { t } = useTranslation();
-  const [acceptedHash, setAcceptedHash] = useState(() => normalizeHashRoute(typeof window === "undefined" ? "#/home" : window.location.hash));
+  const [acceptedHash, setAcceptedHash] = useState(() => {
+    const initialHash = normalizeHashRoute(typeof window === "undefined" ? "#/home" : window.location.hash);
+    return prepareGuardianRouteBootstrap(initialHash);
+  });
   const [page, setPage] = useState(() => parseHashPage(acceptedHash));
   const resetPasswordTokenRef = useRef(undefined);
   if (page === "reset-password" && resetPasswordTokenRef.current === undefined) {
@@ -11438,7 +11446,7 @@ export default function App() {
     emailChangeTokenRef.current = new URLSearchParams(query).get("token") || "";
   }
   const [user, setUser] = useState(null);
-  const [checkingSession, setCheckingSession] = useState(() => page !== "privacy");
+  const [checkingSession, setCheckingSession] = useState(() => page !== "privacy" && page !== "guardian-link-verify");
   const [resourceFocusTopic, setResourceFocusTopic] = useState(null);
   const [pendingResourceTarget, setPendingResourceTarget] = useState(null);
   const [pendingScenarioTarget, setPendingScenarioTarget] = useState(null);
@@ -11446,6 +11454,7 @@ export default function App() {
   const [authMode, setAuthMode] = useState("login");
   const [activityGuard, setActivityGuard] = useState(null);
   const [pendingNavigation, setPendingNavigation] = useState(null);
+  const [guardianVerifyDeliveryVersion, setGuardianVerifyDeliveryVersion] = useState(0);
   const appUserIdRef = useRef(null);
   const explicitLocaleRef = useRef(null);
   const profileRevisionRef = useRef(0);
@@ -11494,7 +11503,7 @@ export default function App() {
     const nextHash = normalizeHashRoute(hashValue);
     const nextPage = parseHashPage(nextHash);
     if (nextPage !== "verify-email") clearEmailVerificationResult();
-    if (nextPage !== "privacy" && !sessionRestoreCompletedRef.current) setCheckingSession(true);
+    if (nextPage !== "privacy" && nextPage !== "guardian-link-verify" && !sessionRestoreCompletedRef.current) setCheckingSession(true);
     acceptedHashRef.current = nextHash;
     historyIndexRef.current = Number.isInteger(historyIndex) ? historyIndex : historyIndexRef.current;
     setAcceptedHash(nextHash);
@@ -11545,7 +11554,7 @@ export default function App() {
 
   useEffect(() => {
     if (sessionRestoreCompletedRef.current) return undefined;
-    if (page === "privacy" && !sessionRestorePromiseRef.current) return undefined;
+    if ((page === "privacy" || page === "guardian-link-verify") && !sessionRestorePromiseRef.current) return undefined;
 
     if (!sessionRestorePromiseRef.current) {
       sessionRestorePromiseRef.current = dbMe();
@@ -11597,7 +11606,9 @@ export default function App() {
 
   useEffect(() => {
     function handleHashChange() {
-      const nextHash = normalizeHashRoute(window.location.hash);
+      const requestedRawHash = normalizeHashRoute(window.location.hash);
+      const nextHash = prepareGuardianRouteBootstrap(requestedRawHash);
+      const stagedGuardianToken = requestedRawHash !== nextHash && nextHash === "#/guardian-link/verify";
       if (suppressHashGuardRef.current) {
         const suppress = suppressHashGuardRef.current;
         suppressHashGuardRef.current = false;
@@ -11620,7 +11631,12 @@ export default function App() {
           acceptedIndex,
           requestedIndex,
         });
-        setPendingNavigation({ ...pending, guard: blocker });
+        setPendingNavigation({
+          ...pending,
+          guard: blocker,
+          guardianBootstrap: stagedGuardianToken,
+          onCancel: stagedGuardianToken ? () => clearGuardianBootstrapToken() : pending.onCancel,
+        });
         if (Number.isInteger(pending.historyDelta) && pending.historyDelta !== 0) {
           suppressHashGuardRef.current = { accept: false };
           window.history.go(-pending.historyDelta);
@@ -11649,6 +11665,7 @@ export default function App() {
         return;
       }
       const nextIndex = Number.isInteger(requestedIndex) ? requestedIndex : acceptedIndex;
+      if (stagedGuardianToken) setGuardianVerifyDeliveryVersion(current => current + 1);
       acceptHashRoute(nextHash, nextIndex);
     }
 
@@ -11983,11 +12000,13 @@ export default function App() {
       return;
     }
     if (target.guard?.source === "scenario") {
+      if (target.guardianBootstrap) clearGuardianBootstrapToken();
       target.guard.onLeave?.();
       commitHashRoute("/scenarios", { replace: true });
       return;
     }
     if (target.type === "hash") {
+      if (target.guardianBootstrap) setGuardianVerifyDeliveryVersion(current => current + 1);
       if (Number.isInteger(target.historyDelta) && target.historyDelta !== 0) {
         suppressHashGuardRef.current = { accept: true };
         window.history.go(target.historyDelta);
@@ -12049,6 +12068,7 @@ export default function App() {
     "ai-chat": <AIChatPage />,
     about:     <AboutPage />,
     privacy:   <PrivacyNoticePage />,
+    "guardian-link-verify": <GuardianLinkVerifyPage key={`guardian-link-verify-${guardianVerifyDeliveryVersion}`} />,
     "privacy-requests": <PrivacyRequestPage onNavigate={go} />,
     progress:  <ProgressPage />,
     profile:   <ProfilePage />,
@@ -12070,7 +12090,7 @@ export default function App() {
           footer={page !== "ai-chat" ? <Footer /> : null}
           floating={!checkingSession && page !== "ai-chat" ? <ChatWidget /> : null}
         >
-          {checkingSession && page !== "privacy" ? (
+          {checkingSession && page !== "privacy" && page !== "guardian-link-verify" ? (
             <div className="section">
               <p className="section-title">{t("app.loadingTitle")}</p>
               <p className="section-sub">{t("app.checkingSession")}</p>

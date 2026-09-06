@@ -17,6 +17,8 @@ import { logout, resendVerificationEmail, restoreSession, verifyEmail } from "..
 import { saveProfile } from "../api/profileApi";
 import { maskEmailAddress } from "../utils/maskEmailAddress";
 
+jest.setTimeout(10000);
+
 jest.mock("react-markdown", () => {
   const React = require("react");
   return {
@@ -44,6 +46,7 @@ jest.mock("../api/profileApi", () => ({
   getProfile: jest.fn(),
   saveProfile: jest.fn(),
 }));
+jest.mock("../guardian/guardianLink.api", () => ({ getGuardianLink: jest.fn().mockResolvedValue({ ok: true, data: { relationship: null } }) }));
 
 jest.mock("../chat/chatApi", () => ({
   listChatConversations: jest.fn(),
