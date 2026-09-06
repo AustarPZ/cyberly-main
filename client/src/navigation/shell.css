@@ -1,0 +1,33 @@
+/* I01 shared frame: existing product tokens, no page-content restyle. */
+.navbar.cy-global-navigation { gap: 0.75rem; padding-inline: clamp(0.5rem, 2vw, 2rem); }
+.cy-global-navigation .navbar-logo { height: 40px; }
+.cy-global-navigation .nav-link { min-height: 44px; padding-inline: 0.65rem; border-radius: 3px; }
+.cy-global-navigation .nav-link.active { background: transparent; box-shadow: inset 0 -2px 0 var(--color-brand-primary); }
+.cy-global-navigation .nav-utility { margin-left: auto; }
+.cy-global-navigation .account-trigger, .cy-global-navigation .mobile-menu-button { min-height: 44px; min-width: 44px; }
+.cy-global-navigation .nav-language select { min-height: 44px; }
+.cy-global-navigation .account-menu-item { min-height: 44px; }
+.cy-global-navigation .account-dropdown { max-height: calc(100dvh - var(--nav-h) - 2rem); overflow-y: auto; }
+.cy-global-navigation .mobile-menu-panel { max-height: calc(100dvh - var(--nav-h) - 1rem); overflow-y: auto; }
+.cy-global-navigation :is(button, select):focus-visible { outline: 2px solid var(--color-brand-primary); outline-offset: 2px; }
+footer.cy-app-footer { display: flex; align-items: center; justify-content: space-between; gap: 1.5rem; text-align: left; padding: 1.5rem clamp(1rem, 3vw, 3rem); background: var(--surface-raised); color: var(--text-secondary); border-top: 1px solid var(--border-default); }
+.cy-app-footer strong { color: var(--color-brand-primary); }
+.cy-footer-identity { max-width: 40rem; }
+.cy-footer-identity p { margin: 0; }
+.cy-footer-identity p + p { margin-top: 0.35rem; }
+.cy-app-footer .cy-footer-links { display: flex; flex-wrap: wrap; align-items: baseline; gap: 0.25rem 1.25rem; flex-shrink: 0; margin: 0; }
+.cy-app-footer .cy-footer-links a { display: inline-flex; align-items: center; min-height: 44px; color: var(--color-brand-primary); font: inherit; line-height: 1.5; text-decoration: underline; text-underline-offset: 0.2em; }
+.cy-app-footer a:focus-visible { outline: 2px solid var(--color-brand-primary); outline-offset: 3px; }
+@media (max-width: 1050px) {
+  .cy-global-navigation .nav-primary { display: none; }
+  .cy-global-navigation .mobile-menu-wrap { display: block; }
+  .cy-global-navigation .desktop-auth-actions { display: none; }
+}
+@media (max-width: 600px) {
+  footer.cy-app-footer { flex-direction: column; align-items: flex-start; gap: 0.75rem; padding-bottom: 5.5rem; }
+  .navbar.cy-global-navigation { gap: 0.35rem; padding-inline: 0.4rem; }
+  .cy-global-navigation .nav-logo { min-width: 0; max-width: 34vw; flex-shrink: 1; }
+  .cy-global-navigation .navbar-logo { height: 34px; }
+  .cy-global-navigation .nav-utility { gap: 0.3rem; }
+  .cy-global-navigation .nav-language select { max-width: 76px; }
+}

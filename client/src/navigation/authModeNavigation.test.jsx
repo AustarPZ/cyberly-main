@@ -39,7 +39,7 @@ describe("explicit authentication mode navigation", () => {
   test("preserves an explicit Registration request while navigating to the auth route", async () => {
     await renderRoute("#/home");
 
-    await userEvent.click(screen.getByRole("button", { name: i18n.t("auth.getStarted") }));
+    await userEvent.click((await screen.findAllByRole("button", { name: i18n.t("home.hero.cta") }))[0]);
 
     expect(window.location.hash).toBe("#/login");
     expect(await screen.findByRole("heading", { level: 1, name: i18n.t("auth.createAccount") })).toBeVisible();
@@ -51,7 +51,7 @@ describe("explicit authentication mode navigation", () => {
   test("keeps an explicit Login request in Login mode", async () => {
     await renderRoute("#/home");
 
-    await userEvent.click(screen.getByRole("button", { name: i18n.t("auth.login") }));
+    await userEvent.click(screen.getByRole("button", { name: i18n.t("nav.signIn") }));
 
     expect(window.location.hash).toBe("#/login");
     expect(await screen.findByRole("heading", { level: 1, name: i18n.t("auth.welcomeBack") })).toBeVisible();

@@ -16,7 +16,7 @@ describe("narrow mobile navbar contract", () => {
   test("keeps controlled preset artwork inside the existing compact avatar geometry", () => {
     expect(appSource).toMatch(/\.nav-avatar\s*\{[^}]*width:\s*30px;[^}]*height:\s*30px;/);
     expect(appSource).toMatch(/\.nav-avatar\s+\.avatar-visual\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;/);
-    expect(appSource).toMatch(/<AvatarVisual\s+presetId=\{avatarModel\.presetId\}/);
+    expect(fs.readFileSync(path.join(__dirname, "AccountMenu.jsx"), "utf8")).toMatch(/<AvatarVisual\s+presetId=\{avatarModel\.presetId\}/);
     expect(appSource).toMatch(/getInitialAvatarText/);
   });
 });

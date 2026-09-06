@@ -83,6 +83,12 @@ describe("AppShell route landmark ownership", () => {
     expect(container.querySelector(".cy-app-shell")).toBeInTheDocument();
     expect(container.querySelector(".progress-content")).toBeInTheDocument();
     expect(container.querySelector(".progress-content").tagName).not.toBe("MAIN");
+    expect(Array.from(container.querySelectorAll(".nav-primary button"), item => item.textContent)).toEqual([
+      "Dashboard", "Resources", "Scenarios", "Assessment", "CyberGuard", "About",
+    ]);
+    expect(container.querySelector('.cy-footer-links a[href="#/about"]')).toBeInTheDocument();
+    expect(container.querySelector('.cy-footer-links a[href="#/resources"]')).not.toBeInTheDocument();
+    expect(Array.from(container.querySelectorAll('.navbar button, .cy-footer-links a')).some(item => item.textContent === i18n.t("nav.help"))).toBe(false);
   });
 
   test("Admin leaves the application main landmark to AppShell", async () => {

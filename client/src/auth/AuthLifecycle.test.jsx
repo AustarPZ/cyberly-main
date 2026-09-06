@@ -97,7 +97,7 @@ async function renderRoute(route = "#/login") {
 
 async function enterRegistration() {
   await renderRoute("#/home");
-  await click(screen.getByRole("button", { name: i18n.t("auth.getStarted") }));
+  await click((await screen.findAllByRole("button", { name: i18n.t("home.hero.cta") }))[0]);
   await screen.findByRole("heading", { level: 1, name: i18n.t("auth.createAccount") });
   return within(screen.getByRole("main"));
 }

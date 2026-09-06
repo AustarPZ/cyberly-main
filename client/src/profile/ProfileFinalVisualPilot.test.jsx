@@ -188,15 +188,14 @@ describe("Learner Profile final visual migration", () => {
     expect(document.querySelector(".profile-avatar .avatar-visual, .nav-avatar .avatar-visual")).not.toBeInTheDocument();
   });
 
-  test("orders the learner account menu as Profile & Settings, Dashboard, Personal Progress, Log out", async () => {
+  test("orders the learner account menu as Profile, Settings, Log out", async () => {
     render(<App />);
     await screen.findByRole("heading", { level: 1, name: i18n.t("settings.title") });
     await userEvent.click(screen.getByRole("button", { name: i18n.t("nav.accountMenu.triggerAriaLabel", { name: learner.displayName }) }));
     const menu = screen.getByRole("menu", { name: i18n.t("nav.accountMenu.menuAriaLabel") });
     expect(within(menu).getAllByRole("menuitem").map(item => item.textContent.trim())).toEqual([
-      i18n.t("nav.accountMenu.profileSettings"),
-      i18n.t("nav.dashboard"),
-      i18n.t("nav.accountMenu.personalProgress"),
+      i18n.t("nav.profile"),
+      i18n.t("nav.settings"),
       i18n.t("nav.accountMenu.logOut"),
     ]);
   });

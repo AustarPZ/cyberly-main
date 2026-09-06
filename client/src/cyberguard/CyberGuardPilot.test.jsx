@@ -155,7 +155,7 @@ describe("CyberGuard public beta pilot baseline", () => {
       },
     });
 
-    await userEvent.click(screen.getByRole("button", { name: /^login$/i }));
+    await userEvent.click(screen.getByRole("button", { name: /^sign in$/i }));
     const authPanel = (await screen.findByRole("heading", { name: /welcome back/i })).closest(".cy-auth-panel");
     const email = "u2@example.test";
     const password = "SafePass1!";
@@ -1599,7 +1599,7 @@ describe("CyberGuard public beta pilot baseline", () => {
     expect(renameChatConversation).not.toHaveBeenCalled();
     expect(generateChatAssistantReply).not.toHaveBeenCalled();
 
-    await userEvent.click(screen.getByRole("button", { name: /ai chatbot/i }));
+    await userEvent.click(screen.getByRole("button", { name: /^CyberGuard$/i }));
     const sidebar = screen.getByLabelText(/conversation history/i);
     expect(conversationTitlesIn(sidebar)).toEqual([]);
     expect(screen.queryByText("User A suspicious link question")).not.toBeInTheDocument();

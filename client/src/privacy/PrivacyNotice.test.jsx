@@ -345,7 +345,7 @@ describe("Privacy Notice", () => {
     render(<App />);
     await waitFor(() => expect(restoreSession).toHaveBeenCalledTimes(1));
     if (openRegistration) {
-      await userEvent.click(await screen.findByRole("button", { name: i18n.t("auth.getStarted") }));
+      await userEvent.click((await screen.findAllByRole("button", { name: i18n.t("home.hero.cta") }))[0]);
     } else {
       await screen.findByRole("heading", { level: 1, name: i18n.t("auth.welcomeBack") });
     }

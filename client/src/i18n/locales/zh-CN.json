@@ -1,5 +1,8 @@
 {
   "nav": {
+    "signIn": "登录",
+    "help": "帮助",
+    "cyberGuard": "CyberGuard",
     "home": "首页",
     "dashboard": "仪表板",
     "assessment": "测评",
@@ -1346,6 +1349,7 @@
     ]
   },
   "footer": {
+    "aboutCyberly": "关于 Cyberly",
     "builtWithCare": "用心构建",
     "description": "面向所有人的网络健康教育。"
   },

@@ -48,7 +48,7 @@ describe("Auth final visual foundation", () => {
 
   test("presents Registration as a seven-step Explorer Setup journey", async () => {
     const { container } = await renderRoute("#/home");
-    await userEvent.click(await screen.findByRole("button", { name: i18n.t("auth.getStarted") }));
+    await userEvent.click((await screen.findAllByRole("button", { name: i18n.t("home.hero.cta") }))[0]);
 
     expect(container.querySelector(".cy-auth-register")).toHaveClass("cy-surface");
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
@@ -63,7 +63,7 @@ describe("Auth final visual foundation", () => {
 
   test("exposes option selection through aria-pressed rather than colour alone", async () => {
     await renderRoute("#/home");
-    await userEvent.click(await screen.findByRole("button", { name: i18n.t("auth.getStarted") }));
+    await userEvent.click((await screen.findAllByRole("button", { name: i18n.t("home.hero.cta") }))[0]);
     await userEvent.type(document.querySelector('[data-field="email"]'), "visual@example.test");
     await userEvent.type(document.querySelector('[data-field="displayName"]'), "Aina");
     await userEvent.type(document.querySelector('[data-field="age"]'), "15");

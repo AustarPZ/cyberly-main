@@ -1,3 +1,5 @@
+import GlobalNavigation from "./navigation/GlobalNavigation";
+import AppFooter from "./navigation/AppFooter";
 import { Fragment, useState, createContext, useContext, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
@@ -10974,302 +10976,20 @@ function LanguageSelector() {
 }
 
 const NAV_ITEMS = [
-  { id: "home", labelKey: "nav.home" },
   { id: "dashboard", labelKey: "nav.dashboard" },
-  { id: "assessment", labelKey: "nav.assessment" },
-  { id: "scenarios", labelKey: "nav.scenarios" },
   { id: "resources", labelKey: "nav.resources" },
-  { id: "ai-chat", labelKey: "nav.aiChat" },
-  { id: "admin", labelKey: "nav.admin", adminOnly: true },
+  { id: "scenarios", labelKey: "nav.scenarios" },
+  { id: "assessment", labelKey: "nav.assessment" },
+  { id: "ai-chat", labelKey: "nav.cyberGuard" },
   { id: "about", labelKey: "nav.about" },
 ];
-
-const LOGGED_OUT_NAV_ITEMS = NAV_ITEMS.filter(item =>
-  ["home", "resources", "about"].includes(item.id)
-);
-
+const LOGGED_OUT_NAV_ITEMS = [
+  { id: "home", labelKey: "nav.home" },
+  { id: "resources", labelKey: "nav.resources" },
+  { id: "about", labelKey: "nav.about" },
+];
 function navigationItemsForUser(user) {
-  if (!user) return LOGGED_OUT_NAV_ITEMS;
-  return NAV_ITEMS.filter(item => !item.adminOnly || user.role === "admin");
-}
-
-function useMediaQuery(query) {
-  const [matches, setMatches] = useState(() => {
-    if (typeof window === "undefined") return false;
-    return window.matchMedia(query).matches;
-  });
-
-  useEffect(() => {
-    const mediaQuery = window.matchMedia(query);
-    function update() {
-      setMatches(mediaQuery.matches);
-    }
-
-    update();
-    mediaQuery.addEventListener("change", update);
-    return () => mediaQuery.removeEventListener("change", update);
-  }, [query]);
-
-  return matches;
-}
-
-function MobileNavMenu({ page, items, user, openAuth, onNavigate }) {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const wrapRef = useRef(null);
-  const buttonRef = useRef(null);
-  const panelId = "mobile-navigation-menu";
-
-  useEffect(() => {
-    setOpen(false);
-  }, [page, user?.id]);
-
-  useEffect(() => {
-    if (!open) return undefined;
-
-    function handlePointerDown(event) {
-      if (!wrapRef.current?.contains(event.target)) {
-        setOpen(false);
-      }
-    }
-
-    function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        setOpen(false);
-        buttonRef.current?.focus();
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [open]);
-
-  function navigate(pageId) {
-    setOpen(false);
-    onNavigate(pageId);
-  }
-
-  function auth(mode) {
-    setOpen(false);
-    openAuth(mode);
-  }
-
-  return (
-    <div className="mobile-menu-wrap" ref={wrapRef}>
-      <button
-        type="button"
-        ref={buttonRef}
-        className={`mobile-menu-button${open ? " open" : ""}`}
-        onClick={() => setOpen(current => !current)}
-        aria-label={t(open ? "nav.closeMenuAriaLabel" : "nav.openMenuAriaLabel")}
-        aria-expanded={open}
-        aria-controls={panelId}
-        aria-haspopup="menu"
-      >
-        <span aria-hidden="true">{open ? "×" : "☰"}</span>
-      </button>
-      {open && (
-        <div className="mobile-menu-panel" id={panelId} role="menu" aria-label={t("nav.mobileNavigationLabel")}>
-          {items.map(item => (
-            <button
-              key={item.id}
-              type="button"
-              className={`mobile-nav-item${page === item.id ? " active" : ""}`}
-              role="menuitem"
-              onClick={() => navigate(item.id)}
-            >
-              <span>{t(item.labelKey)}</span>
-            </button>
-          ))}
-          {!user && (
-            <div className="mobile-menu-actions">
-              <button type="button" className="mobile-nav-item" role="menuitem" onClick={() => auth("login")}>
-                <span>{t("auth.login")}</span>
-              </button>
-              <button type="button" className="mobile-nav-item" role="menuitem" onClick={() => auth("register")}>
-                <span>{t("auth.getStarted")}</span>
-              </button>
-            </div>
-          )}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function AccountMenu({ user, onNavigate, onRequestLogout }) {
-  const { t } = useTranslation();
-  const [open, setOpen] = useState(false);
-  const wrapRef = useRef(null);
-  const triggerRef = useRef(null);
-  const itemRefs = useRef([]);
-  const menuId = "account-navigation-menu";
-  const displayName = user?.displayName || user?.name || t("nav.accountMenu.userFallback");
-  const avatarModel = resolveAvatarModel({
-    avatarPreset: user?.profile?.avatarPreset,
-    displayName,
-  });
-  const email = user?.email;
-
-  useEffect(() => {
-    if (!open) return undefined;
-
-    window.setTimeout(() => {
-      itemRefs.current[0]?.focus();
-    }, 0);
-
-    function handlePointerDown(event) {
-      if (!wrapRef.current?.contains(event.target)) {
-        setOpen(false);
-      }
-    }
-
-    function handleKeyDown(event) {
-      if (event.key === "Escape") {
-        setOpen(false);
-        triggerRef.current?.focus();
-      }
-    }
-
-    document.addEventListener("mousedown", handlePointerDown);
-    document.addEventListener("keydown", handleKeyDown);
-    return () => {
-      document.removeEventListener("mousedown", handlePointerDown);
-      document.removeEventListener("keydown", handleKeyDown);
-    };
-  }, [open]);
-
-  useEffect(() => {
-    setOpen(false);
-  }, [user?.id]);
-
-  function navigate(pageId) {
-    setOpen(false);
-    onNavigate(pageId);
-  }
-
-  function requestLogout() {
-    setOpen(false);
-    onRequestLogout(triggerRef.current);
-  }
-
-  function handleTriggerKeyDown(event) {
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      setOpen(true);
-    }
-  }
-
-  function handleMenuKeyDown(event, index) {
-    const items = itemRefs.current.filter(Boolean);
-
-    if (event.key === "ArrowDown") {
-      event.preventDefault();
-      items[(index + 1) % items.length]?.focus();
-    }
-
-    if (event.key === "ArrowUp") {
-      event.preventDefault();
-      items[(index - 1 + items.length) % items.length]?.focus();
-    }
-  }
-
-  return (
-    <div className="account-menu-wrap" ref={wrapRef}>
-      <button
-        type="button"
-        ref={triggerRef}
-        className={`account-trigger${open ? " open" : ""}`}
-        onClick={() => setOpen(current => !current)}
-        onKeyDown={handleTriggerKeyDown}
-        aria-haspopup="menu"
-        aria-expanded={open}
-        aria-controls={menuId}
-        aria-label={t("nav.accountMenu.triggerAriaLabel", { name: displayName })}
-      >
-        <span className="nav-avatar" aria-hidden="true">
-          {avatarModel.type === "preset"
-            ? <AvatarVisual presetId={avatarModel.presetId} />
-            : avatarModel.text}
-        </span>
-        <span className="account-name">{displayName}</span>
-        <span className="account-chevron" aria-hidden="true">▾</span>
-      </button>
-
-      {open && (
-        <div className="account-dropdown" id={menuId} role="menu" aria-label={t("nav.accountMenu.menuAriaLabel")}>
-          <div className="account-menu-header">
-            <div className="account-menu-name">{displayName}</div>
-            {email && <div className="account-menu-email">{email}</div>}
-          </div>
-          <button
-            type="button"
-            className="account-menu-item"
-            role="menuitem"
-            ref={element => { itemRefs.current[0] = element; }}
-            onKeyDown={event => handleMenuKeyDown(event, 0)}
-            onClick={() => navigate("profile")}
-          >
-            {t("nav.accountMenu.profileSettings")}
-          </button>
-          <button
-            type="button"
-            className="account-menu-item"
-            role="menuitem"
-            ref={element => { itemRefs.current[1] = element; }}
-            onKeyDown={event => handleMenuKeyDown(event, 1)}
-            onClick={() => navigate("dashboard")}
-          >
-            {t("nav.dashboard")}
-          </button>
-          <button
-            type="button"
-            className="account-menu-item"
-            role="menuitem"
-            ref={element => { itemRefs.current[2] = element; }}
-            onKeyDown={event => handleMenuKeyDown(event, 2)}
-            onClick={() => navigate("progress")}
-          >
-            <svg className="account-menu-icon" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-              <path d="M4 19V5" />
-              <path d="M4 19h16" />
-              <path d="M8 16v-5" />
-              <path d="M12 16V8" />
-              <path d="M16 16v-3" />
-            </svg>
-            <span>{t("nav.accountMenu.personalProgress")}</span>
-          </button>
-          {user?.role === "admin" && (
-            <button
-              type="button"
-              className="account-menu-item"
-              role="menuitem"
-              ref={element => { itemRefs.current[3] = element; }}
-              onKeyDown={event => handleMenuKeyDown(event, 3)}
-              onClick={() => navigate("admin")}
-            >
-              {t("nav.accountMenu.adminConsole")}
-            </button>
-          )}
-          <div className="account-menu-divider" role="separator" />
-          <button
-            type="button"
-            className="account-menu-item danger"
-            role="menuitem"
-            ref={element => { itemRefs.current[user?.role === "admin" ? 4 : 3] = element; }}
-            onKeyDown={event => handleMenuKeyDown(event, user?.role === "admin" ? 4 : 3)}
-            onClick={requestLogout}
-          >
-            {t("nav.accountMenu.logOut")}
-          </button>
-        </div>
-      )}
-    </div>
-  );
+  return user ? NAV_ITEMS : LOGGED_OUT_NAV_ITEMS;
 }
 
 function LogoutConfirmModal({ onCancel, onConfirm }) {
@@ -11330,9 +11050,7 @@ function LogoutConfirmModal({ onCancel, onConfirm }) {
 
 function Navbar({ page }) {
   const { go, user, logout, openAuth, requestLogoutWithGuard } = useApp();
-  const { t } = useTranslation();
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
-  const isMobileNav = useMediaQuery("(max-width: 1050px)");
   const logoutReturnFocusRef = useRef(null);
   const navItems = navigationItemsForUser(user);
 
@@ -11356,75 +11074,23 @@ function Navbar({ page }) {
   }
 
   return (
-    <nav className={`navbar${page === "ai-chat" ? " cyberguard-nav-flow" : ""}`}>
-      <button
-        type="button"
-        className="nav-logo"
-        onClick={() => go(user ? "dashboard" : "home")}
-        aria-label={t(user ? "nav.brandDashboardAriaLabel" : "nav.brandHomeAriaLabel")}
-      >
-        <img className="navbar-logo" src={cyberlyNavbarLogo} alt="Cyberly" />
-      </button>
-
-      {isMobileNav && (
-        <MobileNavMenu
-          page={page}
-          items={navItems}
-          user={user}
-          openAuth={openAuth}
-          onNavigate={go}
-        />
-      )}
-
-      <div className="nav-primary" aria-label={t("nav.primaryAriaLabel")}>
-        {navItems.map(n => (
-          <button key={n.id} className={`nav-link${page === n.id ? " active" : ""}`} onClick={() => go(n.id)}>
-            {t(n.labelKey)}
-          </button>
-        ))}
-      </div>
-
-      <div className="nav-utility">
-        <LanguageSelector />
-        <div className="nav-divider" aria-hidden="true" />
-        {user ? (
-          <AccountMenu
-            user={user}
-            onNavigate={go}
-            onRequestLogout={requestLogout}
-          />
-        ) : (
-          <div className="desktop-auth-actions">
-            <button className="nav-cta secondary" onClick={() => openAuth("login")}>{t("auth.login")}</button>
-            <button className="nav-cta" onClick={() => openAuth("register")}>{t("auth.getStarted")}</button>
-          </div>
-        )}
-      </div>
-
+    <>
+      <GlobalNavigation page={page} user={user} items={navItems} onNavigate={go} openAuth={openAuth}
+        onRequestLogout={requestLogout} languageControl={<LanguageSelector />} logo={cyberlyNavbarLogo} />
       {logoutModalOpen && (
         <LogoutConfirmModal
           onCancel={closeLogoutModal}
           onConfirm={confirmLogout}
         />
       )}
-    </nav>
+    </>
   );
 }
 
 // ─── Footer ───────────────────────────────────────────────────────
 function Footer() {
-  const { t } = useTranslation();
-  return (
-    <footer>
-      <p>{t("footer.builtWithCare")} · <strong>Cyberly</strong> · {new Date().getFullYear()}</p>
-      <p style={{ marginTop: "0.4rem", fontSize: "0.78rem" }}>
-        {t("footer.description")}
-      </p>
-      <div className="cy-footer-links">
-        <a className="cy-footer-privacy-link" href="#/privacy">{t("privacyNotice.linkLabel")}</a>
-      </div>
-    </footer>
-  );
+  const { go } = useApp();
+  return <AppFooter onNavigate={go} />;
 }
 
 // ─── Root App ─────────────────────────────────────────────────────

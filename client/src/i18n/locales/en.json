@@ -1,5 +1,8 @@
 {
   "nav": {
+    "signIn": "Sign In",
+    "help": "Help",
+    "cyberGuard": "CyberGuard",
     "home": "Home",
     "dashboard": "Dashboard",
     "assessment": "Assessment",
@@ -1346,6 +1349,7 @@
     ]
   },
   "footer": {
+    "aboutCyberly": "About Cyberly",
     "builtWithCare": "Built with care",
     "description": "Cyber wellness education for everyone."
   },
