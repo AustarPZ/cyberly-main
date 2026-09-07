@@ -43,7 +43,7 @@ import PageIdentity from "./design-system/visual/PageIdentity";
 import Surface from "./design-system/primitives/Surface";
 import Badge from "./design-system/primitives/Badge";
 import PageState from "./design-system/feedback/PageState";
-import ResourceDetailDialog from "./resources/ResourceDetailDialog";
+import ResourceReaderPage from "./resources/ResourceReaderPage";
 import AvatarVisual from "./profile/AvatarVisual";
 import PrivacyNoticePage from "./privacy/PrivacyNoticePage";
 import PrivacyRequestPage from "./privacy/PrivacyRequestPage";
@@ -182,6 +182,7 @@ import {
   createPendingAction,
   createPendingRouteTransition,
   normalizeHashRoute,
+  parseLearningDetailRoute,
   resolveSessionRestoreHash,
   routeIdentityFromHash,
   shouldGuardAction,
@@ -6732,6 +6733,8 @@ function DashboardChatPreview() {
 function ResourcesPage() {
   const { t, i18n: activeI18n } = useTranslation();
   const {
+    acceptedHash,
+    requestHashNavigation,
     resourceFocusTopic,
     clearResourceFocus,
     pendingResourceTarget,
@@ -6739,16 +6742,9 @@ function ResourcesPage() {
   } = useApp();
   const resourceLocale = normalizeLocale(activeI18n.language);
   const [resourceState, setResourceState] = useState({ loading: true, resources: [] });
-  const [selected, setSelected]   = useState(null);
+
   const [filter,   setFilter]     = useState("All");
   const libraryHeadingRef = useRef(null);
-  const resourceCardRefs = useRef(new Map());
-  const returnFocusSlugRef = useRef(null);
-  const restoreLibraryRef = useRef(false);
-  const libraryScrollYRef = useRef(0);
-  const focusRestoreTaskRef = useRef(null);
-  const topic = resourceState.resources.find(resource => resource.slug === selected);
-
   const categories = ["All", ...Array.from(new Set(resourceState.resources.map(resource => resource.categoryCode)))];
   const filtered = filter === "All"
     ? resourceState.resources
@@ -6757,21 +6753,9 @@ function ResourcesPage() {
   const focusedCategory = resourceFocusTopic ? PROGRESS_TOPIC_META[resourceFocusTopic]?.category : null;
   const categoryLabel = category => t(`resources.categories.${category}`, { defaultValue: category });
 
-  const cancelFocusRestoreTask = useCallback(() => {
-    const task = focusRestoreTaskRef.current;
-    if (!task) return;
-    focusRestoreTaskRef.current = null;
-    if (task.type === "frame") window.cancelAnimationFrame?.(task.id);
-    else window.clearTimeout(task.id);
-  }, []);
-
-  const openResource = useCallback((resourceSlug) => {
-    cancelFocusRestoreTask();
-    restoreLibraryRef.current = false;
-    returnFocusSlugRef.current = resourceSlug;
-    libraryScrollYRef.current = window.scrollY;
-    setSelected(resourceSlug);
-  }, [cancelFocusRestoreTask]);
+  const openResource = useCallback((slug) => {
+    if (parseLearningDetailRoute(`#/resources/${slug}`, "resources").slug) requestHashNavigation(`#/resources/${slug}`);
+  }, [requestHashNavigation]);
 
   useEffect(() => {
     if (focusedCategory && resourceState.resources.some(resource => resource.categoryCode === focusedCategory)) {
@@ -6793,57 +6777,23 @@ function ResourcesPage() {
   }, [pendingResourceTarget, resourceState.loading, resourceState.resources, clearPendingResourceTarget, openResource]);
 
   useEffect(() => {
-    if (selected || !restoreLibraryRef.current || resourceState.loading) return;
-    cancelFocusRestoreTask();
-    const task = {
-      type: typeof window.requestAnimationFrame === "function" ? "frame" : "timer",
-      id: null,
-    };
-    const restoreFocus = () => {
-      if (focusRestoreTaskRef.current !== task || !restoreLibraryRef.current) return;
-      focusRestoreTaskRef.current = null;
-      const returnTarget = resourceCardRefs.current.get(returnFocusSlugRef.current) || libraryHeadingRef.current;
-      returnTarget?.focus?.({ preventScroll: true });
-      if (window.scrollY !== libraryScrollYRef.current) {
-        window.scrollTo({ top: libraryScrollYRef.current, behavior: "auto" });
-      }
-      restoreLibraryRef.current = false;
-    };
-    focusRestoreTaskRef.current = task;
-    task.id = task.type === "frame"
-      ? window.requestAnimationFrame(restoreFocus)
-      : window.setTimeout(restoreFocus, 0);
-  }, [selected, resourceState.loading, resourceState.resources, cancelFocusRestoreTask]);
-
-  useEffect(() => () => cancelFocusRestoreTask(), [cancelFocusRestoreTask]);
-
-  useEffect(() => {
     let active = true;
+    if (parseLearningDetailRoute(acceptedHash, "resources").nested) return undefined;
     setResourceState(current => ({ ...current, loading: true, error: null }));
     dbGetResources(resourceLocale).then(result => {
       if (!active) return;
       if (result.ok) {
         const nextResources = result.resources || [];
         setResourceState({ loading: false, resources: nextResources });
-        setSelected(current => {
-          if (current && !nextResources.some(resource => resource.slug === current)) {
-            restoreLibraryRef.current = true;
-            return null;
-          }
-          return current;
-        });
       } else {
         setResourceState({ loading: false, resources: [], error: result.error });
       }
     });
     return () => { active = false; };
-  }, [resourceLocale]);
+  }, [resourceLocale, acceptedHash]);
 
-  function returnToLibrary() {
-    cancelFocusRestoreTask();
-    restoreLibraryRef.current = true;
-    setSelected(null);
-  }
+  const detailRoute = parseLearningDetailRoute(acceptedHash, "resources");
+  if (detailRoute.nested) return <ResourceReaderPage slug={detailRoute.slug} onNavigate={requestHashNavigation} />;
 
   return (
     <div className="resources-page">
@@ -6909,10 +6859,6 @@ function ResourcesPage() {
               <button
                 type="button"
                 key={resource.id}
-                ref={node => {
-                  if (node) resourceCardRefs.current.set(resource.slug, node);
-                  else resourceCardRefs.current.delete(resource.slug);
-                }}
                 className="resources-card"
                 onClick={() => openResource(resource.slug)}
               >
@@ -6935,16 +6881,6 @@ function ResourcesPage() {
             </div>
           </div>
         </Surface>
-        {topic && (
-          <ResourceDetailDialog
-            resource={topic}
-            categoryLabel={categoryLabel(topic.categoryCode)}
-            sourceLabel={t("resources.source")}
-            learnMoreLabel={t("common.learnMore")}
-            closeLabel={t("common.close")}
-            onClose={returnToLibrary}
-          />
-        )}
         </PageSection>
       </PageContainer>
     </div>
@@ -7468,10 +7404,15 @@ function ScenariosPage() {
     requestHashNavigation,
     clearPendingScenarioTarget,
   } = useApp();
+  const nestedIntro = parseLearningDetailRoute(acceptedHash, "scenarios");
+  const [introRetry, setIntroRetry] = useState(0);
   const scenarioLocale = normalizeLocale(activeI18n.language);
   const [filters, setFilters] = useState({ topicCode: "", difficulty: "" });
   const [library, setLibrary] = useState({ loading: true, scenarios: [], recommended: [] });
   const [view, setView] = useState({ mode: "library" });
+  const viewRef = useRef(view);
+  viewRef.current = view;
+  const previousIntroRouteRef = useRef(null);
   const [selectedChoice, setSelectedChoice] = useState("");
   const [decisionFeedback, setDecisionFeedback] = useState(null);
   const [error, setError] = useState(null);
@@ -7512,7 +7453,7 @@ function ScenariosPage() {
 
   useEffect(() => {
     let active = true;
-    if (!user) return () => { active = false; };
+    if (!user || nestedIntro.nested) return () => { active = false; };
     Promise.all([
       dbGetScenarios({ topicCode: filters.topicCode, difficulty: filters.difficulty }, scenarioLocale),
       dbGetRecommendedScenarios(scenarioLocale),
@@ -7526,14 +7467,36 @@ function ScenariosPage() {
       });
     });
     return () => { active = false; };
-  }, [user, filters.topicCode, filters.difficulty, scenarioLocale]);
+  }, [user, filters.topicCode, filters.difficulty, scenarioLocale, nestedIntro.nested]);
+
+  useEffect(() => {
+    if (!user) return undefined;
+    let active = true;
+    const previousRoute = previousIntroRouteRef.current;
+    previousIntroRouteRef.current = nestedIntro.nested ? nestedIntro.slug || "invalid" : null;
+    if (!nestedIntro.nested) {
+      if (previousRoute !== null) setView({ mode: "library" });
+      return undefined;
+    }
+    if (previousRoute === nestedIntro.slug && ["attempt", "result"].includes(viewRef.current.mode)) return undefined;
+    if (!nestedIntro.slug) { setView({ mode: "intro-unavailable" }); return undefined; }
+    setView({ mode: "intro-loading" });
+    setError(null);
+    dbGetScenario(nestedIntro.slug, scenarioLocale).then(result => {
+      if (!active) return;
+      setView(result.ok
+        ? { mode: "intro", scenario: result.scenario, firstStep: result.firstStep, locale: result.locale }
+        : { mode: "intro-unavailable" });
+    });
+    return () => { active = false; };
+  }, [user, nestedIntro.nested, nestedIntro.slug, scenarioLocale, introRetry]);
 
   useEffect(() => {
     let active = true;
     if (!user || view.mode === "library") return () => { active = false; };
 
     async function reloadScenarioContent() {
-      if (view.mode === "intro" && view.scenario?.slug) {
+      if (view.mode === "intro" && view.scenario?.slug && !nestedIntro.nested) {
         const result = await dbGetScenario(view.scenario.slug, scenarioLocale);
         if (active && result.ok) setView(current => ({ ...current, scenario: result.scenario, firstStep: result.firstStep, locale: result.locale }));
       } else if (view.mode === "attempt" && view.attempt?.id && !decisionFeedback) {
@@ -7547,7 +7510,7 @@ function ScenariosPage() {
 
     reloadScenarioContent();
     return () => { active = false; };
-  }, [user, scenarioLocale, view.mode, view.scenario?.slug, view.attempt?.id, decisionFeedback]);
+  }, [user, scenarioLocale, view.mode, view.scenario?.slug, view.attempt?.id, decisionFeedback, nestedIntro.nested]);
 
   useEffect(() => {
     if (view.mode !== "attempt" || !view.attempt || view.attempt.status === "completed") return undefined;
@@ -7568,7 +7531,7 @@ function ScenariosPage() {
 
   useEffect(() => {
     const hashScenarioTarget = parseScenarioHighlightTargetFromHash(acceptedHash);
-    if (!user) return;
+    if (!user || nestedIntro.nested) return;
     if (hashScenarioTarget) {
       buildRecommendedScenarioNavigation(hashScenarioTarget, "legacy");
       requestHashNavigation("#/scenarios", { replace: true });
@@ -7614,6 +7577,7 @@ function ScenariosPage() {
     filters.difficulty,
     requestHashNavigation,
     clearPendingScenarioTarget,
+    nestedIntro.nested,
     t,
   ]);
 
@@ -8021,7 +7985,7 @@ function ScenariosPage() {
           </Surface>
         )}
         <div className="scenario-actions">
-          <Button variant="primary" onClick={() => setView({ mode: "library" })}>{t("scenarios.result.returnToLibrary")}</Button>
+          <Button variant="primary" onClick={() => { if (nestedIntro.nested) requestHashNavigation("#/scenarios"); else setView({ mode: "library" }); }}>{t("scenarios.result.returnToLibrary")}</Button>
           <Button onClick={() => go("dashboard")}>{t("nav.dashboard")}</Button>
           <Button onClick={() => go("progress")}>{t("scenarios.result.viewProgress")}</Button>
         </div>
@@ -8037,7 +8001,15 @@ function ScenariosPage() {
       {view.mode === "result" && renderScenarioHeader(view.scenario.title, t("scenarios.result.completed"), { visual: true })}
       <PageContainer width="wide" className="scenario-content">
         {error && <div className="field-error" role="alert" style={{ marginBottom: "1rem" }}>{error}</div>}
-        {view.mode === "library" ? (
+        {view.mode === "intro-loading" || view.mode === "intro-unavailable" ? (
+          <>
+            <Button variant="quiet" onClick={() => requestHashNavigation("#/scenarios")}>{t("scenarios.library.backToLibrary")}</Button>
+            <PageState type={view.mode === "intro-loading" ? "loading" : "error"}
+              title={t(view.mode === "intro-loading" ? "common.loading" : "resources.reader.scenarioUnavailable")}
+              actionLabel={nestedIntro.slug ? t("resources.reader.retry") : undefined}
+              onAction={nestedIntro.slug ? () => setIntroRetry(value => value + 1) : undefined} />
+          </>
+        ) : view.mode === "library" ? (
           <>
             <PageBackButton />
             {renderLibrary()}
@@ -8051,7 +8023,7 @@ function ScenariosPage() {
         ) : view.mode === "intro" ? (
           <div className="scenario-detail-layout">
             <div className="scenario-detail-back-rail">
-              <Button variant="quiet" onClick={() => setView({ mode: "library" })}>{t("scenarios.library.backToLibrary")}</Button>
+              <Button variant="quiet" onClick={() => { if (nestedIntro.nested) requestHashNavigation("#/scenarios"); else setView({ mode: "library" }); }}>{t("scenarios.library.backToLibrary")}</Button>
             </div>
             <div className="scenario-detail-main">
               {renderIntro()}
@@ -10597,7 +10569,12 @@ export default function App() {
 
   const commitHashRoute = useCallback((hashValue, options = {}) => {
     if (typeof window === "undefined") return;
-    const nextHash = normalizeHashRoute(hashValue);
+    let nextHash = normalizeHashRoute(hashValue);
+    if (!appUserIdRef.current && sessionRestoreCompletedRef.current && parseLearningDetailRoute(nextHash, "scenarios").slug) {
+      pendingAuthTargetRef.current = nextHash;
+      setAuthMode("login");
+      nextHash = "#/login";
+    }
     const currentHash = normalizeHashRoute(window.location.hash);
     const replace = Boolean(options.replace);
     const nextIndex = replace ? historyIndexRef.current : historyIndexRef.current + 1;
@@ -10662,7 +10639,7 @@ export default function App() {
           }), { replace: true });
         } else if (restoredPage === "login") {
           commitHashRoute(`/${restoredUser.onboardingCompleted ? "dashboard" : "profile"}`, { replace: true });
-        } else if (VERIFICATION_PAGES.has(restoredPage)) {
+        } else if (restoredPage === "resources" || VERIFICATION_PAGES.has(restoredPage)) {
           commitHashRoute(currentHash, { replace: true });
         } else {
           commitHashRoute(`/${restoredPage}`, { replace: true });
@@ -10671,14 +10648,14 @@ export default function App() {
         const currentHash = normalizeHashRoute(window.location.hash);
         const restoredPage = parseHashPage(currentHash);
         if (PROTECTED_PAGES.has(restoredPage)) {
-          if (restoredPage === "privacy-requests" || restoredPage === "progress") {
-            pendingAuthTargetRef.current = restoredPage;
+          if (restoredPage === "privacy-requests" || restoredPage === "progress" || parseLearningDetailRoute(currentHash, "scenarios").slug) {
+            pendingAuthTargetRef.current = parseLearningDetailRoute(currentHash, "scenarios").slug ? currentHash : restoredPage;
             setAuthMode("login");
             commitHashRoute("/login", { replace: true });
           } else {
             commitHashRoute("/home", { replace: true });
           }
-        } else if (VERIFICATION_PAGES.has(restoredPage)) {
+        } else if (restoredPage === "resources" || VERIFICATION_PAGES.has(restoredPage)) {
           commitHashRoute(currentHash, { replace: true });
         } else {
           commitHashRoute(`/${restoredPage}`, { replace: true });
@@ -10740,8 +10717,8 @@ export default function App() {
         pendingAuthTargetRef.current = null;
       }
       if (!user && sessionRestoreCompletedRef.current && PROTECTED_PAGES.has(nextPage)) {
-        if (nextPage === "privacy-requests" || nextPage === "progress") {
-          pendingAuthTargetRef.current = nextPage;
+        if (nextPage === "privacy-requests" || nextPage === "progress" || parseLearningDetailRoute(nextHash, "scenarios").slug) {
+          pendingAuthTargetRef.current = parseLearningDetailRoute(nextHash, "scenarios").slug ? nextHash : nextPage;
           setAuthMode("login");
           commitHashRoute("/login", { replace: true });
         } else {
@@ -10797,7 +10774,7 @@ export default function App() {
   function login(userData, profileData, preferredPage) {
     const nextUser = normalizeSessionUser(userData, profileData);
     const continuation = nextUser.onboardingCompleted
-      ? (pendingAuthTargetRef.current === "progress" ? "progress" : privacyLoginTarget(pendingAuthTargetRef.current))
+      ? (parseLearningDetailRoute(pendingAuthTargetRef.current, "scenarios").slug ? pendingAuthTargetRef.current.slice(2) : pendingAuthTargetRef.current === "progress" ? "progress" : privacyLoginTarget(pendingAuthTargetRef.current))
       : null;
     pendingAuthTargetRef.current = null;
     appUserIdRef.current = nextUser.id || null;
@@ -11029,6 +11006,11 @@ export default function App() {
 
     if (target.page === "resources") {
       setResourceFocusTopic(null);
+      if (target.resourceSlug && parseLearningDetailRoute(`#/resources/${target.resourceSlug}`, "resources").slug) {
+        setPendingResourceTarget(null);
+        requestHashNavigation(`#/resources/${target.resourceSlug}`);
+        return true;
+      }
       setPendingResourceTarget({
         resourceId: target.resourceId ? Number(target.resourceId) : null,
         resourceSlug: target.resourceSlug || null,

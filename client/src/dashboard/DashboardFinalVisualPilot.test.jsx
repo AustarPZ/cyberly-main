@@ -6,6 +6,7 @@ import i18n from "../i18n";
 import { restoreSession } from "../api/authApi";
 import { getInitialAssessmentStatus } from "../api/assessmentApi";
 import { getProgress } from "../api/progressApi";
+import { getResourceBySlug } from "../api/resourceApi";
 import { getCurrentRecommendation, markRecommendationViewed } from "../api/recommendationApi";
 import { getRecommendedScenarios, getScenarioDashboard } from "../api/scenarioApi";
 import { createChatConversation, listChatConversations } from "../chat/chatApi";
@@ -29,7 +30,7 @@ jest.mock("../api/scenarioApi", () => ({
   getScenarioBySlug: jest.fn(), startScenarioAttempt: jest.fn(), getScenarioAttempt: jest.fn(),
   saveScenarioDecision: jest.fn(), completeScenarioAttempt: jest.fn(), getScenarioAttemptResult: jest.fn(),
 }));
-jest.mock("../api/resourceApi", () => ({ listResources: jest.fn() }));
+jest.mock("../api/resourceApi", () => ({ listResources: jest.fn(), getResourceBySlug: jest.fn() }));
 jest.mock("../chat/chatApi", () => ({
   listChatConversations: jest.fn(), createChatConversation: jest.fn(), getChatConversation: jest.fn(),
   renameChatConversation: jest.fn(), deleteChatConversation: jest.fn(), createChatUserMessage: jest.fn(),
@@ -226,6 +227,11 @@ describe("Dashboard final visual migration", () => {
   });
 
   test("uses canonical Resource and Assessment recommendation targets", async () => {
+    getResourceBySlug.mockResolvedValue({ ok: true, data: { resource: {
+      slug: "protect-privacy", title: "Protect privacy", categoryCode: "Privacy",
+      summary: "Review privacy guidance.", content: ["Check your privacy settings."],
+      sourceLabel: null, sourceUrl: null, relatedScenario: null,
+    } } });
     getCurrentRecommendation.mockResolvedValue({
       ok: true,
       data: { recommendation: { id: 8, topicCode: "privacy", reasonText: "Review privacy guidance.", target: { page: "resources", resourceSlug: "protect-privacy" } } },
@@ -234,7 +240,8 @@ describe("Dashboard final visual migration", () => {
     await screen.findByText("Review privacy guidance.");
     const resourceRecommendation = firstRender.container.querySelector("#dashboard-recommended-next-step");
     fireEvent.click(within(resourceRecommendation).getByRole("button", { name: i18n.t("dashboard.recommendation.readResource") }));
-    await waitFor(() => expect(window.location.hash).toBe("#/resources"));
+    await waitFor(() => expect(window.location.hash).toBe("#/resources/protect-privacy"));
+    await screen.findByRole("heading", { level: 1, name: "Protect privacy" });
     firstRender.unmount();
 
     window.history.replaceState({}, "", "#/dashboard");

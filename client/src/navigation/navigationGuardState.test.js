@@ -10,6 +10,20 @@ import {
 } from "./navigationGuardState";
 
 describe("navigation guard route state", () => {
+  test("preserves only validated nested Scenario introductions on session restore", () => {
+    for (const [hash, expected] of [
+      ["#/scenarios/suspicious-parcel-delivery-sms", "#/scenarios/suspicious-parcel-delivery-sms"],
+      ["#/scenarios", "#/scenarios"],
+      ["#/scenarios/%2Fbad", "#/scenarios"],
+      ["#/scenarios/a/extra", "#/scenarios"],
+      ["#/assessment/arbitrary", "#/assessment"],
+    ]) {
+      expect(resolveSessionRestoreHash({ currentHash: hash, restoredPage: hash.split('/')[1], onboardingCompleted: true })).toBe(expected);
+    }
+    expect(resolveSessionRestoreHash({ currentHash: "#/scenarios/parcel", restoredPage: "scenarios", onboardingCompleted: false })).toBe("#/profile");
+    expect(routeIdentitiesMatch("#/resources/phishing", "#/resources/privacy")).toBe(false);
+    expect(routeIdentitiesMatch("#/scenarios/parcel", "#/scenarios/bank")).toBe(false);
+  });
   test("normalizes route hashes consistently", () => {
     expect(normalizeHashRoute("admin/resources")).toBe("#/admin/resources");
     expect(normalizeHashRoute("#admin/resources")).toBe("#/admin/resources");

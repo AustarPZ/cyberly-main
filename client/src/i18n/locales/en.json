@@ -708,6 +708,14 @@
     }
   },
   "resources": {
+    "reader": {
+      "back": "Back to Resources",
+      "externalSource": "View external source",
+      "practice": "Put the idea into practice",
+      "unavailable": "This guide is unavailable. Please return to Resources.",
+      "retry": "Retry",
+      "scenarioUnavailable": "This scenario is unavailable right now. Try again or return to the library."
+    },
     "title": "Cyber Wellness Resources",
     "description": "Curated guides on the cyber threats that matter most to Malaysian teens. Click any card to read the full guide.",
     "loading": "Loading resources...",

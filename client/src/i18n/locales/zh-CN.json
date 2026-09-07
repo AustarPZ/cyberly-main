@@ -708,6 +708,14 @@
     }
   },
   "resources": {
+    "reader": {
+      "back": "返回资源库",
+      "externalSource": "查看外部来源",
+      "practice": "将所学付诸实践",
+      "unavailable": "此指南暂不可用。请返回资源库。",
+      "retry": "重试",
+      "scenarioUnavailable": "此情境暂不可用。请重试或返回情境库。"
+    },
     "title": "网络健康资源",
     "description": "精选指南，涵盖马来西亚青少年最需要关注的网络威胁。点击任意卡片即可阅读完整指南。",
     "loading": "正在加载资源...",

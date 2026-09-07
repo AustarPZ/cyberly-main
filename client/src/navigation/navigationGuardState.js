@@ -6,6 +6,18 @@ export function normalizeHashRoute(hashValue) {
   return `#/${raw.replace(/^\/+/, "") || "home"}`;
 }
 
+export function parseLearningDetailRoute(hashValue, page) {
+  const hash = normalizeHashRoute(hashValue);
+  if (!["resources", "scenarios"].includes(page) || !hash.startsWith(`#/${page}/`)) return { nested: false, slug: null };
+  const raw = hash.slice(page.length + 3);
+  try {
+    const slug = decodeURIComponent(raw);
+    return { nested: true, slug: /^[a-z0-9][a-z0-9_-]{0,139}$/.test(slug) ? slug : null };
+  } catch {
+    return { nested: true, slug: null };
+  }
+}
+
 export function routeIdentityFromHash(hashValue) {
   const hash = normalizeHashRoute(hashValue);
   const normalized = hash.replace(/^#\/?/, "");
@@ -40,6 +52,8 @@ export function resolveSessionRestoreHash({ currentHash, restoredPage, onboardin
   if (!onboardingCompleted) return "#/profile";
   const normalizedHash = normalizeHashRoute(currentHash);
   if (restoredPage === "admin") return normalizedHash;
+  const scenario = parseLearningDetailRoute(normalizedHash, "scenarios");
+  if (restoredPage === "scenarios" && scenario.slug) return `#/scenarios/${scenario.slug}`;
   return `#/${restoredPage || "home"}`;
 }
 

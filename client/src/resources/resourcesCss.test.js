@@ -20,6 +20,12 @@ function extractMediaBlock(stylesheet, mediaPattern) {
 }
 
 describe("Resources responsive CSS contract", () => {
+  test("reader is centered with narrow measure, wrapping and no modal dependency", () => {
+    expect(css).toMatch(/\.resources-reader\s*\{[^}]*max-width:\s*48rem[^}]*margin-inline:\s*auto/);
+    expect(css).toMatch(/\.resources-source-link\s*\{[^}]*max-width:\s*100%[^}]*overflow-wrap:\s*anywhere/);
+    expect(css).not.toContain("resources-dialog");
+    expect(css).not.toMatch(/position:\s*fixed/);
+  });
   test("supports a 320px viewport without concealing overflow defects", () => {
     expect(css).toMatch(/@media\s*\(max-width:\s*20rem\)/);
     expect(css).toMatch(/repeat\(auto-fit,\s*minmax\(min\(100%,/);

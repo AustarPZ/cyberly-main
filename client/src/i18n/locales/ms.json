@@ -708,6 +708,14 @@
     }
   },
   "resources": {
+    "reader": {
+      "back": "Kembali ke Sumber",
+      "externalSource": "Lihat sumber luar",
+      "practice": "Praktikkan apa yang dipelajari",
+      "unavailable": "Panduan ini tidak tersedia. Sila kembali ke Sumber.",
+      "retry": "Cuba lagi",
+      "scenarioUnavailable": "Senario ini tidak tersedia buat masa ini. Cuba lagi atau kembali ke pustaka."
+    },
     "title": "Sumber Kesihatan Siber",
     "description": "Panduan terpilih tentang ancaman siber yang paling relevan kepada remaja Malaysia. Klik mana-mana kad untuk membaca panduan penuh.",
     "loading": "Memuatkan sumber...",
