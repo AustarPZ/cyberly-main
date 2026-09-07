@@ -69,7 +69,7 @@ describe("AppShell route landmark ownership", () => {
     await i18n.changeLanguage("en");
   });
 
-  test("Progress leaves the application main landmark to AppShell", async () => {
+  test("Progress compatibility resolves through integrated Dashboard while AppShell owns the main landmark", async () => {
     window.history.replaceState({}, "", "#/progress");
     restoreAs("user");
     getProgress.mockResolvedValue({ ok: true, data: { assessmentTopicResults: [] } });
@@ -77,12 +77,14 @@ describe("AppShell route landmark ownership", () => {
 
     const { container } = render(<App />);
 
-    expect(await screen.findByRole("complementary", { name: i18n.t("progress.sectionNav.ariaLabel") })).toBeInTheDocument();
+    expect(await screen.findByRole("complementary", { name: i18n.t("dashboard.sectionNav.ariaLabel") })).toBeInTheDocument();
+    expect(window.location.hash).toBe("#/dashboard");
     expect(screen.getAllByRole("main")).toHaveLength(1);
     expect(screen.getByRole("main")).toHaveClass("cy-app-shell-main");
     expect(container.querySelector(".cy-app-shell")).toBeInTheDocument();
-    expect(container.querySelector(".progress-content")).toBeInTheDocument();
-    expect(container.querySelector(".progress-content").tagName).not.toBe("MAIN");
+    expect(container.querySelector(".dashboard-content")).toBeInTheDocument();
+    expect(container.querySelector(".dashboard-content").tagName).not.toBe("MAIN");
+    expect(container.querySelector(".dashboard-content #progress-overview")).toBeInTheDocument();
     expect(Array.from(container.querySelectorAll(".nav-primary button"), item => item.textContent)).toEqual([
       "Dashboard", "Resources", "Scenarios", "Assessment", "CyberGuard", "About",
     ]);

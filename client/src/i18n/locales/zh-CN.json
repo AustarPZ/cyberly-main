@@ -268,6 +268,16 @@
     }
   },
   "dashboard": {
+    "integrated": {
+      "progressUnavailable": "暂时无法获取学习路径进度。已记录的进度并未重置。",
+      "recommendationUnavailable": "暂时无法获取当前建议。",
+      "scenarioUnavailable": "暂时无法获取你的情境活动。",
+      "assessmentUnavailable": "暂时无法获取你的评估状态。",
+      "completionUnavailable": "无法确认完成状态。请重试。",
+      "retry": "重试",
+      "moreDetails": "活动详情与学习兴趣",
+      "formula": "此百分比的计算方式"
+    },
     "welcome": "欢迎回来，{{name}}",
     "yourDashboard": "你的仪表板",
     "recommendations": "推荐",

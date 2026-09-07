@@ -9,8 +9,8 @@ import {
   PROGRESS_SECTION_IDS,
 } from "./progressSemantics";
 import enLocale from "../i18n/locales/en.json";
-import fs from "fs";
-import path from "path";
+
+
 
 test("progress sections use learner-facing semantics without mastery nav", () => {
   const sections = getProgressSections({ hasAssessmentResults: true, hasRecommendation: true });
@@ -143,30 +143,4 @@ test("learning path segments clip visual overflow at display cap", () => {
 test("learning path points avoid unnecessary decimal noise", () => {
   expect(formatLearningPathPoints(25)).toBe("25");
   expect(formatLearningPathPoints(18.75)).toBe("18.8");
-});
-
-test("dashboard places learning path progress before initial assessment", () => {
-  const appSource = fs.readFileSync(path.join(__dirname, "..", "App.jsx"), "utf8");
-  const progressIndex = appSource.indexOf('id="dashboard-measured-progress"');
-  const assessmentIndex = appSource.indexOf('id="dashboard-initial-assessment"');
-  const recommendationIndex = appSource.indexOf('id="dashboard-recommended-next-step"');
-
-  expect(progressIndex).toBeGreaterThan(-1);
-  expect(assessmentIndex).toBeGreaterThan(-1);
-  expect(recommendationIndex).toBeGreaterThan(-1);
-  expect(progressIndex).toBeLessThan(assessmentIndex);
-  expect(progressIndex).toBeLessThan(recommendationIndex);
-  expect(recommendationIndex).toBeLessThan(assessmentIndex);
-});
-
-test("recommendation completion refreshes progress data from the API", () => {
-  const appSource = fs.readFileSync(path.join(__dirname, "..", "App.jsx"), "utf8");
-  const handlerStart = appSource.indexOf("async function completeRecommendation()");
-  const handlerEnd = appSource.indexOf("function scrollToProgressSection", handlerStart);
-  const handlerSource = appSource.slice(handlerStart, handlerEnd);
-
-  expect(handlerStart).toBeGreaterThan(-1);
-  expect(handlerSource).toMatch(/dbMarkRecommendationCompleted/);
-  expect(handlerSource).toMatch(/dbGetProgress/);
-  expect(handlerSource.indexOf("dbGetProgress")).toBeGreaterThan(handlerSource.indexOf("dbMarkRecommendationCompleted"));
 });

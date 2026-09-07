@@ -268,6 +268,16 @@
     }
   },
   "dashboard": {
+    "integrated": {
+      "progressUnavailable": "Learning-path progress is unavailable right now. Your recorded progress has not been reset.",
+      "recommendationUnavailable": "Your current recommendation is unavailable right now.",
+      "scenarioUnavailable": "Your Scenario activity is unavailable right now.",
+      "assessmentUnavailable": "Your Assessment status is unavailable right now.",
+      "completionUnavailable": "We could not confirm completion. Please try again.",
+      "retry": "Try again",
+      "moreDetails": "Activity details and learning interests",
+      "formula": "How this percentage is calculated"
+    },
     "welcome": "Welcome back, {{name}}",
     "yourDashboard": "Your Dashboard",
     "recommendations": "Recommendations",

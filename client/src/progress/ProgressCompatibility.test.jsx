@@ -3,7 +3,7 @@ import path from "path";
 import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import App from "../App";
 import i18n from "../i18n";
-import { restoreSession } from "../api/authApi";
+import { restoreSession, login } from "../api/authApi";
 import { getInitialAssessmentStatus } from "../api/assessmentApi";
 import { getProgress } from "../api/progressApi";
 import { getCurrentRecommendation, markRecommendationViewed, markRecommendationCompleted } from "../api/recommendationApi";
@@ -45,12 +45,12 @@ class IntersectionObserverMock {
   disconnect() {}
 }
 
-describe("Integrated Progress foundation", () => {
+describe("Progress protected compatibility", () => {
   beforeEach(async () => {
     jest.clearAllMocks();
     intersectionObserverCallback = undefined;
     window.history.replaceState({}, "", "#/progress");
-    window.scrollTo = jest.fn();
+    window.scrollTo = jest.fn(); Element.prototype.scrollIntoView = jest.fn();
     window.IntersectionObserver = IntersectionObserverMock;
     window.matchMedia = jest.fn().mockReturnValue({ matches: true, addEventListener: jest.fn(), removeEventListener: jest.fn() });
     await i18n.changeLanguage("en");
@@ -84,35 +84,54 @@ describe("Integrated Progress foundation", () => {
   });
 
 
-  test("keeps one Dashboard heading and shell for the compatibility entry",async()=>{
+  test("direct protected entry resolves to integrated Dashboard with one request owner",async()=>{
     render(<App />);
-    expect(await screen.findByRole('heading',{level:1,name:/Welcome back, Alya/})).toBeVisible();
+    await waitFor(()=>expect(window.location.hash).toBe('#/dashboard'));
+    expect(await screen.findByRole('heading',{level:1,name:/Welcome back/})).toBeVisible();
+    await waitFor(()=>expect(document.activeElement.id).toBe('progress-overview'));
+    expect(getProgress).toHaveBeenCalledTimes(1);
+    expect(getCurrentRecommendation).toHaveBeenCalledTimes(1);
     expect(screen.getAllByRole('main')).toHaveLength(1);
-    expect(screen.getAllByRole('heading',{level:1})).toHaveLength(1);
-    expect(document.querySelector('.progress-explorer-hero')).toBeNull();
-    expect(screen.getByRole('complementary',{name:i18n.t('dashboard.sectionNav.ariaLabel')})).toBeVisible();
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
   });
-  test("section navigation remains local and does not mutate learner state",async()=>{
+  test("returning through a Progress history entry does not create a duplicate mounted owner",async()=>{
     render(<App />);
-    await screen.findByText(i18n.t('progress.recentActivity.title'));
-    Element.prototype.scrollIntoView=jest.fn();
-    fireEvent.click(screen.getByRole('button',{name:i18n.t('dashboard.sectionNav.measuredProgress'),exact:true}));
-    expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({behavior:'auto',block:'start'});
+    await waitFor(()=>expect(window.location.hash).toBe('#/dashboard'));
+    act(()=>{window.history.pushState({},'', '#/progress'); window.dispatchEvent(new HashChangeEvent('hashchange'));});
+    await waitFor(()=>expect(window.location.hash).toBe('#/dashboard'));
+    expect(screen.getAllByRole('main')).toHaveLength(1);
+    await waitFor(()=>expect(document.activeElement.id).toBe('progress-overview'));
+  });
+  test("keeps unauthenticated Progress entry pending through Sign In",async()=>{
+    const restored=await restoreSession();
+    restoreSession.mockResolvedValue({ok:false,data:{}});
+    login.mockResolvedValue(restored);
+    render(<App />);
+    await waitFor(()=>expect(window.location.hash).toBe('#/login'));
+    fireEvent.change(document.querySelector('#login-email'),{target:{value:'local@example.test'}});
+    fireEvent.change(document.querySelector('#login-password'),{target:{value:'local-test-only'}});
+    fireEvent.click(screen.getByRole('button',{name:i18n.t('auth.signInButton'),exact:true}));
+    await waitFor(()=>expect(document.activeElement.id).toBe('progress-overview'));
     expect(window.location.hash).toBe('#/dashboard');
-    expect(markRecommendationCompleted).not.toHaveBeenCalled();
-    expect(markRecommendationViewed).not.toHaveBeenCalled();
   });
-  test("retains optional Assessment evidence once",async()=>{
+  test.each(['progress-badges','progress-assessment-results'])('shared action target opens and focuses %s',async(sectionId)=>{
+    window.history.replaceState({},'', '#/dashboard');
+    getCurrentRecommendation.mockResolvedValue({ok:true,data:{recommendation:{id:7,topicCode:'phishing',target:{page:'progress',sectionId}}}});
+    markRecommendationViewed.mockResolvedValue({ok:true,data:{}});
     render(<App />);
-    await waitFor(()=>expect(document.querySelectorAll('#progress-assessment-results')).toHaveLength(1));
-    expect(document.querySelectorAll('.assessment-results-grid')).toHaveLength(1);
+    fireEvent.click(await waitFor(()=>{const action=document.querySelector('#dashboard-recommended-next-step button:not(.btn-ghost)');expect(action).toBeInTheDocument();return action;},{timeout:5000}));
+    await waitFor(()=>expect(document.activeElement.id).toBe(sectionId));
+    if(sectionId==='progress-badges')expect(document.activeElement.closest('details')).toHaveAttribute('open');
+    expect(getProgress).toHaveBeenCalledTimes(1);
+    expect(markRecommendationViewed).toHaveBeenCalledTimes(1);
   });
-  test("keeps existing badge indicators in expandable secondary information",async()=>{
+  test('missing optional action section falls back without trapping focus',async()=>{
+    window.history.replaceState({},'', '#/dashboard');
+    getProgress.mockResolvedValue({ok:true,data:{learningPathProgress:{displayedPercent:0},assessmentTopicResults:[]}});
+    getCurrentRecommendation.mockResolvedValue({ok:true,data:{recommendation:{id:7,topicCode:'phishing',target:{page:'progress',sectionId:'progress-assessment-results'}}}});
+    markRecommendationViewed.mockResolvedValue({ok:true,data:{}});
     render(<App />);
-    const summary=await screen.findByText(i18n.t('dashboard.integrated.moreDetails'));
-    fireEvent.click(summary);
-    expect(document.querySelector('#progress-badges')).toBeInTheDocument();
-    expect(screen.getByText(i18n.t('progress.learningInterests.title'))).toBeInTheDocument();
-    expect(markRecommendationCompleted).not.toHaveBeenCalled();
+    fireEvent.click(await waitFor(()=>{const action=document.querySelector('#dashboard-recommended-next-step button:not(.btn-ghost)');expect(action).toBeInTheDocument();return action;},{timeout:5000}));
+    await waitFor(()=>expect(document.activeElement.id).toBe('progress-overview'));
   });
 });

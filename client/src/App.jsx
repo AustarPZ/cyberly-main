@@ -12,6 +12,8 @@ import "./resources/resources.css";
 import "./cyberguard/cyberguardLayout.css";
 import "./dashboard/dashboard.css";
 import "./progress/progress.css";
+import LearningPathProgressPanel from "./progress/LearningPathProgressPanel";
+import ProgressDetails from "./progress/ProgressDetails";
 import "./assessment/assessment.css";
 import "./scenario/scenarios.css";
 import "./profile/profile.css";
@@ -35,7 +37,6 @@ import ContextHeader from "./design-system/headers/ContextHeader";
 import SectionNav from "./design-system/navigation/SectionNav";
 import ExplorerHeroSurface from "./design-system/visual/ExplorerHeroSurface";
 import DashboardExplorerVisual from "./dashboard/DashboardExplorerVisual";
-import ProgressExplorerVisual from "./progress/ProgressExplorerVisual";
 import AssessmentCheckpointVisual from "./assessment/AssessmentCheckpointVisual";
 import ScenarioDecisionVisual from "./scenario/ScenarioDecisionVisual";
 import PageIdentity from "./design-system/visual/PageIdentity";
@@ -188,18 +189,11 @@ import {
 } from "./navigation/navigationGuardState";
 import {
   getProgressSections,
-  buildLearningPathSegments,
-  formatLearningPathPoints,
   mapAssessmentTopicResult,
-  normalizeLearningPathProgress,
-  normalizeActivityComposition,
-  normalizeRecentLearningActivity,
   PROGRESS_SECTION_IDS,
 } from "./progress/progressSemantics";
 import {
   buildResourceHeaderStats,
-  getAchievementDefinitions,
-  getLearningInterestStateKey,
 } from "./product/productSemantics";
 import cyberlyNavbarLogo from "./assets/Cyberly-navbar-logo-transparent.png";
 import cyberlyAuthLogo from "./assets/CyberlyLogo-transparent.png";
@@ -4274,153 +4268,6 @@ function topicLabel(topicCode, fallback) {
   return PROGRESS_TOPIC_META[topicCode]?.label || fallback || "Recommended topic";
 }
 
-const ACTIVITY_SEGMENT_ICONS = {
-  assessment_topics: "◇",
-  completed_scenarios: "✓",
-  completed_recommendations: "→",
-  learning_events: "•",
-};
-
-function activitySegmentLabelKey(segmentId) {
-  return `progress.activityComposition.segments.${segmentId}`;
-}
-
-function activitySegmentCountKey(segmentId) {
-  return `progress.activityComposition.segmentCounts.${segmentId}`;
-}
-
-function recentActivityLabelKey(type) {
-  return `progress.recentActivity.types.${type}`;
-}
-
-function learningPathSegmentLabelKey(segmentId) {
-  return `progress.learningPath.segments.${segmentId}`;
-}
-
-function learningPathComponentLabelKey(componentId) {
-  return `progress.learningPath.components.${componentId}`;
-}
-
-function learningPathStatusMessageKey(componentId, status) {
-  if (componentId === "assessment" && status === "not_completed") return "progress.learningPath.noAssessment";
-  if (componentId === "scenarios" && status === "no_eligible_scenarios") return "progress.learningPath.noEligibleScenarios";
-  if (componentId === "engagement" && status === "none_completed") return "progress.learningPath.noCompletedRecommendations";
-  return null;
-}
-
-function LearningPathProgressPanel({ value, t, compact = false, onViewJourney }) {
-  const LearningPathHeading = compact ? "h2" : "p";
-  const progress = normalizeLearningPathProgress(value);
-  const segments = buildLearningPathSegments(progress);
-  const components = [
-    {
-      id: "assessment",
-      data: progress.assessment,
-      meta: progress.assessment.totalQuestions > 0
-        ? t("progress.learningPath.assessmentCount", {
-          correct: progress.assessment.correctAnswers,
-          total: progress.assessment.totalQuestions,
-        })
-        : t("progress.learningPath.noAssessment"),
-    },
-    {
-      id: "scenarios",
-      data: progress.scenarios,
-      meta: progress.scenarios.totalEligible > 0
-        ? t("progress.learningPath.scenarioCount", {
-          completed: progress.scenarios.completedUnique,
-          total: progress.scenarios.totalEligible,
-        })
-        : t("progress.learningPath.noEligibleScenarios"),
-    },
-    {
-      id: "engagement",
-      data: progress.engagement,
-      meta: progress.engagement.completedRecommendations > 0
-        ? t("progress.learningPath.recommendationCount", {
-          count: progress.engagement.completedRecommendations,
-        })
-        : t("progress.learningPath.noCompletedRecommendations"),
-    },
-  ];
-  const reachedCore = progress.displayedPercent >= 100;
-
-  return (
-    <div className={`card learning-path-card${compact ? " compact" : ""}`}>
-      <div className="learning-path-header">
-        <div>
-          <LearningPathHeading className="section-title" style={{ fontSize: compact ? "1rem" : "1.1rem", marginBottom: "0.25rem" }}>
-            {t("progress.learningPath.title")}
-          </LearningPathHeading>
-          <p className="section-sub" style={{ marginBottom: 0 }}>
-            {reachedCore ? t("progress.learningPath.coreReached") : t("progress.learningPath.shortDescription")}
-          </p>
-        </div>
-        <div className="learning-path-percent" aria-label={t("progress.learningPath.percentAria", { percent: progress.displayedPercent })}>
-          {progress.displayedPercent}%
-        </div>
-      </div>
-      <div
-        className="learning-path-bar"
-        role="img"
-        aria-label={t("progress.learningPath.barAriaLabel", { percent: progress.displayedPercent })}
-      >
-        {segments.map(segment => (
-          <span
-            key={segment.id}
-            className={`learning-path-segment ${segment.id}`}
-            style={{ width: `${segment.width}%` }}
-            title={t(learningPathSegmentLabelKey(segment.id), { defaultValue: segment.id })}
-          />
-        ))}
-      </div>
-      {!compact && (
-        <>
-          <div className="learning-path-breakdown" aria-label={t("progress.learningPath.breakdownTitle")}>
-            <div style={{ gridColumn: "1 / -1", fontWeight: 800, color: "#27332f", fontSize: "0.9rem" }}>
-              {t("progress.learningPath.breakdownTitle")}
-            </div>
-            {components.map(component => {
-              const statusKey = learningPathStatusMessageKey(component.id, component.data.status);
-              return (
-                <div key={component.id} className="learning-path-component">
-                  <div className="learning-path-component-label">
-                    {t(learningPathComponentLabelKey(component.id))}
-                  </div>
-                  <div className="learning-path-component-value">
-                    {t("progress.learningPath.pointsOutOf", {
-                      earned: formatLearningPathPoints(component.data.earnedPoints),
-                      maximum: formatLearningPathPoints(component.data.maximumPoints),
-                    })}
-                  </div>
-                  <div className="learning-path-component-meta">
-                    {statusKey ? t(statusKey) : component.meta}
-                  </div>
-                </div>
-              );
-            })}
-          </div>
-          <div className="learning-path-disclaimer">
-            {t("progress.learningPath.disclaimer")}
-          </div>
-        </>
-      )}
-      {compact && (
-        <>
-          <div className="learning-path-disclaimer">
-            {t("progress.learningPath.shortDisclaimer")}
-          </div>
-          {onViewJourney && (
-            <button onClick={onViewJourney} style={{ marginTop: "0.75rem", background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1rem", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
-              {t("progress.learningPath.viewJourney")}
-            </button>
-          )}
-        </>
-      )}
-    </div>
-  );
-}
-
 // ─────────────────────────────────────────────────────────────────
 // STEP 1 — Account credentials
 // ─────────────────────────────────────────────────────────────────
@@ -6013,27 +5860,36 @@ const DASHBOARD_SECTIONS = [
   { id: "dashboard-cyberguard-ai", labelKey: "dashboard.sectionNav.cyberGuardAi" },
 ];
 
-const PROGRESS_SECTIONS = [
-  ...getProgressSections({ hasAssessmentResults: true, hasRecommendation: true }),
-];
 
 function DashboardPage() {
   const { t, i18n: activeI18n } = useTranslation();
-  const { user, go, handleChatAction, openRecommendedResource, openScenarioTarget } = useApp();
+  const { user, go, handleChatAction, openRecommendedResource, pendingProgressSection, clearPendingProgressSection, resolvedUiLocale } = useApp();
   const { conversations, selectConversation, initialLoading: chatHistoryLoading } = useChat();
+  const dashboardUserId = user?.id;
   const assessmentLocale = normalizeLocale(activeI18n.language);
+  const initializedLocaleUser = useRef(null);
+  const initialLocaleReady = initializedLocaleUser.current === dashboardUserId || assessmentLocale === resolvedUiLocale;
+  const [reloadIndex, setReloadIndex] = useState(0);
+  const [recommendationCompleting, setRecommendationCompleting] = useState(false);
+  const [recommendationCompleteSaved, setRecommendationCompleteSaved] = useState(false);
+  const [completionError, setCompletionError] = useState(false);
+  const dataEpoch = useRef(0);
+  const overviewRequest = useRef(null);
+  const completionInFlight = useRef(false);
+  const retryDashboard = () => setReloadIndex(value => value + 1);
   const [tipIndex] = useState(() => Math.floor(Math.random() * 4));
   const [assessmentStatus, setAssessmentStatus] = useState({ loading: true, status: "pending" });
   const [progressState, setProgressState] = useState({ loading: true, progress: null });
   const [recommendationState, setRecommendationState] = useState({ loading: true, recommendation: null });
-  const [scenarioState, setScenarioState] = useState({ loading: true, recommended: [], dashboard: null });
+  const [scenarioState, setScenarioState] = useState({ loading: true, dashboard: null });
   const [activeSection, setActiveSection] = useState("dashboard-overview");
   const dashboardAssessmentResults = (progressState.progress?.assessmentTopicResults || []).map(mapAssessmentTopicResult);
   const dashboardSections = DASHBOARD_SECTIONS;
 
   useEffect(() => {
     let active = true;
-    if (!user) return () => { active = false; };
+    if (!dashboardUserId || !initialLocaleReady) return () => { active = false; };
+    setAssessmentStatus({ loading: true, status: "unknown" });
     dbGetAssessmentStatus(assessmentLocale).then(result => {
       if (!active) return;
       if (result.ok) {
@@ -6043,7 +5899,7 @@ function DashboardPage() {
       }
     });
     return () => { active = false; };
-  }, [user, assessmentLocale]);
+  }, [dashboardUserId, assessmentLocale, reloadIndex, initialLocaleReady]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -6103,23 +5959,38 @@ function DashboardPage() {
 
   useEffect(() => {
     let active = true;
-    if (!user) return () => { active = false; };
-    Promise.all([dbGetRecommendedScenarios(assessmentLocale), dbGetScenarioDashboard(assessmentLocale)]).then(([recommendedResult, dashboardResult]) => {
+    if (!dashboardUserId || !initialLocaleReady) return () => { active = false; };
+    setScenarioState({ loading: true, dashboard: null });
+    dbGetScenarioDashboard(assessmentLocale).then(dashboardResult => {
       if (!active) return;
       setScenarioState({
         loading: false,
-        recommended: recommendedResult.ok ? recommendedResult.scenarios : [],
         dashboard: dashboardResult.ok ? dashboardResult : null,
-        error: recommendedResult.ok && dashboardResult.ok ? null : (recommendedResult.error || dashboardResult.error),
+        summaryError: !dashboardResult.ok,
       });
     });
     return () => { active = false; };
-  }, [user, assessmentLocale]);
+  }, [dashboardUserId, assessmentLocale, reloadIndex, initialLocaleReady]);
 
   useEffect(() => {
     let active = true;
-    if (!user) return () => { active = false; };
-    Promise.all([dbGetProgress(), dbGetCurrentRecommendation(assessmentLocale)]).then(([progressResult, recommendationResult]) => {
+    if (!dashboardUserId || !initialLocaleReady) return () => { active = false; };
+    initializedLocaleUser.current = dashboardUserId;
+    const epoch = ++dataEpoch.current;
+    completionInFlight.current = false;
+    setRecommendationCompleting(false);
+    setRecommendationCompleteSaved(false);
+    setCompletionError(false);
+    setProgressState({ loading: true, progress: null });
+    setRecommendationState({ loading: true, recommendation: null });
+    const requestKey = `${dashboardUserId}:${assessmentLocale}:${reloadIndex}`;
+    if (overviewRequest.current?.key !== requestKey) {
+      overviewRequest.current = {
+        key: requestKey,
+        promise: Promise.all([dbGetProgress(), dbGetCurrentRecommendation(assessmentLocale)]),
+      };
+    }
+    overviewRequest.current.promise.then(([progressResult, recommendationResult]) => {
       if (!active) return;
       setProgressState(progressResult.ok
         ? { loading: false, progress: progressResult }
@@ -6128,8 +5999,51 @@ function DashboardPage() {
         ? { loading: false, recommendation: recommendationResult.recommendation }
         : { loading: false, recommendation: null, error: recommendationResult.error });
     });
-    return () => { active = false; };
-  }, [user, assessmentLocale]);
+    return () => { active = false; if (dataEpoch.current === epoch) dataEpoch.current += 1; };
+  }, [dashboardUserId, assessmentLocale, reloadIndex, initialLocaleReady]);
+
+  useEffect(() => {
+    if (!pendingProgressSection || progressState.loading || recommendationState.loading) return undefined;
+    const allowed = getProgressSections({
+      hasAssessmentResults: dashboardAssessmentResults.length > 0,
+      hasRecommendation: Boolean(recommendationState.recommendation),
+    }).map(section => section.id);
+    const timer = window.setTimeout(() => {
+      const requested = allowed.includes(pendingProgressSection) ? pendingProgressSection : PROGRESS_SECTION_IDS.OVERVIEW;
+      const target = document.getElementById(requested) || document.getElementById(PROGRESS_SECTION_IDS.OVERVIEW);
+      if (target) {
+        let parent = target.parentElement;
+        while (parent) { if (parent.tagName === "DETAILS") parent.open = true; parent = parent.parentElement; }
+        target.setAttribute("tabindex", "-1");
+        target.scrollIntoView?.({ behavior: prefersReducedMotion() ? "auto" : "smooth", block: "start" });
+        target.focus({ preventScroll: true });
+      }
+      clearPendingProgressSection();
+    }, 0);
+    return () => window.clearTimeout(timer);
+  }, [pendingProgressSection, progressState.loading, recommendationState.loading, dashboardAssessmentResults.length, recommendationState.recommendation, clearPendingProgressSection]);
+
+  async function completeRecommendation() {
+    const current = recommendationState.recommendation;
+    if (!current?.id || completionInFlight.current) return;
+    const epoch = dataEpoch.current;
+    completionInFlight.current = true;
+    setRecommendationCompleting(true);
+    setCompletionError(false);
+    setRecommendationCompleteSaved(false);
+    const result = await dbMarkRecommendationCompleted(current.id, assessmentLocale);
+    if (dataEpoch.current !== epoch) return;
+    if (result.ok) {
+      setRecommendationState({ loading: false, recommendation: result.recommendation });
+      setProgressState({ loading: true, progress: null });
+      const refreshed = await dbGetProgress();
+      if (dataEpoch.current !== epoch) return;
+      setProgressState(refreshed.ok ? { loading: false, progress: refreshed } : { loading: false, progress: null, error: refreshed.error });
+      setRecommendationCompleteSaved(true);
+    } else setCompletionError(true);
+    completionInFlight.current = false;
+    setRecommendationCompleting(false);
+  }
 
   if (!user) { go("login"); return null; }
 
@@ -6137,7 +6051,6 @@ function DashboardPage() {
   const group = getAgeGroup(user.age);
   const dashboardLearningPathProgress = progressState.progress?.learningPathProgress;
   const recommendation = recommendationState.recommendation;
-  const recommendedScenario = scenarioState.recommended?.[0];
   const scenarioDashboard = scenarioState.dashboard;
   const translatedAgeGroup = t(`settings.ageGroups.${group.key}`,{defaultValue: group.label});
   const familiarityValue = user.profile?.familiarityLevel || "";
@@ -6152,15 +6065,15 @@ function DashboardPage() {
   );
 
   async function followRecommendation() {
+    const epoch = dataEpoch.current;
     if (recommendation?.id) {
       await dbMarkRecommendationViewed(recommendation.id, assessmentLocale);
     }
+    if (dataEpoch.current !== epoch) return;
     if (recommendation?.target && handleChatAction({ target: recommendation.target })) {
       return;
     }
-    if (recommendedScenario) {
-      openScenarioTarget(recommendedScenario, "dashboard");
-    } else if (recommendation?.topicCode) {
+    if (recommendation?.topicCode) {
       openRecommendedResource(recommendation.topicCode);
     } else {
       go("assessment");
@@ -6293,34 +6206,24 @@ function DashboardPage() {
 
       <div className="dashboard-content">
 
-        <div id="dashboard-measured-progress" className="dashboard-anchor">
+        <div id="dashboard-measured-progress" className="dashboard-anchor"><div id="progress-overview" className="progress-anchor">
           {progressState.loading ? (
             <div className="card learning-path-card compact">
               <PageState message={t("dashboard.progress.loading")} />
             </div>
-          ) : dashboardLearningPathProgress ? (
-            <LearningPathProgressPanel
-              value={dashboardLearningPathProgress}
-              t={t}
-              compact
-              onViewJourney={() => go("progress")}
-            />
-          ) : (
-            <div className="card learning-path-card compact">
-              <PageState type="empty" message={t("dashboard.progress.empty")} />
-              <button onClick={() => go("progress")} style={{ marginTop: "0.75rem", background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1rem", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
-                {t("dashboard.progress.viewJourney")}
-              </button>
-            </div>
-          )}
-        </div>
+          ) : progressState.error || !dashboardLearningPathProgress ? (
+            <div className="card learning-path-card"><PageState type="error" message={t("dashboard.integrated.progressUnavailable")} /><button className="btn-ghost" onClick={retryDashboard}>{t("dashboard.integrated.retry")}</button></div>
+          ) : <LearningPathProgressPanel value={dashboardLearningPathProgress} t={t} />}
+        </div></div>
 
         <div>
           <div id="dashboard-recommended-next-step" className="card dashboard-anchor dashboard-journey-surface">
-            <h2 style={{ fontWeight: 700, color: "var(--teal)", margin: "0 0 0.35rem" }}>{t("dashboard.recommendation.title")}</h2>
+            <h2 id="progress-recommendation" className="progress-anchor" style={{ fontWeight: 700, color: "var(--teal)", margin: "0 0 0.35rem" }}>{t("dashboard.recommendation.title")}</h2>
+            {recommendationCompleteSaved && <SuccessFeedback message={t("progress.recommendation.completedSaved")} />}
+            {completionError && <p role="alert">{t("dashboard.integrated.completionUnavailable")}</p>}
             {recommendationState.loading ? (
               <PageState message={t("dashboard.recommendation.loading")} />
-            ) : recommendation ? (
+            ) : recommendationState.error ? (<><PageState type="error" message={t("dashboard.integrated.recommendationUnavailable")} /><button className="btn-ghost" onClick={retryDashboard}>{t("dashboard.integrated.retry")}</button></>) : recommendation ? (
               <>
                 <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.05rem", marginBottom: "0.35rem", color: "#1a1a18" }}>
                   {recommendationTitle}
@@ -6335,12 +6238,11 @@ function DashboardPage() {
                       ? t("dashboard.recommendation.readResource")
                       : recommendationTargetPage === "assessment"
                         ? t("dashboard.recommendation.startAssessment")
-                        : recommendedScenario
-                          ? t("dashboard.recommendation.practiceScenario")
-                          : recommendation.topicCode
+                        : recommendation.topicCode
                             ? t("dashboard.recommendation.readResource")
                             : t("dashboard.recommendation.startAssessment")}
                 </button>
+                {recommendation.topicCode && recommendation.status !== "completed" && <button className="btn-ghost" onClick={completeRecommendation} disabled={recommendationCompleting}>{recommendationCompleting ? t("common.saving") : t("progress.recommendation.markComplete")}</button>}
               </>
             ) : (
               <PageState type="empty" message={t("dashboard.recommendation.empty")} />
@@ -6355,7 +6257,7 @@ function DashboardPage() {
               <PageState message={t("dashboard.scenarios.loadingActivity")} />
             ) : (
               <>
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0.75rem", marginBottom: "0.85rem" }}>
+                {scenarioState.summaryError ? <><PageState type="error" message={t("dashboard.integrated.scenarioUnavailable")} /><button className="btn-ghost" onClick={retryDashboard}>{t("dashboard.integrated.retry")}</button></> : <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0.75rem", marginBottom: "0.85rem" }}>
                   <div>
                     <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.45rem", fontWeight: 700, color: "#1a1a18" }}>{scenarioDashboard?.completedCount || 0}</div>
                     <div style={{ fontSize: "0.74rem", color: "#777" }}>{t("dashboard.scenarios.completed")}</div>
@@ -6364,15 +6266,10 @@ function DashboardPage() {
                     <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.45rem", fontWeight: 700, color: "#1a1a18" }}>{scenarioDashboard?.inProgress ? "1" : "0"}</div>
                     <div style={{ fontSize: "0.74rem", color: "#777" }}>{t("dashboard.scenarios.inProgress")}</div>
                   </div>
-                </div>
+                </div>}
                 {scenarioDashboard?.latestCompleted && (
                   <div style={{ fontSize: "0.82rem", color: "#555", lineHeight: 1.55, marginBottom: "0.8rem" }}>
                     {t("dashboard.scenarios.latest")}: <strong>{scenarioDashboard.latestCompleted.title}</strong> · {t( `scenarioResults.${scenarioDashboard.latestCompleted.resultLevel}`, { defaultValue: scenarioResultLabel( scenarioDashboard.latestCompleted.resultLevel)})}
-                  </div>
-                )}
-                {recommendedScenario && (
-                  <div style={{ fontSize: "0.82rem", color: "#445", lineHeight: 1.55, marginBottom: "0.8rem" }}>
-                    <strong>{recommendedScenario.title}</strong> · {t(`topics.${recommendedScenario.topicCode}`, { defaultValue: topicLabel(recommendedScenario.topicCode) })} · {t(`levels.${recommendedScenario.difficulty}`, { defaultValue: levelLabel(recommendedScenario.difficulty) })}
                   </div>
                 )}
                 <button onClick={() => go("scenarios")} style={{ background: "#2E7D32", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1rem", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
@@ -6385,8 +6282,8 @@ function DashboardPage() {
         </div>
 
         <div id="dashboard-initial-assessment" className="card dashboard-anchor dashboard-next-surface">
-          <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
-            <div style={{ flex: 1, minWidth: 220 }}>
+          {assessmentStatus.loading ? <PageState message={t("dashboard.assessment.checking")} /> : assessmentStatus.error || assessmentStatus.status === "unknown" ? <><h2>{t("progress.snapshot.assessmentStatus")}</h2><PageState type="error" message={t("dashboard.integrated.assessmentUnavailable")} /><button className="btn-ghost" onClick={retryDashboard}>{t("dashboard.integrated.retry")}</button></> : <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
+            <div style={{ flex: 1, minWidth: 0 }}>
               <h2 style={{ fontWeight: 700, color: "#e65100", margin: "0 0 0.25rem" }}>
                 {assessmentStatus.status === "completed"
                   ? t("dashboard.assessment.completed")
@@ -6409,9 +6306,9 @@ function DashboardPage() {
             <button onClick={() => go("assessment")} style={{ background: "#FB8C00", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>
               {assessmentStatus.status === "completed" ? t("dashboard.assessment.viewResults") : assessmentStatus.status === "in_progress" ? t("dashboard.assessment.resume") : t("dashboard.assessment.start")}
             </button>
-          </div>
-          {assessmentStatus.status === "completed" && dashboardAssessmentResults.length > 0 && (
-            <div className="assessment-results-grid" style={{ marginTop: "1rem" }}>
+          </div>}
+          {dashboardAssessmentResults.length > 0 && (
+            <div id="progress-assessment-results" className="assessment-results-grid progress-anchor" style={{ marginTop: "1rem" }}>
               {dashboardAssessmentResults.map(topic => (
                 <div key={topic.topicCode} className="card" style={{ padding: "1rem" }}>
                   <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.55rem" }}>
@@ -6443,6 +6340,8 @@ function DashboardPage() {
           ))}
         </div>
         </div>
+
+        {!progressState.loading && !progressState.error && progressState.progress && <ProgressDetails progress={progressState.progress} user={user} topics={HELP_OPTIONS} t={t} locale={assessmentLocale} onExplore={() => go("resources")} />}
 
         {/* Daily tip */}
         <div id="dashboard-daily-tip" className="dashboard-anchor dashboard-field-note">
@@ -8867,491 +8766,11 @@ function ProfilePage() {
 
 // ─── Page: Progress ──────────────────────────────────────────────
 function ProgressPage() {
-  const { t, i18n: activeI18n } = useTranslation();
-  const {
-    user,
-    go,
-    openRecommendedResource,
-    openScenarioTarget,
-    pendingProgressSection,
-    clearPendingProgressSection,
-  } = useApp();
-  const progressLocale = normalizeLocale(activeI18n.language);
-  const [progressState, setProgressState] = useState({ loading: true, progress: null });
-  const [recommendationState, setRecommendationState] = useState({ loading: true, recommendation: null });
-  const [recommendationCompleting, setRecommendationCompleting] = useState(false);
-  const [recommendationCompleteSaved, setRecommendationCompleteSaved] = useState(false);
-  const [activeProgressSection, setActiveProgressSection] = useState(PROGRESS_SECTION_IDS.OVERVIEW);
-
+  const { user, handleChatAction, pendingProgressSection } = useApp();
   useEffect(() => {
-    let active = true;
-    if (!user) return () => { active = false; };
-    Promise.all([dbGetProgress(), dbGetCurrentRecommendation(progressLocale)]).then(([progressResult, recommendationResult]) => {
-      if (!active) return;
-      setProgressState(progressResult.ok
-        ? { loading: false, progress: progressResult }
-        : { loading: false, progress: null, error: progressResult.error });
-      setRecommendationState(recommendationResult.ok
-        ? { loading: false, recommendation: recommendationResult.recommendation }
-        : { loading: false, recommendation: null, error: recommendationResult.error });
-    });
-    return () => { active = false; };
-  }, [user, progressLocale]);
-
-  useEffect(() => {
-    if (!recommendationCompleteSaved) return undefined;
-    const timeout = window.setTimeout(() => setRecommendationCompleteSaved(false), prefersReducedMotion() ? 2500 : 3500);
-    return () => window.clearTimeout(timeout);
-  }, [recommendationCompleteSaved]);
-
-  const assessmentTopicResults = (progressState.progress?.assessmentTopicResults || []).map(mapAssessmentTopicResult);
-  const activityComposition = normalizeActivityComposition(progressState.progress?.activityComposition);
-  const recentLearningActivity = normalizeRecentLearningActivity(progressState.progress?.recentLearningActivity);
-  const hasAssessmentResultsSection = Boolean(assessmentTopicResults.length);
-  const hasRecommendationSection = Boolean(recommendationState.recommendation);
-  const progressSections = PROGRESS_SECTIONS.filter(section => (
-    (section.optional !== "assessmentResults" || hasAssessmentResultsSection) &&
-    (section.optional !== "recommendation" || hasRecommendationSection)
-  ));
-
-  useEffect(() => {
-    const visibleSectionIds = PROGRESS_SECTIONS
-      .filter(section => (
-        (section.optional !== "assessmentResults" || hasAssessmentResultsSection) &&
-        (section.optional !== "recommendation" || hasRecommendationSection)
-      ))
-      .map(section => section.id);
-
-    setActiveProgressSection(current => (
-      visibleSectionIds.includes(current)
-        ? current
-        : visibleSectionIds[0] || PROGRESS_SECTION_IDS.OVERVIEW
-    ));
-
-    const sections = visibleSectionIds
-      .map(id => document.getElementById(id))
-      .filter(Boolean);
-
-    if (sections.length === 0) return undefined;
-
-    const isAtPageEnd = () => {
-      const tolerance = 4;
-      const documentHeight = Math.max(
-        document.documentElement.scrollHeight,
-        document.body?.scrollHeight || 0
-      );
-      const maxScrollY = Math.max(0, documentHeight - window.innerHeight);
-
-      if (maxScrollY <= tolerance) return false;
-      return window.scrollY >= maxScrollY - tolerance;
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      if (isAtPageEnd()) {
-        setActiveProgressSection(visibleSectionIds[visibleSectionIds.length - 1]);
-        return;
-      }
-
-      const visible = entries
-        .filter(entry => entry.isIntersecting)
-        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-
-      if (visible?.target?.id) {
-        setActiveProgressSection(visible.target.id);
-      }
-    }, {
-      rootMargin: "-80px 0px -65% 0px",
-      threshold: [0.1, 0.35, 0.6],
-    });
-
-    const updateActiveSectionAtPageEnd = () => {
-      if (isAtPageEnd()) {
-        setActiveProgressSection(visibleSectionIds[visibleSectionIds.length - 1]);
-      }
-    };
-
-    sections.forEach(section => observer.observe(section));
-    window.addEventListener("scroll", updateActiveSectionAtPageEnd, { passive: true });
-    updateActiveSectionAtPageEnd();
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", updateActiveSectionAtPageEnd);
-    };
-  }, [hasAssessmentResultsSection, hasRecommendationSection]);
-
-  useEffect(() => {
-    if (!pendingProgressSection) return;
-    const validSectionIds = progressSections.map(section => section.id);
-    if (!validSectionIds.includes(pendingProgressSection)) {
-      if (!progressState.loading && !recommendationState.loading) clearPendingProgressSection();
-      return;
-    }
-
-    window.setTimeout(() => {
-      const target = document.getElementById(pendingProgressSection);
-      if (target) {
-        target.setAttribute("tabindex", "-1");
-        target.scrollIntoView({
-          behavior: prefersReducedMotion() ? "auto" : "smooth",
-          block: "start",
-        });
-        target.focus({ preventScroll: true });
-      }
-      clearPendingProgressSection();
-    }, 0);
-  }, [
-    pendingProgressSection,
-    progressSections,
-    progressState.loading,
-    recommendationState.loading,
-    clearPendingProgressSection,
-  ]);
-
-  if (!user) { go("login"); return null; }
-
-  const nick  = user.aiNickname || user.name;
-  const topics = user.helpTopics || [];
-  const profileLevelValue = user.profile?.familiarityLevel || "";
-  const languageValue = user.profile?.preferredLanguage || "";
-  const learningStyleValue = user.profile?.learningStyle || "";
-  const profileLevel = profileLevelValue
-    ? t(`profileOptions.familiarity.${profileLevelValue}.label`, { defaultValue: user.familiarity || t("dashboard.beginner") })
-    : user.familiarity || t("dashboard.beginner");
-  const lang = languageValue
-    ? t(`profileOptions.language.${languageValue}`, { defaultValue: user.language || "English" })
-    : user.language || "English";
-  const style = learningStyleValue
-    ? t(`profileOptions.learningStyle.${learningStyleValue}`, { defaultValue: user.learningStyle || t("common.notSet") })
-    : user.learningStyle || t("common.notSet");
-
-  const allTopics = HELP_OPTIONS;
-
-  const summary = progressState.progress?.summary;
-  const learningPathProgress = progressState.progress?.learningPathProgress;
-  const recommendation = recommendationState.recommendation;
-  const activitySegments = activityComposition.segments;
-
-  const achievements = getAchievementDefinitions({
-    hasJoined: true,
-    hasHelpTopics: topics.length > 0,
-    hasMultipleLanguages: languageValue && languageValue !== "english",
-    hasAssessmentBaseline: Boolean(summary?.exists),
-  });
-
-  async function completeRecommendation() {
-    if (!recommendation?.id || recommendationCompleting) return;
-    setRecommendationCompleting(true);
-    const result = await dbMarkRecommendationCompleted(recommendation.id, progressLocale);
-    setRecommendationCompleting(false);
-    if (result.ok) {
-      setRecommendationState({ loading: false, recommendation: result.recommendation });
-      const progressResult = await dbGetProgress();
-      setProgressState(progressResult.ok
-        ? { loading: false, progress: progressResult }
-        : { loading: false, progress: null, error: progressResult.error });
-      setRecommendationCompleteSaved(true);
-    }
-  }
-
-  function scrollToProgressSection(sectionId) {
-    document.getElementById(sectionId)?.scrollIntoView({
-      behavior: prefersReducedMotion() ? "auto" : "smooth",
-      block: "start",
-    });
-  }
-
-  return (
-    <div>
-      <PageContainer>
-        <ExplorerHeroSurface
-          identity={t("progress.title")}
-          icon={<span aria-hidden="true">↗</span>}
-          visual={<ProgressExplorerVisual />}
-          className="progress-explorer-hero"
-        >
-          <CompactHeader
-            title={t("progress.heroTitle", { name: nick })}
-            description={summary?.exists
-              ? t("progress.baselineSummary", { count: assessmentTopicResults.length })
-              : t("progress.profileFamiliaritySummary", { level: profileLevel })}
-            metadata={(
-              <>
-                <span>{lang}</span>
-                <span aria-hidden="true">·</span>
-                <span>{style}</span>
-              </>
-            )}
-          />
-        </ExplorerHeroSurface>
-      </PageContainer>
-
-      <div className="progress-shell">
-        <SectionNav
-          ariaLabel={t("progress.sectionNav.ariaLabel")}
-          title={t("progress.sectionNav.title")}
-          items={progressSections.map((section) => ({
-            id: section.id,
-            label: t(section.labelKey),
-          }))}
-          activeId={activeProgressSection}
-          onSelect={scrollToProgressSection}
-        />
-
-        <div className="progress-content">
-          <PageBackButton style={{ marginBottom: "2rem" }} />
-
-        <div id={PROGRESS_SECTION_IDS.OVERVIEW} className="progress-anchor progress-overview-surface" style={{ marginBottom: "2.5rem" }}>
-          {progressState.loading ? (
-            <div className="card learning-path-card">
-              <PageState message={t("common.loading")} />
-            </div>
-          ) : (
-            <LearningPathProgressPanel value={learningPathProgress} t={t} />
-          )}
-
-          <div className="card activity-composition-card">
-            <div className="activity-composition-header">
-              <div>
-                <p className="section-title" style={{ fontSize: "1.1rem", marginBottom: "0.25rem" }}>
-                  {t("progress.activityComposition.title")}
-                </p>
-                <p className="section-sub" style={{ marginBottom: 0 }}>
-                  {t("progress.activityComposition.description")}
-                </p>
-              </div>
-              {activityComposition.totalRecordedActivities > 0 && (
-                <div className="activity-composition-total">
-                  {t("progress.activityComposition.recordedActivitiesCount", { count: activityComposition.totalRecordedActivities })}
-                </div>
-              )}
-            </div>
-            {progressState.loading ? (
-              <PageState message={t("common.loading")} />
-            ) : activitySegments.length > 0 ? (
-              <>
-                <div
-                  className="activity-composition-bar"
-                  role="img"
-                  aria-label={t("progress.activityComposition.barAriaLabel")}
-                >
-                  {activitySegments.map(segment => (
-                    <span
-                      key={segment.id}
-                      className={`activity-composition-segment ${segment.id}`}
-                      style={{ width: `${segment.sharePercentage}%` }}
-                      title={t("progress.activityComposition.segmentShare", {
-                        label: t(activitySegmentLabelKey(segment.id), { defaultValue: segment.label }),
-                        share: segment.sharePercentage,
-                        count: segment.count,
-                      })}
-                    />
-                  ))}
-                </div>
-                <div className="activity-composition-legend" aria-label={t("progress.activityComposition.legendLabel")}>
-                  {activitySegments.map(segment => (
-                    <div key={segment.id} className="activity-composition-legend-item">
-                      <span className={`activity-composition-dot ${segment.id}`} aria-hidden="true" />
-                      <div style={{ minWidth: 0 }}>
-                        <div style={{ fontWeight: 800, fontSize: "0.86rem", color: "#26312d" }}>
-                          <span aria-hidden="true" style={{ marginRight: "0.35rem" }}>{ACTIVITY_SEGMENT_ICONS[segment.id] || "•"}</span>
-                          {t(activitySegmentLabelKey(segment.id), { defaultValue: segment.label })}
-                        </div>
-                        <div style={{ fontSize: "0.78rem", color: "#61716b", lineHeight: 1.45 }}>
-                          {t(activitySegmentCountKey(segment.id), {
-                            count: segment.count,
-                            defaultValue: segment.displayValue,
-                          })} · {t("progress.activityComposition.shareOfActivity", { share: segment.sharePercentage })}
-                        </div>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-                {activitySegments.length === 1 && (
-                  <div className="activity-composition-disclaimer">
-                    {t("progress.activityComposition.singleCategory", {
-                      label: t(activitySegmentLabelKey(activitySegments[0].id), { defaultValue: activitySegments[0].label }),
-                    })}
-                  </div>
-                )}
-              </>
-            ) : (
-              <PageState type="empty" message={t("progress.activityComposition.empty")} />
-            )}
-            <div className="activity-composition-disclaimer">
-              {activitySegments.length === 1 && activitySegments[0].id === "assessment_topics"
-                ? `${t("progress.activityComposition.assessmentOnlyNote")} `
-                : ""}
-              {t("progress.activityComposition.explanation")} {t("progress.activityComposition.disclaimer")}
-            </div>
-          </div>
-
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: "1rem" }}>
-            {[
-              { icon: "🎓", labelKey: "progress.snapshot.assessmentStatus", value: progressState.loading ? t("common.loading") : (summary?.exists ? t("progress.snapshot.baselineAvailable") : t("progress.snapshot.noBaseline")) },
-              { icon: "🌐", labelKey: "progress.snapshot.language", value: lang },
-              { icon: "📖", labelKey: "progress.snapshot.style",    value: style },
-              { icon: "🎯", labelKey: "progress.snapshot.topics",   value: t("progress.selectedTopics", { count: topics.length }) },
-            ].map(s => (
-              <div key={s.labelKey} className="card" style={{ textAlign: "center", padding: "1.25rem 1rem" }}>
-                <div style={{ fontSize: "1.5rem", marginBottom: "0.35rem" }}>{s.icon}</div>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1rem", color: "var(--teal)", marginBottom: "0.2rem" }}>{s.value}</div>
-                <div style={{ fontSize: "0.75rem", color: "#888" }}>{t(s.labelKey)}</div>
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {assessmentTopicResults.length > 0 && (
-          <div id={PROGRESS_SECTION_IDS.ASSESSMENT_RESULTS} className="progress-anchor progress-checkpoint-surface" style={{ marginBottom: "2.5rem" }}>
-            <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("progress.assessmentResults.title")}</p>
-            <p className="section-sub" style={{ marginBottom: "1rem" }}>{t("progress.assessmentResults.description")}</p>
-            <div className="assessment-results-grid">
-              {assessmentTopicResults.map(topic => (
-                <div key={topic.topicCode} className="card">
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem", alignItems: "flex-start", marginBottom: "0.65rem" }}>
-                    <div>
-                      <div style={{ fontSize: "1.25rem", marginBottom: "0.25rem" }}>{PROGRESS_TOPIC_META[topic.topicCode]?.icon || "📘"}</div>
-                      <div style={{ fontWeight: 700, fontSize: "0.92rem" }}>{t(`topics.${topic.topicCode}`, { defaultValue: topicLabel(topic.topicCode, topic.topicLabel) })}</div>
-                    </div>
-                    <div style={{ color: "var(--teal)", fontWeight: 800 }}>
-                      {t("progress.assessmentResults.correctOutOfTotal", { correct: topic.correctCount, total: topic.totalCount })}
-                    </div>
-                  </div>
-                  <div style={{ fontSize: "0.78rem", color: "#666" }}>
-                    {t("progress.assessmentResults.assessmentResult", {
-                      level: t(`levels.${topic.resultLevel}`, { defaultValue: levelLabel(topic.resultLevel) }),
-                    })} · {t("progress.assessmentResults.source")}
-                  </div>
-                </div>
-              ))}
-            </div>
-          </div>
-        )}
-
-        {recommendation && (
-          <div id="progress-recommendation" className="card progress-anchor progress-recommendation-surface" style={{ marginBottom: "2.5rem" }}>
-            {recommendationCompleteSaved && <SuccessFeedback message={t("progress.recommendation.completedSaved")} />}
-            <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.3rem" }}>{t("progress.currentFocus.title")}</div>
-            <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.05rem", marginBottom: "0.4rem" }}>
-              {recommendation.topicCode ? t(`topics.${recommendation.topicCode}`, { defaultValue: topicLabel(recommendation.topicCode, recommendation.topicLabel) }) : t("dashboard.recommendation.initialAssessment")}
-            </div>
-            <div style={{ fontSize: "0.78rem", color: "#496157", lineHeight: 1.5, marginBottom: "0.55rem" }}>
-              {t("progress.currentFocus.basedOn")} · {t("progress.currentFocus.suggestedNextStep")}
-            </div>
-            <div style={{ fontSize: "0.86rem", color: "#3e5149", lineHeight: 1.6, marginBottom: "1rem" }}>
-              {recommendation.reasonText}
-            </div>
-            <div style={{ display: "flex", gap: "0.75rem", flexWrap: "wrap" }}>
-              <button onClick={() => recommendation.topicCode ? openRecommendedResource(recommendation.topicCode) : go("assessment")} style={{ background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>
-                {recommendation.topicCode ? t("dashboard.recommendation.readResource") : t("dashboard.recommendation.startAssessment")}
-              </button>
-              {recommendation.topicCode && (
-                <button onClick={() => recommendation.target ? openScenarioTarget(recommendation.target, "progress") : go("scenarios")} style={{ background: "#2E7D32", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: "pointer" }}>
-                  {t("dashboard.recommendation.practiceScenario")}
-                </button>
-              )}
-              {recommendation.topicCode && recommendation.status !== "completed" && (
-                <button onClick={completeRecommendation} disabled={recommendationCompleting} style={{ background: "#fff", color: "var(--teal)", border: "1px solid rgba(29,158,117,0.3)", borderRadius: 10, padding: "0.6rem 1.1rem", fontSize: "0.84rem", fontWeight: 700, cursor: recommendationCompleting ? "not-allowed" : "pointer", opacity: recommendationCompleting ? 0.55 : 1 }}>
-                  {recommendationCompleting ? t("common.saving") : t("progress.recommendation.markComplete")}
-                </button>
-              )}
-            </div>
-          </div>
-        )}
-
-        {/* Learning activity and topics */}
-        <div id={PROGRESS_SECTION_IDS.LEARNING_ACTIVITY} className="progress-anchor progress-activity-trail" style={{ marginBottom: "2.5rem" }}>
-          <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("progress.learningActivity.title")}</p>
-          <p className="section-sub" style={{ marginBottom: "1rem" }}>{t("progress.learningActivity.description")}</p>
-          <div className="card" style={{ marginBottom: "1rem", padding: "1rem" }}>
-            <div style={{ fontWeight: 700, color: "var(--teal)", marginBottom: "0.35rem" }}>
-              {t("progress.recentActivity.title")}
-            </div>
-            <div style={{ fontSize: "0.82rem", color: "#666", lineHeight: 1.6 }}>
-              {t("progress.recentActivity.description")}
-            </div>
-            {recentLearningActivity.length > 0 ? (
-              <div className="recent-activity-list">
-                {recentLearningActivity.map((activity, index) => (
-                  <div key={`${activity.type}-${activity.occurredAt}-${index}`} className="recent-activity-item">
-                    <div>
-                      <div style={{ fontWeight: 700, fontSize: "0.84rem", color: "#27332f" }}>
-                        {t(recentActivityLabelKey(activity.type), { defaultValue: activity.label })}
-                      </div>
-                      {activity.topicCode && (
-                        <div style={{ fontSize: "0.76rem", color: "#69756f", marginTop: "0.15rem" }}>
-                          {t(`topics.${activity.topicCode}`, { defaultValue: topicLabel(activity.topicCode) })}
-                        </div>
-                      )}
-                    </div>
-                    <time style={{ fontSize: "0.76rem", color: "#7c8882" }} dateTime={activity.occurredAt}>
-                      {new Intl.DateTimeFormat(progressLocale, { month: "short", day: "numeric" }).format(new Date(activity.occurredAt))}
-                    </time>
-                  </div>
-                ))}
-              </div>
-            ) : (
-              <PageState type="empty" message={t("progress.recentActivity.empty")} />
-            )}
-          </div>
-
-          <div style={{ marginBottom: "0.85rem" }}>
-            <div style={{ fontWeight: 700, color: "#24322e", marginBottom: "0.25rem" }}>
-              {t("progress.learningInterests.title")}
-            </div>
-            <div style={{ fontSize: "0.82rem", color: "#666", lineHeight: 1.6 }}>
-              {t("progress.learningInterests.description")}
-            </div>
-          </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(220px, 1fr))", gap: "0.75rem" }}>
-            {allTopics.map(topicOption => {
-              const active = topics.includes(topicOption.value);
-              return (
-                <div key={topicOption.value} style={{
-                  background: active ? "var(--teal-lt)" : "#f9f9f9",
-                  border: active ? "1px solid rgba(29,158,117,0.3)" : "1px solid rgba(0,0,0,0.07)",
-                  borderRadius: 10, padding: "0.75rem 1rem",
-                  display: "flex", alignItems: "center", gap: "0.6rem",
-                }}>
-                  <span style={{ fontSize: "1rem" }}>{active ? "✅" : "⬜"}</span>
-                  <span style={{ fontSize: "0.85rem", fontWeight: active ? 600 : 400, color: active ? "var(--teal)" : "#888" }}>
-                    {t(`profileOptions.helpTopics.${topicOption.value}`, { defaultValue: topicOption.label })}
-                    <span style={{ display: "block", marginTop: "0.12rem", fontSize: "0.72rem", color: active ? "#357a63" : "#888", fontWeight: 700 }}>
-                      {t(getLearningInterestStateKey(active))}
-                    </span>
-                  </span>
-                </div>
-              );
-            })}
-          </div>
-          <button onClick={() => go("resources")} style={{ marginTop: "1rem", background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.6rem 1.25rem", fontSize: "0.85rem", fontWeight: 600, cursor: "pointer" }}>
-            {t("progress.learningActivity.exploreAll")}
-          </button>
-        </div>
-
-        {/* Achievements */}
-        <div id={PROGRESS_SECTION_IDS.BADGES} className="progress-anchor progress-achievement-grid">
-          <p className="section-title" style={{ fontSize: "1.1rem" }}>{t("progress.achievements.title")}</p>
-          <p className="section-sub" style={{ marginBottom: "1rem" }}>{t("progress.achievements.description")}</p>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "1rem" }}>
-            {achievements.map(b => (
-              <div key={b.labelKey} className="card" style={{
-                textAlign: "center", padding: "1.25rem 0.75rem",
-                opacity: b.earned ? 1 : 0.4,
-                filter: b.earned ? "none" : "grayscale(1)",
-              }}>
-                <div style={{ fontSize: "2rem", marginBottom: "0.4rem" }}>{b.icon}</div>
-                <div style={{ fontSize: "0.78rem", fontWeight: 600, color: b.earned ? "#1a1a18" : "#aaa" }}>{t(b.labelKey)}</div>
-                {b.earned && <div style={{ fontSize: "0.68rem", color: "var(--teal)", marginTop: "0.25rem", fontWeight: 600 }}>{t("progress.achievements.earned")}</div>}
-              </div>
-            ))}
-          </div>
-        </div>
-        </div>
-      </div>
-    </div>
-  );
+    if (user) handleChatAction({ target: { page: "progress", sectionId: pendingProgressSection || PROGRESS_SECTION_IDS.OVERVIEW } });
+  }, [user, handleChatAction, pendingProgressSection]);
+  return null;
 }
 
 function formatChatUpdatedAt(value, t) {
@@ -11252,8 +10671,8 @@ export default function App() {
         const currentHash = normalizeHashRoute(window.location.hash);
         const restoredPage = parseHashPage(currentHash);
         if (PROTECTED_PAGES.has(restoredPage)) {
-          if (restoredPage === "privacy-requests") {
-            pendingAuthTargetRef.current = "privacy-requests";
+          if (restoredPage === "privacy-requests" || restoredPage === "progress") {
+            pendingAuthTargetRef.current = restoredPage;
             setAuthMode("login");
             commitHashRoute("/login", { replace: true });
           } else {
@@ -11321,8 +10740,8 @@ export default function App() {
         pendingAuthTargetRef.current = null;
       }
       if (!user && sessionRestoreCompletedRef.current && PROTECTED_PAGES.has(nextPage)) {
-        if (nextPage === "privacy-requests") {
-          pendingAuthTargetRef.current = "privacy-requests";
+        if (nextPage === "privacy-requests" || nextPage === "progress") {
+          pendingAuthTargetRef.current = nextPage;
           setAuthMode("login");
           commitHashRoute("/login", { replace: true });
         } else {
@@ -11378,7 +10797,7 @@ export default function App() {
   function login(userData, profileData, preferredPage) {
     const nextUser = normalizeSessionUser(userData, profileData);
     const continuation = nextUser.onboardingCompleted
-      ? privacyLoginTarget(pendingAuthTargetRef.current)
+      ? (pendingAuthTargetRef.current === "progress" ? "progress" : privacyLoginTarget(pendingAuthTargetRef.current))
       : null;
     pendingAuthTargetRef.current = null;
     appUserIdRef.current = nextUser.id || null;
@@ -11526,7 +10945,7 @@ export default function App() {
       setPendingResourceTarget(null);
     }
     if (nextPage !== "scenarios") setPendingScenarioTarget(null);
-    if (nextPage !== "progress") setPendingProgressSection(null);
+    if (nextPage !== "progress" && nextPage !== "dashboard") setPendingProgressSection(null);
     if (nextPage === "login") {
       setAuthMode(requestedAuthMode === "register" ? "register" : "login");
     } else if (nextPage !== "privacy-requests") {
@@ -11625,7 +11044,7 @@ export default function App() {
 
     if (target.page === "progress") {
       setPendingProgressSection(target.sectionId || null);
-      go("progress");
+      go("dashboard", { replace: page === "progress" });
       return true;
     }
 
@@ -11689,6 +11108,12 @@ export default function App() {
   }
 
   const ctx = {
+    resolvedUiLocale: resolveLanguageAuthority({
+      explicitLocale: explicitLocaleRef.current,
+      profileLanguage: userProfilePreferredLanguage || userPreferredLanguage,
+      storedLocale: getStoredUiLanguage(),
+      browserLanguage: typeof navigator === "undefined" ? null : navigator.language,
+    }),
     page,
     go,
     user,

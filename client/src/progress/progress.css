@@ -174,3 +174,21 @@
     transition: none;
   }
 }
+
+.integrated-progress-details { display: grid; gap: 1.5rem; min-width: 0; }
+.integrated-progress-details h2 { margin: 0 0 0.5rem; font-size: 1.1rem; color: var(--color-brand-primary-hover); }
+.integrated-progress-details p { color: var(--text-muted); line-height: 1.6; }
+.integrated-progress-details ol, .integrated-progress-details ul { list-style: none; padding: 0; }
+.integrated-progress-details time { white-space: nowrap; }
+.integrated-progress-details .recent-activity-item { gap: 1rem; }
+.integrated-progress-details .recent-activity-item > div { min-width: 0; }
+.progress-secondary > section { margin-top: 1.5rem; }
+.progress-secondary summary, .learning-path-formula summary { min-height: 44px; display: list-item; cursor: pointer; font-weight: 700; color: var(--color-brand-primary-hover); padding-block: 0.7rem; }
+.progress-secondary summary:focus-visible, .learning-path-formula summary:focus-visible, .progress-anchor:focus-visible { outline: 2px solid var(--color-brand-primary); outline-offset: 4px; }
+.integrated-interests, .integrated-badges { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 14rem), 1fr)); gap: 1rem; }
+.integrated-interests > div, .integrated-badges > div { border: 1px solid var(--border-default); border-radius: 12px; padding: 1rem; }
+.learning-path-formula { margin-top: 0.5rem; }
+@media (max-width: 40rem) {
+  .integrated-progress-details .recent-activity-item { flex-wrap: wrap; }
+  .integrated-progress-details .activity-composition-legend { grid-template-columns: minmax(0, 1fr); }
+}

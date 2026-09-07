@@ -17,8 +17,8 @@
 .dashboard-explorer-companion-zone circle { fill: var(--surface-raised); stroke: var(--color-brand-border); stroke-width: 3; stroke-dasharray: 5 6; }
 .dashboard-explorer-companion-zone path { fill: none; stroke: var(--color-brand-primary); stroke-width: 3; stroke-linecap: round; opacity: 0.65; }
 
-.dashboard-shell { max-width: 1180px; margin: 0 auto; padding: 2.75rem 1.5rem 4rem; display: grid; grid-template-columns: minmax(190px, 230px) minmax(0, 1fr); gap: 2rem; }
-.dashboard-shell > .cy-section-nav { position: sticky; top: calc(var(--nav-h) + 1rem); align-self: start; }
+.dashboard-shell { max-width: 1180px; margin: 0 auto; padding: 1.5rem 1.5rem 4rem; display: grid; grid-template-columns: minmax(0, 1fr); gap: 1.5rem; }
+.dashboard-shell > .cy-section-nav { position: static; min-width: 0; }
 .dashboard-content { min-width: 0; display: grid; gap: 1.5rem; }
 .dashboard-content > .dashboard-anchor { margin: 0; }
 .dashboard-journey-surface,
@@ -27,7 +27,7 @@
 .dashboard-field-note { border-color: var(--color-brand-border); box-shadow: var(--shadow-card); }
 .dashboard-journey-surface { background: var(--color-brand-soft); }
 .dashboard-next-surface { background: var(--status-warning-surface); }
-.dashboard-practice-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.dashboard-practice-grid { display: grid; grid-template-columns: minmax(0, 1fr); gap: 1rem; }
 .dashboard-field-note { display: flex; gap: 0.85rem; align-items: flex-start; padding: 1rem 1.2rem; border-radius: 14px; background: var(--status-warning-surface); }
 .dashboard-action-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(12rem, 1fr)); gap: 1rem; margin-bottom: 1rem; }
 .dashboard-action-card { min-height: 9rem; padding: 1rem; text-align: left; cursor: pointer; border: 1px solid var(--border-default); border-radius: 14px; background: var(--surface-raised); box-shadow: var(--shadow-card); transition: transform 160ms ease, border-color 160ms ease, box-shadow 160ms ease; }
@@ -52,4 +52,23 @@
 
 @media (prefers-reduced-motion: reduce) {
   .dashboard-action-card { transition: none; }
+}
+
+
+/* The integrated home uses the full centred content width. */
+.dashboard-shell .cy-section-nav-list { display: flex; flex-wrap: wrap; gap: 0.25rem; }
+.dashboard-shell .cy-section-nav-button { width: auto; min-height: 44px; flex: 0 1 auto; }
+.dashboard-explorer-hero .cy-explorer-hero-layout { padding-block: 1.25rem; }
+.dashboard-explorer-hero .cy-compact-header-title { max-width: none; font-size: clamp(1.5rem, 3vw, 2rem); }
+.dashboard-explorer-visual svg { max-height: 10rem; }
+.dashboard-content > *, .dashboard-content .card { min-width: 0; overflow-wrap: anywhere; }
+.dashboard-journey-surface .btn-ghost { margin-inline-start: 0.75rem; }
+@media (max-width: 40rem) {
+  .dashboard-explorer-visual { display: none; }
+  .dashboard-shell .cy-section-nav-list { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .dashboard-shell .cy-section-nav-button { width: 100%; }
+  .dashboard-shell .cy-section-nav-button { min-width: 0; white-space: normal; overflow-wrap: anywhere; }
+  #dashboard-initial-assessment > div:first-child { flex-direction: column; align-items: stretch !important; }
+  #dashboard-initial-assessment > div:first-child > button { align-self: flex-start; max-width: 100%; white-space: normal; }
+  .dashboard-journey-surface .btn-ghost { margin: 0.75rem 0 0; }
 }

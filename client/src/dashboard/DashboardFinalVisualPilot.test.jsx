@@ -131,7 +131,7 @@ describe("Dashboard final visual migration", () => {
     await screen.findByRole("heading", { level: 1, name: /Welcome back, Alya/i });
 
     expect(container.querySelector("#dashboard-learning-profile")).not.toBeInTheDocument();
-    expect(screen.getByText(i18n.t("dashboard.assessment.pending"))).toBeVisible();
+    expect(await screen.findByText(i18n.t("dashboard.assessment.pending"))).toBeVisible();
     expect(screen.getByText(i18n.t("dashboard.recommendation.title"))).toBeVisible();
     expect(await screen.findByText(i18n.t("progress.learningPath.title"))).toBeVisible();
     expect(screen.getByText(i18n.t("dashboard.scenarios.practiceTitle"))).toBeVisible();
