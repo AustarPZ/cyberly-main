@@ -270,6 +270,10 @@ describe("Learner Profile final visual migration", () => {
     expect(window.localStorage.getItem("cyberly.uiLanguage")).toBe("en");
     expect(screen.getByLabelText(i18n.t("settings.preferredLanguage"))).toHaveValue("english");
     expect(screen.getByRole("alert")).toHaveTextContent(i18n.t("settings.languageSaveFailed"));
+    expect(screen.getByRole("alert")).toHaveClass("sr-only");
+    expect(screen.getByRole("alert")).not.toHaveAttribute("aria-hidden", "true");
+    expect(screen.getByRole("alert")).not.toHaveStyle({ display: "none" });
+    expect(screen.getByRole("alert")).not.toHaveStyle({ visibility: "hidden" });
     expect(saveProfile).not.toHaveBeenCalled();
   });
 
