@@ -541,6 +541,19 @@
     "completeScenario": "完成情境"
   },
   "scenarios": {
+    "resume": {
+      "loading": "正在打开你的情境练习…",
+      "invalidTarget": "此情境练习链接无效。",
+      "authLost": "请重新登录以继续。",
+      "unavailable": "此情境练习记录不可用。",
+      "identityMismatch": "此练习记录与请求的情境不匹配。",
+      "notInProgress": "此情境练习已不处于进行中状态。",
+      "inconsistent": "无法从已保存的状态继续此练习。",
+      "networkError": "无法加载此练习。你可以重试。",
+      "requestRejected": "无法打开此练习。",
+      "retry": "重试",
+      "backToScenarios": "返回情境练习"
+    },
     "library": {
       "title": "情境库",
       "description": "练习真实的网络安全决策，并在每次最终选择后立即获得反馈。",

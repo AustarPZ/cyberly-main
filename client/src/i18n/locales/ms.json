@@ -541,6 +541,19 @@
     "completeScenario": "Selesaikan senario"
   },
   "scenarios": {
+    "resume": {
+      "loading": "Membuka senario anda…",
+      "invalidTarget": "Pautan senario ini tidak sah.",
+      "authLost": "Sila log masuk semula untuk meneruskan.",
+      "unavailable": "Percubaan senario ini tidak tersedia.",
+      "identityMismatch": "Percubaan ini tidak sepadan dengan senario yang diminta.",
+      "notInProgress": "Percubaan senario ini tidak lagi sedang dijalankan.",
+      "inconsistent": "Percubaan ini tidak dapat disambung daripada keadaan yang disimpan.",
+      "networkError": "Kami tidak dapat memuatkan percubaan ini. Anda boleh cuba lagi.",
+      "requestRejected": "Percubaan ini tidak dapat dibuka.",
+      "retry": "Cuba lagi",
+      "backToScenarios": "Kembali ke Senario"
+    },
     "library": {
       "title": "Perpustakaan Senario",
       "description": "Berlatih membuat keputusan keselamatan siber yang realistik dengan maklum balas segera selepas setiap pilihan akhir.",

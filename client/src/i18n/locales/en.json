@@ -541,6 +541,19 @@
     "completeScenario": "Complete scenario"
   },
   "scenarios": {
+    "resume": {
+      "loading": "Opening your Scenario…",
+      "invalidTarget": "This Scenario link is invalid.",
+      "authLost": "Please sign in again to continue.",
+      "unavailable": "This Scenario attempt is unavailable.",
+      "identityMismatch": "This attempt does not match the requested Scenario.",
+      "notInProgress": "This Scenario attempt is no longer in progress.",
+      "inconsistent": "This attempt cannot be resumed from its saved state.",
+      "networkError": "We could not load this attempt. You can try again.",
+      "requestRejected": "This attempt could not be opened.",
+      "retry": "Try again",
+      "backToScenarios": "Back to Scenarios"
+    },
     "library": {
       "title": "Scenario Library",
       "description": "Practice realistic cyber safety decisions with immediate feedback after each final choice.",

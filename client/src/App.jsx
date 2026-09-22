@@ -1,5 +1,6 @@
 import GlobalNavigation from "./navigation/GlobalNavigation";
 import AppFooter from "./navigation/AppFooter";
+import { validScenarioResumeTarget, validScenarioResumeHandoff, validateScenarioResumeResponse, sameScenarioResumeContext } from "./guidance/scenarioContinuation";
 import { Fragment, useState, createContext, useContext, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
@@ -2424,7 +2425,7 @@ footer strong { color: #fff; }
 `;
 
 // ─── Context ──────────────────────────────────────────────────────
-const AppCtx = createContext(null);
+export const AppCtx = createContext(null);
 function useApp() { return useContext(AppCtx); }
 const ChatCtx = createContext(null);
 function useChat() { return useContext(ChatCtx); }
@@ -4143,7 +4144,7 @@ async function dbGetScenarioAttempt(attemptId, locale) {
   try {
     const result = await getScenarioAttempt(attemptId, { locale: normalizeLocale(locale) });
     const data = result.data || {};
-    if (!result.ok) return apiFailure(data, "errors.fallback.restoreScenario");
+    if (!result.ok) return { ...apiFailure(data, "errors.fallback.restoreScenario"), status: result.status };
     return { ok: true, ...data };
   } catch {
     return networkFailure("errors.fallback.restoreScenario");
@@ -7403,6 +7404,10 @@ function ScenariosPage() {
     acceptedHash,
     requestHashNavigation,
     clearPendingScenarioTarget,
+    pendingScenarioResume,
+    clearPendingScenarioResume,
+    scenarioResumeAuthority,
+    clearLocalAuthenticatedUserState,
   } = useApp();
   const nestedIntro = parseLearningDetailRoute(acceptedHash, "scenarios");
   const [introRetry, setIntroRetry] = useState(0);
@@ -7415,6 +7420,99 @@ function ScenariosPage() {
   const previousIntroRouteRef = useRef(null);
   const [selectedChoice, setSelectedChoice] = useState("");
   const [decisionFeedback, setDecisionFeedback] = useState(null);
+  const [exactResume, setExactResume] = useState({ mode: "idle" });
+  const exactResumeRef = useRef(exactResume);
+  const exactRequestRef = useRef(null);
+  const exactGenerationRef = useRef(0);
+  const exactLocaleRef = useRef(scenarioLocale);
+  exactLocaleRef.current = scenarioLocale;
+  const [exactRetry, setExactRetry] = useState(0);
+  const exactFocusRef = useRef(null);
+  const completionLibraryRefreshRef = useRef(null);
+  const exactIsolated = Boolean(pendingScenarioResume) || exactResume.mode !== "idle";
+  const authScopeRevision = scenarioResumeAuthority.current.authScopeRevision;
+  const acceptedNavigationGeneration = scenarioResumeAuthority.current.acceptedNavigationGeneration;
+
+  const publishExact = useCallback(next => {
+    exactResumeRef.current = next;
+    setExactResume(next);
+  }, []);
+  const leaveExactResume = useCallback(() => {
+    exactGenerationRef.current += 1;
+    exactRequestRef.current = null;
+    if (pendingScenarioResume) clearPendingScenarioResume(pendingScenarioResume.targetRevision);
+    publishExact({ mode: "idle" });
+  }, [pendingScenarioResume, clearPendingScenarioResume, publishExact]);
+
+  useEffect(() => {
+    let active = true;
+    const previous = exactResumeRef.current;
+    const target = pendingScenarioResume || previous.target;
+    if (!user || acceptedHash !== "#/scenarios" || (target && (
+      target.authScopeRevision !== authScopeRevision || target.acceptedNavigationGeneration !== acceptedNavigationGeneration
+    ))) {
+      exactGenerationRef.current += 1;
+      exactRequestRef.current = null;
+      if (pendingScenarioResume) clearPendingScenarioResume(pendingScenarioResume.targetRevision);
+      if (previous.mode !== "idle") {
+        publishExact(user && acceptedHash === "#/scenarios" && target?.authScopeRevision !== authScopeRevision
+          ? { mode: "recovery", reason: "AUTH_LOST" }
+          : { mode: "idle" });
+        setSelectedChoice(""); setDecisionFeedback(null); setView({ mode: "library" });
+      }
+      return undefined;
+    }
+    if (!target) return undefined;
+    if (!validScenarioResumeHandoff(target)) {
+      clearPendingScenarioResume(target.targetRevision);
+      publishExact({ mode: "recovery", reason: "INVALID_TARGET" });
+      return undefined;
+    }
+    if (decisionFeedback && previous.target?.targetRevision === target.targetRevision) return undefined;
+    if (!pendingScenarioResume && previous.mode === "recovery" && previous.retry === exactRetry) return undefined;
+    if (!pendingScenarioResume && previous.mode === "active" && previous.locale === scenarioLocale && previous.retry === exactRetry) return undefined;
+    const cached = exactRequestRef.current;
+    const context = { ...target, locale: scenarioLocale, requestGeneration: exactGenerationRef.current };
+    let request;
+    if (cached && cached.retry === exactRetry && sameScenarioResumeContext(cached.stamp, context)) {
+      request = cached;
+    } else {
+      context.requestGeneration = ++exactGenerationRef.current;
+      request = { stamp: context, retry: exactRetry, promise: dbGetScenarioAttempt(target.attemptId, scenarioLocale) };
+      exactRequestRef.current = request;
+    }
+    publishExact({ mode: "loading", target, locale: scenarioLocale, retry: exactRetry });
+    setError(null); setSelectedChoice(""); setDecisionFeedback(null);
+    request.promise.then(result => {
+      const current = exactResumeRef.current;
+      const stamp = { ...current.target, ...scenarioResumeAuthority.current, requestGeneration: exactGenerationRef.current, locale: exactLocaleRef.current };
+      if (!active || !sameScenarioResumeContext(request.stamp, stamp)) return;
+      exactRequestRef.current = null;
+      const reason = validateScenarioResumeResponse(target, result);
+      clearPendingScenarioResume(target.targetRevision);
+      if (reason) {
+        setView({ mode: "library" });
+        publishExact({ mode: "recovery", reason, retry: exactRetry, ...(reason === "NETWORK_ERROR" ? { target } : {}) });
+        if (reason === "AUTH_LOST") clearLocalAuthenticatedUserState();
+        return;
+      }
+      setHighlightedScenarioTarget(null);
+      setView({ ...result, mode: "attempt" });
+      publishExact({ mode: "active", target, locale: scenarioLocale, retry: exactRetry });
+    });
+    return () => { active = false; };
+    // The refs are the synchronous authority; mode publication is not a fetch trigger.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [pendingScenarioResume, scenarioLocale, exactRetry, decisionFeedback, authScopeRevision, acceptedNavigationGeneration, acceptedHash, user?.id]);
+
+  useEffect(() => {
+    if (exactResume.mode === "active" || exactResume.mode === "recovery") exactFocusRef.current?.focus();
+  }, [exactResume.mode, exactResume.target?.targetRevision]);
+  useEffect(() => {
+    if (!user) go("login");
+    // Authentication loss redirects after render, never while publishing the player.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user?.id]);
   const [error, setError] = useState(null);
   const [busy, setBusy] = useState(false);
   const [highlightedScenarioTarget, setHighlightedScenarioTarget] = useState(null);
@@ -7453,7 +7551,14 @@ function ScenariosPage() {
 
   useEffect(() => {
     let active = true;
-    if (!user || nestedIntro.nested) return () => { active = false; };
+    if (!user || nestedIntro.nested || exactIsolated) return () => { active = false; };
+    const completionRefresh = completionLibraryRefreshRef.current;
+    completionLibraryRefreshRef.current = null;
+    // Completion already owns this refresh; consume only its isolation-release replay.
+    if (completionRefresh && completionRefresh.user === user &&
+      completionRefresh.locale === scenarioLocale &&
+      completionRefresh.topicCode === filters.topicCode &&
+      completionRefresh.difficulty === filters.difficulty) return () => { active = false; };
     Promise.all([
       dbGetScenarios({ topicCode: filters.topicCode, difficulty: filters.difficulty }, scenarioLocale),
       dbGetRecommendedScenarios(scenarioLocale),
@@ -7467,10 +7572,10 @@ function ScenariosPage() {
       });
     });
     return () => { active = false; };
-  }, [user, filters.topicCode, filters.difficulty, scenarioLocale, nestedIntro.nested]);
+  }, [user, filters.topicCode, filters.difficulty, scenarioLocale, nestedIntro.nested, exactIsolated]);
 
   useEffect(() => {
-    if (!user) return undefined;
+    if (!user || exactIsolated) return undefined;
     let active = true;
     const previousRoute = previousIntroRouteRef.current;
     previousIntroRouteRef.current = nestedIntro.nested ? nestedIntro.slug || "invalid" : null;
@@ -7489,11 +7594,11 @@ function ScenariosPage() {
         : { mode: "intro-unavailable" });
     });
     return () => { active = false; };
-  }, [user, nestedIntro.nested, nestedIntro.slug, scenarioLocale, introRetry]);
+  }, [user, nestedIntro.nested, nestedIntro.slug, scenarioLocale, introRetry, exactIsolated]);
 
   useEffect(() => {
     let active = true;
-    if (!user || view.mode === "library") return () => { active = false; };
+    if (!user || view.mode === "library" || exactIsolated) return () => { active = false; };
 
     async function reloadScenarioContent() {
       if (view.mode === "intro" && view.scenario?.slug && !nestedIntro.nested) {
@@ -7510,7 +7615,7 @@ function ScenariosPage() {
 
     reloadScenarioContent();
     return () => { active = false; };
-  }, [user, scenarioLocale, view.mode, view.scenario?.slug, view.attempt?.id, decisionFeedback, nestedIntro.nested]);
+  }, [user, scenarioLocale, view.mode, view.scenario?.slug, view.attempt?.id, decisionFeedback, nestedIntro.nested, exactIsolated]);
 
   useEffect(() => {
     if (view.mode !== "attempt" || !view.attempt || view.attempt.status === "completed") return undefined;
@@ -7522,16 +7627,17 @@ function ScenariosPage() {
       cancelLabel: t("scenarios.continueScenario"),
       confirmLabel: t("scenarios.leaveScenario"),
       onLeave: () => {
+        leaveExactResume();
         setSelectedChoice("");
         setDecisionFeedback(null);
         setView({ mode: "library" });
       },
     });
-  }, [view.mode, view.attempt, registerActivityGuard, t]);
+  }, [view.mode, view.attempt, registerActivityGuard, t, leaveExactResume]);
 
   useEffect(() => {
     const hashScenarioTarget = parseScenarioHighlightTargetFromHash(acceptedHash);
-    if (!user || nestedIntro.nested) return;
+    if (!user || nestedIntro.nested || exactIsolated) return;
     if (hashScenarioTarget) {
       buildRecommendedScenarioNavigation(hashScenarioTarget, "legacy");
       requestHashNavigation("#/scenarios", { replace: true });
@@ -7578,11 +7684,12 @@ function ScenariosPage() {
     requestHashNavigation,
     clearPendingScenarioTarget,
     nestedIntro.nested,
+    exactIsolated,
     t,
   ]);
 
   useEffect(() => {
-    if (!highlightedScenarioSlug || view.mode !== "library" || library.loading) return;
+    if (exactIsolated || !highlightedScenarioSlug || view.mode !== "library" || library.loading) return;
     const key = highlightedScenarioSlug;
     if (lastScrolledHighlightRef.current === key) return;
     const element = scenarioCardRefs.current.get(highlightedScenarioSlug);
@@ -7590,10 +7697,10 @@ function ScenariosPage() {
     lastScrolledHighlightRef.current = key;
     element.scrollIntoView({ behavior: "smooth", block: "center" });
     window.setTimeout(() => element.focus?.({ preventScroll: true }), 0);
-  }, [highlightedScenarioSlug, acceptedHash, view.mode, library.loading]);
+  }, [highlightedScenarioSlug, acceptedHash, view.mode, library.loading, exactIsolated]);
 
   useEffect(() => {
-    if ((!highlightedScenarioSlug && !highlightedScenarioId) || library.loading) return;
+    if (exactIsolated || (!highlightedScenarioSlug && !highlightedScenarioId) || library.loading) return;
     const highlightedScenario = library.scenarios.find(scenario => isScenarioHighlightMatch({
       scenarioSlug: highlightedScenarioSlug,
       scenarioId: highlightedScenarioId,
@@ -7606,14 +7713,14 @@ function ScenariosPage() {
     if ((library.recommended || []).length > 0 && !hasCanonicalRecommendation) {
       clearHighlightedScenario();
     }
-  }, [highlightedScenarioSlug, highlightedScenarioId, library.loading, library.scenarios, library.recommended]);
+  }, [highlightedScenarioSlug, highlightedScenarioId, library.loading, library.scenarios, library.recommended, exactIsolated]);
 
   useEffect(() => {
     if (view.mode !== "intro") return;
     window.setTimeout(() => scenarioIntroRef.current?.focus?.(), 0);
   }, [view.mode, view.scenario?.slug]);
 
-  if (!user) { go("login"); return null; }
+  if (!user) return null;
 
   const recommendedIds = new Set((library.recommended || []).map(item => item.id));
 
@@ -7711,6 +7818,12 @@ function ScenariosPage() {
     const result = await dbCompleteScenario(view.attempt.id, scenarioLocale);
     setBusy(false);
     if (!result.ok) return setError(result.error);
+    if (exactResumeRef.current.mode === "active") {
+      completionLibraryRefreshRef.current = {
+        user, locale: scenarioLocale, topicCode: filters.topicCode, difficulty: filters.difficulty,
+      };
+    }
+    leaveExactResume();
     syncCompletedScenarioInLibrary(result.result);
     await refreshScenarioLibrary();
     setView({ mode: "result", ...result.result });
@@ -7727,6 +7840,7 @@ function ScenariosPage() {
 
   function exitActiveScenario() {
     const leave = () => {
+      leaveExactResume();
       setSelectedChoice("");
       setDecisionFeedback(null);
       setView({ mode: "library" });
@@ -7993,8 +8107,19 @@ function ScenariosPage() {
     );
   }
 
+  if (exactResume.mode === "loading" || (pendingScenarioResume && exactResume.mode === "idle")) {
+    return <PageContainer><p role="status" aria-live="polite">{t("scenarios.resume.loading")}</p></PageContainer>;
+  }
+  if (exactResume.mode === "recovery") {
+    const key = { INVALID_TARGET: "invalidTarget", AUTH_LOST: "authLost", NOT_FOUND_OR_FOREIGN: "unavailable", IDENTITY_MISMATCH: "identityMismatch", NOT_IN_PROGRESS: "notInProgress", INCONSISTENT_ATTEMPT: "inconsistent", NETWORK_ERROR: "networkError", REQUEST_REJECTED: "requestRejected" }[exactResume.reason];
+    return <PageContainer>
+      <div role="alert" tabIndex={-1} ref={exactFocusRef}>{t(`scenarios.resume.${key}`)}</div>
+      {exactResume.reason === "NETWORK_ERROR" && <Button onClick={() => setExactRetry(value => value + 1)}>{t("scenarios.resume.retry")}</Button>}
+      <Button variant="quiet" onClick={() => { leaveExactResume(); setView({ mode: "library" }); }}>{t("scenarios.resume.backToScenarios")}</Button>
+    </PageContainer>;
+  }
   return (
-    <div className={`scenario-page scenario-page-${view.mode}`}>
+    <div className={`scenario-page scenario-page-${view.mode}`} ref={exactFocusRef} tabIndex={exactResume.mode === "active" ? -1 : undefined}>
       {view.mode === "library" && renderScenarioHeader(t("scenarios.library.title"), t("scenarios.library.description"), { visual: true })}
       {view.mode === "intro" && renderScenarioHeader(view.scenario.title, null, { visual: false })}
       {view.mode === "attempt" && renderScenarioHeader(view.currentStep?.promptText || t("scenarios.attempt.readyToComplete"), null, { compact: true })}
@@ -10507,6 +10632,17 @@ export default function App() {
   const [resourceFocusTopic, setResourceFocusTopic] = useState(null);
   const [pendingResourceTarget, setPendingResourceTarget] = useState(null);
   const [pendingScenarioTarget, setPendingScenarioTarget] = useState(null);
+  const [pendingScenarioResume, setPendingScenarioResume] = useState(null);
+  const [, renderScenarioResumeAuthority] = useState(0);
+  const scenarioResumeAuthority = useRef({ authScopeRevision: 0, targetRevision: 0, acceptedNavigationGeneration: 0 });
+  const clearPendingScenarioResume = useCallback(revision => {
+    setPendingScenarioResume(current => current?.targetRevision === revision ? null : current);
+  }, []);
+  function invalidateScenarioResumeAuth() {
+    scenarioResumeAuthority.current.authScopeRevision += 1;
+    renderScenarioResumeAuthority(value => value + 1);
+    setPendingScenarioResume(null);
+  }
   const [pendingProgressSection, setPendingProgressSection] = useState(null);
   const [authMode, setAuthMode] = useState("login");
   const [activityGuard, setActivityGuard] = useState(null);
@@ -10558,6 +10694,9 @@ export default function App() {
 
   const acceptHashRoute = useCallback((hashValue, historyIndex = historyIndexRef.current) => {
     const nextHash = normalizeHashRoute(hashValue);
+    scenarioResumeAuthority.current.acceptedNavigationGeneration += 1;
+    renderScenarioResumeAuthority(value => value + 1);
+    if (nextHash !== "#/scenarios") setPendingScenarioResume(null);
     const nextPage = parseHashPage(nextHash);
     if (nextPage !== "verify-email") clearEmailVerificationResult();
     if (nextPage !== "privacy" && nextPage !== "guardian-link-verify" && !sessionRestoreCompletedRef.current) setCheckingSession(true);
@@ -10627,6 +10766,7 @@ export default function App() {
       sessionRestoreCompletedRef.current = true;
       if (result.ok) {
         const restoredUser = normalizeSessionUser(result.user, result.profile);
+        invalidateScenarioResumeAuth();
         const currentHash = normalizeHashRoute(window.location.hash);
         const restoredPage = parseHashPage(currentHash);
         appUserIdRef.current = restoredUser.id || null;
@@ -10772,6 +10912,7 @@ export default function App() {
   ]);
 
   function login(userData, profileData, preferredPage) {
+    invalidateScenarioResumeAuth();
     const nextUser = normalizeSessionUser(userData, profileData);
     const continuation = nextUser.onboardingCompleted
       ? (parseLearningDetailRoute(pendingAuthTargetRef.current, "scenarios").slug ? pendingAuthTargetRef.current.slice(2) : pendingAuthTargetRef.current === "progress" ? "progress" : privacyLoginTarget(pendingAuthTargetRef.current))
@@ -10873,6 +11014,7 @@ export default function App() {
     });
   }
   async function logout() {
+    invalidateScenarioResumeAuth();
     appUserIdRef.current = null;
     pendingAuthTargetRef.current = null;
     clearEmailVerificationResult();
@@ -10905,12 +11047,14 @@ export default function App() {
     go("login", { authMode: mode });
   }
   function clearAuthAfterPasswordReset() {
+    invalidateScenarioResumeAuth();
     appUserIdRef.current = null;
     setUser(null);
     setActivityGuard(null);
     setPendingNavigation(null);
   }
   function clearLocalAuthenticatedUserState() {
+    invalidateScenarioResumeAuth();
     appUserIdRef.current = null;
     setUser(null);
     setActivityGuard(null);
@@ -10981,6 +11125,21 @@ export default function App() {
     }
     action();
     return true;
+  }
+  function requestScenarioExactResume(target) {
+    if (!validScenarioResumeTarget(target)) return { ok: false, reason: "INVALID_TARGET" };
+    if (!appUserIdRef.current) return { ok: false, reason: "AUTH_LOST" };
+    const expectedScope = scenarioResumeAuthority.current.authScopeRevision;
+    const identity = { attemptId: target.attemptId, scenarioSlug: target.scenarioSlug };
+    const execute = () => {
+      if (!appUserIdRef.current || scenarioResumeAuthority.current.authScopeRevision !== expectedScope) return;
+      commitHashRoute("/scenarios");
+      const authority = scenarioResumeAuthority.current;
+      authority.targetRevision += 1;
+      setPendingScenarioResume({ ...identity, ...authority });
+    };
+    const executed = requestGuardedAction(execute, { actionType: "scenario-exact-resume" });
+    return { ok: true, queued: !executed };
   }
   function requestLogoutWithGuard() {
     const blocker = activityGuardRef.current;
@@ -11066,6 +11225,11 @@ export default function App() {
       await logout();
       return;
     }
+    if (target.type === "action" && target.actionType === "scenario-exact-resume" && target.guard?.source === "scenario") {
+      target.guard.onLeave?.();
+      await target.execute?.();
+      return;
+    }
     if (target.guard?.source === "scenario") {
       if (target.guardianBootstrap) clearGuardianBootstrapToken();
       target.guard.onLeave?.();
@@ -11090,6 +11254,10 @@ export default function App() {
   }
 
   const ctx = {
+    pendingScenarioResume,
+    clearPendingScenarioResume,
+    scenarioResumeAuthority,
+    requestScenarioExactResume,
     resolvedUiLocale: resolveLanguageAuthority({
       explicitLocale: explicitLocaleRef.current,
       profileLanguage: userProfilePreferredLanguage || userPreferredLanguage,
