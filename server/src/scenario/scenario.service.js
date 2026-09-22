@@ -234,6 +234,7 @@ function createScenarioService(repository, progressService) {
   async function getScenarioDashboard(userId, localeInput) {
     const locale = normalizeLocale(localeInput);
     const stats = await repository.listCompletedScenarioStats(userId, locale);
+    if (!Array.isArray(stats.inProgressAttempts)) throw new Error('Invalid unfinished scenario contract');
     return {
       completedCount: Number(stats.completedCount || 0),
       latestCompleted: stats.latestCompleted ? {
@@ -253,6 +254,14 @@ function createScenarioService(repository, progressService) {
         difficulty: stats.inProgress.difficulty,
         currentStepOrder: stats.inProgress.current_step_order,
       } : null,
+      // Identity order is stable display order, not recommendation priority.
+      inProgressAttempts: [...stats.inProgressAttempts]
+        .sort((a, b) => a.id - b.id)
+        .map(row => ({
+          attemptId: row.id,
+          scenarioSlug: row.slug,
+          title: row.title,
+        })),
     };
   }
 

@@ -327,26 +327,44 @@ function createScenarioRepository(pool) {
       [locale, userId]
     );
     const [inProgress] = await db(connection).query(
-      `SELECT sa.*,
+      `SELECT sa.id,
+              sa.scenario_id,
+              sa.current_step_order,
+              sd.id AS definition_id,
               COALESCE(requested.title, english.title, sd.title) AS title,
               sd.slug,
               sd.topic_code,
               sd.difficulty
        FROM scenario_attempts sa
-       JOIN scenario_definitions sd ON sd.id = sa.scenario_id
+       LEFT JOIN scenario_definitions sd ON sd.id = sa.scenario_id
        LEFT JOIN scenario_definition_translations requested
          ON requested.scenario_id = sd.id AND requested.locale = ?
        LEFT JOIN scenario_definition_translations english
          ON english.scenario_id = sd.id AND english.locale = 'en'
        WHERE sa.user_id = ? AND sa.status = 'in_progress'
-       ORDER BY sa.started_at DESC, sa.id DESC
-       LIMIT 1`,
+       ORDER BY sa.started_at DESC, sa.id DESC`,
       [locale, userId]
     );
+    // A left join keeps orphaned attempts visible so they cannot silently turn
+    // into incomplete successful coverage. Distinct same-Scenario attempts stay.
+    if (!Array.isArray(inProgress)) throw new Error('Invalid unfinished scenario contract');
+    const attemptIds = new Set();
+    for (const row of inProgress) {
+      if (!row || !Number.isSafeInteger(row.id) || row.id <= 0
+        || !Number.isSafeInteger(row.scenario_id) || row.scenario_id <= 0
+        || !Number.isSafeInteger(row.definition_id) || row.definition_id <= 0
+        || row.definition_id !== row.scenario_id
+        || typeof row.slug !== 'string' || !/^[a-z0-9][a-z0-9_-]{0,139}$/.test(row.slug)
+        || typeof row.title !== 'string' || attemptIds.has(row.id)) {
+        throw new Error('Invalid unfinished scenario contract');
+      }
+      attemptIds.add(row.id);
+    }
     return {
       completedCount: rows[0].completed_count,
       latestCompleted: latest[0] || null,
       inProgress: inProgress[0] || null,
+      inProgressAttempts: inProgress,
     };
   }
 
