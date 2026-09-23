@@ -40,6 +40,9 @@ import ContextHeader from "./design-system/headers/ContextHeader";
 import SectionNav from "./design-system/navigation/SectionNav";
 import ExplorerHeroSurface from "./design-system/visual/ExplorerHeroSurface";
 import DashboardExplorerVisual from "./dashboard/DashboardExplorerVisual";
+import DashboardResumeSurface from "./dashboard/DashboardResumeSurface";
+import { dashboardGuidanceInput, dashboardGuidanceStamp } from "./guidance/dashboardGuidance";
+import { resolveGuidance } from "./guidance/resolveGuidance";
 import AssessmentCheckpointVisual from "./assessment/AssessmentCheckpointVisual";
 import ScenarioDecisionVisual from "./scenario/ScenarioDecisionVisual";
 import PageIdentity from "./design-system/visual/PageIdentity";
@@ -5867,13 +5870,14 @@ const DASHBOARD_SECTIONS = [
 
 function DashboardPage() {
   const { t, i18n: activeI18n } = useTranslation();
-  const { user, go, handleChatAction, openRecommendedResource, pendingProgressSection, clearPendingProgressSection, resolvedUiLocale } = useApp();
+  const { user, go, handleChatAction, openRecommendedResource, pendingProgressSection, clearPendingProgressSection, resolvedUiLocale, requestScenarioExactResume, requestAssessmentExactResume } = useApp();
   const { conversations, selectConversation, initialLoading: chatHistoryLoading } = useChat();
   const dashboardUserId = user?.id;
   const assessmentLocale = normalizeLocale(activeI18n.language);
   const initializedLocaleUser = useRef(null);
   const initialLocaleReady = initializedLocaleUser.current === dashboardUserId || assessmentLocale === resolvedUiLocale;
   const [reloadIndex, setReloadIndex] = useState(0);
+  const guidanceStamp = useMemo(() => dashboardGuidanceStamp(dashboardUserId, assessmentLocale, reloadIndex), [dashboardUserId, assessmentLocale, reloadIndex]);
   const [recommendationCompleting, setRecommendationCompleting] = useState(false);
   const [recommendationCompleteSaved, setRecommendationCompleteSaved] = useState(false);
   const [completionError, setCompletionError] = useState(false);
@@ -5893,17 +5897,17 @@ function DashboardPage() {
   useEffect(() => {
     let active = true;
     if (!dashboardUserId || !initialLocaleReady) return () => { active = false; };
-    setAssessmentStatus({ loading: true, status: "unknown" });
+    setAssessmentStatus({ guidanceStamp, loading: true, status: "unknown" });
     dbGetAssessmentStatus(assessmentLocale).then(result => {
       if (!active) return;
       if (result.ok) {
-        setAssessmentStatus({ loading: false, status: result.status, result: result.result, attempt: result.attempt });
+        setAssessmentStatus({ guidanceStamp, loading: false, status: result.status, result: result.result, attempt: result.attempt });
       } else {
-        setAssessmentStatus({ loading: false, status: "unknown", error: result.error });
+        setAssessmentStatus({ guidanceStamp, loading: false, status: "unknown", error: result.error });
       }
     });
     return () => { active = false; };
-  }, [dashboardUserId, assessmentLocale, reloadIndex, initialLocaleReady]);
+  }, [dashboardUserId, assessmentLocale, reloadIndex, initialLocaleReady, guidanceStamp]);
 
   useEffect(() => {
     window.scrollTo({ top: 0, behavior: "auto" });
@@ -5964,17 +5968,18 @@ function DashboardPage() {
   useEffect(() => {
     let active = true;
     if (!dashboardUserId || !initialLocaleReady) return () => { active = false; };
-    setScenarioState({ loading: true, dashboard: null });
+    setScenarioState({ guidanceStamp, loading: true, dashboard: null });
     dbGetScenarioDashboard(assessmentLocale).then(dashboardResult => {
       if (!active) return;
       setScenarioState({
+        guidanceStamp,
         loading: false,
         dashboard: dashboardResult.ok ? dashboardResult : null,
         summaryError: !dashboardResult.ok,
       });
     });
     return () => { active = false; };
-  }, [dashboardUserId, assessmentLocale, reloadIndex, initialLocaleReady]);
+  }, [dashboardUserId, assessmentLocale, reloadIndex, initialLocaleReady, guidanceStamp]);
 
   useEffect(() => {
     let active = true;
@@ -5986,7 +5991,7 @@ function DashboardPage() {
     setRecommendationCompleteSaved(false);
     setCompletionError(false);
     setProgressState({ loading: true, progress: null });
-    setRecommendationState({ loading: true, recommendation: null });
+    setRecommendationState({ guidanceStamp, loading: true, recommendation: null });
     const requestKey = `${dashboardUserId}:${assessmentLocale}:${reloadIndex}`;
     if (overviewRequest.current?.key !== requestKey) {
       overviewRequest.current = {
@@ -6000,11 +6005,11 @@ function DashboardPage() {
         ? { loading: false, progress: progressResult }
         : { loading: false, progress: null, error: progressResult.error });
       setRecommendationState(recommendationResult.ok
-        ? { loading: false, recommendation: recommendationResult.recommendation }
-        : { loading: false, recommendation: null, error: recommendationResult.error });
+        ? { guidanceStamp, loading: false, recommendation: recommendationResult.recommendation }
+        : { guidanceStamp, loading: false, recommendation: null, error: recommendationResult.error });
     });
     return () => { active = false; if (dataEpoch.current === epoch) dataEpoch.current += 1; };
-  }, [dashboardUserId, assessmentLocale, reloadIndex, initialLocaleReady]);
+  }, [dashboardUserId, assessmentLocale, reloadIndex, initialLocaleReady, guidanceStamp]);
 
   useEffect(() => {
     if (!pendingProgressSection || progressState.loading || recommendationState.loading) return undefined;
@@ -6038,7 +6043,7 @@ function DashboardPage() {
     const result = await dbMarkRecommendationCompleted(current.id, assessmentLocale);
     if (dataEpoch.current !== epoch) return;
     if (result.ok) {
-      setRecommendationState({ loading: false, recommendation: result.recommendation });
+      setRecommendationState({ guidanceStamp, loading: false, recommendation: result.recommendation });
       setProgressState({ loading: true, progress: null });
       const refreshed = await dbGetProgress();
       if (dataEpoch.current !== epoch) return;
@@ -6056,6 +6061,9 @@ function DashboardPage() {
   const dashboardLearningPathProgress = progressState.progress?.learningPathProgress;
   const recommendation = recommendationState.recommendation;
   const scenarioDashboard = scenarioState.dashboard;
+  const resumeGuidance = resolveGuidance(dashboardGuidanceInput({
+    stamp: guidanceStamp, assessment: assessmentStatus, scenario: scenarioState, recommendation: recommendationState,
+  }));
   const translatedAgeGroup = t(`settings.ageGroups.${group.key}`,{defaultValue: group.label});
   const familiarityValue = user.profile?.familiarityLevel || "";
   const educationValue = user.profile?.educationLevel || "";
@@ -6209,6 +6217,12 @@ function DashboardPage() {
         />
 
       <div className="dashboard-content">
+        <DashboardResumeSurface
+          guidance={resumeGuidance}
+          inventory={scenarioDashboard?.inProgressAttempts}
+          requestScenarioExactResume={requestScenarioExactResume}
+          requestAssessmentExactResume={requestAssessmentExactResume}
+        />
 
         <div id="dashboard-measured-progress" className="dashboard-anchor"><div id="progress-overview" className="progress-anchor">
           {progressState.loading ? (
