@@ -1,5 +1,5 @@
 import React from 'react';
-import { act, render, screen, waitFor } from '@testing-library/react';
+import { act, render, screen, waitFor, within } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import App from '../App';
 import i18n from '../i18n';
@@ -15,6 +15,10 @@ jest.mock('../design-system/layout/AppShell', () => {
 });
 jest.mock('react-markdown', () => ({ __esModule: true, default: ({ children }) => <div>{children}</div> }));
 jest.mock('remark-gfm', () => ({ __esModule: true, default: () => null }));
+jest.mock('../api/assessmentApi', () => ({ getInitialAssessmentStatus: jest.fn().mockResolvedValue({ ok: true, data: { status: 'pending' } }) }));
+jest.mock('../api/progressApi', () => ({ getProgress: jest.fn().mockResolvedValue({ ok: true, data: { learningPathProgress: { displayedPercent: 0 } } }) }));
+jest.mock('../api/recommendationApi', () => ({ getCurrentRecommendation: jest.fn().mockResolvedValue({ ok: true, data: { recommendation: null } }) }));
+jest.mock('../api/resourceApi', () => ({ listResources: jest.fn().mockResolvedValue({ ok: true, data: { resources: [] } }) }));
 jest.mock('../api/authApi', () => ({ register: jest.fn(), login: jest.fn(), restoreSession: jest.fn(), refreshCurrentUser: jest.fn(), verifyEmail: jest.fn(), resendVerificationEmail: jest.fn(), logout: jest.fn() }));
 jest.mock('../api/scenarioApi', () => ({ listScenarios: jest.fn(), getRecommendedScenarios: jest.fn(), getScenarioDashboard: jest.fn(), getScenarioBySlug: jest.fn(), startScenarioAttempt: jest.fn(), getScenarioAttempt: jest.fn(), saveScenarioDecision: jest.fn(), completeScenarioAttempt: jest.fn(), getScenarioAttemptResult: jest.fn() }));
 jest.mock('../chat/chatApi', () => ({ listChatConversations: jest.fn().mockResolvedValue({ ok: true, data: { conversations: [] } }), createChatConversation: jest.fn(), getChatConversation: jest.fn(), renameChatConversation: jest.fn(), deleteChatConversation: jest.fn(), createChatUserMessage: jest.fn(), generateChatAssistantReply: jest.fn(), createLearnerActionProposal: jest.fn(), confirmLearnerActionProposal: jest.fn(), cancelLearnerActionProposal: jest.fn() }));
@@ -205,6 +209,28 @@ test('ordinary generic guarded action still executes after confirmation', async 
   await userEvent.click(screen.getByRole('button', { name: 'Proceed' }));
   expect(execute).toHaveBeenCalledTimes(1); expect(getScenarioAttempt).not.toHaveBeenCalled();
 });
+test.each([
+  ['Dashboard', '#/dashboard', /Welcome back, Learner/i],
+  ['Resources', '#/resources', 'Cyber Wellness Resources'],
+])('active exact Scenario preserves main-nav %s destination after Cancel then Confirm', async (destination, hash, heading) => {
+  window.matchMedia.mockReturnValue({ matches: false, addEventListener: jest.fn(), removeEventListener: jest.fn() });
+  await boot(); await request(); await screen.findByText('Situation 7');
+  const navigate = () => userEvent.click(within(screen.getByLabelText(i18n.t('nav.primaryAriaLabel'))).getByRole('button', { name: destination }));
+  await navigate();
+  expect(screen.getByRole('dialog')).toBeVisible();
+  await userEvent.click(screen.getByRole('button', { name: i18n.t('scenarios.continueScenario') }));
+  expect(window.location.hash).toBe('#/scenarios');
+  expect(screen.getByText('Situation 7')).toBeVisible();
+  expect(getScenarioAttempt).toHaveBeenCalledTimes(1);
+  noAutomaticMutations();
+  await navigate();
+  await userEvent.click(screen.getByRole('button', { name: i18n.t('scenarios.leaveScenario') }));
+  expect(window.location.hash).toBe(hash);
+  expect(await screen.findByRole('heading', { level: 1, name: heading })).toBeVisible();
+  expect(screen.queryByText('Situation 7')).not.toBeInTheDocument();
+  expect(screen.queryByRole('heading', { name: 'Scenario Library' })).not.toBeInTheDocument();
+});
+
 test('active exact exit cancellation preserves isolation and accepted exit restores Library', async () => {
   await boot(); await request(); await screen.findByText('Situation 7');
   await userEvent.click(screen.getByRole('button', { name: i18n.t('scenarios.attempt.exit') }));
@@ -213,6 +239,44 @@ test('active exact exit cancellation preserves isolation and accepted exit resto
   await userEvent.click(screen.getByRole('button', { name: i18n.t('scenarios.attempt.exit') }));
   await userEvent.click(screen.getByRole('button', { name: i18n.t('scenarios.leaveScenario') }));
   await waitFor(() => expect(getRecommendedScenarios).toHaveBeenCalledTimes(1));
+  expect(window.location.hash).toBe('#/scenarios');
+  expect(screen.getByRole('heading', { level: 1, name: 'Scenario Library' })).toBeVisible();
+  expect(screen.queryByText('Situation 7')).not.toBeInTheDocument();
+});
+
+test('explicit Scenario exit runs its shared cleanup and action only once', async () => {
+  await boot();
+  const leave = jest.fn();
+  act(() => mockContext.requestGuardedAction(leave, { actionType: 'scenario-exit', guard: {
+    source: 'scenario', title: 'Leave scenario?', description: 'Confirm',
+    confirmLabel: 'Leave', cancelLabel: 'Stay', onLeave: leave,
+  } }));
+  await userEvent.click(screen.getByRole('button', { name: 'Leave', exact: true }));
+  expect(await screen.findByRole('heading', { level: 1, name: 'Scenario Library' })).toBeVisible();
+  expect(window.location.hash).toBe('#/scenarios');
+  expect(leave).toHaveBeenCalledTimes(1);
+});
+
+test.each(['hash', 'history'])('active exact Scenario confirms the original %s destination', async mode => {
+  await boot(); await request(); await screen.findByText('Situation 7');
+  if (mode === 'history') {
+    act(() => window.history.back());
+  } else {
+    act(() => { window.location.hash = '#/about'; });
+  }
+  await screen.findByRole('dialog');
+  await waitFor(() => expect(window.location.hash).toBe('#/scenarios'));
+  const historyLength = window.history.length;
+  await userEvent.click(screen.getByRole('button', { name: i18n.t('scenarios.leaveScenario') }));
+  await waitFor(() => expect(window.location.hash).toBe('#/about'));
+  expect(screen.queryByText('Situation 7')).not.toBeInTheDocument();
+  if (mode === 'history') {
+    expect(window.history.length).toBe(historyLength);
+    act(() => window.history.forward());
+    expect(await screen.findByRole('heading', { level: 1, name: 'Scenario Library' })).toBeVisible();
+    expect(window.location.hash).toBe('#/scenarios');
+    expect(getScenarioAttempt).toHaveBeenCalledTimes(1);
+  }
 });
 test('Strict Mode does not duplicate the exact request after opening', async () => {
   render(<React.StrictMode><App /></React.StrictMode>);

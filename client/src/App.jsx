@@ -11331,8 +11331,10 @@ export default function App() {
     if (target.guard?.source === "scenario") {
       if (target.guardianBootstrap) clearGuardianBootstrapToken();
       target.guard.onLeave?.();
-      commitHashRoute("/scenarios", { replace: true });
-      return;
+      if (target.guardianBootstrap || target.actionType === "scenario-exit") {
+        commitHashRoute("/scenarios", { replace: true });
+        return;
+      }
     }
     if (target.type === "hash") {
       if (target.guardianBootstrap) setGuardianVerifyDeliveryVersion(current => current + 1);
