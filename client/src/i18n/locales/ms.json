@@ -462,6 +462,19 @@
     }
   },
   "assessment": {
+    "exactResume": {
+      "loading": "Membuka Penilaian anda…",
+      "invalidTarget": "Pautan Penilaian ini tidak sah.",
+      "authLost": "Sila log masuk semula untuk meneruskan.",
+      "unavailable": "Percubaan Penilaian ini tidak tersedia.",
+      "identityMismatch": "Percubaan ini tidak sepadan dengan Penilaian yang diminta.",
+      "notInProgress": "Percubaan Penilaian ini tidak lagi sedang dijalankan.",
+      "inconsistent": "Soalan yang tersedia tidak sepadan dengan percubaan yang disimpan ini. Percubaan ini tidak dapat disambung dengan selamat.",
+      "networkError": "Kami tidak dapat memuatkan Penilaian ini. Anda boleh kembali ke Penilaian untuk memilih langkah seterusnya.",
+      "requestRejected": "Percubaan Penilaian ini tidak dapat dibuka.",
+      "retry": "Cuba lagi",
+      "backToAssessment": "Kembali ke Penilaian"
+    },
     "title": "Penilaian Awal Kesihatan Siber",
     "introduction": "Penilaian ringkas 12 soalan ini memberi Cyberly gambaran awal tentang pengetahuan kesejahteraan siber anda sekarang, supaya cadangan topik lebih sesuai dengan perkara yang mungkin anda perlukan seterusnya.",
     "start": "Mulakan penilaian",

@@ -462,6 +462,19 @@
     }
   },
   "assessment": {
+    "exactResume": {
+      "loading": "Opening your Assessment…",
+      "invalidTarget": "This Assessment link is invalid.",
+      "authLost": "Please sign in again to continue.",
+      "unavailable": "This Assessment attempt is unavailable.",
+      "identityMismatch": "This attempt does not match the requested Assessment.",
+      "notInProgress": "This Assessment attempt is no longer in progress.",
+      "inconsistent": "The available questions do not match this saved attempt. It cannot be resumed safely.",
+      "networkError": "We could not load this Assessment. You can return to Assessment to choose your next step.",
+      "requestRejected": "This Assessment attempt could not be opened.",
+      "retry": "Try again",
+      "backToAssessment": "Back to Assessment"
+    },
     "title": "Initial Cyber Wellness Assessment",
     "introduction": "This short 12-question assessment gives Cyberly a starting picture of your current cyber-wellness knowledge, helping make topic recommendations more relevant to what you may need next.",
     "start": "Start assessment",

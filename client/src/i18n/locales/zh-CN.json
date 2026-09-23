@@ -462,6 +462,19 @@
     }
   },
   "assessment": {
+    "exactResume": {
+      "loading": "正在打开你的评估…",
+      "invalidTarget": "此评估链接无效。",
+      "authLost": "请重新登录以继续。",
+      "unavailable": "此评估记录不可用。",
+      "identityMismatch": "此记录与请求的评估不匹配。",
+      "notInProgress": "此评估已不再处于进行中状态。",
+      "inconsistent": "现有题目与此已保存的评估记录不匹配，无法安全地继续。",
+      "networkError": "无法加载此评估。你可以返回评估页面，选择下一步。",
+      "requestRejected": "无法打开此评估记录。",
+      "retry": "重试",
+      "backToAssessment": "返回评估"
+    },
     "title": "网络健康初始测评",
     "introduction": "这项简短的 12 题测评让 Cyberly 初步了解你目前的网络健康知识，从而根据你接下来可能需要的内容提供更贴切的主题建议。",
     "start": "开始测评",

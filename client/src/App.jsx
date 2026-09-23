@@ -1,6 +1,8 @@
 import GlobalNavigation from "./navigation/GlobalNavigation";
 import AppFooter from "./navigation/AppFooter";
 import { validScenarioResumeTarget, validScenarioResumeHandoff, validateScenarioResumeResponse, sameScenarioResumeContext } from "./guidance/scenarioContinuation";
+import { validAssessmentResumeTarget, assessmentResumeReasonKey } from "./guidance/assessmentContinuation";
+import useAssessmentExactResume from "./assessment/useAssessmentExactResume";
 import { Fragment, useState, createContext, useContext, useRef, useEffect, useLayoutEffect, useCallback, useMemo } from "react";
 import { createPortal } from "react-dom";
 import ReactMarkdown from "react-markdown";
@@ -7042,7 +7044,7 @@ function AboutPage() {
 // ─── Page: Initial Assessment ────────────────────────────────────
 function AssessmentPage() {
   const { t, i18n: activeI18n } = useTranslation();
-  const { user, go, registerActivityGuard } = useApp();
+  const { user, go, registerActivityGuard, acceptedHash, pendingAssessmentResume, clearPendingAssessmentResume, assessmentResumeAuthority, clearLocalAuthenticatedUserState } = useApp();
   const assessmentLocale = normalizeLocale(activeI18n.language);
   const [assessment, setAssessment] = useState(null);
   const [questions, setQuestions] = useState([]);
@@ -7056,9 +7058,26 @@ function AssessmentPage() {
   const [error, setError] = useState("");
   const [confirmAction, setConfirmAction] = useState(null);
 
+  const resetExactPlayer = useCallback(() => {
+    setAssessment(null); setQuestions([]); setAttempt(null); setAnswers({});
+    setResult(null); setCurrent(0); setError(""); setConfirmAction(null);
+    setSaving(false); setSubmitting(false); setLoading(true);
+  }, []);
+  const loadExactPlayer = useCallback(data => {
+    setAssessment(data.assessment); setQuestions(data.questions); setAttempt(data.attempt);
+    setAnswers(Object.fromEntries(data.attempt.answers.map(answer => [answer.questionId, answer.selectedOptionKey])));
+    setLoading(false);
+  }, []);
+  const exactResume = useAssessmentExactResume({
+    user, locale: assessmentLocale, acceptedHash, pending: pendingAssessmentResume,
+    clearPending: clearPendingAssessmentResume, authority: assessmentResumeAuthority,
+    clearAuth: clearLocalAuthenticatedUserState, onLoad: loadExactPlayer, onReset: resetExactPlayer,
+  });
+
   useEffect(() => {
     let active = true;
-    if (!user) return () => { active = false; };
+    if (!user || exactResume.isolated) return () => { active = false; };
+    const expectedAuthority = { ...assessmentResumeAuthority.current };
     async function load() {
       setLoading(true);
       setError("");
@@ -7066,7 +7085,8 @@ function AssessmentPage() {
         dbGetInitialAssessment(assessmentLocale),
         dbGetAssessmentStatus(assessmentLocale),
       ]);
-      if (!active) return;
+      if (!active || expectedAuthority.targetRevision !== assessmentResumeAuthority.current.targetRevision
+        || expectedAuthority.authScopeRevision !== assessmentResumeAuthority.current.authScopeRevision) return;
       if (!assessmentResult.ok) {
         setError(assessmentResult.error);
         setLoading(false);
@@ -7085,23 +7105,31 @@ function AssessmentPage() {
     }
     load();
     return () => { active = false; };
-  }, [user, assessmentLocale]);
+  }, [user, assessmentLocale, exactResume.isolated, assessmentResumeAuthority]);
 
   useEffect(() => {
-    if (!attempt || attempt.status !== "in_progress" || result) return undefined;
+    if (!attempt || attempt.status !== "in_progress" || result || (exactResume.isolated && exactResume.mode !== "active")) return undefined;
     return registerActivityGuard({
       type: "assessment",
       title: t("assessment.leaveTitle"),
       description: t("assessment.leaveDescription"),
     });
-  }, [attempt, result, registerActivityGuard, t]);
+  }, [attempt, result, registerActivityGuard, t, exactResume.isolated, exactResume.mode]);
 
-  if (!user) { go("login"); return null; }
+  useEffect(() => {
+    if (!user) go("login");
+    // Authentication loss redirects after render.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [user]);
+  if (!user) return null;
 
   async function start() {
+    if (exactResume.isolated) return;
+    const isCurrent = exactResume.captureActivity();
     setLoading(true);
     setError("");
     const response = await dbStartInitialAttempt(assessmentLocale);
+    if (!isCurrent()) return;
     setLoading(false);
     if (!response.ok) {
       setError(response.error);
@@ -7118,10 +7146,12 @@ function AssessmentPage() {
 
   async function selectAnswer(questionId, optionKey) {
     if (!attempt || attempt.status !== "in_progress") return;
+    const isCurrent = exactResume.captureActivity();
     setSaving(true);
     setError("");
     setAnswers(currentAnswers => ({ ...currentAnswers, [questionId]: optionKey }));
     const response = await dbSaveAssessmentAnswer(attempt.id, questionId, optionKey);
+    if (!isCurrent()) return;
     setSaving(false);
     if (!response.ok) {
       setError(response.error);
@@ -7146,10 +7176,12 @@ function AssessmentPage() {
 
   async function submitConfirmed() {
     if (!attempt || submitting) return;
+    const isCurrent = exactResume.captureActivity();
     setConfirmAction(null);
     setSubmitting(true);
     setError("");
     const response = await dbSubmitAssessment(attempt.id, assessmentLocale);
+    if (!isCurrent()) return;
     setSubmitting(false);
     if (!response.ok) {
       setError(response.error);
@@ -7157,6 +7189,7 @@ function AssessmentPage() {
     }
     setResult(response.result);
     setAttempt(response.result.attempt);
+    if (exactResume.isolated) exactResume.complete();
   }
 
   function closeAssessmentConfirm() {
@@ -7363,8 +7396,20 @@ function AssessmentPage() {
     );
   }
 
+  if (exactResume.mode === "loading" || (pendingAssessmentResume && exactResume.mode === "idle")) {
+    return <div className="assessment-page"><PageContainer width="reading"><PageState type="loading" message={t("assessment.exactResume.loading")} /></PageContainer></div>;
+  }
+  if (exactResume.mode === "recovery") {
+    return <div className="assessment-page"><PageContainer width="reading"><PageSection>
+      <div role="alert" tabIndex={-1} ref={exactResume.focusRef}>{t(`assessment.exactResume.${assessmentResumeReasonKey[exactResume.reason]}`)}</div>
+      <div className="assessment-actions">
+        {exactResume.retryable && <Button onClick={exactResume.retry}>{t("assessment.exactResume.retry")}</Button>}
+        <Button variant="quiet" onClick={exactResume.leave}>{t("assessment.exactResume.backToAssessment")}</Button>
+      </div>
+    </PageSection></PageContainer></div>;
+  }
   return (
-    <div className="assessment-page">
+    <div className="assessment-page" ref={exactResume.focusRef} tabIndex={exactResume.mode === "active" ? -1 : undefined}>
       {error && (
         <PageContainer width="reading" className="assessment-content">
           <PageState type="error" title={t("assessment.errorTitle")} message={error || t("assessment.error")} />
@@ -10633,6 +10678,17 @@ export default function App() {
   const [pendingResourceTarget, setPendingResourceTarget] = useState(null);
   const [pendingScenarioTarget, setPendingScenarioTarget] = useState(null);
   const [pendingScenarioResume, setPendingScenarioResume] = useState(null);
+  const [pendingAssessmentResume, setPendingAssessmentResume] = useState(null);
+  const [, renderAssessmentResumeAuthority] = useState(0);
+  const assessmentResumeAuthority = useRef({ authScopeRevision: 0, targetRevision: 0, acceptedNavigationGeneration: 0 });
+  const clearPendingAssessmentResume = useCallback(revision => {
+    setPendingAssessmentResume(current => current?.targetRevision === revision ? null : current);
+  }, []);
+  function invalidateAssessmentResumeAuth() {
+    assessmentResumeAuthority.current.authScopeRevision += 1;
+    renderAssessmentResumeAuthority(value => value + 1);
+    setPendingAssessmentResume(null);
+  }
   const [, renderScenarioResumeAuthority] = useState(0);
   const scenarioResumeAuthority = useRef({ authScopeRevision: 0, targetRevision: 0, acceptedNavigationGeneration: 0 });
   const clearPendingScenarioResume = useCallback(revision => {
@@ -10694,6 +10750,9 @@ export default function App() {
 
   const acceptHashRoute = useCallback((hashValue, historyIndex = historyIndexRef.current) => {
     const nextHash = normalizeHashRoute(hashValue);
+    assessmentResumeAuthority.current.acceptedNavigationGeneration += 1;
+    renderAssessmentResumeAuthority(value => value + 1);
+    setPendingAssessmentResume(null);
     scenarioResumeAuthority.current.acceptedNavigationGeneration += 1;
     renderScenarioResumeAuthority(value => value + 1);
     if (nextHash !== "#/scenarios") setPendingScenarioResume(null);
@@ -10766,6 +10825,7 @@ export default function App() {
       sessionRestoreCompletedRef.current = true;
       if (result.ok) {
         const restoredUser = normalizeSessionUser(result.user, result.profile);
+        invalidateAssessmentResumeAuth();
         invalidateScenarioResumeAuth();
         const currentHash = normalizeHashRoute(window.location.hash);
         const restoredPage = parseHashPage(currentHash);
@@ -10912,6 +10972,7 @@ export default function App() {
   ]);
 
   function login(userData, profileData, preferredPage) {
+    invalidateAssessmentResumeAuth();
     invalidateScenarioResumeAuth();
     const nextUser = normalizeSessionUser(userData, profileData);
     const continuation = nextUser.onboardingCompleted
@@ -11014,6 +11075,7 @@ export default function App() {
     });
   }
   async function logout() {
+    invalidateAssessmentResumeAuth();
     invalidateScenarioResumeAuth();
     appUserIdRef.current = null;
     pendingAuthTargetRef.current = null;
@@ -11047,6 +11109,7 @@ export default function App() {
     go("login", { authMode: mode });
   }
   function clearAuthAfterPasswordReset() {
+    invalidateAssessmentResumeAuth();
     invalidateScenarioResumeAuth();
     appUserIdRef.current = null;
     setUser(null);
@@ -11054,6 +11117,7 @@ export default function App() {
     setPendingNavigation(null);
   }
   function clearLocalAuthenticatedUserState() {
+    invalidateAssessmentResumeAuth();
     invalidateScenarioResumeAuth();
     appUserIdRef.current = null;
     setUser(null);
@@ -11125,6 +11189,21 @@ export default function App() {
     }
     action();
     return true;
+  }
+  function requestAssessmentExactResume(target) {
+    if (!validAssessmentResumeTarget(target)) return { ok: false, reason: "INVALID_TARGET" };
+    if (!appUserIdRef.current) return { ok: false, reason: "AUTH_LOST" };
+    const expectedScope = assessmentResumeAuthority.current.authScopeRevision;
+    const attemptId = target.attemptId;
+    const execute = () => {
+      if (!appUserIdRef.current || assessmentResumeAuthority.current.authScopeRevision !== expectedScope) return;
+      commitHashRoute("/assessment");
+      const authority = assessmentResumeAuthority.current;
+      authority.targetRevision += 1;
+      setPendingAssessmentResume({ attemptId, ...authority });
+    };
+    const executed = requestGuardedAction(execute, { actionType: "assessment-exact-resume" });
+    return { ok: true, queued: !executed };
   }
   function requestScenarioExactResume(target) {
     if (!validScenarioResumeTarget(target)) return { ok: false, reason: "INVALID_TARGET" };
@@ -11225,6 +11304,11 @@ export default function App() {
       await logout();
       return;
     }
+    if (target.type === "action" && target.actionType === "assessment-exact-resume") {
+      await target.guard?.onLeave?.();
+      await target.execute?.();
+      return;
+    }
     if (target.type === "action" && target.actionType === "scenario-exact-resume" && target.guard?.source === "scenario") {
       target.guard.onLeave?.();
       await target.execute?.();
@@ -11254,6 +11338,10 @@ export default function App() {
   }
 
   const ctx = {
+    pendingAssessmentResume,
+    clearPendingAssessmentResume,
+    assessmentResumeAuthority,
+    requestAssessmentExactResume,
     pendingScenarioResume,
     clearPendingScenarioResume,
     scenarioResumeAuthority,

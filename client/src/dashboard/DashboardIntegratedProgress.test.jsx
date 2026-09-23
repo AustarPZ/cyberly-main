@@ -46,6 +46,24 @@ class IntersectionObserverMock {
   disconnect() {}
 }
 
+async function renderDashboardWithSettledOverview() {
+  // A whole-page role query during startup can monopolize jsdom before React
+  // runs the overview effect. Settle the mocked authority and its React updates
+  // first, then perform the same accessible-role assertions on the ready UI.
+  render(<App />);
+  await act(async () => {
+    await restoreSession.mock.results[0].value;
+  });
+  expect(getProgress).toHaveBeenCalledTimes(1);
+  expect(getCurrentRecommendation).toHaveBeenCalledTimes(1);
+  await act(async () => {
+    await Promise.all([
+      getProgress.mock.results[0].value,
+      getCurrentRecommendation.mock.results[0].value,
+    ]);
+  });
+}
+
 describe("Dashboard integrated Progress", () => {
   beforeEach(async () => {
     jest.clearAllMocks();
@@ -183,7 +201,7 @@ describe("Dashboard integrated Progress", () => {
     listScenarios.mockResolvedValue({ok:true,data:{scenarios:[scenario]}});
     getCurrentRecommendation.mockResolvedValue({ok:true,data:{recommendation:{id:7,topicCode:'phishing',targetScenarioTitle:scenario.title,target:{page:'scenarios',scenarioId:12,scenarioSlug:scenario.slug}}}});
     markRecommendationViewed.mockResolvedValue({ok:true,data:{}});
-    render(<App />);
+    await renderDashboardWithSettledOverview();
     const action = await screen.findByRole('button',{name:i18n.t('dashboard.recommendation.practiceScenario')});
     expect(getRecommendedScenarios).not.toHaveBeenCalled();
     fireEvent.click(action);
@@ -212,7 +230,7 @@ describe("Dashboard integrated Progress", () => {
   test("failed completion preserves recorded progress and offers another explicit attempt", async()=>{
     markRecommendationCompleted.mockResolvedValue({ok:false,data:{message:'offline'}});
     getProgress.mockResolvedValue({ok:true,data:{learningPathProgress:{displayedPercent:20}}});
-    render(<App />);
+    await renderDashboardWithSettledOverview();
     fireEvent.click(await screen.findByRole('button',{name:i18n.t('progress.recommendation.markComplete')}));
     expect(await screen.findByText(i18n.t('dashboard.integrated.completionUnavailable'))).toBeVisible();
     expect(screen.getByText('20%')).toBeVisible();
