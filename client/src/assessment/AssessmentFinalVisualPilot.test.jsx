@@ -127,6 +127,72 @@ describe("Assessment final visual migration", () => {
     listChatConversations.mockResolvedValue({ ok: true, data: { conversations: [] } });
   });
 
+  test.each(["status", "network", "unknown", "content"])("ordinary %s failure exposes recovery without an actionable assessment", async failure => {
+    if (failure === "status") getInitialAssessmentStatus.mockResolvedValue({ ok: false });
+    if (failure === "network") getInitialAssessmentStatus.mockRejectedValue(new Error("Offline"));
+    if (failure === "unknown") getInitialAssessmentStatus.mockResolvedValue({ ok: true, data: { status: "unknown" } });
+    if (failure === "content") getInitialAssessment.mockResolvedValue({ ok: false });
+    render(<App />);
+    expect(await screen.findByRole("alert")).toHaveTextContent(i18n.t("assessment.errorTitle"));
+    expect(screen.getByRole("button", { name: i18n.t("common.retry") })).toBeEnabled();
+    expect(screen.queryByRole("button", { name: i18n.t("assessment.start") })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: i18n.t("assessment.resume") })).not.toBeInTheDocument();
+    expect(screen.queryByText(questions[0].prompt)).not.toBeInTheDocument();
+    expect(createInitialAssessmentAttempt).not.toHaveBeenCalled();
+    expect(saveAssessmentAnswer).not.toHaveBeenCalled();
+    expect(submitAssessmentAttempt).not.toHaveBeenCalled();
+  });
+
+  test("ordinary retry reloads both authorities and waits for explicit Start after confirmed pending", async () => {
+    getInitialAssessmentStatus.mockResolvedValueOnce({ ok: false });
+    createInitialAssessmentAttempt.mockResolvedValue({ ok: true, data: { attempt: { id: 712, status: "in_progress", answers: [] } } });
+    render(<App />);
+    await screen.findByRole("alert");
+    await userEvent.click(screen.getByRole("button", { name: i18n.t("common.retry") }));
+    const start = await screen.findByRole("button", { name: i18n.t("assessment.start") });
+    expect(getInitialAssessment).toHaveBeenCalledTimes(2);
+    expect(getInitialAssessmentStatus).toHaveBeenCalledTimes(2);
+    expect(createInitialAssessmentAttempt).not.toHaveBeenCalled();
+    expect(saveAssessmentAnswer).not.toHaveBeenCalled();
+    expect(submitAssessmentAttempt).not.toHaveBeenCalled();
+    await userEvent.click(start);
+    expect(await screen.findByRole("heading", { name: questions[0].prompt })).toBeVisible();
+    expect(createInitialAssessmentAttempt).toHaveBeenCalledTimes(1);
+  });
+
+  test("a failed ordinary Retry stays in recovery without creating an attempt", async () => {
+    getInitialAssessmentStatus.mockResolvedValue({ ok: false });
+    render(<App />);
+    await screen.findByRole("alert");
+    await userEvent.click(screen.getByRole("button", { name: i18n.t("common.retry") }));
+    expect(await screen.findByRole("alert")).toHaveTextContent(i18n.t("assessment.errorTitle"));
+    expect(getInitialAssessmentStatus).toHaveBeenCalledTimes(2);
+    expect(getInitialAssessment).toHaveBeenCalledTimes(2);
+    expect(screen.queryByRole("button", { name: i18n.t("assessment.start") })).not.toBeInTheDocument();
+    expect(createInitialAssessmentAttempt).not.toHaveBeenCalled();
+  });
+
+  test.each(["save", "submit"])("active Assessment %s errors retain the valid attempt instead of ordinary-load recovery", async operation => {
+    getInitialAssessment.mockResolvedValue({ ok: true, data: { assessment: { id: 1, title: i18n.t("assessment.title") }, questions: questions.slice(0, 1) } });
+    getInitialAssessmentStatus.mockResolvedValue({ ok: true, data: { status: "in_progress", attempt: {
+      id: 712, status: "in_progress", answers: [{ questionId: 101, selectedOptionKey: "A" }],
+    } } });
+    saveAssessmentAnswer.mockResolvedValue({ ok: false });
+    submitAssessmentAttempt.mockResolvedValue({ ok: false });
+    render(<App />);
+    await screen.findByRole("heading", { name: questions[0].prompt });
+    if (operation === "save") {
+      await userEvent.click(screen.getByRole("button", { name: /B\. It uses your bank/i }));
+    } else {
+      await userEvent.click(screen.getByRole("button", { name: i18n.t("assessment.submit") }));
+      await userEvent.click(within(screen.getByRole("dialog")).getByRole("button", { name: i18n.t("assessment.submit") }));
+    }
+    expect(await screen.findByRole("alert")).toBeVisible();
+    expect(screen.getByRole("heading", { name: questions[0].prompt })).toBeVisible();
+    expect(screen.queryByRole("button", { name: i18n.t("common.retry") })).not.toBeInTheDocument();
+    expect(createInitialAssessmentAttempt).not.toHaveBeenCalled();
+  });
+
   test("presents the pending assessment as one checkpoint briefing without the legacy banner", async () => {
     const { container } = render(<App />);
     const heading = await screen.findByRole("heading", { level: 1, name: i18n.t("assessment.title") });

@@ -6389,6 +6389,7 @@ function DashboardPage() {
 
 function ChatMessageList({ className = "chat-messages", emptyCompact = false, emptyState = null }) {
   const { t } = useTranslation();
+  const { go } = useApp();
   const {
     activeConversationId,
     messages,
@@ -6556,6 +6557,10 @@ function ChatMessageList({ className = "chat-messages", emptyCompact = false, em
                           {t("chat.generation.retry")}
                         </button>
                       )}
+                      <div className="chat-action-proposal-actions">
+                        <Button variant="quiet" onClick={() => go("resources")}>{t("chat.actions.openResources")}</Button>
+                        <Button variant="quiet" onClick={() => go("scenarios")}>{t("chat.actions.openScenarios")}</Button>
+                      </div>
                     </div>
                   </div>
                 )}
@@ -7071,6 +7076,8 @@ function AssessmentPage() {
   const [submitting, setSubmitting] = useState(false);
   const [error, setError] = useState("");
   const [confirmAction, setConfirmAction] = useState(null);
+  const [ordinaryLoad, setOrdinaryLoad] = useState("loading");
+  const [ordinaryLoadRevision, setOrdinaryLoadRevision] = useState(0);
 
   const resetExactPlayer = useCallback(() => {
     setAssessment(null); setQuestions([]); setAttempt(null); setAnswers({});
@@ -7094,6 +7101,7 @@ function AssessmentPage() {
     const expectedAuthority = { ...assessmentResumeAuthority.current };
     async function load() {
       setLoading(true);
+      setOrdinaryLoad("loading");
       setError("");
       const [assessmentResult, statusResult] = await Promise.all([
         dbGetInitialAssessment(assessmentLocale),
@@ -7101,25 +7109,36 @@ function AssessmentPage() {
       ]);
       if (!active || expectedAuthority.targetRevision !== assessmentResumeAuthority.current.targetRevision
         || expectedAuthority.authScopeRevision !== assessmentResumeAuthority.current.authScopeRevision) return;
-      if (!assessmentResult.ok) {
-        setError(assessmentResult.error);
+      const knownStatus = statusResult.ok && (
+        statusResult.status === "pending"
+        || (statusResult.status === "in_progress" && statusResult.attempt?.status === "in_progress")
+        || (statusResult.status === "completed" && statusResult.result?.attempt?.status === "completed")
+      );
+      if (!assessmentResult.ok || !knownStatus) {
+        setOrdinaryLoad("error");
         setLoading(false);
         return;
       }
       setAssessment(assessmentResult.assessment);
       setQuestions(assessmentResult.questions);
+      setOrdinaryLoad(statusResult.status);
       if (statusResult.ok && statusResult.status === "completed") {
         setResult(statusResult.result);
         setAttempt(statusResult.result?.attempt || null);
       } else if (statusResult.ok && statusResult.status === "in_progress") {
+        setResult(null);
         setAttempt(statusResult.attempt);
         setAnswers(Object.fromEntries((statusResult.attempt?.answers || []).map(answer => [answer.questionId, answer.selectedOptionKey])));
+      } else {
+        setResult(null);
+        setAttempt(null);
+        setAnswers({});
       }
       setLoading(false);
     }
     load();
     return () => { active = false; };
-  }, [user, assessmentLocale, exactResume.isolated, assessmentResumeAuthority]);
+  }, [user, assessmentLocale, exactResume.isolated, assessmentResumeAuthority, ordinaryLoadRevision]);
 
   useEffect(() => {
     if (!attempt || attempt.status !== "in_progress" || result || (exactResume.isolated && exactResume.mode !== "active")) return undefined;
@@ -7138,7 +7157,7 @@ function AssessmentPage() {
   if (!user) return null;
 
   async function start() {
-    if (exactResume.isolated) return;
+    if (exactResume.isolated || ordinaryLoad !== "pending" || loading) return;
     const isCurrent = exactResume.captureActivity();
     setLoading(true);
     setError("");
@@ -7421,6 +7440,12 @@ function AssessmentPage() {
         <Button variant="quiet" onClick={exactResume.leave}>{t("assessment.exactResume.backToAssessment")}</Button>
       </div>
     </PageSection></PageContainer></div>;
+  }
+  if (!exactResume.isolated && ordinaryLoad === "error") {
+    return <div className="assessment-page"><PageContainer width="reading" className="assessment-content">
+      <PageState type="error" title={t("assessment.errorTitle")} message={t("assessment.error")}
+        actionLabel={t("assessment.retry")} onAction={() => setOrdinaryLoadRevision(value => value + 1)} />
+    </PageContainer></div>;
   }
   return (
     <div className="assessment-page" ref={exactResume.focusRef} tabIndex={exactResume.mode === "active" ? -1 : undefined}>

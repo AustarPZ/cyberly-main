@@ -19,7 +19,13 @@ import {
   getChatConversation,
   listChatConversations,
   renameChatConversation,
+  createLearnerActionProposal,
+  confirmLearnerActionProposal,
+  cancelLearnerActionProposal,
 } from "../chat/chatApi";
+import { listScenarios, startScenarioAttempt, saveScenarioDecision, completeScenarioAttempt } from "../api/scenarioApi";
+import { markRecommendationViewed, markRecommendationCompleted } from "../api/recommendationApi";
+import { listResources } from "../api/resourceApi";
 import { pinnedConversationStorageKey } from "../chat/chatPinning";
 import { archivedConversationStorageKey } from "../chat/chatArchiving";
 import {
@@ -83,13 +89,20 @@ jest.mock("../api/progressApi", () => ({
 jest.mock("../api/recommendationApi", () => ({
   ...jest.requireActual("../api/recommendationApi"),
   getCurrentRecommendation: jest.fn(),
+  markRecommendationViewed: jest.fn(),
+  markRecommendationCompleted: jest.fn(),
 }));
 
 jest.mock("../api/scenarioApi", () => ({
   ...jest.requireActual("../api/scenarioApi"),
   getRecommendedScenarios: jest.fn(),
   getScenarioDashboard: jest.fn(),
+  listScenarios: jest.fn(),
+  startScenarioAttempt: jest.fn(),
+  saveScenarioDecision: jest.fn(),
+  completeScenarioAttempt: jest.fn(),
 }));
+jest.mock("../api/resourceApi", () => ({ ...jest.requireActual("../api/resourceApi"), listResources: jest.fn() }));
 
 function follows(before, after) {
   return Boolean(before.compareDocumentPosition(after) & Node.DOCUMENT_POSITION_FOLLOWING);
@@ -338,6 +351,14 @@ describe("CyberGuard public beta pilot baseline", () => {
     });
 
     expect(screen.getByRole("alert")).toHaveTextContent(copyPattern);
+    const failure = within(screen.getByRole("alert"));
+    expect(failure.getByRole("button", { name: /open resources/i })).toBeVisible();
+    expect(failure.getByRole("button", { name: /open scenarios/i })).toBeVisible();
+    expect(window.location.hash).toBe("#/ai-chat");
+    [createChatConversation, createChatUserMessage, generateChatAssistantReply, renameChatConversation, deleteChatConversation,
+      createLearnerActionProposal, confirmLearnerActionProposal, cancelLearnerActionProposal,
+      markRecommendationViewed, markRecommendationCompleted, startScenarioAttempt, saveScenarioDecision, completeScenarioAttempt]
+      .forEach(mutation => expect(mutation).not.toHaveBeenCalled());
     expect(screen.queryByText(/sk-test|OPENAI_API_KEY|Mock auth|gpt-5|OpenAI|Gemini|ILMU/i)).not.toBeInTheDocument();
     const retry = screen.queryByRole("button", { name: /retry cyberguard reply/i });
     if (retryable) {
@@ -345,6 +366,34 @@ describe("CyberGuard public beta pilot baseline", () => {
     } else {
       expect(retry).not.toBeInTheDocument();
     }
+  });
+
+  test.each([
+    ["resources", false], ["scenarios", false], ["resources", true], ["scenarios", true],
+  ])("generation recovery opens only %s through normal navigation (mobile=%s)", async (destination, mobile) => {
+    listResources.mockResolvedValue({ ok: true, data: { resources: [] } });
+    listScenarios.mockResolvedValue({ ok: true, data: { scenarios: [] } });
+    await renderCyberGuardPilotFixture({ mobile, chatOverrides: {
+      getChatConversation: () => Promise.resolve({
+        ok: true, conversation: cyberGuardPilotConversation, messages: [cyberGuardPilotUserMessage],
+        actions: [], sources: [], generations: [{ id: 8801, conversationId: cyberGuardPilotConversation.id,
+          userMessageId: cyberGuardPilotUserMessage.id, status: "failed", errorCode: "AI_AUTH_FAILED" }],
+      }),
+    } });
+    const failure = within(await screen.findByRole("alert"));
+    const action = failure.getByRole("button", { name: new RegExp(`open ${destination}`, "i") });
+    expect(action).toBeVisible();
+    expect(window.location.hash).toBe("#/ai-chat");
+    action.focus();
+    expect(action).toHaveFocus();
+    await userEvent.keyboard("{Enter}");
+    await waitFor(() => expect(window.location.hash).toBe(`#/${destination}`));
+    await waitFor(() => expect(destination === "resources" ? listResources : listScenarios).toHaveBeenCalled());
+    expect(destination === "resources" ? listScenarios : listResources).not.toHaveBeenCalled();
+    [createChatConversation, createChatUserMessage, generateChatAssistantReply, renameChatConversation, deleteChatConversation,
+      createLearnerActionProposal, confirmLearnerActionProposal, cancelLearnerActionProposal,
+      markRecommendationViewed, markRecommendationCompleted, startScenarioAttempt, saveScenarioDecision, completeScenarioAttempt]
+      .forEach(mutation => expect(mutation).not.toHaveBeenCalled());
   });
 
   test("desktop sidebar collapse toggles the ChatShell modifier without removing content", async () => {
