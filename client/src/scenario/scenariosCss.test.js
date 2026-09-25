@@ -14,6 +14,19 @@ function remPaddingFor(selector) {
 }
 
 describe("Scenario Decision Trail responsive CSS", () => {
+  test("PERSIST1 canonical recommendation owns orange on a white surface without an arrival target", () => {
+    expect(blockFor(".scenario-library-card.recommended")).toMatch(/border-color:\s*var\(--cyberly-warning\)/);
+    expect(blockFor(".scenario-page-library .scenario-library-card.recommended")).toMatch(/background:\s*var\(--surface-raised\)/);
+    expect(blockFor(".scenario-library-card.recommended::before")).toMatch(/background:\s*var\(--cyberly-warning\)/);
+    expect(blockFor(".scenario-page-library .scenario-library-card.recommended::before")).toMatch(/display:\s*block/);
+  });
+
+  test("PERSIST1 arrival state adds green focus only, never independent orange emphasis", () => {
+    expect(blockFor(".scenario-library-card.highlighted")).not.toMatch(/border-color|box-shadow/);
+    expect(blockFor(".scenario-library-card.highlighted::before")).not.toMatch(/background/);
+    expect(blockFor(".scenario-library-card.highlighted:focus")).toMatch(/outline:\s*3px solid var\(--cyberly-interactive-focus\)/);
+    expect(blockFor(".scenario-library-card.highlighted:focus")).toMatch(/outline-offset:\s*3px/);
+  });
   test("I01 limits green primary and compact orientation to Library, preserving other Scenario surfaces", () => {
     expect(blockFor(".scenario-page-library .cy-button-primary")).toMatch(/background:\s*var\(--color-brand-primary-hover\)/);
     expect(blockFor(".scenario-library-header")).toMatch(/background:\s*transparent/);
@@ -44,7 +57,7 @@ describe("Scenario Decision Trail responsive CSS", () => {
     expect(remPaddingFor(".scenario-library-card")).toBeGreaterThanOrEqual(1);
     expect(blockFor(".scenario-library-card")).toMatch(/min-width\s*:\s*0/);
     expect(blockFor(".scenario-library-card.recommended")).toMatch(/border-color\s*:/);
-    expect(blockFor(".scenario-library-card.highlighted")).toMatch(/border-color\s*:/);
+    expect(blockFor(".scenario-library-card.highlighted:focus")).toMatch(/outline\s*:/);
     expect(css).not.toMatch(/(?:html|body|\.scenario-page)[^{]*\{[^}]*overflow-x\s*:\s*hidden/);
   });
 

@@ -664,3 +664,16 @@ COMMITS / PUSHES / REF MOVEMENTS / DEPLOYMENTS / DB MUTATIONS / PROVIDER CALLS =
 - Recommended first slice: SC01-I01 Library compact orientation + truthful recovery. Proposal only; scope/files/tests/gates and all five preservation maps in report.
 - Evidence/report/gallery: `C:/Users/AsusT/.codex/visualizations/2026/09/24/01a0d487-d6fa-7ab3-9d0b-964e20805f29/PILOT-SC01-AUDIT/REPORT.md`, `review/index.html`, `PILOT-SC01-AUDIT-review.zip`; full inventory/ledger/hash manifests alongside.
 - Product/CSS/locale/test/backend edits = 0. Only this readiness append; no commit/push/deploy/ref movement. **PRODUCTION = NOT CERTIFIED.**
+
+
+### SC01-I01-PERSIST1 — persistent orange recommendation candidate, verification blocked
+
+2026-09-26 — **SC01-I01-PERSIST1_VERIFICATION_BLOCKED**. Not OWNER_VISUAL_REVIEW_READY; no UI acceptance. **PRODUCTION = NOT CERTIFIED**.
+
+Precheck: develop / d88677cbe5dbe3164f8c5be15224a354879de288, local origin/develop and origin/master matched, clean worktree/index. I01 accepted composition is unchanged. Product delta only in Scenario CSS: `.recommended` now owns orange border/top strip on white; `.highlighted:focus` retains green focus only. App.jsx, canonical endpoint, recommendation authority, refresh/completion flow, exact-resume, guards, filters, mutation timing, locale and backend are unchanged. No new persistence or ranking.
+
+TDD valid RED: two expected CSS failures / six existing behavior protections pass. Original RED fixture typo and correction are preserved. GREEN focused: 8 pass (16 unrelated cases excluded by focused name filter); Scenario targeted: 5 suites / 66 pass; relevant regressions: 9 / 179 pass; locale PASS. One fresh full-client run failed: Test Suites: 1 failed, 111 passed, 112 total; Tests:       1 failed, 1157 passed, 1158 total; Time:        491.872 s. Exact failures/source hashes: external full-client-failures.json. No retries, failing-suite reruns, timeout changes, skipped/deleted assertions or unrelated fixes.
+
+Per PERSIST1 section 15 STOP, fresh evidence build and AFTER browser capture were not run. Four genuine BEFORE full-page PNGs (EN1440, EN390, MS390, ZH-CN390) are retained, with build/source provenance matching the published baseline. They are not evidence of the CSS fix. BEFORE ledger: all requests intercepted; no mutations/live API/network continuation. The historical I01 timing watch item remains documented; current failure root cause is not established.
+
+Evidence: C:/Users/AsusT/.codex/visualizations/2026/09/24/01a0d487-d6fa-7ab3-9d0b-964e20805f29/SC01-I01-PERSIST1/REPORT.md; SC01-I01-PERSIST1-blocked-evidence.zip. Candidate CSS, two Scenario test files and this readiness append are the only changed paths. Need separately authorized runtime investigation before completing fresh build and requested visual review package. No commit/push/deploy/ref movement/DB/provider/RAG/dependency changes. PRODUCTION = NOT CERTIFIED.

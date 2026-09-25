@@ -72,11 +72,9 @@
 }
 .scenario-library-card:hover,
 .scenario-library-card:focus-within { border-color: var(--border-strong); box-shadow: var(--shadow-raised); transform: translateY(-2px); }
-.scenario-library-card.recommended { border-color: var(--color-brand-border); background: linear-gradient(180deg, var(--color-brand-soft), var(--surface-raised) 44%); }
-.scenario-library-card.recommended::before,
-.scenario-library-card.highlighted::before { content: ""; position: absolute; inset: 0 0 auto; height: 4px; background: var(--color-brand-primary); }
-.scenario-library-card.highlighted { border-color: var(--cyberly-warning); box-shadow: 0 0 0 3px rgba(247, 183, 49, 0.2), var(--shadow-raised); }
-.scenario-library-card.highlighted::before { background: var(--cyberly-warning); }
+/* Canonical recommendation owns orange; the consumed arrival target owns focus only. */
+.scenario-library-card.recommended { border-color: var(--cyberly-warning); background: var(--surface-raised); }
+.scenario-library-card.recommended::before { content: ""; position: absolute; inset: 0 0 auto; height: 4px; background: var(--cyberly-warning); }
 .scenario-library-card.highlighted:focus { outline: 3px solid var(--cyberly-interactive-focus); outline-offset: 3px; }
 .scenario-card-heading { display: flex; justify-content: space-between; gap: 0.75rem; align-items: flex-start; margin-bottom: 0.85rem; }
 .scenario-card-topic { color: var(--color-brand-strong); font-size: 0.78rem; font-weight: 800; }
@@ -207,8 +205,7 @@
 .scenario-page-library .scenario-library-card:hover,
 .scenario-page-library .scenario-library-card:focus-within { transform: none; }
 .scenario-page-library .scenario-library-card.recommended { background: var(--surface-raised); }
-.scenario-page-library .scenario-library-card.recommended::before { display: none; }
-.scenario-page-library .scenario-library-card.highlighted::before { display: block; }
+.scenario-page-library .scenario-library-card.recommended::before { display: block; }
 .scenario-page-library .scenario-card-actions { gap: 0.6rem; }
 .scenario-page-library .cy-button { white-space: normal; min-height: 44px; }
 .scenario-page-library .cy-button-primary { background: var(--color-brand-primary-hover); border-color: var(--color-brand-primary-hover); color: var(--text-on-brand); }

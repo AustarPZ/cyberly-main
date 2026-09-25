@@ -14,6 +14,7 @@ import {
   startScenarioAttempt,
 } from "../api/scenarioApi";
 import { listChatConversations } from "../chat/chatApi";
+import { buildRecommendedScenarioNavigation, clearRecommendedScenarioTarget } from "../chat/chatActions";
 
 jest.mock("react-markdown", () => ({ __esModule: true, default: ({ children }) => <div>{children}</div> }));
 jest.mock("remark-gfm", () => ({ __esModule: true, default: () => null }));
@@ -104,6 +105,7 @@ class IntersectionObserverMock {
 describe("Scenario Decision Trail final visual migration", () => {
   beforeEach(async () => {
     jest.clearAllMocks();
+    clearRecommendedScenarioTarget();
     window.history.replaceState({}, "", "#/scenarios");
     window.scrollTo = jest.fn();
     window.HTMLElement.prototype.scrollIntoView = jest.fn();
@@ -133,6 +135,95 @@ describe("Scenario Decision Trail final visual migration", () => {
     expect(saveScenarioDecision).not.toHaveBeenCalled();
     expect(completeScenarioAttempt).not.toHaveBeenCalled();
   }
+
+  test("PERSIST1 direct entry and fresh mount use canonical recommendation without storing its identity", async () => {
+    const storageWrite = jest.spyOn(Storage.prototype, "setItem");
+    try {
+      const first = render(<App />);
+      const card = (await screen.findByText(scenario.title)).closest(".scenario-library-card");
+      expect(card).toHaveClass("recommended");
+      expect(card).not.toHaveClass("highlighted");
+      expect(within(card).getByText("Recommended")).toBeVisible();
+      first.unmount();
+      render(<App />);
+      expect((await screen.findByText(scenario.title)).closest(".scenario-library-card")).toHaveClass("recommended");
+      expect(getRecommendedScenarios).toHaveBeenCalledTimes(2);
+      expect(storageWrite.mock.calls.filter(([key, value]) => /recommend|suspicious-bank-message/i.test(`${key} ${value}`))).toEqual([]);
+      expectNoLearningWrites();
+    } finally { storageWrite.mockRestore(); }
+  });
+
+  test("PERSIST1 arrival focus and Intro consume only transient state; return retains canonical recommendation", async () => {
+    buildRecommendedScenarioNavigation({ scenarioSlug: scenario.slug }, "dashboard");
+    render(<App />);
+    const card = (await screen.findByText(scenario.title)).closest(".scenario-library-card");
+    await waitFor(() => expect(card).toHaveFocus());
+    expect(card).toHaveClass("recommended", "highlighted");
+    await userEvent.click(screen.getByRole("combobox", { name: "Topic filter" }));
+    expect(card).not.toHaveFocus();
+    expect(card).toHaveClass("recommended");
+    await userEvent.click(within(card).getByRole("button", { name: "View scenario" }));
+    expect(await screen.findByRole("button", { name: "Start practice" })).toBeVisible();
+    await userEvent.click(screen.getByRole("button", { name: i18n.t("scenarios.library.backToLibrary") }));
+    const returned = (await screen.findByText(scenario.title)).closest(".scenario-library-card");
+    expect(returned).toHaveClass("recommended");
+    expect(returned).not.toHaveClass("highlighted");
+    expect(within(returned).getByText("Recommended")).toBeVisible();
+    expectNoLearningWrites();
+  });
+
+  test("PERSIST1 filters hide canonical recommendation without clearing themselves, then restore it", async () => {
+    listScenarios.mockImplementation(({ topicCode, difficulty }) => Promise.resolve({ ok: true, data: {
+      scenarios: [scenario, { ...resumedScenario, topicCode: "password_and_account_security", difficulty: "advanced" }].filter(s => (!topicCode || s.topicCode === topicCode) && (!difficulty || s.difficulty === difficulty)),
+    } }));
+    render(<App />);
+    await screen.findByText(scenario.title);
+    for (const [name, value] of [["Topic filter", "password_and_account_security"], ["Difficulty filter", "advanced"]]) {
+      const filter = screen.getByRole("combobox", { name });
+      await userEvent.selectOptions(filter, value);
+      await screen.findByText(resumedScenario.title);
+      expect(filter).toHaveValue(value);
+      expect(screen.queryByText(scenario.title)).not.toBeInTheDocument();
+      await userEvent.selectOptions(filter, "");
+      expect((await screen.findByText(scenario.title)).closest(".scenario-library-card")).toHaveClass("recommended");
+    }
+    expectNoLearningWrites();
+  });
+
+  test.each(["next", "empty", "completed"])("PERSIST1 completion refresh respects canonical %s result without frontend ranking", async (mode) => {
+    // A is the existing saved attempt; B is available. Authority may also legitimately retain completed A.
+    getRecommendedScenarios.mockResolvedValueOnce({ ok: true, data: { scenarios: [resumedScenario] } });
+    const completedA = { ...resumedScenario, latestAttempt: { id: 501, status: "completed" } };
+    getRecommendedScenarios.mockResolvedValue({ ok: true, data: { scenarios: mode === "empty" ? [] : [mode === "next" ? scenario : completedA] } });
+    saveScenarioDecision.mockResolvedValue({ ok: true, data: {
+      decision: { feedback: "Safer choice.", safetyExplanation: "Verify independently.", classification: "safest" },
+      attempt: { id: 501, status: "in_progress" }, nextStep: null, readyToComplete: true,
+    } });
+    completeScenarioAttempt.mockResolvedValue({ ok: true, data: { ...completedResult, attempt: { ...completedResult.attempt, id: 501 }, scenario: completedA } });
+    const { container } = render(<App />);
+    const a = (await screen.findByText(resumedScenario.title)).closest(".scenario-library-card");
+    expect(a).toHaveClass("recommended");
+    expect(screen.getByText(scenario.title).closest(".scenario-library-card")).not.toHaveClass("recommended");
+    expectNoLearningWrites();
+    await userEvent.click(within(a).getByRole("button", { name: "Continue scenario" }));
+    await userEvent.click(await screen.findByRole("button", { name: /B\. Pause and verify/i }));
+    await userEvent.click(screen.getByRole("button", { name: i18n.t("scenarios.attempt.confirmChoice") }));
+    listScenarios.mockResolvedValue({ ok: true, data: { scenarios: [scenario, completedA] } });
+    await userEvent.click(await screen.findByRole("button", { name: i18n.t("scenarios.attempt.complete") }));
+    await userEvent.click(await screen.findByRole("button", { name: i18n.t("scenarios.result.returnToLibrary") }));
+    const returnedA = (await screen.findByText(resumedScenario.title)).closest(".scenario-library-card");
+    const b = screen.getByText(scenario.title).closest(".scenario-library-card");
+    expect(returnedA.classList.contains("recommended")).toBe(mode === "completed");
+    expect(b.classList.contains("recommended")).toBe(mode === "next");
+    expect(container.querySelectorAll(".scenario-library-card.recommended")).toHaveLength(mode === "empty" ? 0 : 1);
+    expect(within(returnedA).getByRole("button", { name: "Review result" })).toBeVisible();
+    expect(within(b).getByRole("button", { name: "View scenario" })).toBeVisible();
+    expect(startScenarioAttempt).not.toHaveBeenCalled();
+    expect(saveScenarioDecision).toHaveBeenCalledTimes(1);
+    expect(saveScenarioDecision).toHaveBeenCalledWith(501, { stepId: 301, selectedOptionKey: "B" }, { locale: "en" });
+    expect(completeScenarioAttempt).toHaveBeenCalledTimes(1);
+    expect(completeScenarioAttempt).toHaveBeenCalledWith(501, { locale: "en" });
+  });
 
   test("I01 separates failed catalogue recovery from successful empty and retries the active filters without mutations", async () => {
     const { container } = render(<App />);
