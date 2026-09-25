@@ -77,14 +77,14 @@ describe("AppShell route landmark ownership", () => {
 
     const { container } = render(<App />);
 
-    expect(await screen.findByRole("complementary", { name: i18n.t("dashboard.sectionNav.ariaLabel") })).toBeInTheDocument();
+    expect(await screen.findByRole("heading", { name: i18n.t("dashboard.astra.myProgress") })).toBeInTheDocument();
     expect(window.location.hash).toBe("#/dashboard");
     expect(screen.getAllByRole("main")).toHaveLength(1);
     expect(screen.getByRole("main")).toHaveClass("cy-app-shell-main");
     expect(container.querySelector(".cy-app-shell")).toBeInTheDocument();
-    expect(container.querySelector(".dashboard-content")).toBeInTheDocument();
-    expect(container.querySelector(".dashboard-content").tagName).not.toBe("MAIN");
-    expect(container.querySelector(".dashboard-content #progress-overview")).toBeInTheDocument();
+    expect(container.querySelector(".dashboard-shell")).toBeInTheDocument();
+    expect(container.querySelector(".dashboard-shell").tagName).not.toBe("MAIN");
+    expect(container.querySelector(".dashboard-shell #progress-overview")).toBeInTheDocument();
     expect(Array.from(container.querySelectorAll(".nav-primary button"), item => item.textContent)).toEqual([
       "Dashboard", "Resources", "Scenarios", "Assessment", "CyberGuard", "About",
     ]);

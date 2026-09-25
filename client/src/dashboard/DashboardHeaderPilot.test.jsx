@@ -66,22 +66,22 @@ describe("Dashboard CompactHeader pilot", () => {
     listChatConversations.mockResolvedValue({ ok: true, data: { conversations: [] } });
   });
 
-  test("uses CompactHeader without changing Dashboard section structure or fetching header statistics", async () => {
+  test("uses minimal Astra header without fetching header statistics", async () => {
     const { container } = render(<App />);
-    const heading = await screen.findByRole("heading", { level: 1, name: /Welcome back, Alya/i });
-    const header = heading.closest(".cy-compact-header");
+    const heading = await screen.findByRole("heading", { level: 1, name: /A little practice\. A stronger instinct\./i });
+    const header = heading.closest(".dashboard-astra-header");
 
     expect(header).toBeInTheDocument();
-    expect(within(header).getByText(/Teen/)).toBeInTheDocument();
-    expect(within(header).getByText(/Beginner/)).toBeInTheDocument();
-    expect(within(header).getByText(/Form 3/i)).toBeInTheDocument();
+    expect(within(header).queryByText(/Teen/)).not.toBeInTheDocument();
+    expect(within(header).queryByText(/Beginner/)).not.toBeInTheDocument();
+    expect(within(header).queryByText(/Form 3/i)).not.toBeInTheDocument();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(container.querySelector("[style*='linear-gradient(135deg']")).not.toBeInTheDocument();
     expect(screen.queryByText(i18n.t("dashboard.stats.learningTopics"))).not.toBeInTheDocument();
-    expect(screen.getByRole("complementary", { name: i18n.t("dashboard.sectionNav.ariaLabel") })).toBeInTheDocument();
+    expect(screen.queryByRole("complementary", { name: i18n.t("dashboard.sectionNav.ariaLabel") })).not.toBeInTheDocument();
 
     const overview = container.querySelector("#dashboard-overview");
-    const shell = container.querySelector(".dashboard-shell");
+    const shell = container.querySelector(".dashboard-top-composition");
     expect(overview.compareDocumentPosition(shell) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
     await waitFor(() => expect(getInitialAssessmentStatus).toHaveBeenCalled());
     expect(listResources).not.toHaveBeenCalled();

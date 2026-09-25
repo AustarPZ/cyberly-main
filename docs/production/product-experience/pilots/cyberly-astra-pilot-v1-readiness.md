@@ -560,3 +560,48 @@ All seven required product-facing SHA-256 values match before/final/previous cap
 Evidence root: `C:/Users/AsusT/.codex/visualizations/2026/09/24/01a0d487-d6fa-7ab3-9d0b-964e20805f29/PILOT-B01/`. Current `report.md` / `amd3-final-report.md`, `verification.json`, `amd3-integrity.json`, `amd3-exact-diff.patch`, `amd3-*.log`, `amd3-git-name-status.txt`, `amd3-git-stat.txt`, `git-final.txt`, and existing `index.html` gallery. Seven before/final hashes are tabulated in the report.
 
 Branch/HEAD remain develop / b9baed034bd8af02d3b6863fc85515f77869097a. AMD3 test edits 1 file / 1 line; source/CSS/locale/backend/API/resolver/DB/migration/live API/provider/commit/push/deploy counts **0**. This document append is the only additional repository documentation change. Roadmap and scope hashes unchanged. Owner visual review remains required; synthetic local evidence does not certify production, physical devices, Safari or full accessibility. Stop here without commit, push or deployment.
+
+
+## PILOT-B01-FULL1 — local execution (2026-09-25)
+Owner-approved full composition; FULL1 attachment is the execution contract. Baseline: develop / c69528d1c5cc3f72d059fdde6c82b4ad05a0e5ec; tracked, untracked and staged counts zero. Local master irrelevant; no ref movement.
+
+Function/anchor map: dashboard-overview → minimal header; dashboard-recommended-next-step / progress-recommendation → B01 illustrated action surface; dashboard-measured-progress / progress-overview → integrated My Progress heading/detail; dashboard-scenario-practice and dashboard-initial-assessment → integrated rows; progress-assessment-results / progress-learning-activity / progress-badges → real results, activity, expandable details; dashboard-quick-actions → final Resources/Scenarios/Talk paths and utilities; dashboard-daily-tip → upper-right Wellness Tip; dashboard-cyberguard-ai → explicit chat disclosure retaining first-message/history. Global nav/footer/launcher retained.
+
+Test-impact pass: all Dashboard/Progress tests, plus directly rendering navigation/auth/home/profile/scenario/assessment/about/CyberGuard suites. Adapt old header/metadata/section directory/card order and single-percentage assertions, preserving auth, ownership, exact attempt, canonical target, uncertainty and mutation timing. Failing composition/shared-progress/shortcut/tip/inventory tests precede implementation. Then affected/contract/full-client, locale, isolated build, diff and full-page visual evidence. External evidence: PILOT-B01-FULL1 alongside B01; no old evidence overwritten. Production remains NOT CERTIFIED.
+
+
+### FULL1 final local verification — 2026-09-25
+
+**PILOT-B01-FULL1_OWNER_VISUAL_REVIEW_READY**. Owner visual approval is still required; authenticated staging acceptance is not inferred. **PRODUCTION = NOT CERTIFIED**.
+
+Implemented full composition, not only the main card: concise approved three-language header; illustrated existing B01 action owner; shared scoped progress shortcut; stable entry/manual Wellness Tip; integrated My Progress/Scenario/Assessment/recent activity; final light exploration and explicit chat disclosure. Missing progress/Scenario counts remain unknown, not zero. Global shell and exact-resume/resolver/API/score behavior remain intact.
+
+Final post-launcher-fix checks: targeted 13 suites / 121 tests PASS; contract/navigation/chat regression 9 suites / 279 tests PASS; full client 112 suites / 1127 tests PASS, zero skipped; locales/build/diff PASS. The final evidence-only build uses https://pilot.invalid. Existing React act, test-environment network console output and Node fs.F_OK deprecation are retained in logs. Initial failures and fixes are disclosed in report.md; no tests were skipped/deleted or timeouts increased.
+
+50 fresh full-page candidate PNGs cover EN/MS/ZH-CN × 1440/1024/390/320, explicit Recommended, uncertainty/empty/multiple/duplicate/completion states, tips, expanded details/chat, stale locale/user sessions, keyboard, reduced motion and 200% viewport reflow (720×450 CSS at DPR2, not native menu zoom). Four historical reference/BEFORE images are clearly separated. Final capture checks include 44px control height, overflow, hit-testing, sticky-header focus offset, resize stability and narrow shortcut/launcher rectangle separation. The earlier overlap is preserved in launcher-overlap-red.log; only Dashboard shortcut CSS was adjusted, followed by fresh full validation and capture.
+
+Final ledger: 360 intercepted requests, passive writes 0, live requests/provider calls/network continuation 0; two explicitly triggered synthetic completion requests; one explicitly triggered existing language-preference PUT was aborted rather than fulfilled or sent live. Synthetic GET results do not certify live backend side effects. Stale-user browser proof uses a fresh synthetic session after reload, with an old held response; automated App tests also check late prior-user isolation.
+
+Evidence/review root: C:/Users/AsusT/.codex/visualizations/2026/09/24/01a0d487-d6fa-7ab3-9d0b-964e20805f29/PILOT-B01-FULL1/. Transfer package: PILOT-B01-FULL1-review.zip; review/index.html, review/report.md, function-anchor-test-map.md, source-diff.patch, git-manifest.json, request-ledger.json, screenshot-manifest.json, tested-product-hashes.json and capture-build-hashes.json. Final hashes bind product source, build and actual PNGs. PNG bytes and relative gallery links are included; font binaries and sensitive files are excluded.
+
+Scope: 6 product source files (3 new focused components), 11 test files (2 new), 1 Dashboard stylesheet, 3 locales, 3 existing docs; 0 binary assets. Fonts use repository fallback, not exact Astra typography. Activity title/reason fixture text stays identical English across locale captures; backend content translation, physical devices, native zoom, full accessibility and authenticated staging remain unverified. Next scope is Owner review and any specifically requested bounded corrections.
+
+COMMITS / AMENDS / PUSHES / REF MOVEMENTS / DEPLOYMENTS / DB-MIGRATION-RAG MUTATIONS / PROVIDER CALLS / LIVE LEARNER REQUESTS / SMTP SENDS / DEPENDENCY INSTALLS = 0. No master publication retry or .git permission repair.
+
+### FULL1-FIX1 bounded presentation correction — 2026-09-25
+
+**PILOT-B01-FULL1-FIX1_OWNER_VISUAL_REVIEW_READY**. Full-page information architecture is retained; final UI and staging acceptance remain pending Owner review. **PRODUCTION = NOT CERTIFIED**.
+
+Precheck matched all 24 existing uncommitted FULL1 paths/hashes, develop / c69528d1c5cc3f72d059fdde6c82b4ad05a0e5ec, staged count 0. Original evidence remains unchanged; submitted ZIP/report/manifests and their hashes are preserved separately as PRE_FIX1. The four supplied screenshots match the archived FULL1 PNG hashes.
+
+V01 RED browser evidence showed the sr-only status had position:static / overflow:visible and no matching hiding rule. Dashboard-scoped descendant CSS now uses absolute 1px clipped geometry, preserving the existing accessible button name without a grid cell. Detailed error and Retry remain visible. V02 RED text-line rectangles showed the 390px loading Tip sentence intersecting the launcher. Narrow Dashboard Wellness Tip content now reserves 4.5rem inline-end space; the launcher, shared shell, chat architecture, content and full-page layout are unchanged. No global sr-only override.
+
+FIX1 repository delta: dashboard/dashboard.css, dashboard/DashboardFullAstra.test.jsx, and this readiness append only (client paths under client/src/). DashboardProgressShortcut.jsx and all other FULL1 files are unchanged. Two semantic regressions preserve accessible loading/error names and visible detail recovery. The first added error test queried the wrong existing retry locale key; that test-authoring mistake is disclosed separately from the genuine browser RED defects.
+
+Fresh focused 1 suite / 15 tests, targeted 13 / 123, contract regression 9 / 279, full client 112 / 1129: PASS, zero skipped. Locale verification, process-only https://pilot.invalid build and diff check PASS. No product edits after verification began. The evidence build must never be deployed.
+
+73 corrected full-page captures recapture the 50-record matrix and extend three-language loading/error and 390/320 Recommended/missing states. 219 recorded initial/paragraph-aligned/control-aligned scroll samples check actual text Range rectangles, status computed styles/clipping, and compact arrow geometry. EN/MS/ZH-CN Continue/Recommended/loading/error are covered at 390/320; the wider matrix retains 1440/1024, keyboard/focus, reduced motion and 200% viewport reflow. Six full-page PNGs were visually inspected; all captures have automated checks. Physical devices, native menu zoom, screen-reader sessions and authenticated staging remain unverified.
+
+GREEN ledger: 613 intercepted requests; network continuation / live API/provider requests / passive mutations = 0; two explicit synthetic completion requests and one explicit profile-language PUT aborted. RED requests are recorded separately. No live learner data, DB/migration, provider, SMTP, dependency, API/resolver/controller/scoring changes.
+
+Evidence: C:/Users/AsusT/.codex/visualizations/2026/09/24/01a0d487-d6fa-7ab3-9d0b-964e20805f29/PILOT-B01-FULL1-FIX1/. Self-contained PILOT-B01-FULL1-FIX1-review.zip includes corrected PNGs, relative review/index.html gallery, report, full accumulated source/diff/manifest, FIX1-only delta, RED/GREEN geometry, logs, request ledger, and source/build/PNG hashes. PRE_FIX1 images are explicitly historical. Next step is Owner review of these two corrections only. COMMITS / AMENDS / PUSHES / REF MOVEMENTS / DEPLOYMENTS / DB MUTATIONS / PROVIDER CALLS = 0.

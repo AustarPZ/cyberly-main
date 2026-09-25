@@ -37,9 +37,9 @@ import PageContainer from "./design-system/layout/PageContainer";
 import PageSection from "./design-system/layout/PageSection";
 import CompactHeader from "./design-system/headers/CompactHeader";
 import ContextHeader from "./design-system/headers/ContextHeader";
-import SectionNav from "./design-system/navigation/SectionNav";
 import ExplorerHeroSurface from "./design-system/visual/ExplorerHeroSurface";
-import DashboardExplorerVisual from "./dashboard/DashboardExplorerVisual";
+import DashboardWellnessTip from "./dashboard/DashboardWellnessTip";
+import DashboardProgressShortcut from "./dashboard/DashboardProgressShortcut";
 import DashboardNextStepArea, { isActionableDashboardRecommendation } from "./dashboard/DashboardNextStepArea";
 import { dashboardGuidanceInput, dashboardGuidanceStamp } from "./guidance/dashboardGuidance";
 import { resolveGuidance } from "./guidance/resolveGuidance";
@@ -5856,17 +5856,6 @@ function HomePage() {
 }
 
 // ─── Page: Dashboard ──────────────────────────────────────────────
-const DASHBOARD_SECTIONS = [
-  { id: "dashboard-overview", labelKey: "dashboard.sectionNav.overview" },
-  { id: "dashboard-measured-progress", labelKey: "dashboard.sectionNav.measuredProgress" },
-  { id: "dashboard-recommended-next-step", labelKey: "dashboard.sectionNav.recommendedNextStep" },
-  { id: "dashboard-scenario-practice", labelKey: "dashboard.sectionNav.scenarioPractice" },
-  { id: "dashboard-initial-assessment", labelKey: "dashboard.sectionNav.initialAssessment" },
-  { id: "dashboard-quick-actions", labelKey: "dashboard.sectionNav.quickActions" },
-  { id: "dashboard-daily-tip", labelKey: "dashboard.dailyTip" },
-  { id: "dashboard-cyberguard-ai", labelKey: "dashboard.sectionNav.cyberGuardAi" },
-];
-
 
 function DashboardPage() {
   const { t, i18n: activeI18n } = useTranslation();
@@ -5885,14 +5874,14 @@ function DashboardPage() {
   const overviewRequest = useRef(null);
   const completionInFlight = useRef(false);
   const retryDashboard = () => setReloadIndex(value => value + 1);
-  const [tipIndex] = useState(() => Math.floor(Math.random() * 4));
   const [assessmentStatus, setAssessmentStatus] = useState({ loading: true, status: "pending" });
   const [progressState, setProgressState] = useState({ loading: true, progress: null });
   const [recommendationState, setRecommendationState] = useState({ loading: true, recommendation: null });
   const [scenarioState, setScenarioState] = useState({ loading: true, dashboard: null });
-  const [activeSection, setActiveSection] = useState("dashboard-overview");
-  const dashboardAssessmentResults = (progressState.progress?.assessmentTopicResults || []).map(mapAssessmentTopicResult);
-  const dashboardSections = DASHBOARD_SECTIONS;
+  const progressCurrent = progressState.guidanceStamp?.scopeKey === guidanceStamp.scopeKey && progressState.guidanceStamp?.revision === guidanceStamp.revision;
+  const currentProgress = progressCurrent && !progressState.loading && !progressState.error ? progressState.progress : null;
+  const progressLoading = progressState.loading || !progressCurrent;
+  const dashboardAssessmentResults = (currentProgress?.assessmentTopicResults || []).map(mapAssessmentTopicResult);
   const guidanceInput = dashboardGuidanceInput({ stamp: guidanceStamp, assessment: assessmentStatus, scenario: scenarioState, recommendation: recommendationState });
   const recommendationAction = {
     valid: isActionableDashboardRecommendation(guidanceInput.currentRecommendation, guidanceStamp, recommendationState.recommendation),
@@ -5929,58 +5918,6 @@ function DashboardPage() {
   }, []);
 
   useEffect(() => {
-    const sectionIds = DASHBOARD_SECTIONS.map(section => section.id);
-    const sections = sectionIds
-      .map(id => document.getElementById(id))
-      .filter(Boolean);
-
-    if (sections.length === 0) return undefined;
-
-    const isAtPageEnd = () => {
-      const tolerance = 4;
-      const documentHeight = Math.max(
-        document.documentElement.scrollHeight,
-        document.body?.scrollHeight || 0
-      );
-      const maxScrollY = Math.max(0, documentHeight - window.innerHeight);
-
-      if (maxScrollY <= tolerance) return false;
-      return window.scrollY >= maxScrollY - tolerance;
-    };
-
-    const observer = new IntersectionObserver((entries) => {
-      if (isAtPageEnd()) {
-        setActiveSection(sectionIds[sectionIds.length - 1]);
-        return;
-      }
-
-      const visible = entries
-        .filter(entry => entry.isIntersecting)
-        .sort((a, b) => b.intersectionRatio - a.intersectionRatio)[0];
-
-      if (visible?.target?.id) {
-        setActiveSection(visible.target.id);
-      }
-    }, {
-      rootMargin: "-80px 0px -65% 0px",
-      threshold: [0.1, 0.35, 0.6],
-    });
-
-    const updateActiveSectionAtPageEnd = () => {
-      if (isAtPageEnd()) setActiveSection(sectionIds[sectionIds.length - 1]);
-    };
-
-    sections.forEach(section => observer.observe(section));
-    window.addEventListener("scroll", updateActiveSectionAtPageEnd, { passive: true });
-    updateActiveSectionAtPageEnd();
-
-    return () => {
-      observer.disconnect();
-      window.removeEventListener("scroll", updateActiveSectionAtPageEnd);
-    };
-  }, []);
-
-  useEffect(() => {
     let active = true;
     if (!dashboardUserId || !initialLocaleReady) return () => { active = false; };
     setScenarioState({ guidanceStamp, loading: true, dashboard: null });
@@ -6005,7 +5942,7 @@ function DashboardPage() {
     setRecommendationCompleting(false);
     setRecommendationCompleteSaved(false);
     setCompletionError(false);
-    setProgressState({ loading: true, progress: null });
+    setProgressState({ guidanceStamp, loading: true, progress: null });
     setRecommendationState({ guidanceStamp, loading: true, recommendation: null });
     const requestKey = `${dashboardUserId}:${assessmentLocale}:${reloadIndex}`;
     if (overviewRequest.current?.key !== requestKey) {
@@ -6017,8 +5954,8 @@ function DashboardPage() {
     overviewRequest.current.promise.then(([progressResult, recommendationResult]) => {
       if (!active) return;
       setProgressState(progressResult.ok
-        ? { loading: false, progress: progressResult }
-        : { loading: false, progress: null, error: progressResult.error });
+        ? { guidanceStamp, loading: false, progress: progressResult }
+        : { guidanceStamp, loading: false, progress: null, error: progressResult.error });
       setRecommendationState(recommendationResult.ok
         ? { guidanceStamp, loading: false, recommendation: recommendationResult.recommendation }
         : { guidanceStamp, loading: false, recommendation: null, error: recommendationResult.error });
@@ -6060,10 +5997,10 @@ function DashboardPage() {
     if (dataEpoch.current !== epoch) return;
     if (result.ok) {
       setRecommendationState({ guidanceStamp, loading: false, recommendation: result.recommendation });
-      setProgressState({ loading: true, progress: null });
+      setProgressState({ guidanceStamp, loading: true, progress: null });
       const refreshed = await dbGetProgress();
       if (dataEpoch.current !== epoch) return;
-      setProgressState(refreshed.ok ? { loading: false, progress: refreshed } : { loading: false, progress: null, error: refreshed.error });
+      setProgressState(refreshed.ok ? { guidanceStamp, loading: false, progress: refreshed } : { guidanceStamp, loading: false, progress: null, error: refreshed.error });
       setRecommendationCompleteSaved(true);
     } else setCompletionError(true);
     completionInFlight.current = false;
@@ -6072,17 +6009,10 @@ function DashboardPage() {
 
   if (!user) { go("login"); return null; }
 
-  const nick  = user.aiNickname || user.name;
-  const group = getAgeGroup(user.age);
-  const dashboardLearningPathProgress = progressState.progress?.learningPathProgress;
+  const dashboardLearningPathProgress = currentProgress?.learningPathProgress;
   const recommendation = recommendationState.recommendation;
   const scenarioDashboard = scenarioState.dashboard;
   const resumeGuidance = resolveGuidance(guidanceInput);
-  const translatedAgeGroup = t(`settings.ageGroups.${group.key}`,{defaultValue: group.label});
-  const familiarityValue = user.profile?.familiarityLevel || "";
-  const educationValue = user.profile?.educationLevel || "";
-  const translatedFamiliarity = t(`profileOptions.familiarity.${familiarityValue}.label`,{defaultValue: user.familiarity || t("dashboard.beginner") });
-  const translatedEducation = educationValue? t(`profileOptions.education.${educationValue}`,{ defaultValue: user.educationLevel }): "";
   const recommendationTitle = recommendation?.targetScenarioTitle || (
     recommendation?.topicCode
       ? t(`topics.${recommendation.topicCode}`, { defaultValue: topicLabel(recommendation.topicCode, recommendation.topicLabel) })
@@ -6108,121 +6038,20 @@ function DashboardPage() {
     go("ai-chat");
   }
 
-  const quickActions = [
-    {
-      icon: "📚",
-      labelKey: "dashboard.actions.resources",
-      descKey: "dashboard.actions.resourcesDescription",
-      page: "resources",
-    },
-    {
-      icon: "🧭",
-      labelKey: "dashboard.actions.assessment",
-      descKey: "dashboard.actions.assessmentDescription",
-      page: "assessment",
-    },
-    {
-      icon: "🎮",
-      labelKey: "dashboard.actions.scenarios",
-      descKey: "dashboard.actions.scenariosDescription",
-      page: "scenarios",
-    },
-    {
-      icon: "👤",
-      labelKey: "dashboard.actions.profile",
-      descKey: "dashboard.actions.profileDescription",
-      page: "profile",
-    },
-    {
-      icon: "ℹ️",
-      labelKey: "dashboard.actions.about",
-      descKey: "dashboard.actions.aboutDescription",
-      page: "about",
-    },
-    {
-      icon: "📊",
-      labelKey: "dashboard.actions.progress",
-      descKey: "dashboard.actions.progressDescription",
-      page: "progress",
-    },
-    {
-      icon: "🏠",
-      labelKey: "dashboard.actions.home",
-      descKey: "dashboard.actions.homeDescription",
-      page: "home",
-    },
-  ];
-
-  const tips = [
-    {
-      emoji: "🎣",
-      tipKey: "dashboard.tips.phishing",
-    },
-    {
-      emoji: "🔐",
-      tipKey: "dashboard.tips.password",
-    },
-    {
-      emoji: "🤔",
-      tipKey: "dashboard.tips.fakeNews",
-    },
-    {
-      emoji: "📵",
-      tipKey: "dashboard.tips.phoneScam",
-    },
-  ];
-
-  const todayTip = tips[tipIndex];
-
-  function scrollToDashboardSection(sectionId) {
-    const target = document.getElementById(sectionId);
-    if (!target) return;
-    if (sectionId === "dashboard-recommended-next-step") target.dispatchEvent(new Event("dashboard:reveal-recommendation"));
-    target.scrollIntoView({
-      behavior: prefersReducedMotion() ? "auto" : "smooth",
-      block: "start",
-    });
+  function focusProgress() {
+    const target = document.getElementById('progress-overview');
+    target?.scrollIntoView?.({ behavior: prefersReducedMotion() ? 'auto' : 'smooth', block: 'start' });
+    target?.focus({ preventScroll: true });
   }
 
   return (
-    <div>
-      <PageContainer id="dashboard-overview" className="dashboard-anchor">
-        <ExplorerHeroSurface
-          identity={t("dashboard.yourDashboard")}
-          icon={<span aria-hidden="true">◇</span>}
-          visual={<DashboardExplorerVisual />}
-          className="dashboard-explorer-hero"
-        >
-          <CompactHeader
-            title={`${t("dashboard.welcomeBack", { name: nick })} 👋`}
-            description={t("dashboard.continueLearning")}
-            metadata={(
-              <>
-                <span>{translatedAgeGroup}</span>
-                <span aria-hidden="true">·</span>
-                <span>{t("dashboard.levelDisplay", { level: translatedFamiliarity })}</span>
-                {translatedEducation && (
-                  <>
-                    <span aria-hidden="true">·</span>
-                    <span>{translatedEducation}</span>
-                  </>
-                )}
-              </>
-            )}
-          />
-        </ExplorerHeroSurface>
-      </PageContainer>
-
+    <div className="dashboard-astra">
       <div className="dashboard-shell">
-        <SectionNav
-          ariaLabel={t("dashboard.sectionNav.ariaLabel")}
-          title={t("dashboard.sectionNav.title")}
-          items={dashboardSections.map(section => ({ id: section.id, label: t(section.labelKey) }))}
-          activeId={activeSection}
-          onSelect={scrollToDashboardSection}
-        />
-
-      <div className="dashboard-content">
+        <header id="dashboard-overview" className="dashboard-astra-header dashboard-anchor">
+          <p>{t('dashboard.astra.eyebrow')}</p>
+          <h1>{t('dashboard.astra.heading')}</h1>
+        </header>
+        <div className="dashboard-top-composition">
         <DashboardNextStepArea
           stamp={guidanceStamp} guidance={resumeGuidance} inventory={scenarioDashboard?.inProgressAttempts}
           recommendationObservation={guidanceInput.currentRecommendation} recommendation={recommendation}
@@ -6233,30 +6062,39 @@ function DashboardPage() {
           successFeedback={recommendationCompleteSaved ? <SuccessFeedback message={t("progress.recommendation.completedSaved")} /> : null}
         />
 
-        <div id="dashboard-measured-progress" className="dashboard-anchor"><div id="progress-overview" className="progress-anchor">
-          {progressState.loading ? (
+        <aside className="dashboard-astra-aside">
+          <DashboardProgressShortcut value={dashboardLearningPathProgress} loading={progressLoading} onActivate={focusProgress} />
+          <DashboardWellnessTip key={dashboardUserId} />
+        </aside>
+        </div>
+        <section id="dashboard-measured-progress" className="dashboard-integrated-progress dashboard-anchor" aria-labelledby="progress-overview">
+          <h2 id="progress-overview" tabIndex={-1} className="progress-anchor">{t('dashboard.astra.myProgress')}</h2>
+          <div className="dashboard-progress-layout">
+          <div className="dashboard-progress-meter">
+
+          {progressLoading ? (
             <div className="card learning-path-card compact">
               <PageState message={t("dashboard.progress.loading")} />
             </div>
           ) : progressState.error || !dashboardLearningPathProgress ? (
             <div className="card learning-path-card"><PageState type="error" message={t("dashboard.integrated.progressUnavailable")} /><button className="btn-ghost" onClick={retryDashboard}>{t("dashboard.integrated.retry")}</button></div>
-          ) : <LearningPathProgressPanel value={dashboardLearningPathProgress} t={t} />}
-        </div></div>
+          ) : <LearningPathProgressPanel value={dashboardLearningPathProgress} t={t} disclaimer={t("dashboard.astra.progressDisclaimer")} />}
+        </div>
 
         <div id="dashboard-scenario-practice" className="dashboard-anchor dashboard-practice-grid">
           <div className="card" style={{ border: "1px solid rgba(0,0,0,0.07)" }}>
             <h2 style={{ fontWeight: 700, color: "#2E7D32", margin: "0 0 0.35rem" }}>{t("dashboard.scenarios.practiceTitle")}</h2>
-            {scenarioState.loading ? (
+            {scenarioState.loading || scenarioState.guidanceStamp?.scopeKey !== guidanceStamp.scopeKey || scenarioState.guidanceStamp?.revision !== guidanceStamp.revision ? (
               <PageState message={t("dashboard.scenarios.loadingActivity")} />
             ) : (
               <>
                 {scenarioState.summaryError ? <><PageState type="error" message={t("dashboard.integrated.scenarioUnavailable")} /><button className="btn-ghost" onClick={retryDashboard}>{t("dashboard.integrated.retry")}</button></> : <div style={{ display: "grid", gridTemplateColumns: "repeat(2, minmax(0, 1fr))", gap: "0.75rem", marginBottom: "0.85rem" }}>
                   <div>
-                    <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.45rem", fontWeight: 700, color: "#1a1a18" }}>{scenarioDashboard?.completedCount || 0}</div>
+                    <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.45rem", fontWeight: 700, color: "#1a1a18" }}>{Number.isSafeInteger(scenarioDashboard?.completedCount) && scenarioDashboard.completedCount >= 0 ? scenarioDashboard.completedCount : '—'}</div>
                     <div style={{ fontSize: "0.74rem", color: "#777" }}>{t("dashboard.scenarios.completed")}</div>
                   </div>
                   <div>
-                    <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.45rem", fontWeight: 700, color: "#1a1a18" }}>{scenarioDashboard?.inProgress ? "1" : "0"}</div>
+                    <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontSize: "1.45rem", fontWeight: 700, color: "#1a1a18" }}>{Array.isArray(scenarioDashboard?.inProgressAttempts) ? scenarioDashboard.inProgressAttempts.length : '—'}</div>
                     <div style={{ fontSize: "0.74rem", color: "#777" }}>{t("dashboard.scenarios.inProgress")}</div>
                   </div>
                 </div>}
@@ -6275,7 +6113,7 @@ function DashboardPage() {
         </div>
 
         <div id="dashboard-initial-assessment" className="card dashboard-anchor dashboard-next-surface">
-          {assessmentStatus.loading ? <PageState message={t("dashboard.assessment.checking")} /> : assessmentStatus.error || assessmentStatus.status === "unknown" ? <><h2>{t("progress.snapshot.assessmentStatus")}</h2><PageState type="error" message={t("dashboard.integrated.assessmentUnavailable")} /><button className="btn-ghost" onClick={retryDashboard}>{t("dashboard.integrated.retry")}</button></> : <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
+          {assessmentStatus.loading || assessmentStatus.guidanceStamp?.scopeKey !== guidanceStamp.scopeKey || assessmentStatus.guidanceStamp?.revision !== guidanceStamp.revision ? <PageState message={t("dashboard.assessment.checking")} /> : assessmentStatus.error || assessmentStatus.status === "unknown" ? <><h2>{t("progress.snapshot.assessmentStatus")}</h2><PageState type="error" message={t("dashboard.integrated.assessmentUnavailable")} /><button className="btn-ghost" onClick={retryDashboard}>{t("dashboard.integrated.retry")}</button></> : <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <h2 style={{ fontWeight: 700, color: "#e65100", margin: "0 0 0.25rem" }}>
                 {assessmentStatus.status === "completed"
@@ -6319,44 +6157,30 @@ function DashboardPage() {
           )}
         </div>
 
-        {/* Quick actions */}
-        <div id="dashboard-quick-actions" className="dashboard-anchor">
-        <h2 className="section-title" style={{ fontSize: "1.1rem", marginBottom: "0.4rem" }}>{t("dashboard.quickActions.title")}</h2>
-        <p className="section-sub" style={{ marginBottom: "1.25rem" }}>{t("dashboard.quickActions.description")}</p>
-        <div className="dashboard-action-grid">
-          {quickActions.map(a => (
-            <button key={a.labelKey} className="dashboard-action-card" onClick={() => go(a.page)}>
-              <div className="dashboard-action-icon" aria-hidden="true">{a.icon}</div>
-              <div className="dashboard-action-title">{t(a.labelKey)}</div>
-              <div className="dashboard-action-description">{t(a.descKey)}</div>
-            </button>
-          ))}
-        </div>
-        </div>
-
-        {!progressState.loading && !progressState.error && progressState.progress && <ProgressDetails progress={progressState.progress} user={user} topics={HELP_OPTIONS} t={t} locale={assessmentLocale} onExplore={() => go("resources")} />}
-
-        {/* Daily tip */}
-        <div id="dashboard-daily-tip" className="dashboard-anchor dashboard-field-note">
-          <span style={{ fontSize: "1.4rem", flexShrink: 0 }}>{todayTip.emoji}</span>
-          <div>
-            <h2 style={{ fontWeight: 700, fontSize: "0.82rem", color: "#e65100", textTransform: "uppercase", letterSpacing: "0.06em", margin: "0 0 0.25rem" }}>{t("dashboard.dailyTip")}</h2>
-            <div style={{ fontSize: "0.88rem", color: "#444", lineHeight: 1.6 }}>{t(todayTip.tipKey)}</div>
           </div>
-        </div>
-
-        {/* CyberGuard AI */}
-        <div id="dashboard-cyberguard-ai" className="dashboard-anchor dashboard-cyberguard-heading">
-          <div>
-            <h2 className="section-title" style={{ fontSize: "1.1rem", margin: 0 }}>🛡 {t("dashboard.cyberGuard.title")}</h2>
-            <p className="section-sub" style={{ margin: "0.25rem 0 0" }}>{t("dashboard.cyberGuard.description")}</p>
+          {currentProgress && <ProgressDetails progress={currentProgress} user={user} topics={HELP_OPTIONS} t={t} locale={assessmentLocale} onExplore={() => go("resources")} />}
+        </section>
+        <section id="dashboard-quick-actions" className="dashboard-explore dashboard-anchor" aria-labelledby="dashboard-explore-heading">
+          <h2 id="dashboard-explore-heading">{t('dashboard.astra.explore')}</h2>
+          <div className="dashboard-explore-paths">
+            {['resources','scenarios','talk'].map((kind,index) => <div key={kind}>
+              <span aria-hidden="true">{String(index+1).padStart(2,'0')}</span>
+              <div><button className="btn-ghost" onClick={() => {
+                if (kind !== 'talk') go(kind);
+                else { const chat = document.getElementById('dashboard-cyberguard-ai'); chat.open = true; chat.querySelector('summary').focus(); chat.scrollIntoView({behavior:prefersReducedMotion()?'auto':'smooth',block:'start'}); }
+              }}>{t('dashboard.astra.paths.'+kind)} <span aria-hidden="true">→</span></button>
+              <p>{t('dashboard.astra.pathDescriptions.'+kind)}</p></div>
+            </div>)}
           </div>
-          <button className="btn-ghost" onClick={viewDashboardChatHistory} disabled={chatHistoryLoading}>
-            {t("chat.actions.chatHistory")}
-          </button>
-        </div>
-        <DashboardChatPreview />
-      </div>
+          <details id="dashboard-cyberguard-ai" className="dashboard-chat-disclosure dashboard-anchor">
+            <summary>{t('dashboard.cyberGuard.title')}</summary>
+            <button className="btn-ghost" onClick={viewDashboardChatHistory} disabled={chatHistoryLoading}>{t('chat.actions.chatHistory')}</button>
+            <DashboardChatPreview />
+          </details>
+          <nav className="dashboard-utilities" aria-label={t('dashboard.astra.utilities')}>
+            {['profile','about','home'].map(page => <button key={page} className="btn-ghost" onClick={() => go(page)}>{t('dashboard.actions.'+page)}</button>)}
+          </nav>
+        </section>
       </div>
     </div>
   );

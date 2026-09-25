@@ -16,7 +16,7 @@ function learningPathStatusMessageKey(componentId, status) {
   return null;
 }
 
-export default function LearningPathProgressPanel({ value, t, compact = false, onViewJourney }) {
+export default function LearningPathProgressPanel({ value, t, compact = false, onViewJourney, disclaimer }) {
   const LearningPathHeading = "h2";
   const progress = normalizeLearningPathProgress(value);
   const segments = buildLearningPathSegments(progress);
@@ -82,7 +82,7 @@ export default function LearningPathProgressPanel({ value, t, compact = false, o
           />
         ))}
       </div>
-      <p className="learning-path-disclaimer">{t("progress.learningPath.shortDisclaimer")}</p>
+      <p className="learning-path-disclaimer">{disclaimer || t("progress.learningPath.shortDisclaimer")}</p>
       {!compact && (
         <details className="learning-path-formula"><summary>{t("dashboard.integrated.formula")}</summary>
           <div className="learning-path-breakdown" aria-label={t("progress.learningPath.breakdownTitle")}>
@@ -117,7 +117,7 @@ export default function LearningPathProgressPanel({ value, t, compact = false, o
       {compact && (
         <>
           <div className="learning-path-disclaimer">
-            {t("progress.learningPath.shortDisclaimer")}
+            {disclaimer || t("progress.learningPath.shortDisclaimer")}
           </div>
           {onViewJourney && (
             <button onClick={onViewJourney} style={{ marginTop: "0.75rem", background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1rem", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>

@@ -84,26 +84,26 @@ describe("Dashboard final visual migration", () => {
     listChatConversations.mockResolvedValue({ ok: true, data: { conversations: [] } });
   });
 
-  test("composes the real Dashboard from the Explorer hero and reusable section navigation", async () => {
+  test("composes the real Dashboard with minimal heading and explicit local progress shortcut", async () => {
     const { container } = render(<App />);
-    const heading = await screen.findByRole("heading", { level: 1, name: /Welcome back, Alya/i });
-    const hero = heading.closest(".cy-explorer-hero");
+    const heading = await screen.findByRole("heading", { level: 1, name: /A little practice\. A stronger instinct\./i });
+    const hero = heading.closest(".dashboard-astra-header");
 
     expect(screen.getAllByRole("main")).toHaveLength(1);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(hero).toBeInTheDocument();
-    expect(within(hero).getByText(i18n.t("dashboard.yourDashboard"))).toHaveClass("cy-page-identity-label");
-    expect(within(hero).getByText(i18n.t("dashboard.yourDashboard")).closest(".cy-compact-header-eyebrow")).toBeNull();
-    expect(hero.querySelector(".dashboard-explorer-visual").closest(".cy-explorer-hero-visual")).toHaveAttribute("aria-hidden", "true");
+    expect(within(hero).getByText(i18n.t("dashboard.astra.eyebrow"))).toBeVisible();
+    expect(hero.querySelector(".cy-compact-header-metadata")).toBeNull();
+    expect(document.querySelector(".dashboard-action-visual")).toHaveAttribute("aria-hidden", "true");
     expect(container.querySelector(".dashboard-section-nav")).not.toBeInTheDocument();
-    expect(screen.getByRole("complementary", { name: i18n.t("dashboard.sectionNav.ariaLabel") })).toHaveClass("cy-section-nav");
+    expect(screen.getByRole("button", { name: /My Progress/ })).toBeVisible();
   });
 
   test.each([
     ["beginner", "初学者"],
     ["intermediate", "中级"],
     ["advanced", "高级"],
-  ])("renders the self-contained Simplified Chinese %s familiarity label", async (familiarityLevel, expectedLabel) => {
+  ])("keeps concise Chinese header for %s profile without old metadata", async (familiarityLevel, expectedLabel) => {
     await i18n.changeLanguage("zh-CN");
     restoreSession.mockResolvedValue({
       ok: true,
@@ -122,14 +122,15 @@ describe("Dashboard final visual migration", () => {
 
     render(<App />);
 
-    expect(await screen.findByText(expectedLabel)).toBeVisible();
+    expect(await screen.findByRole("heading", {level:1,name:i18n.t("dashboard.astra.heading")})).toBeVisible();
+    expect(screen.queryByText(expectedLabel)).not.toBeInTheDocument();
     expect(screen.queryByText(`${expectedLabel}级`)).not.toBeInTheDocument();
     expect(screen.queryByText(`profileOptions.familiarity.${familiarityLevel}.label`)).not.toBeInTheDocument();
   });
 
   test("keeps representative Dashboard content and conditional navigation aligned", async () => {
     const { container } = render(<App />);
-    await screen.findByRole("heading", { level: 1, name: /Welcome back, Alya/i });
+    await screen.findByRole("heading", { level: 1, name: /A little practice\. A stronger instinct\./i });
 
     expect(container.querySelector("#dashboard-learning-profile")).not.toBeInTheDocument();
     expect(await screen.findByText(i18n.t("dashboard.assessment.pending"))).toBeVisible();
@@ -137,7 +138,7 @@ describe("Dashboard final visual migration", () => {
     expect(await screen.findByText(i18n.t("progress.learningPath.title"))).toBeVisible();
     expect(screen.getByText(i18n.t("dashboard.scenarios.practiceTitle"))).toBeVisible();
     expect(container.querySelector("#dashboard-topic-mastery")).not.toBeInTheDocument();
-    expect(screen.getByText(i18n.t("dashboard.quickActions.title"))).toBeVisible();
+    expect(screen.getByText(i18n.t("dashboard.astra.explore"))).toBeVisible();
     expect(screen.getByText(i18n.t("dashboard.cyberGuard.title"))).toBeVisible();
     expect(screen.queryByRole("button", { name: i18n.t("dashboard.sectionNav.learningProfile") })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: i18n.t("dashboard.sectionNav.topicMastery") })).not.toBeInTheDocument();
@@ -154,12 +155,12 @@ describe("Dashboard final visual migration", () => {
       },
     });
     const { container } = render(<App />);
-    await screen.findByRole("heading", { level: 1, name: /Welcome back, Alya/i });
+    await screen.findByRole("heading", { level: 1, name: /A little practice\. A stronger instinct\./i });
 
     expect(container.querySelector("#dashboard-learning-profile")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: i18n.t("dashboard.sectionNav.learningProfile") })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: i18n.t("dashboard.sectionNav.overview") })).toBeVisible();
-    expect(screen.getByRole("button", { name: i18n.t("dashboard.sectionNav.cyberGuardAi") })).toBeVisible();
+    expect(screen.getByRole("heading", {level:1})).toBeVisible();
+    expect(screen.getByText(i18n.t("dashboard.cyberGuard.title"))).toBeVisible();
     expect(screen.getAllByRole("main")).toHaveLength(1);
     expect(window.location.hash).toBe("#/dashboard");
   });
@@ -167,33 +168,33 @@ describe("Dashboard final visual migration", () => {
   test("omits the retired Learning Profile and Topic Mastery sections without assessment results", async () => {
     getProgress.mockResolvedValue({ ok: true, data: { learningPathProgress: { percentage: 25, components: [] }, assessmentTopicResults: [] } });
     const { container } = render(<App />);
-    await screen.findByRole("heading", { level: 1, name: /Welcome back, Alya/i });
+    await screen.findByRole("heading", { level: 1, name: /A little practice\. A stronger instinct\./i });
 
     expect(container.querySelector("#dashboard-topic-mastery")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: i18n.t("dashboard.sectionNav.topicMastery") })).not.toBeInTheDocument();
     expect(container.querySelector("#dashboard-learning-profile")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: i18n.t("dashboard.sectionNav.learningProfile") })).not.toBeInTheDocument();
-    expect(screen.getByRole("button", { name: i18n.t("dashboard.sectionNav.cyberGuardAi") })).toBeVisible();
+    expect(screen.getByText(i18n.t("dashboard.cyberGuard.title"))).toBeVisible();
     expect(window.location.hash).toBe("#/dashboard");
   });
 
   test("renders the approved Dashboard decision flow in DOM order", async () => {
     const { container } = render(<App />);
-    await screen.findByRole("heading", { level: 1, name: /Welcome back, Alya/i });
+    await screen.findByRole("heading", { level: 1, name: /A little practice\. A stronger instinct\./i });
 
     const orderedIds = [
       "dashboard-recommended-next-step",
+      "dashboard-daily-tip",
       "dashboard-measured-progress",
       "dashboard-scenario-practice",
       "dashboard-initial-assessment",
       "dashboard-quick-actions",
-      "dashboard-daily-tip",
       "dashboard-cyberguard-ai",
     ];
     const sections = orderedIds.map(id => container.querySelector(`#${id}`));
     sections.forEach(section => expect(section).toBeInTheDocument());
     await waitFor(() => {
-      sections.forEach(section => expect(section.querySelector("h2")).toBeInTheDocument());
+      sections.forEach(section => expect(section.querySelector("h2, summary")).toBeInTheDocument());
     });
     sections.slice(0, -1).forEach((section, index) => {
       expect(section.compareDocumentPosition(sections[index + 1]) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
@@ -215,7 +216,7 @@ describe("Dashboard final visual migration", () => {
       },
     });
     const { container } = render(<App />);
-    await screen.findByRole("heading", { level: 1, name: /Welcome back, Alya/i });
+    await screen.findByRole("heading", { level: 1, name: /A little practice\. A stronger instinct\./i });
     await screen.findByText("Continue with the canonical scenario.");
     const recommendation = container.querySelector("#dashboard-recommended-next-step");
 
@@ -305,86 +306,24 @@ describe("Dashboard final visual migration", () => {
     expect(container.querySelector("#dashboard-topic-mastery")).not.toBeInTheDocument();
   });
 
-  test("keeps the final visible Dashboard section current at genuine page end", async () => {
-    Object.defineProperty(window, "innerHeight", { configurable: true, value: 900 });
-    Object.defineProperty(window, "scrollY", { configurable: true, value: 1600 });
-    Object.defineProperty(document.documentElement, "scrollHeight", { configurable: true, value: 2500 });
-    Object.defineProperty(document.body, "scrollHeight", { configurable: true, value: 2500 });
-    render(<App />);
-
-    const cyberGuard = await screen.findByRole("button", { name: i18n.t("dashboard.sectionNav.cyberGuardAi") });
-    const measuredProgress = screen.getByRole("button", { name: i18n.t("dashboard.sectionNav.measuredProgress") });
-    act(() => window.dispatchEvent(new Event("scroll")));
-    expect(cyberGuard).toHaveAttribute("aria-current", "location");
-    expect(measuredProgress).not.toHaveAttribute("aria-current");
-    expect(document.querySelectorAll('.cy-section-nav-button[aria-current="location"]')).toHaveLength(1);
-
-    act(() => intersectionObserverCallback?.([{
-        isIntersecting: true,
-        intersectionRatio: 0.8,
-        target: document.getElementById("dashboard-measured-progress"),
-      }]));
-    expect(cyberGuard).toHaveAttribute("aria-current", "location");
-    expect(measuredProgress).not.toHaveAttribute("aria-current");
-    expect(document.querySelectorAll('.cy-section-nav-button[aria-current="location"]')).toHaveLength(1);
-    expect(markRecommendationViewed).not.toHaveBeenCalled();
-    expect(createChatConversation).not.toHaveBeenCalled();
-    expect(window.location.hash).toBe("#/dashboard");
-  });
-
-  test("resumes observer tracking after leaving genuine page end", async () => {
-    Object.defineProperty(window, "innerHeight", { configurable: true, value: 900 });
-    Object.defineProperty(window, "scrollY", { configurable: true, value: 1600 });
-    Object.defineProperty(document.documentElement, "scrollHeight", { configurable: true, value: 2500 });
-    Object.defineProperty(document.body, "scrollHeight", { configurable: true, value: 2500 });
-    render(<App />);
-
-    const cyberGuard = await screen.findByRole("button", { name: i18n.t("dashboard.sectionNav.cyberGuardAi") });
-    const measuredProgress = screen.getByRole("button", { name: i18n.t("dashboard.sectionNav.measuredProgress") });
-    act(() => window.dispatchEvent(new Event("scroll")));
-    expect(cyberGuard).toHaveAttribute("aria-current", "location");
-
-    Object.defineProperty(window, "scrollY", { configurable: true, value: 700 });
-    act(() => {
-      window.dispatchEvent(new Event("scroll"));
-      intersectionObserverCallback?.([{
-        isIntersecting: true,
-        intersectionRatio: 0.8,
-        target: document.getElementById("dashboard-measured-progress"),
-      }]);
-    });
-
-    expect(measuredProgress).toHaveAttribute("aria-current", "location");
-    expect(cyberGuard).not.toHaveAttribute("aria-current");
-    expect(document.querySelectorAll('.cy-section-nav-button[aria-current="location"]')).toHaveLength(1);
-    expect(markRecommendationViewed).not.toHaveBeenCalled();
-    expect(createChatConversation).not.toHaveBeenCalled();
-    expect(window.location.hash).toBe("#/dashboard");
-  });
-
-  test("does not select the final section when the document cannot scroll", async () => {
-    Object.defineProperty(window, "innerHeight", { configurable: true, value: 3000 });
-    Object.defineProperty(window, "scrollY", { configurable: true, value: 0 });
-    Object.defineProperty(document.documentElement, "scrollHeight", { configurable: true, value: 2500 });
-    Object.defineProperty(document.body, "scrollHeight", { configurable: true, value: 2500 });
-    render(<App />);
-
-    const overview = await screen.findByRole("button", { name: i18n.t("dashboard.sectionNav.overview") });
-    act(() => window.dispatchEvent(new Event("scroll")));
-    expect(overview).toHaveAttribute("aria-current", "location");
-    expect(screen.getByRole("button", { name: i18n.t("dashboard.sectionNav.cyberGuardAi") }))
-      .not.toHaveAttribute("aria-current");
-    expect(document.querySelectorAll('.cy-section-nav-button[aria-current="location"]')).toHaveLength(1);
-    expect(window.location.hash).toBe("#/dashboard");
+  test.each([['page end',900,1600,2500],['mid-page',900,700,2500],['non-scrollable',3000,0,2500]])('scrolling %s keeps actions explicit',async(label,height,y,documentHeight)=>{
+    Object.defineProperty(window,'innerHeight',{configurable:true,value:height});Object.defineProperty(window,'scrollY',{configurable:true,value:y});
+    Object.defineProperty(document.documentElement,'scrollHeight',{configurable:true,value:documentHeight});Object.defineProperty(document.body,'scrollHeight',{configurable:true,value:documentHeight});
+    render(<App />);await screen.findByRole('heading',{level:1});
+    const shortcut=screen.getByRole('button',{name:/My Progress/});shortcut.focus();
+    act(()=>window.dispatchEvent(new Event('scroll')));
+    expect(shortcut).toHaveFocus();expect(document.querySelector('#dashboard-cyberguard-ai')).not.toHaveAttribute('open');
+    expect(document.querySelectorAll('.cy-section-nav-button[aria-current="location"]')).toHaveLength(0);
+    expect(markRecommendationViewed).not.toHaveBeenCalled();expect(createChatConversation).not.toHaveBeenCalled();expect(window.location.hash).toBe('#/dashboard');
   });
 
   test("scrolls to a Dashboard section without changing route or learner state", async () => {
     const { container } = render(<App />);
-    await screen.findByRole("heading", { level: 1, name: /Welcome back, Alya/i });
-    const target = container.querySelector("#dashboard-quick-actions");
+    await screen.findByRole("heading", { level: 1, name: /A little practice\. A stronger instinct\./i });
+    const target = container.querySelector("#progress-overview");
     target.scrollIntoView = jest.fn();
 
-    fireEvent.click(screen.getByRole("button", { name: i18n.t("dashboard.sectionNav.quickActions") }));
+    fireEvent.click(screen.getByRole("button", { name: /My Progress/ }));
 
     expect(target.scrollIntoView).toHaveBeenCalledWith({ behavior: "auto", block: "start" });
     expect(window.location.hash).toBe("#/dashboard");

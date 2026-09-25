@@ -87,8 +87,9 @@ describe("Integrated Progress visual composition", () => {
   test("uses the full server percentage without a duplicate Progress page",async()=>{
     getProgress.mockResolvedValue({ok:true,data:{learningPathProgress:{displayedPercent:53},activityComposition:{segments:[]}}});
     render(<App />);
-    expect(await screen.findByText('53%')).toBeVisible();
-    expect(screen.getAllByText('53%')).toHaveLength(1);
+    expect(await screen.findAllByText('53%')).toHaveLength(2);
+    expect(within(document.querySelector('#dashboard-measured-progress')).getByText('53%')).toBeVisible();
+    expect(screen.getAllByText('53%')).toHaveLength(2);
     expect(document.querySelector('.learning-path-formula')).toBeInTheDocument();
     expect(getProgress).toHaveBeenCalledTimes(1);
   });
@@ -97,7 +98,8 @@ describe("Integrated Progress visual composition", () => {
     render(<App />);
     expect(await screen.findByText(i18n.t('progress.recentActivity.empty'))).toBeVisible();
     expect(document.querySelector('#progress-assessment-results')).toBeNull();
-    expect(screen.getByText('0%')).toBeVisible();
+    expect(screen.getAllByText('0%')).toHaveLength(2);
+    expect(within(document.querySelector('#dashboard-measured-progress')).getByText('0%')).toBeVisible();
   });
   test("keeps one service-owned recommendation when Assessment evidence is absent",async()=>{
     getProgress.mockResolvedValue({ok:true,data:{learningPathProgress:{displayedPercent:0},assessmentTopicResults:[]}});

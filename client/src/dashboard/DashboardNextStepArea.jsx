@@ -4,6 +4,7 @@ import Button from '../design-system/primitives/Button';
 import Surface from '../design-system/primitives/Surface';
 import PageState from '../design-system/feedback/PageState';
 import DashboardResumeSurface from './DashboardResumeSurface';
+import DashboardActionVisual from './DashboardActionVisual';
 
 const sameStamp = (a, b) => Boolean(a && b && a.scopeKey === b.scopeKey && a.revision === b.revision);
 const slug = value => typeof value === 'string' && /^[a-z0-9][a-z0-9_-]{0,139}$/.test(value);
@@ -62,6 +63,7 @@ function ScopedNextStep({ stamp, guidance, inventory, recommendationObservation:
   }, []);
 
   return <Surface as="section" id="dashboard-recommended-next-step" className="dashboard-anchor dashboard-next-step" aria-labelledby="dashboard-next-step-eyebrow">
+    <div className="dashboard-action-copy">
     <p id="dashboard-next-step-eyebrow" className="dashboard-next-step-eyebrow">{t('dashboard.nextStep.eyebrow')}</p>
     <h2 id="progress-recommendation" className="progress-anchor">{t(family === 'continue' ? 'dashboard.continueLearning' : 'dashboard.recommendation.title')}</h2>
     {hasResume && hasRecommendationPanel && <div className="dashboard-next-step-controls">
@@ -90,5 +92,7 @@ function ScopedNextStep({ stamp, guidance, inventory, recommendationObservation:
               </> : <PageState type="error" message={t('dashboard.integrated.recommendationUnavailable')} actionLabel={t('dashboard.integrated.retry')} onAction={onRetry} />}
         </div>}
     </div>
+    </div>
+    <DashboardActionVisual family={family} targetType={actionable ? observation.value.target.type : null} />
   </Surface>;
 }

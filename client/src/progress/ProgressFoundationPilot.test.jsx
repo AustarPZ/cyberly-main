@@ -86,17 +86,17 @@ describe("Integrated Progress foundation", () => {
 
   test("keeps one Dashboard heading and shell for the compatibility entry",async()=>{
     render(<App />);
-    expect(await screen.findByRole('heading',{level:1,name:/Welcome back, Alya/})).toBeVisible();
+    expect(await screen.findByRole('heading',{level:1,name:/A little practice\. A stronger instinct\./i})).toBeVisible();
     expect(screen.getAllByRole('main')).toHaveLength(1);
     expect(screen.getAllByRole('heading',{level:1})).toHaveLength(1);
     expect(document.querySelector('.progress-explorer-hero')).toBeNull();
-    expect(screen.getByRole('complementary',{name:i18n.t('dashboard.sectionNav.ariaLabel')})).toBeVisible();
+    expect(screen.getByRole('heading',{name:i18n.t('dashboard.astra.myProgress')})).toBeVisible();
   });
   test("section navigation remains local and does not mutate learner state",async()=>{
     render(<App />);
     await screen.findByText(i18n.t('progress.recentActivity.title'));
     Element.prototype.scrollIntoView=jest.fn();
-    fireEvent.click(screen.getByRole('button',{name:i18n.t('dashboard.sectionNav.measuredProgress'),exact:true}));
+    fireEvent.click(screen.getByRole('button',{name:new RegExp(i18n.t('dashboard.astra.myProgress'))}));
     expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({behavior:'auto',block:'start'});
     expect(window.location.hash).toBe('#/dashboard');
     expect(markRecommendationCompleted).not.toHaveBeenCalled();

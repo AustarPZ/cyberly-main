@@ -87,7 +87,7 @@ describe("Progress protected compatibility", () => {
   test("direct protected entry resolves to integrated Dashboard with one request owner",async()=>{
     render(<App />);
     await waitFor(()=>expect(window.location.hash).toBe('#/dashboard'));
-    expect(await screen.findByRole('heading',{level:1,name:/Welcome back/})).toBeVisible();
+    expect(await screen.findByRole('heading',{level:1,name:/A little practice\. A stronger instinct\./i})).toBeVisible();
     await waitFor(()=>expect(document.activeElement.id).toBe('progress-overview'));
     expect(getProgress).toHaveBeenCalledTimes(1);
     expect(getCurrentRecommendation).toHaveBeenCalledTimes(1);

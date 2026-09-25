@@ -268,6 +268,27 @@
     }
   },
   "dashboard": {
+    "astra": {
+      "progressDisclaimer": "This shows progress through Cyberly. It does not measure cybersecurity ability, mastery or safety.",
+      "eyebrow": "DASHBOARD",
+      "heading": "A little practice. A stronger instinct.",
+      "myProgress": "My Progress",
+      "wellnessTip": "Wellness Tip",
+      "anotherTip": "Another tip",
+      "visualLabel": "One step at a time",
+      "explore": "Explore something else",
+      "utilities": "More destinations",
+      "paths": {
+        "resources": "Resources",
+        "scenarios": "Scenarios",
+        "talk": "Talk it through"
+      },
+      "pathDescriptions": {
+        "resources": "Short, practical guides you can open at any time.",
+        "scenarios": "Realistic situations, with feedback that explains why.",
+        "talk": "Ask CyberGuard a focused cyber-wellness question."
+      }
+    },
     "nextStep": {
       "eyebrow": "YOUR NEXT STEP",
       "continue": "Continue",

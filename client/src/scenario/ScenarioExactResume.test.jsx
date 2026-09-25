@@ -210,7 +210,7 @@ test('ordinary generic guarded action still executes after confirmation', async 
   expect(execute).toHaveBeenCalledTimes(1); expect(getScenarioAttempt).not.toHaveBeenCalled();
 });
 test.each([
-  ['Dashboard', '#/dashboard', /Welcome back, Learner/i],
+  ['Dashboard', '#/dashboard', /A little practice\. A stronger instinct\./i],
   ['Resources', '#/resources', 'Cyber Wellness Resources'],
 ])('active exact Scenario preserves main-nav %s destination after Cancel then Confirm', async (destination, hash, heading) => {
   window.matchMedia.mockReturnValue({ matches: false, addEventListener: jest.fn(), removeEventListener: jest.fn() });

@@ -110,14 +110,15 @@ describe("Dashboard integrated Progress", () => {
   test("integrates detailed progress with one response owner", async () => {
     getProgress.mockResolvedValue({ok:true,data:{learningPathProgress:{displayedPercent:37},recentLearningActivity:[{type:'scenario_completed',occurredAt:'2026-09-01T10:00:00Z'}]}});
     render(<App />);
-    expect(await screen.findByText('37%')).toBeVisible();
+    expect(await screen.findAllByText('37%')).toHaveLength(2);
+    expect(within(document.querySelector('#dashboard-measured-progress')).getByText('37%')).toBeVisible();
     expect(await screen.findByText(i18n.t('progress.recentActivity.title'))).toBeVisible();
     expect(getProgress).toHaveBeenCalledTimes(1);
   });
   test("never presents a failed progress request as zero or an empty learner", async () => {
     getProgress.mockResolvedValue({ok:false,data:{message:'Unavailable'}});
     render(<App />);
-    expect(await screen.findByText(i18n.t('dashboard.integrated.progressUnavailable'))).toBeVisible();
+    expect(await within(await screen.findByRole('region',{name:i18n.t('dashboard.astra.myProgress')})).findByText(i18n.t('dashboard.integrated.progressUnavailable'))).toBeVisible();
     expect(screen.queryByText('0%')).not.toBeInTheDocument();
   });
 
@@ -125,7 +126,8 @@ describe("Dashboard integrated Progress", () => {
     getProgress.mockResolvedValue({ok:true,data:{learningPathProgress:{displayedPercent:0}}});
     getCurrentRecommendation.mockResolvedValue({ok:true,data:{recommendation:null}});
     render(<App />);
-    expect(await screen.findByText('0%')).toBeVisible();
+    expect(await screen.findAllByText('0%')).toHaveLength(2);
+    expect(within(document.querySelector('#dashboard-measured-progress')).getByText('0%')).toBeVisible();
     expect(await screen.findByText(i18n.t('dashboard.recommendation.empty'))).toBeVisible();
     expect(getProgress).toHaveBeenCalledTimes(1);
     expect(getCurrentRecommendation).toHaveBeenCalledTimes(1);
@@ -136,10 +138,11 @@ describe("Dashboard integrated Progress", () => {
     let resolveProgress;
     getProgress.mockReturnValue(new Promise(resolve => {resolveProgress=resolve;}));
     render(<App />);
-    expect(await screen.findByText(i18n.t('dashboard.progress.loading'))).toBeVisible();
+    expect(await within(await screen.findByRole('region',{name:i18n.t('dashboard.astra.myProgress')})).findByText(i18n.t('dashboard.progress.loading'))).toBeVisible();
     expect(screen.queryByText('0%')).not.toBeInTheDocument();
     await act(async()=>resolveProgress({ok:true,data:{learningPathProgress:{displayedPercent:18}}}));
-    expect(await screen.findByText('18%')).toBeVisible();
+    expect(await screen.findAllByText('18%')).toHaveLength(2);
+    expect(within(document.querySelector('#dashboard-measured-progress')).getByText('18%')).toBeVisible();
   });
   test("distinguishes failed recommendation, scenario summary and assessment from empty/pending", async () => {
     getCurrentRecommendation.mockResolvedValue({ok:false,data:{message:'offline'}});
@@ -168,13 +171,16 @@ describe("Dashboard integrated Progress", () => {
     markRecommendationCompleted.mockReturnValue(new Promise(resolve=>{confirm=resolve;}));
     getProgress.mockResolvedValueOnce({ok:true,data:{learningPathProgress:{displayedPercent:20}}}).mockResolvedValue({ok:true,data:{learningPathProgress:{displayedPercent:25}}});
     render(<App />);
-    expect(await screen.findByText('20%')).toBeVisible();
+    expect(await screen.findAllByText('20%')).toHaveLength(2);
+    expect(within(document.querySelector('#dashboard-measured-progress')).getByText('20%')).toBeVisible();
     fireEvent.click(screen.getByRole('button',{name:i18n.t('progress.recommendation.markComplete')}));
     expect(markRecommendationCompleted).toHaveBeenCalledTimes(1);
-    expect(screen.getByText('20%')).toBeVisible();
+    expect(screen.getAllByText('20%')).toHaveLength(2);
+    expect(within(document.querySelector('#dashboard-measured-progress')).getByText('20%')).toBeVisible();
     expect(screen.queryByText(i18n.t('progress.recommendation.completedSaved'))).not.toBeInTheDocument();
     await act(async()=>confirm({ok:true,data:{completedRecommendation:{id:7,status:'completed'},recommendation:{id:8,topicCode:'privacy',status:'active',reasonText:'Your next server-owned step',target:{page:'progress',sectionId:'progress-badges'}}}}));
-    expect(await screen.findByText('25%')).toBeVisible();
+    expect(await screen.findAllByText('25%')).toHaveLength(2);
+    expect(within(document.querySelector('#dashboard-measured-progress')).getByText('25%')).toBeVisible();
     expect(screen.getByText('Your next server-owned step')).toBeVisible();
     markRecommendationViewed.mockResolvedValue({ok:true,data:{}});
     fireEvent.click(document.querySelector('#dashboard-recommended-next-step button:not(.btn-ghost)'));
@@ -236,7 +242,8 @@ describe("Dashboard integrated Progress", () => {
     await renderDashboardWithSettledOverview();
     fireEvent.click(await screen.findByRole('button',{name:i18n.t('progress.recommendation.markComplete')}));
     expect(await screen.findByText(i18n.t('dashboard.integrated.completionUnavailable'))).toBeVisible();
-    expect(screen.getByText('20%')).toBeVisible();
+    expect(screen.getAllByText('20%')).toHaveLength(2);
+    expect(within(document.querySelector('#dashboard-measured-progress')).getByText('20%')).toBeVisible();
     expect(getProgress).toHaveBeenCalledTimes(1);
     expect(screen.getByRole('button',{name:i18n.t('progress.recommendation.markComplete')})).toBeEnabled();
   });
@@ -244,12 +251,14 @@ describe("Dashboard integrated Progress", () => {
     let oldResponse;
     getProgress.mockReturnValueOnce(new Promise(resolve=>{oldResponse=resolve;})).mockResolvedValue({ok:true,data:{learningPathProgress:{displayedPercent:60}}});
     render(<App />);
-    await screen.findByText(i18n.t('dashboard.progress.loading'));
+    await within(await screen.findByRole('region',{name:i18n.t('dashboard.astra.myProgress')})).findByText(i18n.t('dashboard.progress.loading'));
     await act(async()=>{await i18n.changeLanguage('ms');});
-    expect(await screen.findByText('60%')).toBeVisible();
+    expect(await screen.findAllByText('60%')).toHaveLength(2);
+    expect(within(document.querySelector('#dashboard-measured-progress')).getByText('60%')).toBeVisible();
     await act(async()=>oldResponse({ok:true,data:{learningPathProgress:{displayedPercent:10}}}));
     expect(screen.queryByText('10%')).not.toBeInTheDocument();
-    expect(screen.getByText('60%')).toBeVisible();
+    expect(screen.getAllByText('60%')).toHaveLength(2);
+    expect(within(document.querySelector('#dashboard-measured-progress')).getByText('60%')).toBeVisible();
   });
   test('App callbacks reject malformed authority even if invoked outside the suppressed UI', async () => {
     getCurrentRecommendation.mockResolvedValue({ok:true,data:{recommendation:{id:7,status:'active',topicCode:'phishing'}}});

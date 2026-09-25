@@ -141,7 +141,7 @@ describe("Home Cyber Explorer Gateway final visual migration", () => {
 
     expect(window.location.hash).toBe("#/dashboard");
     expect(listChatConversations).toHaveBeenCalledWith(50);
-    await screen.findByRole("heading", { level: 1, name: new RegExp(i18n.t("dashboard.welcome", { name: learner.displayName }).replace(learner.displayName, ".+"), "i") });
+    await screen.findByRole("heading", { level: 1, name: i18n.t("dashboard.astra.heading") });
   });
 
   test("keeps threat exploration on the Resources route", async () => {

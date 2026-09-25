@@ -268,6 +268,27 @@
     }
   },
   "dashboard": {
+    "astra": {
+      "progressDisclaimer": "Ini menunjukkan kemajuan melalui Cyberly. Ia bukan ukuran kebolehan, penguasaan atau keselamatan siber.",
+      "eyebrow": "PAPAN PEMUKA",
+      "heading": "Latihan kecil. Pertimbangan lebih yakin.",
+      "myProgress": "Kemajuan Saya",
+      "wellnessTip": "Tip Kesejahteraan",
+      "anotherTip": "Tip lain",
+      "visualLabel": "Satu langkah demi satu",
+      "explore": "Terokai perkara lain",
+      "utilities": "Destinasi lain",
+      "paths": {
+        "resources": "Sumber",
+        "scenarios": "Senario",
+        "talk": "Bincangkan soalan anda"
+      },
+      "pathDescriptions": {
+        "resources": "Panduan praktikal yang boleh dibaca pada bila-bila masa.",
+        "scenarios": "Situasi realistik dengan maklum balas yang menerangkan sebabnya.",
+        "talk": "Tanya CyberGuard soalan tentang kesejahteraan siber."
+      }
+    },
     "nextStep": {
       "eyebrow": "LANGKAH ANDA SETERUSNYA",
       "continue": "Sambung",
