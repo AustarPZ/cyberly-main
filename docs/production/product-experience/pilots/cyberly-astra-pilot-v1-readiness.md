@@ -677,3 +677,16 @@ TDD valid RED: two expected CSS failures / six existing behavior protections pas
 Per PERSIST1 section 15 STOP, fresh evidence build and AFTER browser capture were not run. Four genuine BEFORE full-page PNGs (EN1440, EN390, MS390, ZH-CN390) are retained, with build/source provenance matching the published baseline. They are not evidence of the CSS fix. BEFORE ledger: all requests intercepted; no mutations/live API/network continuation. The historical I01 timing watch item remains documented; current failure root cause is not established.
 
 Evidence: C:/Users/AsusT/.codex/visualizations/2026/09/24/01a0d487-d6fa-7ab3-9d0b-964e20805f29/SC01-I01-PERSIST1/REPORT.md; SC01-I01-PERSIST1-blocked-evidence.zip. Candidate CSS, two Scenario test files and this readiness append are the only changed paths. Need separately authorized runtime investigation before completing fresh build and requested visual review package. No commit/push/deploy/ref movement/DB/provider/RAG/dependency changes. PRODUCTION = NOT CERTIFIED.
+
+
+### PILOT-SC01-I02 — bounded Scenario Intro / Briefing polish
+
+2026-09-26 — **PILOT-SC01-I02_OWNER_VISUAL_REVIEW_READY**. Owner visual review pending, not UI ACCEPTED. **PRODUCTION = NOT CERTIFIED**.
+
+Precheck develop / c3655f4a32ba4d91af92e149a41bd8385ea9ee38, clean worktree/index; local origin/develop and origin/master matched. Accepted I01 / PERSIST1 remain closed. Intro-only CSS removes duplicate gradient/card framing, groups metadata after summary, softens finality presentation without changing its text, provides a green primary Start, compact supporting illustration and a reading-safe lane. Only App JSX change moves the existing topic badge into Intro metadata; all handlers/routes/exact resume/player/result code remain unchanged. Original Scenario CSS prefix preserved; only Intro selectors appended. No locale/backend/API/scoring/dependency changes.
+
+RED before implementation: 3 expected presentation/hierarchy failures / 4 existing lifecycle protections passed. Additional programmatic-container-outline RED: 1 expected failure; buttons retain visible keyboard focus. Final focused 7 pass; Scenario targeted 5 suites / 73 pass; regression 4 / 41 pass; locales PASS. Exactly one full client: Test Suites: 112 passed, 112 total; Tests:       1165 passed, 1165 total; Time:        340.134 s, estimated 377 s. No timeout increase/retries/skips/assertion weakening. Historical cross-suite timing watch item retained.
+
+Fresh isolated build/diff PASS. AFTER browser evidence, request ledger, viewport/locale/fallback/focus measurements and full-page unchanged sibling smoke comparisons are in the external package. S4 smoke uses existing ready state via GET; Feedback renderer/semantics remain source-verified and covered by unchanged tests. Only one explicit intercepted Start POST; passive/live writes zero.
+
+Evidence: C:/Users/AsusT/.codex/visualizations/2026/09/24/01a0d487-d6fa-7ab3-9d0b-964e20805f29/PILOT-SC01-I02/REPORT.md and PILOT-SC01-I02-review.zip. Exact changed paths and hashes recorded; this is the only readiness append. No commit/push/deploy/ref movement, DB/migration/provider/RAG/dependency operation. PRODUCTION = NOT CERTIFIED.

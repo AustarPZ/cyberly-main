@@ -13,6 +13,23 @@ function ruleBody(source, selector, startAt = 0) {
 }
 
 describe("Scenario detail responsive layout", () => {
+  test("I02 Intro uses an editorial surface and quiet guidance without changing other Scenario modes", () => {
+    expect(ruleBody(scenarioStyles, ".scenario-page-intro .scenario-page-header")).toMatch(/background:\s*transparent/);
+    expect(ruleBody(scenarioStyles, ".scenario-page-intro .scenario-briefing")).toMatch(/border:\s*0/);
+    expect(ruleBody(scenarioStyles, ".scenario-page-intro .scenario-briefing")).toMatch(/box-shadow:\s*none/);
+    expect(ruleBody(scenarioStyles, ".scenario-page-intro .scenario-briefing-summary")).toMatch(/max-width:\s*60ch/);
+    expect(ruleBody(scenarioStyles, ".scenario-page-intro .scenario-briefing-notice")).toMatch(/background:\s*transparent/);
+    expect(ruleBody(scenarioStyles, ".scenario-page-intro .scenario-actions .cy-button-primary")).toMatch(/background:\s*var\(--color-brand-primary-hover\)/);
+  });
+
+  test("I02 keeps an Intro-only reading lane, visible focus and a small mobile supporting illustration", () => {
+    expect(ruleBody(scenarioStyles, ".scenario-page-intro")).toMatch(/--scenario-intro-safe-lane:\s*6rem/);
+    expect(ruleBody(scenarioStyles, ".scenario-page-intro :is(button, a):focus-visible")).toMatch(/outline:\s*3px solid/);
+    expect(ruleBody(scenarioStyles, ".scenario-page-intro .scenario-briefing:focus")).toMatch(/outline:\s*none/);
+    const mobile = scenarioStyles.lastIndexOf("@media (max-width: 40rem)");
+    expect(ruleBody(scenarioStyles, ".scenario-page-intro .scenario-decision-visual", mobile)).toMatch(/max-height:\s*7rem/);
+    expect(ruleBody(scenarioStyles, ".scenario-page-intro .scenario-actions", mobile)).toMatch(/grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+  });
   test("keeps the detail layout in a shrink-safe content column", () => {
     const baseIndex = scenarioStyles.indexOf(".scenario-detail-layout {");
     const baseLayout = ruleBody(scenarioStyles, ".scenario-detail-layout", baseIndex);

@@ -7856,9 +7856,9 @@ function ScenariosPage() {
     return (
       <Surface className="scenario-briefing" ref={scenarioIntroRef} tabIndex={-1}>
         <div className="scenario-briefing-copy">
-          <Badge tone="brand">{t(`topics.${scenario.topicCode}`, { defaultValue: topicLabel(scenario.topicCode) })}</Badge>
           <p className="scenario-briefing-summary">{scenario.summary}</p>
           <div className="scenario-briefing-meta">
+            <Badge tone="brand">{t(`topics.${scenario.topicCode}`, { defaultValue: topicLabel(scenario.topicCode) })}</Badge>
             <Badge>{t(`levels.${scenario.difficulty}`, { defaultValue: levelLabel(scenario.difficulty) })}</Badge>
             <Badge>{t("scenarios.card.minutes", { count: scenario.estimatedMinutes })}</Badge>
             <Badge>{t("scenarios.card.decisions", { count: scenario.totalSteps })}</Badge>

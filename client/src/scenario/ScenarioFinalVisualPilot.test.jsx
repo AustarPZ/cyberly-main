@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "../App";
 import i18n from "../i18n";
@@ -135,6 +135,80 @@ describe("Scenario Decision Trail final visual migration", () => {
     expect(saveScenarioDecision).not.toHaveBeenCalled();
     expect(completeScenarioAttempt).not.toHaveBeenCalled();
   }
+
+  test("I02 Intro keeps one title and summary before grouped lightweight metadata, with a decorative visual", async () => {
+    window.history.replaceState({}, "", `#/scenarios/${scenario.slug}`);
+    const { container } = render(<App />);
+    expect(await screen.findByRole("heading", { level: 1, name: scenario.title })).toBeVisible();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    const briefing = container.querySelector(".scenario-briefing");
+    const summary = within(briefing).getByText(scenario.summary);
+    const topic = within(briefing).getByText(i18n.t(`topics.${scenario.topicCode}`));
+    expect(topic.closest(".scenario-briefing-meta")).toBeInTheDocument();
+    expect(summary.compareDocumentPosition(topic) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    for (const text of [i18n.t(`levels.${scenario.difficulty}`), i18n.t("scenarios.card.minutes", { count: 6 }), i18n.t("scenarios.card.decisions", { count: 2 }), i18n.t("scenarios.intro.choiceNotice")]) expect(within(briefing).getByText(text)).toBeVisible();
+    const visual = briefing.querySelector("svg");
+    expect(visual).toHaveAttribute("role", "presentation");
+    expect(visual).toHaveAttribute("aria-hidden", "true");
+    expect(visual).toHaveAttribute("focusable", "false");
+    expect(briefing.querySelectorAll("button.cy-button-primary")).toHaveLength(1);
+    expect(getScenarioBySlug).toHaveBeenCalledWith(scenario.slug, { locale: "en" });
+    expectNoLearningWrites();
+  });
+
+  test("I02 nested Intro refresh and focus are GET-only; explicit Start stays busy and prevents duplicate POST", async () => {
+    window.history.replaceState({}, "", `#/scenarios/${scenario.slug}`);
+    const first = render(<App />);
+    await screen.findByRole("button", { name: "Start practice" });
+    first.unmount();
+    render(<App />);
+    const start = await screen.findByRole("button", { name: "Start practice" });
+    expect(window.location.hash).toBe(`#/scenarios/${scenario.slug}`);
+    expect(getScenarioBySlug).toHaveBeenCalledTimes(2);
+    start.focus();expect(start).toHaveFocus();expectNoLearningWrites();
+    let resolveStart;
+    startScenarioAttempt.mockImplementationOnce(() => new Promise(resolve => { resolveStart = resolve; }));
+    await userEvent.click(start);
+    expect(start).toBeDisabled();
+    expect(start).toHaveTextContent(i18n.t("common.loading"));
+    await userEvent.click(start);
+    expect(startScenarioAttempt).toHaveBeenCalledTimes(1);
+    expect(startScenarioAttempt).toHaveBeenCalledWith(scenario.slug, { locale: "en" });
+    await act(async () => resolveStart({ ok: true, data: { ...attemptPayload, scenario } }));
+    expect(await screen.findByText(currentStep.situationText)).toBeVisible();
+    expect(saveScenarioDecision).not.toHaveBeenCalled();expect(completeScenarioAttempt).not.toHaveBeenCalled();
+  });
+
+  test("I02 unavailable Retry repeats only detail GET and Back preserves the nested route contract", async () => {
+    window.history.replaceState({}, "", `#/scenarios/${scenario.slug}`);
+    getScenarioBySlug.mockResolvedValueOnce({ ok: false, status: 404 });
+    render(<App />);
+    expect(await screen.findByText(i18n.t("resources.reader.scenarioUnavailable"))).toBeVisible();
+    expectNoLearningWrites();
+    await userEvent.click(screen.getByRole("button", { name: i18n.t("resources.reader.retry") }));
+    expect(await screen.findByRole("button", { name: "Start practice" })).toBeVisible();
+    expect(getScenarioBySlug).toHaveBeenCalledTimes(2);
+    expect(listScenarios).not.toHaveBeenCalled();expect(getRecommendedScenarios).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: i18n.t("scenarios.library.backToLibrary") }));
+    expect(await screen.findByRole("heading", { name: i18n.t("scenarios.library.title") })).toBeVisible();
+    expect(window.location.hash).toBe("#/scenarios");expectNoLearningWrites();
+  });
+
+  test.each([["ms", "bahasa_melayu"], ["zh-CN", "chinese"]])("I02 %s fallback stays truthful and does not block explicit Start", async (locale, language) => {
+    window.history.replaceState({}, "", `#/scenarios/${scenario.slug}`);
+    restoreSession.mockResolvedValue({ ok: true, data: {
+      user: { id: 91, email: "scenario@example.test", displayName: "Alya", age: 15, role: "user", accountStatus: "active", emailVerified: true },
+      profile: { exists: true, onboardingCompleted: true, familiarityLevel: "beginner", preferredLanguage: language, learningStyle: "step_by_step", helpTopics: ["phishing"] },
+    } });
+    getScenarioBySlug.mockResolvedValue({ ok: true, data: { scenario, firstStep: currentStep, locale: { requestedLocale: locale, resolvedLocale: "en", fallbackUsed: true } } });
+    render(<App />);
+    await screen.findByText(scenario.summary);
+    const notice = document.querySelector(".scenario-locale-fallback");
+    expect(notice).toBeVisible();
+    expect(notice).toHaveTextContent(i18n.t("scenarios.localeFallback", { requested: i18n.t(`admin.scenarioEditor.locales.${locale}`), displayed: i18n.t("admin.scenarioEditor.locales.en") }));
+    expect(screen.getByRole("button", { name: i18n.t("scenarios.intro.startPractice") })).toBeEnabled();
+    expect(getScenarioBySlug).toHaveBeenLastCalledWith(scenario.slug, { locale });expectNoLearningWrites();
+  });
 
   test("PERSIST1 direct entry and fresh mount use canonical recommendation without storing its identity", async () => {
     const storageWrite = jest.spyOn(Storage.prototype, "setItem");
