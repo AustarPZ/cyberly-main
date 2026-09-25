@@ -268,6 +268,16 @@
     }
   },
   "dashboard": {
+    "nextStep": {
+      "eyebrow": "你的下一步",
+      "continue": "继续",
+      "recommended": "推荐",
+      "savedPractice": "已保存练习",
+      "savedPracticeNumber": "已保存练习 {{number}}",
+      "ownerLoading": "正在检查你保存的活动…",
+      "ownerUnavailable": "暂时无法确认你保存的活动。请重试检查。",
+      "continueEmpty": "目前没有已确认的未完成活动。"
+    },
     "integrated": {
       "progressUnavailable": "暂时无法获取学习路径进度。已记录的进度并未重置。",
       "recommendationUnavailable": "暂时无法获取当前建议。",

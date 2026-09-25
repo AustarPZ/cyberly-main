@@ -78,7 +78,7 @@ describe("Dashboard final visual migration", () => {
         assessmentTopicResults: [{ topicCode: "phishing", correctCount: 2, totalCount: 3, resultLevel: "developing" }],
       },
     });
-    getCurrentRecommendation.mockResolvedValue({ ok: true, data: { recommendation: { id: 7, topicCode: "phishing", reasonText: "Build confidence spotting suspicious messages." } } });
+    getCurrentRecommendation.mockResolvedValue({ ok: true, data: { recommendation: { id: 7, status: "active", target: { page: "resources" }, topicCode: "phishing", reasonText: "Build confidence spotting suspicious messages." } } });
     getRecommendedScenarios.mockResolvedValue({ ok: true, data: { scenarios: [{ id: 9, slug: "bank-message", title: "Suspicious bank message", topicCode: "phishing", difficulty: "beginner", estimatedMinutes: 5 }] } });
     getScenarioDashboard.mockResolvedValue({ ok: true, data: { completedCount: 1, inProgress: null } });
     listChatConversations.mockResolvedValue({ ok: true, data: { conversations: [] } });
@@ -182,8 +182,8 @@ describe("Dashboard final visual migration", () => {
     await screen.findByRole("heading", { level: 1, name: /Welcome back, Alya/i });
 
     const orderedIds = [
-      "dashboard-measured-progress",
       "dashboard-recommended-next-step",
+      "dashboard-measured-progress",
       "dashboard-scenario-practice",
       "dashboard-initial-assessment",
       "dashboard-quick-actions",
@@ -206,6 +206,7 @@ describe("Dashboard final visual migration", () => {
       data: {
         recommendation: {
           id: 7,
+          status: "active",
           topicCode: "phishing",
           reasonText: "Continue with the canonical scenario.",
           targetScenarioTitle: "Canonical phishing scenario",
@@ -234,7 +235,7 @@ describe("Dashboard final visual migration", () => {
     } } });
     getCurrentRecommendation.mockResolvedValue({
       ok: true,
-      data: { recommendation: { id: 8, topicCode: "privacy", reasonText: "Review privacy guidance.", target: { page: "resources", resourceSlug: "protect-privacy" } } },
+      data: { recommendation: { id: 8, status: "active", topicCode: "privacy", reasonText: "Review privacy guidance.", target: { page: "resources", resourceSlug: "protect-privacy" } } },
     });
     const firstRender = render(<App />);
     await screen.findByText("Review privacy guidance.");
@@ -247,7 +248,7 @@ describe("Dashboard final visual migration", () => {
     window.history.replaceState({}, "", "#/dashboard");
     getCurrentRecommendation.mockResolvedValue({
       ok: true,
-      data: { recommendation: { id: 9, reasonText: "Establish your starting point.", target: { page: "assessment" } } },
+      data: { recommendation: { id: 9, status: "active", reasonText: "Establish your starting point.", target: { page: "assessment" } } },
     });
     const secondRender = render(<App />);
     await screen.findByText("Establish your starting point.");
@@ -263,7 +264,7 @@ describe("Dashboard final visual migration", () => {
     const recommendation = container.querySelector("#dashboard-recommended-next-step");
 
     expect(within(recommendation).getByText(i18n.t("dashboard.recommendation.empty"))).toBeVisible();
-    expect(within(recommendation).queryByRole("button")).not.toBeInTheDocument();
+    expect(within(recommendation.querySelector('.dashboard-recommendation-panel')).queryByRole("button")).not.toBeInTheDocument();
   });
 
   test("keeps pending and in-progress Assessment states distinct without inventing skipped", async () => {

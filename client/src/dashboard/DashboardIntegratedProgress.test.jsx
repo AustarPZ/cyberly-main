@@ -1,7 +1,7 @@
 import { StrictMode } from "react";
 import fs from "fs";
 import path from "path";
-import { act, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
+import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testing-library/react";
 import App from "../App";
 import i18n from "../i18n";
 import { restoreSession } from "../api/authApi";
@@ -39,6 +39,11 @@ jest.mock("../chat/chatApi", () => ({
 }));
 
 let intersectionObserverCallback;
+let mockNextStepProps;
+jest.mock('./DashboardNextStepArea', () => {
+  const actual = jest.requireActual('./DashboardNextStepArea');
+  return { ...actual, __esModule: true, default: props => { mockNextStepProps = props; return <actual.default {...props} />; } };
+});
 
 class IntersectionObserverMock {
   constructor(callback) { intersectionObserverCallback = callback; }
@@ -96,7 +101,7 @@ describe("Dashboard integrated Progress", () => {
         assessmentTopicResults: [{ topicCode: "phishing", correctCount: 2, totalCount: 3, resultLevel: "developing" }],
       },
     });
-    getCurrentRecommendation.mockResolvedValue({ ok: true, data: { recommendation: { id: 7, topicCode: "phishing", reasonText: "Build confidence spotting suspicious messages." } } });
+    getCurrentRecommendation.mockResolvedValue({ ok: true, data: { recommendation: { id: 7, status: "active", target: {page: "resources"}, topicCode: "phishing", reasonText: "Build confidence spotting suspicious messages." } } });
     getRecommendedScenarios.mockResolvedValue({ ok: true, data: { scenarios: [{ id: 9, slug: "bank-message", title: "Suspicious bank message", topicCode: "phishing", difficulty: "beginner", estimatedMinutes: 5 }] } });
     getScenarioDashboard.mockResolvedValue({ ok: true, data: { completedCount: 1, inProgress: null } });
     listChatConversations.mockResolvedValue({ ok: true, data: { conversations: [] } });
@@ -179,7 +184,7 @@ describe("Dashboard integrated Progress", () => {
     expect(getRecommendedScenarios).not.toHaveBeenCalled();
   });
   test("follows the Current Recommendation target without a suggested-Scenario fallback", async () => {
-    getCurrentRecommendation.mockResolvedValue({ok:true,data:{recommendation:{id:7,topicCode:'phishing',target:{page:'progress',sectionId:'progress-badges'}}}});
+    getCurrentRecommendation.mockResolvedValue({ok:true,data:{recommendation:{id:7,status:'active',topicCode:'phishing',target:{page:'progress',sectionId:'progress-badges'}}}});
     markRecommendationViewed.mockResolvedValue({ok:true,data:{}});
     render(<App />);
     const action = await waitFor(() => {
@@ -199,7 +204,7 @@ describe("Dashboard integrated Progress", () => {
     Element.prototype.scrollIntoView = jest.fn();
     const scenario = {id:12,slug:'canonical-phishing',title:'Canonical phishing scenario',topicCode:'phishing',difficulty:'beginner',estimatedMinutes:5};
     listScenarios.mockResolvedValue({ok:true,data:{scenarios:[scenario]}});
-    getCurrentRecommendation.mockResolvedValue({ok:true,data:{recommendation:{id:7,topicCode:'phishing',targetScenarioTitle:scenario.title,target:{page:'scenarios',scenarioId:12,scenarioSlug:scenario.slug}}}});
+    getCurrentRecommendation.mockResolvedValue({ok:true,data:{recommendation:{id:7,status:'active',topicCode:'phishing',targetScenarioTitle:scenario.title,target:{page:'scenarios',scenarioId:12,scenarioSlug:scenario.slug}}}});
     markRecommendationViewed.mockResolvedValue({ok:true,data:{}});
     await renderDashboardWithSettledOverview();
     const action = await screen.findByRole('button',{name:i18n.t('dashboard.recommendation.practiceScenario')});
@@ -210,22 +215,20 @@ describe("Dashboard integrated Progress", () => {
     expect(getRecommendedScenarios).toHaveBeenCalled();
     expect(markRecommendationViewed).toHaveBeenCalledWith(7,{locale:'en'});
   });
-  test.each([
-    ['phishing','readResource','#/resources'],
-    [null,'startAssessment','#/assessment'],
-  ])('uses the existing fallback for topic %s without a Scenario request', async (topicCode,label,hash) => {
-    getCurrentRecommendation.mockResolvedValue({ok:true,data:{recommendation:{id:7,topicCode}}});
-    markRecommendationViewed.mockResolvedValue({ok:true,data:{}});
+  test.each(['phishing', null])('recovers without fabricating authority for targetless topic %s', async topicCode => {
+    getCurrentRecommendation.mockResolvedValue({ok:true,data:{recommendation:{id:7,status:'active',topicCode}}});
     render(<App />);
-    const region = await waitFor(()=>{
-      const element=document.querySelector('#dashboard-recommended-next-step');
-      expect(within(element).getByRole('button',{name:i18n.t(`dashboard.recommendation.${label}`),exact:true})).toBeInTheDocument();
-      return element;
-    });
-    fireEvent.click(within(region).getByRole('button',{name:i18n.t(`dashboard.recommendation.${label}`),exact:true}));
-    await waitFor(()=>expect(window.location.hash).toBe(hash));
+    const region = await screen.findByText(i18n.t('dashboard.integrated.recommendationUnavailable'));
+    expect(region).toBeVisible();
+    const area = document.querySelector('#dashboard-recommended-next-step');
+    for (const label of ['readResource','startAssessment','practiceScenario']) {
+      expect(within(area).queryByRole('button',{name:i18n.t(`dashboard.recommendation.${label}`),exact:true})).not.toBeInTheDocument();
+    }
+    expect(within(area).queryByRole('button',{name:i18n.t('progress.recommendation.markComplete')})).not.toBeInTheDocument();
+    expect(window.location.hash).toBe('#/dashboard');
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
     expect(getRecommendedScenarios).not.toHaveBeenCalled();
-    expect(markRecommendationViewed).toHaveBeenCalledWith(7,{locale:'en'});
   });
   test("failed completion preserves recorded progress and offers another explicit attempt", async()=>{
     markRecommendationCompleted.mockResolvedValue({ok:false,data:{message:'offline'}});
@@ -247,6 +250,31 @@ describe("Dashboard integrated Progress", () => {
     await act(async()=>oldResponse({ok:true,data:{learningPathProgress:{displayedPercent:10}}}));
     expect(screen.queryByText('10%')).not.toBeInTheDocument();
     expect(screen.getByText('60%')).toBeVisible();
+  });
+  test('App callbacks reject malformed authority even if invoked outside the suppressed UI', async () => {
+    getCurrentRecommendation.mockResolvedValue({ok:true,data:{recommendation:{id:7,status:'active',topicCode:'phishing'}}});
+    await renderDashboardWithSettledOverview();
+    await act(async()=>{await mockNextStepProps.onFollow();await mockNextStepProps.onComplete();});
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
+    expect(window.location.hash).toBe('#/dashboard');
+  });
+  test('retained old-scope App callbacks cannot mutate after locale change', async () => {
+    await renderDashboardWithSettledOverview();
+    const old=mockNextStepProps;
+    await act(async()=>{await i18n.changeLanguage('ms');});
+    await act(async()=>{await old.onFollow();await old.onComplete();});
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
+    expect(window.location.hash).toBe('#/dashboard');
+  });
+  test('retained App callbacks cannot mutate after Dashboard unmount', async () => {
+    await renderDashboardWithSettledOverview();
+    const old=mockNextStepProps;
+    cleanup();
+    await act(async()=>{await old.onFollow();await old.onComplete();});
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
   });
   test('deduplicates initial overview requests during StrictMode effect replay',async()=>{
     render(<StrictMode><App /></StrictMode>);

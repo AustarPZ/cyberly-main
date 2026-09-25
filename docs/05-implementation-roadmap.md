@@ -2,6 +2,12 @@
 
 This roadmap reflects the current product state and the beginning of production cleanup.
 
+## Current pilot pointer — 2026-09-25 (MYT)
+
+Current bounded delivery follows [Cyberly Astra Pilot v1](production/product-experience/pilots/cyberly-astra-pilot-v1.md), mirrored from the [canonical Control Tower plan](https://docs.google.com/document/d/1PdAASZCCkpM4-2WIsZMNDUp6mQWRzvT8AhTB8QllARg/edit?tab=t.qta335asc824). See the [PILOT-A01/A02 readiness and evidence report](production/product-experience/pilots/cyberly-astra-pilot-v1-readiness.md) for the exposed-function matrix, Astra comparison, Workbook reconciliation and next exact UI slice.
+
+For current sequencing, the approved controlled-pilot scope takes precedence over automatically completing comprehensive S3 recommendation architecture work. Keep the earlier history and commitments below, including Gemini/ILMU, without treating them as fresh verification or cancelling them. Batch 01 is documentation/evidence only; implementation and release acceptance require their own scoped evidence. Production remains **NOT CERTIFIED**.
+
 ## Completed Foundation
 
 - Official frontend is `client/`.

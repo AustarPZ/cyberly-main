@@ -61,7 +61,7 @@ test.each(['en', 'ms', 'zh-CN'])('one scenario: accessible %s action reaches exa
   restoreSession.mockResolvedValue({ ok: true, data: { user: account, profile: { ...profile, preferredLanguage: { en: 'english', ms: 'bahasa_melayu', 'zh-CN': 'chinese' }[locale] } } });
   setOwners(false, [unfinished()]); await boot();
   const buttons = within(surface()).getAllByRole('button'); expect(buttons).toHaveLength(1);
-  expect(buttons[0]).toHaveAccessibleName(`${i18n.t('dashboard.resumeScenario')}: Parcel SMS (#9)`);
+  expect(buttons[0]).toHaveAccessibleName(`${i18n.t('dashboard.resumeScenario')}: Parcel SMS`);
   expect(scenario.getScenarioAttempt).not.toHaveBeenCalled();
   await act(async () => fireEvent.click(buttons[0]));
   expect(await screen.findByText('Saved situation 9')).toBeVisible();
@@ -82,7 +82,7 @@ test('all same-title same-slug attempts remain distinct in resolver identity ord
   setOwners(false, [unfinished(12), unfinished(9), { attemptId: 10, scenarioSlug: 'other', title: 'Other title' }]); await boot();
   const buttons = within(surface()).getAllByRole('button'); expect(buttons).toHaveLength(3);
   expect(buttons.map(button => button.textContent)).toEqual([
-    `${i18n.t('dashboard.resumeScenario')}: Parcel SMS (#9)`, `${i18n.t('dashboard.resumeScenario')}: Other title (#10)`, `${i18n.t('dashboard.resumeScenario')}: Parcel SMS (#12)`,
+    `${i18n.t('dashboard.resumeScenario')}: Parcel SMS${i18n.t('dashboard.nextStep.savedPracticeNumber',{number:1})}`, `${i18n.t('dashboard.resumeScenario')}: Other title`, `${i18n.t('dashboard.resumeScenario')}: Parcel SMS${i18n.t('dashboard.nextStep.savedPracticeNumber',{number:2})}`,
   ]);
   await act(async () => fireEvent.click(buttons[2]));
   expect(scenario.getScenarioAttempt.mock.calls).toEqual([[12, { locale: 'en' }]]); isolated();

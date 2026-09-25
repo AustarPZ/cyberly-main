@@ -77,7 +77,7 @@ describe("Integrated Progress visual composition", () => {
         assessmentTopicResults: [{ topicCode: "phishing", correctCount: 2, totalCount: 3, resultLevel: "developing" }],
       },
     });
-    getCurrentRecommendation.mockResolvedValue({ ok: true, data: { recommendation: { id: 7, topicCode: "phishing", reasonText: "Build confidence spotting suspicious messages." } } });
+    getCurrentRecommendation.mockResolvedValue({ ok: true, data: { recommendation: { id: 7, status: "active", target: { page: "resources" }, topicCode: "phishing", reasonText: "Build confidence spotting suspicious messages." } } });
     getRecommendedScenarios.mockResolvedValue({ ok: true, data: { scenarios: [{ id: 9, slug: "bank-message", title: "Suspicious bank message", topicCode: "phishing", difficulty: "beginner", estimatedMinutes: 5 }] } });
     getScenarioDashboard.mockResolvedValue({ ok: true, data: { completedCount: 1, inProgress: null } });
     listChatConversations.mockResolvedValue({ ok: true, data: { conversations: [] } });

@@ -40,7 +40,7 @@ import ContextHeader from "./design-system/headers/ContextHeader";
 import SectionNav from "./design-system/navigation/SectionNav";
 import ExplorerHeroSurface from "./design-system/visual/ExplorerHeroSurface";
 import DashboardExplorerVisual from "./dashboard/DashboardExplorerVisual";
-import DashboardResumeSurface from "./dashboard/DashboardResumeSurface";
+import DashboardNextStepArea, { isActionableDashboardRecommendation } from "./dashboard/DashboardNextStepArea";
 import { dashboardGuidanceInput, dashboardGuidanceStamp } from "./guidance/dashboardGuidance";
 import { resolveGuidance } from "./guidance/resolveGuidance";
 import AssessmentCheckpointVisual from "./assessment/AssessmentCheckpointVisual";
@@ -5870,7 +5870,7 @@ const DASHBOARD_SECTIONS = [
 
 function DashboardPage() {
   const { t, i18n: activeI18n } = useTranslation();
-  const { user, go, handleChatAction, openRecommendedResource, pendingProgressSection, clearPendingProgressSection, resolvedUiLocale, requestScenarioExactResume, requestAssessmentExactResume } = useApp();
+  const { user, go, handleChatAction, pendingProgressSection, clearPendingProgressSection, resolvedUiLocale, requestScenarioExactResume, requestAssessmentExactResume } = useApp();
   const { conversations, selectConversation, initialLoading: chatHistoryLoading } = useChat();
   const dashboardUserId = user?.id;
   const assessmentLocale = normalizeLocale(activeI18n.language);
@@ -5893,6 +5893,21 @@ function DashboardPage() {
   const [activeSection, setActiveSection] = useState("dashboard-overview");
   const dashboardAssessmentResults = (progressState.progress?.assessmentTopicResults || []).map(mapAssessmentTopicResult);
   const dashboardSections = DASHBOARD_SECTIONS;
+  const guidanceInput = dashboardGuidanceInput({ stamp: guidanceStamp, assessment: assessmentStatus, scenario: scenarioState, recommendation: recommendationState });
+  const recommendationAction = {
+    valid: isActionableDashboardRecommendation(guidanceInput.currentRecommendation, guidanceStamp, recommendationState.recommendation),
+    identity: JSON.stringify([guidanceStamp, recommendationState.recommendation?.id, recommendationState.recommendation?.target]),
+  };
+  const currentRecommendationAction = useRef(recommendationAction);
+  const dashboardMounted = useRef(true);
+  useEffect(() => {
+    dashboardMounted.current = true;
+    return () => { dashboardMounted.current = false; };
+  }, []);
+  currentRecommendationAction.current = recommendationAction;
+  const actionStillCurrent = () => dashboardMounted.current && recommendationAction.valid && currentRecommendationAction.current.valid
+    && recommendationAction.identity === currentRecommendationAction.current.identity;
+
 
   useEffect(() => {
     let active = true;
@@ -6021,6 +6036,7 @@ function DashboardPage() {
       const requested = allowed.includes(pendingProgressSection) ? pendingProgressSection : PROGRESS_SECTION_IDS.OVERVIEW;
       const target = document.getElementById(requested) || document.getElementById(PROGRESS_SECTION_IDS.OVERVIEW);
       if (target) {
+        if (requested === 'progress-recommendation') document.getElementById('dashboard-recommended-next-step')?.dispatchEvent(new Event('dashboard:reveal-recommendation'));
         let parent = target.parentElement;
         while (parent) { if (parent.tagName === "DETAILS") parent.open = true; parent = parent.parentElement; }
         target.setAttribute("tabindex", "-1");
@@ -6034,7 +6050,7 @@ function DashboardPage() {
 
   async function completeRecommendation() {
     const current = recommendationState.recommendation;
-    if (!current?.id || completionInFlight.current) return;
+    if (!actionStillCurrent() || completionInFlight.current) return;
     const epoch = dataEpoch.current;
     completionInFlight.current = true;
     setRecommendationCompleting(true);
@@ -6061,15 +6077,12 @@ function DashboardPage() {
   const dashboardLearningPathProgress = progressState.progress?.learningPathProgress;
   const recommendation = recommendationState.recommendation;
   const scenarioDashboard = scenarioState.dashboard;
-  const resumeGuidance = resolveGuidance(dashboardGuidanceInput({
-    stamp: guidanceStamp, assessment: assessmentStatus, scenario: scenarioState, recommendation: recommendationState,
-  }));
+  const resumeGuidance = resolveGuidance(guidanceInput);
   const translatedAgeGroup = t(`settings.ageGroups.${group.key}`,{defaultValue: group.label});
   const familiarityValue = user.profile?.familiarityLevel || "";
   const educationValue = user.profile?.educationLevel || "";
   const translatedFamiliarity = t(`profileOptions.familiarity.${familiarityValue}.label`,{defaultValue: user.familiarity || t("dashboard.beginner") });
   const translatedEducation = educationValue? t(`profileOptions.education.${educationValue}`,{ defaultValue: user.educationLevel }): "";
-  const recommendationTargetPage = recommendation?.target?.page;
   const recommendationTitle = recommendation?.targetScenarioTitle || (
     recommendation?.topicCode
       ? t(`topics.${recommendation.topicCode}`, { defaultValue: topicLabel(recommendation.topicCode, recommendation.topicLabel) })
@@ -6077,19 +6090,11 @@ function DashboardPage() {
   );
 
   async function followRecommendation() {
+    if (!actionStillCurrent() || completionInFlight.current) return;
     const epoch = dataEpoch.current;
-    if (recommendation?.id) {
-      await dbMarkRecommendationViewed(recommendation.id, assessmentLocale);
-    }
-    if (dataEpoch.current !== epoch) return;
-    if (recommendation?.target && handleChatAction({ target: recommendation.target })) {
-      return;
-    }
-    if (recommendation?.topicCode) {
-      openRecommendedResource(recommendation.topicCode);
-    } else {
-      go("assessment");
-    }
+    await dbMarkRecommendationViewed(recommendation.id, assessmentLocale);
+    if (dataEpoch.current !== epoch || !actionStillCurrent()) return;
+    handleChatAction({ target: recommendation.target });
   }
 
   function viewDashboardChatHistory() {
@@ -6172,6 +6177,7 @@ function DashboardPage() {
   function scrollToDashboardSection(sectionId) {
     const target = document.getElementById(sectionId);
     if (!target) return;
+    if (sectionId === "dashboard-recommended-next-step") target.dispatchEvent(new Event("dashboard:reveal-recommendation"));
     target.scrollIntoView({
       behavior: prefersReducedMotion() ? "auto" : "smooth",
       block: "start",
@@ -6217,11 +6223,14 @@ function DashboardPage() {
         />
 
       <div className="dashboard-content">
-        <DashboardResumeSurface
-          guidance={resumeGuidance}
-          inventory={scenarioDashboard?.inProgressAttempts}
-          requestScenarioExactResume={requestScenarioExactResume}
-          requestAssessmentExactResume={requestAssessmentExactResume}
+        <DashboardNextStepArea
+          stamp={guidanceStamp} guidance={resumeGuidance} inventory={scenarioDashboard?.inProgressAttempts}
+          recommendationObservation={guidanceInput.currentRecommendation} recommendation={recommendation}
+          recommendationTitle={recommendationTitle}
+          requestScenarioExactResume={requestScenarioExactResume} requestAssessmentExactResume={requestAssessmentExactResume}
+          onFollow={followRecommendation} onComplete={completeRecommendation} onRetry={retryDashboard}
+          completing={recommendationCompleting} completionError={completionError}
+          successFeedback={recommendationCompleteSaved ? <SuccessFeedback message={t("progress.recommendation.completedSaved")} /> : null}
         />
 
         <div id="dashboard-measured-progress" className="dashboard-anchor"><div id="progress-overview" className="progress-anchor">
@@ -6233,40 +6242,6 @@ function DashboardPage() {
             <div className="card learning-path-card"><PageState type="error" message={t("dashboard.integrated.progressUnavailable")} /><button className="btn-ghost" onClick={retryDashboard}>{t("dashboard.integrated.retry")}</button></div>
           ) : <LearningPathProgressPanel value={dashboardLearningPathProgress} t={t} />}
         </div></div>
-
-        <div>
-          <div id="dashboard-recommended-next-step" className="card dashboard-anchor dashboard-journey-surface">
-            <h2 id="progress-recommendation" className="progress-anchor" style={{ fontWeight: 700, color: "var(--teal)", margin: "0 0 0.35rem" }}>{t("dashboard.recommendation.title")}</h2>
-            {recommendationCompleteSaved && <SuccessFeedback message={t("progress.recommendation.completedSaved")} />}
-            {completionError && <p role="alert">{t("dashboard.integrated.completionUnavailable")}</p>}
-            {recommendationState.loading ? (
-              <PageState message={t("dashboard.recommendation.loading")} />
-            ) : recommendationState.error ? (<><PageState type="error" message={t("dashboard.integrated.recommendationUnavailable")} /><button className="btn-ghost" onClick={retryDashboard}>{t("dashboard.integrated.retry")}</button></>) : recommendation ? (
-              <>
-                <div style={{ fontFamily: "'Space Grotesk', sans-serif", fontWeight: 700, fontSize: "1.05rem", marginBottom: "0.35rem", color: "#1a1a18" }}>
-                  {recommendationTitle}
-                </div>
-                <div style={{ fontSize: "0.84rem", color: "#3e5149", lineHeight: 1.55, marginBottom: "0.85rem" }}>
-                  {recommendation.reasonText}
-                </div>
-                <button onClick={followRecommendation} style={{ background: "var(--teal)", color: "#fff", border: "none", borderRadius: 10, padding: "0.55rem 1rem", fontSize: "0.82rem", fontWeight: 700, cursor: "pointer" }}>
-                  {recommendationTargetPage === "scenarios"
-                    ? t("dashboard.recommendation.practiceScenario")
-                    : recommendationTargetPage === "resources"
-                      ? t("dashboard.recommendation.readResource")
-                      : recommendationTargetPage === "assessment"
-                        ? t("dashboard.recommendation.startAssessment")
-                        : recommendation.topicCode
-                            ? t("dashboard.recommendation.readResource")
-                            : t("dashboard.recommendation.startAssessment")}
-                </button>
-                {recommendation.topicCode && recommendation.status !== "completed" && <button className="btn-ghost" onClick={completeRecommendation} disabled={recommendationCompleting}>{recommendationCompleting ? t("common.saving") : t("progress.recommendation.markComplete")}</button>}
-              </>
-            ) : (
-              <PageState type="empty" message={t("dashboard.recommendation.empty")} />
-            )}
-          </div>
-        </div>
 
         <div id="dashboard-scenario-practice" className="dashboard-anchor dashboard-practice-grid">
           <div className="card" style={{ border: "1px solid rgba(0,0,0,0.07)" }}>

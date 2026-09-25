@@ -77,7 +77,7 @@ describe("Progress protected compatibility", () => {
         assessmentTopicResults: [{ topicCode: "phishing", correctCount: 2, totalCount: 3, resultLevel: "developing" }],
       },
     });
-    getCurrentRecommendation.mockResolvedValue({ ok: true, data: { recommendation: { id: 7, topicCode: "phishing", reasonText: "Build confidence spotting suspicious messages." } } });
+    getCurrentRecommendation.mockResolvedValue({ ok: true, data: { recommendation: { id: 7, status: "active", target: { page: "resources" }, topicCode: "phishing", reasonText: "Build confidence spotting suspicious messages." } } });
     getRecommendedScenarios.mockResolvedValue({ ok: true, data: { scenarios: [{ id: 9, slug: "bank-message", title: "Suspicious bank message", topicCode: "phishing", difficulty: "beginner", estimatedMinutes: 5 }] } });
     getScenarioDashboard.mockResolvedValue({ ok: true, data: { completedCount: 1, inProgress: null } });
     listChatConversations.mockResolvedValue({ ok: true, data: { conversations: [] } });
@@ -116,7 +116,7 @@ describe("Progress protected compatibility", () => {
   });
   test.each(['progress-badges','progress-assessment-results'])('shared action target opens and focuses %s',async(sectionId)=>{
     window.history.replaceState({},'', '#/dashboard');
-    getCurrentRecommendation.mockResolvedValue({ok:true,data:{recommendation:{id:7,topicCode:'phishing',target:{page:'progress',sectionId}}}});
+    getCurrentRecommendation.mockResolvedValue({ok:true,data:{recommendation:{id:7,status:'active',topicCode:'phishing',target:{page:'progress',sectionId}}}});
     markRecommendationViewed.mockResolvedValue({ok:true,data:{}});
     render(<App />);
     fireEvent.click(await waitFor(()=>{const action=document.querySelector('#dashboard-recommended-next-step button:not(.btn-ghost)');expect(action).toBeInTheDocument();return action;},{timeout:5000}));
@@ -128,7 +128,7 @@ describe("Progress protected compatibility", () => {
   test('missing optional action section falls back without trapping focus',async()=>{
     window.history.replaceState({},'', '#/dashboard');
     getProgress.mockResolvedValue({ok:true,data:{learningPathProgress:{displayedPercent:0},assessmentTopicResults:[]}});
-    getCurrentRecommendation.mockResolvedValue({ok:true,data:{recommendation:{id:7,topicCode:'phishing',target:{page:'progress',sectionId:'progress-assessment-results'}}}});
+    getCurrentRecommendation.mockResolvedValue({ok:true,data:{recommendation:{id:7,status:'active',topicCode:'phishing',target:{page:'progress',sectionId:'progress-assessment-results'}}}});
     markRecommendationViewed.mockResolvedValue({ok:true,data:{}});
     render(<App />);
     fireEvent.click(await waitFor(()=>{const action=document.querySelector('#dashboard-recommended-next-step button:not(.btn-ghost)');expect(action).toBeInTheDocument();return action;},{timeout:5000}));
