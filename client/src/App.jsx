@@ -6113,7 +6113,7 @@ function DashboardPage() {
         </div>
 
         <div id="dashboard-initial-assessment" className="card dashboard-anchor dashboard-next-surface">
-          {assessmentStatus.loading || assessmentStatus.guidanceStamp?.scopeKey !== guidanceStamp.scopeKey || assessmentStatus.guidanceStamp?.revision !== guidanceStamp.revision ? <PageState message={t("dashboard.assessment.checking")} /> : assessmentStatus.error || assessmentStatus.status === "unknown" ? <><h2>{t("progress.snapshot.assessmentStatus")}</h2><PageState type="error" message={t("dashboard.integrated.assessmentUnavailable")} /><button className="btn-ghost" onClick={retryDashboard}>{t("dashboard.integrated.retry")}</button></> : <div style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
+          {assessmentStatus.loading || assessmentStatus.guidanceStamp?.scopeKey !== guidanceStamp.scopeKey || assessmentStatus.guidanceStamp?.revision !== guidanceStamp.revision ? <PageState message={t("dashboard.assessment.checking")} /> : assessmentStatus.error || assessmentStatus.status === "unknown" ? <><h2>{t("progress.snapshot.assessmentStatus")}</h2><PageState type="error" message={t("dashboard.integrated.assessmentUnavailable")} /><button className="btn-ghost" onClick={retryDashboard}>{t("dashboard.integrated.retry")}</button></> : <div id={dashboardAssessmentResults.length > 0 ? "progress-assessment-results" : undefined} className="progress-anchor" style={{ display: "flex", flexWrap: "wrap", gap: "1rem", alignItems: "center" }}>
             <div style={{ flex: 1, minWidth: 0 }}>
               <h2 style={{ fontWeight: 700, color: "#e65100", margin: "0 0 0.25rem" }}>
                 {assessmentStatus.status === "completed"
@@ -6138,23 +6138,7 @@ function DashboardPage() {
               {assessmentStatus.status === "completed" ? t("dashboard.assessment.viewResults") : assessmentStatus.status === "in_progress" ? t("dashboard.assessment.resume") : t("dashboard.assessment.start")}
             </button>
           </div>}
-          {dashboardAssessmentResults.length > 0 && (
-            <div id="progress-assessment-results" className="assessment-results-grid progress-anchor" style={{ marginTop: "1rem" }}>
-              {dashboardAssessmentResults.map(topic => (
-                <div key={topic.topicCode} className="card" style={{ padding: "1rem" }}>
-                  <div style={{ display: "flex", justifyContent: "space-between", gap: "0.75rem", marginBottom: "0.55rem" }}>
-                    <span style={{ fontWeight: 700, fontSize: "0.86rem" }}>{PROGRESS_TOPIC_META[topic.topicCode]?.icon} {t(`topics.${topic.topicCode}`, { defaultValue: topicLabel(topic.topicCode, topic.topicLabel) })}</span>
-                    <span style={{ color: "var(--teal)", fontWeight: 700, fontSize: "0.82rem" }}>
-                      {t("progress.assessmentResults.correctOutOfTotal", { correct: topic.correctCount, total: topic.totalCount })}
-                    </span>
-                  </div>
-                  <div style={{ fontSize: "0.74rem", color: "#777", marginTop: "0.45rem" }}>
-                    {t("progress.assessmentResults.assessmentResult", { level: t(`levels.${topic.resultLevel}`, { defaultValue: levelLabel(topic.resultLevel) }) })} · {t("progress.assessmentResults.source")}
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
+
         </div>
 
           </div>

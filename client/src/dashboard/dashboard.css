@@ -10,8 +10,11 @@
 .dashboard-next-step-body { margin-top: 1.5rem; }
 .dashboard-next-step-reason { margin: 0 0 1.5rem; max-width: 58ch; line-height: 1.65; color: var(--text-secondary); }
 .dashboard-resume-choices { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,18rem),1fr)); gap: 0.75rem; }
-.dashboard-next-step .dashboard-resume-choice { display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 0.4rem; padding: 1rem 1.25rem; min-height: 72px; text-align: left; background: var(--surface-raised); color: var(--color-brand-primary-hover); border: 1px solid var(--color-brand-border); white-space: normal; }
-.dashboard-resume-label { font-size: 0.8rem; font-weight: 400; color: var(--text-secondary); }
+.dashboard-next-step .dashboard-resume-choice { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 1rem; padding: 1rem 1.25rem; min-height: 72px; text-align: left; background: var(--color-brand-primary-hover); color: var(--text-on-brand); border: 1px solid var(--color-brand-primary-hover); white-space: normal; }
+.dashboard-resume-label { font-size: 0.8rem; font-weight: 400; color: inherit; }
+.dashboard-next-step .dashboard-action-label { display: grid; gap: 0.4rem; min-width: 0; text-align: left; }
+.dashboard-next-step .dashboard-action-arrow { flex-shrink: 0; font-size: 1.35rem; line-height: 1; }
+.dashboard-next-step .dashboard-primary-action { display: flex; justify-content: space-between; gap: 1rem; }
 .dashboard-next-step-actions { display: flex; flex-wrap: wrap; align-items: center; gap: 0.75rem; }
 .dashboard-next-step button { min-height: 44px; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
 .dashboard-next-step button:focus-visible { outline: 3px solid var(--color-brand-primary-hover); outline-offset: 3px; }

@@ -289,7 +289,7 @@ describe("Dashboard final visual migration", () => {
     expect(within(inProgress).getByRole("button", { name: i18n.t("dashboard.assessment.resume") })).toBeVisible();
   });
 
-  test("integrates completed Assessment topic results into the Initial Assessment section", async () => {
+  test("retains completed Assessment summary without duplicated topic details", async () => {
     getInitialAssessmentStatus.mockResolvedValue({
       ok: true,
       data: { status: "completed", result: { attempt: { percentage: 67, measuredLevel: "developing" } } },
@@ -301,7 +301,8 @@ describe("Dashboard final visual migration", () => {
     expect(within(assessment).getByText(i18n.t("dashboard.assessment.completed"))).toBeVisible();
     expect(within(assessment).getByText(i18n.t("dashboard.assessment.completedDescription"))).toBeVisible();
     expect(within(assessment).getByText(/67%/)).toBeVisible();
-    expect(within(assessment).getByText(i18n.t("topics.phishing", { defaultValue: "Phishing" }), { exact: false })).toBeVisible();
+    expect(within(assessment).queryByText(i18n.t("topics.phishing", { defaultValue: "Phishing" }), { exact: false })).not.toBeInTheDocument();
+    expect(assessment.querySelector('.assessment-results-grid')).toBeNull();
     expect(within(assessment).getByRole("button", { name: i18n.t("dashboard.assessment.viewResults") })).toBeVisible();
     expect(container.querySelector("#dashboard-topic-mastery")).not.toBeInTheDocument();
   });

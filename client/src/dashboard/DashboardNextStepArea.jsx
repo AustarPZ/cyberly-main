@@ -84,9 +84,9 @@ function ScopedNextStep({ stamp, guidance, inventory, recommendationObservation:
                 <h3>{recommendationTitle}</h3>
                 <p className="dashboard-next-step-reason">{recommendation.reasonText}</p>
                 <div className="dashboard-next-step-actions">
-                  <Button variant="primary" disabled={completing} onClick={onFollow}>{t(recommendation.target.page === 'scenarios' ? 'dashboard.recommendation.practiceScenario'
+                  <Button variant="primary" className="dashboard-primary-action" disabled={completing} onClick={onFollow}><span className="dashboard-action-label">{t(recommendation.target.page === 'scenarios' ? 'dashboard.recommendation.practiceScenario'
                     : recommendation.target.page === 'resources' ? 'dashboard.recommendation.readResource'
-                      : recommendation.target.page === 'assessment' ? 'dashboard.recommendation.startAssessment' : 'guidance.actions.openRecommendation')}</Button>
+                      : recommendation.target.page === 'assessment' ? 'dashboard.recommendation.startAssessment' : 'dashboard.recommendation.openRecommendation')}</span><span className="dashboard-action-arrow" aria-hidden="true">→</span></Button>
                   {recommendation.topicCode && <Button variant="quiet" className="btn-ghost" onClick={onComplete} loading={completing} loadingLabel={t('common.saving')}>{t('progress.recommendation.markComplete')}</Button>}
                 </div>
               </> : <PageState type="error" message={t('dashboard.integrated.recommendationUnavailable')} actionLabel={t('dashboard.integrated.retry')} onAction={onRetry} />}

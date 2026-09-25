@@ -81,7 +81,7 @@ test.each([0, 1])('mixed choices have equal prominence and only selected choice 
 test('all same-title same-slug attempts remain distinct in resolver identity order', async () => {
   setOwners(false, [unfinished(12), unfinished(9), { attemptId: 10, scenarioSlug: 'other', title: 'Other title' }]); await boot();
   const buttons = within(surface()).getAllByRole('button'); expect(buttons).toHaveLength(3);
-  expect(buttons.map(button => button.textContent)).toEqual([
+  expect(buttons.map(button => button.querySelector('.dashboard-action-label').textContent)).toEqual([
     `${i18n.t('dashboard.resumeScenario')}: Parcel SMS${i18n.t('dashboard.nextStep.savedPracticeNumber',{number:1})}`, `${i18n.t('dashboard.resumeScenario')}: Other title`, `${i18n.t('dashboard.resumeScenario')}: Parcel SMS${i18n.t('dashboard.nextStep.savedPracticeNumber',{number:2})}`,
   ]);
   await act(async () => fireEvent.click(buttons[2]));

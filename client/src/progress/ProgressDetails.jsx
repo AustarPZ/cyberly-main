@@ -21,7 +21,6 @@ export default function ProgressDetails({ progress, user, topics, t, locale, onE
   return <div className="integrated-progress-details">
     <section id={PROGRESS_SECTION_IDS.LEARNING_ACTIVITY} className="card progress-anchor" aria-labelledby="integrated-activity-heading">
       <h2 id="integrated-activity-heading">{t("progress.recentActivity.title")}</h2>
-      <p>{t("progress.recentActivity.description")}</p>
       {recent.length ? <ol className="recent-activity-list">
         {recent.map((activity, index) => <li className="recent-activity-item" key={`${activity.type}-${activity.occurredAt}-${index}`}>
           <div><strong>{t(`progress.recentActivity.types.${activity.type}`, { defaultValue: activity.label })}</strong>

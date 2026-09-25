@@ -25,7 +25,7 @@ export default function DashboardResumeSurface({ guidance, inventory, labelRegis
           return <Button key={identity} className="dashboard-resume-choice" onClick={() => {
             if (target.type === 'resume_scenario') requestScenarioExactResume(target);
             if (target.type === 'resume_assessment') requestAssessmentExactResume(target);
-          }}><span>{label}</span>{sessionLabels.has(identity) && <span className="dashboard-resume-label">{t('dashboard.nextStep.savedPracticeNumber', { number: sessionLabels.get(identity) })}</span>}</Button>;
+          }}><span className="dashboard-action-label">{label}{sessionLabels.has(identity) && <span className="dashboard-resume-label">{t('dashboard.nextStep.savedPracticeNumber', { number: sessionLabels.get(identity) })}</span>}</span><span className="dashboard-action-arrow" aria-hidden="true">→</span></Button>;
         })}
       </div>
     </section>

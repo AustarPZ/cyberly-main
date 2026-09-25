@@ -108,6 +108,34 @@ describe("Dashboard integrated Progress", () => {
   });
 
 
+ test.each([true,false])('polish retains Assessment summary and recent activity; populated=%s',async(populated)=>{
+ getInitialAssessmentStatus.mockResolvedValue({ok:true,data:{status:'completed',result:{attempt:{percentage:75,measuredLevel:'developing'}}}});
+ getProgress.mockResolvedValue({ok:true,data:{learningPathProgress:{displayedPercent:38},assessmentTopicResults:['phishing_and_scams','password_and_account_security','privacy_and_personal_information','misinformation_and_deepfakes'].map(topicCode=>({topicCode,correctCount:1,totalCount:3,resultLevel:'developing'})),recentLearningActivity:populated?[{type:'scenario_completed',occurredAt:'2026-09-01T10:00:00Z',topicCode:'phishing'}]:[]}});
+ await renderDashboardWithSettledOverview();
+ const assessment=document.querySelector('#dashboard-initial-assessment');
+ expect(within(assessment).getByRole('heading',{name:'Initial assessment completed'})).toBeVisible();
+ expect(assessment).toHaveTextContent('75%');expect(assessment).toHaveTextContent(i18n.t('levels.developing'));
+ expect(within(assessment).getByRole('button',{name:'View assessment results'})).toBeVisible();
+ expect(assessment.querySelector('.assessment-results-grid')).toBeNull();expect(within(assessment).queryByText(/1\/3/)).toBeNull();
+ expect(assessment).toHaveTextContent('A starting baseline, not a permanent label.');
+ expect(assessment).not.toHaveTextContent('They help inform your current recommendations.');
+ expect(screen.getByText('Learning progress, not an ability score.')).toBeVisible();
+ expect(screen.queryByText('This shows progress through Cyberly. It does not measure cybersecurity ability, mastery or safety.')).toBeNull();
+ const recent=document.querySelector('#progress-learning-activity');
+ expect(recent).not.toHaveTextContent('Recent items use only activity Cyberly has recorded.');
+ expect(within(recent).getByText(i18n.t(populated?'progress.recentActivity.types.scenario_completed':'progress.recentActivity.empty'))).toBeVisible();
+ });
+ test.each(['guardrail','baseline','recent'])('polish concise %s copy',async(kind)=>{
+ getInitialAssessmentStatus.mockResolvedValue({ok:true,data:{status:'completed',result:{attempt:{percentage:75,measuredLevel:'developing'}}}});
+ await renderDashboardWithSettledOverview();
+ if(kind==='guardrail'){
+ expect(screen.getByText('Learning progress, not an ability score.')).toBeVisible();
+ expect(screen.queryByText('This shows progress through Cyberly. It does not measure cybersecurity ability, mastery or safety.')).toBeNull();
+ }else if(kind==='baseline'){
+ expect(screen.getByText('A starting baseline, not a permanent label.')).toBeVisible();
+ expect(screen.queryByText('These results are a starting baseline, not a permanent measure of ability. They help inform your current recommendations.')).toBeNull();
+ }else expect(document.querySelector('#progress-learning-activity')).not.toHaveTextContent('Recent items use only activity Cyberly has recorded.');
+ });
  test.each([0,37])('same confirmed %s in shortcut and detail with one owner',async(percent)=>{
  getProgress.mockResolvedValue({ok:true,data:{learningPathProgress:{displayedPercent:percent}}});await renderDashboardWithSettledOverview();
  expect(within(screen.getByRole('button',{name:/My Progress/})).getByText(percent+'%')).toBeVisible();
@@ -116,7 +144,7 @@ describe("Dashboard integrated Progress", () => {
  test('full composition integrates details before exploration and explicit chat disclosure',async()=>{
  await renderDashboardWithSettledOverview();expect(screen.getByRole('heading',{level:1})).toHaveTextContent('A little practice. A stronger instinct.');
  const detail=document.querySelector('#dashboard-measured-progress');expect(detail.compareDocumentPosition(document.querySelector('#dashboard-quick-actions')) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
- expect(detail).toHaveTextContent('It does not measure cybersecurity ability, mastery or safety.');
+ expect(detail).toHaveTextContent('Learning progress, not an ability score.');
  expect(detail.contains(document.querySelector('#dashboard-initial-assessment'))).toBe(true);expect(detail.contains(document.querySelector('#progress-learning-activity'))).toBe(true);
  expect(document.querySelector('#dashboard-cyberguard-ai').tagName).toBe('DETAILS');expect(document.querySelector('#dashboard-cyberguard-ai')).not.toHaveAttribute('open');
  expect(screen.queryByRole('complementary',{name:i18n.t('dashboard.sectionNav.ariaLabel')})).not.toBeInTheDocument();

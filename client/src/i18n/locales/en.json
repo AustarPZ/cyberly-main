@@ -269,7 +269,7 @@
   },
   "dashboard": {
     "astra": {
-      "progressDisclaimer": "This shows progress through Cyberly. It does not measure cybersecurity ability, mastery or safety.",
+      "progressDisclaimer": "Learning progress, not an ability score.",
       "eyebrow": "DASHBOARD",
       "heading": "A little practice. A stronger instinct.",
       "myProgress": "My Progress",
@@ -317,9 +317,9 @@
     "resources": "Resources",
     "continueLearning": "Continue learning",
     "startAssessment": "Start assessment",
-    "resumeAssessment": "Resume assessment",
+    "resumeAssessment": "Continue assessment",
     "startScenario": "Start scenario",
-    "resumeScenario": "Resume scenario",
+    "resumeScenario": "Continue scenario",
     "noRecommendationYet": "No active recommendation yet.",
     "recommendedNextStep": "Recommended next step",
     "measuredProgress": "Learning activity",
@@ -353,7 +353,7 @@
       "inProgress": "Initial assessment in progress",
       "pending": "Initial assessment pending",
       "checking": "Checking assessment status...",
-      "completedDescription": "These results are a starting baseline, not a permanent measure of ability. They help inform your current recommendations.",
+      "completedDescription": "A starting baseline, not a permanent label.",
       "resumeDescription": "Your saved answers are kept. Continue the assessment when you’re ready.",
       "pendingDescription": "Your starting baseline is not recorded yet. Complete the assessment when you’re ready to help Cyberly make topic recommendations more specific.",
       "viewResults": "View assessment results",
@@ -394,12 +394,13 @@
       "empty": "Complete the initial assessment to start recording your learning activity."
     },
     "recommendation": {
+      "openRecommendation": "Open recommendation",
       "title": "Recommended next step",
       "loading": "Checking recommendation...",
       "initialAssessment": "Initial assessment",
       "practiceScenario": "View recommended scenario",
-      "readResource": "Read resource",
-      "startAssessment": "Start assessment",
+      "readResource": "Read recommended resource",
+      "startAssessment": "View assessment",
       "empty": "No active recommendation yet."
     },
     "scenarios": {

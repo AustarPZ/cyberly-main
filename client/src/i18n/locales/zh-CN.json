@@ -269,7 +269,7 @@
   },
   "dashboard": {
     "astra": {
-      "progressDisclaimer": "这里显示你在 Cyberly 的学习进展，不代表网络安全能力、掌握程度或安全保障。",
+      "progressDisclaimer": "这是学习进度，不是能力评分。",
       "eyebrow": "学习面板",
       "heading": "一点练习，更有把握。",
       "myProgress": "我的学习进展",
@@ -317,7 +317,7 @@
     "resources": "资源",
     "continueLearning": "继续学习",
     "startAssessment": "开始测评",
-    "resumeAssessment": "继续测评",
+    "resumeAssessment": "继续评估",
     "startScenario": "开始情境",
     "resumeScenario": "继续情境",
     "noRecommendationYet": "目前还没有推荐。",
@@ -353,7 +353,7 @@
       "inProgress": "初始测评进行中",
       "pending": "初始测评尚未完成",
       "checking": "正在检查测评状态...",
-      "completedDescription": "这些结果只是起始基线，并非对能力的永久评定。它们会帮助 Cyberly 提供当前建议。",
+      "completedDescription": "这是起点评估，不是永久标签。",
       "resumeDescription": "你已保存的答案会保留。准备好后可继续测评。",
       "pendingDescription": "你的起始基线尚未记录。准备好后完成测评，可帮助 Cyberly 提供更具体的主题建议。",
       "viewResults": "查看测评结果",
@@ -394,12 +394,13 @@
       "empty": "完成初始测评后即可开始记录学习活动。"
     },
     "recommendation": {
+      "openRecommendation": "打开推荐",
       "title": "建议的下一步",
       "loading": "正在检查建议...",
       "initialAssessment": "初始测评",
       "practiceScenario": "查看推荐情境",
-      "readResource": "阅读资源",
-      "startAssessment": "开始测评",
+      "readResource": "阅读推荐资源",
+      "startAssessment": "查看评估",
       "empty": "目前没有有效建议。"
     },
     "scenarios": {

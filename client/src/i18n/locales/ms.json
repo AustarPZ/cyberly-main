@@ -269,7 +269,7 @@
   },
   "dashboard": {
     "astra": {
-      "progressDisclaimer": "Ini menunjukkan kemajuan melalui Cyberly. Ia bukan ukuran kebolehan, penguasaan atau keselamatan siber.",
+      "progressDisclaimer": "Kemajuan pembelajaran, bukan skor keupayaan.",
       "eyebrow": "PAPAN PEMUKA",
       "heading": "Latihan kecil. Pertimbangan lebih yakin.",
       "myProgress": "Kemajuan Saya",
@@ -317,9 +317,9 @@
     "resources": "Sumber",
     "continueLearning": "Terus belajar",
     "startAssessment": "Mulakan penilaian",
-    "resumeAssessment": "Sambung penilaian",
+    "resumeAssessment": "Teruskan penilaian",
     "startScenario": "Mulakan senario",
-    "resumeScenario": "Sambung senario",
+    "resumeScenario": "Teruskan senario",
     "noRecommendationYet": "Belum ada cadangan aktif.",
     "recommendedNextStep": "Langkah seterusnya yang dicadangkan",
     "measuredProgress": "Aktiviti pembelajaran",
@@ -353,7 +353,7 @@
       "inProgress": "Penilaian awal sedang dijalankan",
       "pending": "Penilaian awal belum dilakukan",
       "checking": "Sedang menyemak status penilaian...",
-      "completedDescription": "Keputusan ini ialah asas permulaan, bukan ukuran kekal kebolehan anda. Keputusan ini membantu memaklumkan cadangan semasa anda.",
+      "completedDescription": "Titik permulaan, bukan label kekal.",
       "resumeDescription": "Jawapan yang telah disimpan akan dikekalkan. Sambung penilaian apabila anda bersedia.",
       "pendingDescription": "Asas permulaan anda belum direkodkan. Lengkapkan penilaian apabila anda bersedia untuk membantu Cyberly memberikan cadangan topik yang lebih khusus.",
       "viewResults": "Lihat keputusan penilaian",
@@ -394,12 +394,13 @@
       "empty": "Lengkapkan penilaian awal untuk mula merekodkan aktiviti pembelajaran anda."
     },
     "recommendation": {
+      "openRecommendation": "Buka cadangan",
       "title": "Langkah seterusnya yang disyorkan",
       "loading": "Sedang menyemak cadangan...",
       "initialAssessment": "Penilaian awal",
       "practiceScenario": "Lihat senario yang dicadangkan",
-      "readResource": "Baca sumber",
-      "startAssessment": "Mulakan penilaian",
+      "readResource": "Baca sumber yang disyorkan",
+      "startAssessment": "Lihat penilaian",
       "empty": "Belum ada cadangan aktif."
     },
     "scenarios": {

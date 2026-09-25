@@ -102,10 +102,11 @@ describe("Integrated Progress foundation", () => {
     expect(markRecommendationCompleted).not.toHaveBeenCalled();
     expect(markRecommendationViewed).not.toHaveBeenCalled();
   });
-  test("retains optional Assessment evidence once",async()=>{
+  test("retains one optional Assessment summary anchor without topic cards",async()=>{
     render(<App />);
     await waitFor(()=>expect(document.querySelectorAll('#progress-assessment-results')).toHaveLength(1));
-    expect(document.querySelectorAll('.assessment-results-grid')).toHaveLength(1);
+    expect(document.querySelectorAll('.assessment-results-grid')).toHaveLength(0);
+    expect(document.querySelector('#dashboard-initial-assessment').contains(document.querySelector('#progress-assessment-results'))).toBe(true);
   });
   test("keeps existing badge indicators in expandable secondary information",async()=>{
     render(<App />);
