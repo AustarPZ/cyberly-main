@@ -10,7 +10,9 @@
 .dashboard-next-step-body { margin-top: 1.5rem; }
 .dashboard-next-step-reason { margin: 0 0 1.5rem; max-width: 58ch; line-height: 1.65; color: var(--text-secondary); }
 .dashboard-resume-choices { display: grid; grid-template-columns: repeat(auto-fit,minmax(min(100%,18rem),1fr)); gap: 0.75rem; }
-.dashboard-next-step .dashboard-resume-choice { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 1rem; padding: 1rem 1.25rem; min-height: 72px; text-align: left; background: var(--color-brand-primary-hover); color: var(--text-on-brand); border: 1px solid var(--color-brand-primary-hover); white-space: normal; }
+.dashboard-next-step .dashboard-resume-choice { display: grid; grid-template-columns: minmax(0, 1fr) auto; align-items: center; gap: 1rem; padding: 1rem 1.25rem; min-height: 72px; text-align: left; background: var(--surface-raised); color: var(--color-brand-primary-hover); border: 1px solid var(--color-brand-border); white-space: normal; }
+.dashboard-next-step .dashboard-resume-choice:hover { background: var(--color-brand-soft); border-color: var(--color-brand-primary-hover); }
+.dashboard-next-step .dashboard-resume-choice:active { background: var(--color-brand-border); border-color: var(--color-brand-primary-hover); }
 .dashboard-resume-label { font-size: 0.8rem; font-weight: 400; color: inherit; }
 .dashboard-next-step .dashboard-action-label { display: grid; gap: 0.4rem; min-width: 0; text-align: left; }
 .dashboard-next-step .dashboard-action-arrow { flex-shrink: 0; font-size: 1.35rem; line-height: 1; }
@@ -101,7 +103,7 @@
 }
 /* FULL1: approved Astra composition, scoped to the Dashboard only. */
 .dashboard-astra { background: var(--surface-page, #f6f8f1); color: var(--text-primary); }
-.dashboard-astra .dashboard-shell { max-width: 1240px; display: grid; padding: 2.5rem 2rem 6rem; gap: 2.5rem; }
+.dashboard-astra .dashboard-shell { max-width: 1240px; display: grid; padding: 2.5rem 2rem 3rem; gap: 2.5rem; }
 .dashboard-astra-header p { margin: 0 0 0.8rem; font-size: 0.75rem; font-weight: 700; letter-spacing: 0.12em; color: var(--color-brand-primary-hover); }
 .dashboard-astra-header h1 { margin: 0; font-size: clamp(1.9rem, 3.5vw, 2.8rem); line-height: 1.2; letter-spacing: -0.04em; color: var(--color-brand-primary-hover); }
 .dashboard-top-composition { display: grid; grid-template-columns: minmax(0, 1.8fr) minmax(240px, 1fr); gap: 2rem; align-items: stretch; }
@@ -157,9 +159,15 @@
 .dashboard-chat-disclosure { margin-top: 1.5rem; border-top: 1px solid var(--border-default); padding-block: 0.75rem; }
 .dashboard-chat-disclosure[open] > .chat-window { margin-top: 1rem; }
 .dashboard-utilities { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.75rem; }
+/* Dashboard-only lane for the fixed assistant; shared mobile footer clearance is retained. */
+@media (min-width: 601px) {
+  .cy-app-shell:has(.dashboard-astra) > footer.cy-app-footer {
+    padding-inline-end: max(6rem, env(safe-area-inset-right));
+  }
+}
 .dashboard-astra .progress-anchor { scroll-margin-top: calc(var(--nav-h) + 1.5rem); }
 @media (max-width: 68rem) { .dashboard-astra .dashboard-next-step { grid-template-columns: 1fr; } .dashboard-action-visual { min-height: 130px; } .dashboard-visual-paper { max-width: 210px; padding: 0.75rem; } .dashboard-visual-symbol { display: inline; margin-right: 0.75rem; } .dashboard-visual-lines { margin-top: 0.5rem; } .dashboard-progress-layout { grid-template-columns: 1fr 1fr; } .dashboard-progress-meter { grid-column: 1 / -1; } }
-@media (max-width: 48rem) { .dashboard-astra .dashboard-shell { padding: 1.75rem 1.25rem 6rem; gap: 2rem; } .dashboard-top-composition { grid-template-columns: 1fr; gap: 1.5rem; } .dashboard-progress-layout, .dashboard-explore-paths { grid-template-columns: 1fr; } .dashboard-progress-layout > * + * { border-top: 1px solid var(--border-default); padding-top: 1rem !important; } .dashboard-action-visual { min-height: 110px; } .dashboard-astra .dashboard-next-step { padding: 1.25rem; } }
+@media (max-width: 48rem) { .dashboard-astra .dashboard-shell { padding: 1.75rem 1.25rem 4rem; gap: 2rem; } .dashboard-top-composition { grid-template-columns: 1fr; gap: 1.5rem; } .dashboard-progress-layout, .dashboard-explore-paths { grid-template-columns: 1fr; } .dashboard-progress-layout > * + * { border-top: 1px solid var(--border-default); padding-top: 1rem !important; } .dashboard-action-visual { min-height: 110px; } .dashboard-astra .dashboard-next-step { padding: 1.25rem; } }
 @media (prefers-reduced-motion: reduce) { .dashboard-astra *, .dashboard-astra *::before, .dashboard-astra *::after { animation: none !important; transition: none !important; scroll-behavior: auto !important; } }
 
 .dashboard-astra .dashboard-wellness .btn-ghost, .dashboard-astra .dashboard-explore .btn-ghost { border-color: transparent; background: transparent; padding-inline: 0; color: var(--color-brand-primary-hover); font-weight: 700; }

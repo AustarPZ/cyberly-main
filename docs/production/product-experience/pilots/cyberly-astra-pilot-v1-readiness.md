@@ -628,3 +628,25 @@ Ledger: 275 intercepted fixture/local-asset requests; mutation requests, network
 Evidence root: C:/Users/AsusT/.codex/visualizations/2026/09/24/01a0d487-d6fa-7ab3-9d0b-964e20805f29/PILOT-B01-FULL1-POLISH1/. Review ZIP: PILOT-B01-FULL1-POLISH1-review.zip. Includes relative full-page gallery, before/after PNGs, completed Assessment/three-language/keyboard captures, RED and verification logs, request ledger, exact source/diff, Git manifest and final source/build/PNG hashes. Previous FULL1/FIX1 evidence is preserved. Next step: Owner review of this bounded polish.
 
 COMMITS / PUSHES / REF MOVEMENTS / DEPLOYMENTS / DB-MIGRATION-RAG MUTATIONS / PROVIDER CALLS / SMTP / LIVE LEARNER MUTATIONS / DEPENDENCY INSTALLS = 0. PRODUCTION = NOT CERTIFIED.
+
+### FULL1-POLISH2 final Dashboard visual closeout (A+B+C) — 2026-09-25
+
+**PILOT-B01-FULL1-POLISH2_OWNER_VISUAL_REVIEW_READY**. Owner visual acceptance remains pending. **PRODUCTION = NOT CERTIFIED**.
+
+Precheck: develop / f92e5929673eb4f9dd6254f2fc380fd721cff9aa, clean worktree and empty index. Baseline client source and previous isolated build matched POLISH1 evidence hashes. Remote/staging state was not independently rechecked in this local-only task.
+
+A: Continue activity rows use raised white surfaces, dark green text, brand borders, mint hover/stronger border and light-brand active state. Family selector pills and Recommended primary CTA retain their treatment. Existing aria-hidden arrows, accessible names, equal prominence, exact targets, Saved practice labels, guards and explicit mutation timing remain unchanged. B: Dashboard shell bottom padding is 3rem (48px) on desktop/tablet and 4rem (64px) at <=48rem, reduced from 6rem (96px).
+
+C: Owner explicitly authorized a Dashboard-only footer right safe lane after pre-fix browser evidence showed Privacy Notice intersecting the fixed launcher at 1440/1024. dashboard.css uses .cy-app-shell:has(.dashboard-astra) > footer.cy-app-footer under min-width:601px to reserve 6rem inline-end. Shared AppFooter.jsx, navigation/shell.css, AppShell.jsx, links, launcher position/behavior/z-index and routes are unchanged. Shared mobile 5.5rem (88px) footer bottom clearance is retained.
+
+Repository delta: client/src/dashboard/dashboard.css; client/src/dashboard/DashboardFinalVisualPilot.test.jsx; this append only. All other tracked client source files match baseline hashes. No JSX, API, server, guidance, exact-resume, formula, locale, dependency or configuration changes.
+
+RED A+B: 2 expected failures / 19 passes; C: 1 expected failure / 21 passes. Actual pre-fix browser records show equal dark selected/row fills, 96px gap and Privacy Notice obstruction. Initial A+B verification was interrupted during full-client when C was approved; those partial logs are preserved separately and excluded from final counts. Fresh final A+B+C: focused 5 suites / 96 tests; targeted 13 / 138; regression 9 / 279; full client 112 / 1144, all PASS, zero skipped. Locale verification, process-only https://pilot.invalid build and diff check PASS. The isolated evidence build must not be deployed. Existing console warnings are preserved in logs.
+
+Final visual evidence: 36 fresh full-page PNGs plus 8 bottom viewport supplements, covering EN 1440/1024/768/601/390/320, MS/ZH-CN 390, Continue/Recommended, keyboard focus, duplicate/long titles, completed/empty activity and three-language 390/320 loading/error. All 108 FIX1 text/reading-lane samples pass. Eight bottom checks verify zero text/link rectangle intersection with launcher, visible About/Privacy links, hit testing and trial-click actionability; no horizontal overflow. Actual footer gap is 48px or 64px. Hover changes remain light-brand. Ten AFTER images manually inspected. Forty original PNGs remain explicitly PRE_POLISH2; CSS-injected development probes are separately labelled and are not final evidence.
+
+Ledger: 319 intercepted fixture/local-asset requests; POST/PUT/PATCH/DELETE, network continuation, live backend/provider calls = 0. No learner state, DB/migration, RAG or SMTP mutations. This is Chromium fixture evidence; native devices, screen readers, native zoom and authenticated staging remain unverified. Synthetic activity/recommendation content is English across UI locales. External fonts are blocked; repository fallbacks used. Launcher may overlap decorative illustration/background; sampled controls/text remain clear. This does not certify every content/scroll combination.
+
+Evidence root: C:/Users/AsusT/.codex/visualizations/2026/09/24/01a0d487-d6fa-7ab3-9d0b-964e20805f29/PILOT-B01-FULL1-POLISH2/. PILOT-B01-FULL1-POLISH2-review.zip contains relative HTML gallery, real PNGs, complete report, RED/GREEN logs, request ledgers, source/diff, build/source/PNG hashes and final Git status. Prior evidence is preserved. Next step: Owner visual review of A+B+C only.
+
+COMMITS / PUSHES / REF MOVEMENTS / DEPLOYMENTS / DB MUTATIONS / PROVIDER CALLS = 0. PRODUCTION = NOT CERTIFIED.

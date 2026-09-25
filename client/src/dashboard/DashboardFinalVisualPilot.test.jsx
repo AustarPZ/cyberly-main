@@ -332,6 +332,43 @@ describe("Dashboard final visual migration", () => {
     expect(createChatConversation).not.toHaveBeenCalled();
   });
 
+  test("Continue rows use secondary surfaces while selectors and recommendations retain primary styling", () => {
+    const css = fs.readFileSync(path.join(__dirname, "dashboard.css"), "utf8");
+    const row = css.match(/\.dashboard-next-step \.dashboard-resume-choice\s*\{([^}]+)\}/)[1];
+    expect(row).toMatch(/background:\s*var\(--surface-raised\)/);
+    expect(row).toMatch(/color:\s*var\(--color-brand-primary-hover\)/);
+    expect(css).toMatch(/\.dashboard-resume-choice:hover\s*\{[^}]*background:\s*var\(--color-brand-soft\)/);
+    expect(css).toMatch(/\.dashboard-resume-choice:active\s*\{[^}]*background:\s*var\(--color-brand-border\)/);
+    expect(css).toMatch(/\[aria-pressed="true"\][^{]*\.dashboard-next-step \.cy-button-primary\s*\{[^}]*background:\s*var\(--color-brand-primary-hover\)/);
+  });
+
+  test("Astra bottom breathing room stays within three to four rem at all declared breakpoints", () => {
+    const css = fs.readFileSync(path.join(__dirname, "dashboard.css"), "utf8");
+    const shells = [...css.matchAll(/\.dashboard-astra \.dashboard-shell\s*\{([^}]+)\}/g)];
+    expect(shells.length).toBeGreaterThan(0);
+    for (const [, body] of shells) {
+      const padding = body.match(/padding:\s*([^;]+)/)[1].trim().split(/\s+/);
+      const bottom = padding[2] || padding[0];
+      expect(bottom).toMatch(/rem$/);
+      expect(parseFloat(bottom)).toBeGreaterThanOrEqual(3);
+      expect(parseFloat(bottom)).toBeLessThanOrEqual(4);
+    }
+  });
+
+  test("footer safe lane requires Dashboard context and preserves the shared mobile baseline", () => {
+    const css = fs.readFileSync(path.join(__dirname, "dashboard.css"), "utf8");
+    expect(css).toMatch(/@media\s*\(min-width:\s*601px\)\s*\{\s*\.cy-app-shell:has\(\.dashboard-astra\)\s*>\s*footer\.cy-app-footer\s*\{\s*padding-inline-end:\s*max\(6rem,\s*env\(safe-area-inset-right\)\);/);
+  });
+
+  test("the single shared footer follows and remains outside Dashboard", async () => {
+    const { container } = render(<App />);
+    await screen.findByRole("heading", { level: 1 });
+    const footer = screen.getByRole("contentinfo");
+    const dashboard = container.querySelector(".dashboard-astra");
+    expect(dashboard.contains(footer)).toBe(false);
+    expect(dashboard.compareDocumentPosition(footer) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+  });
+
   test("uses the defined raised shadow token for Quick Action hover elevation", () => {
     const css = fs.readFileSync(path.join(__dirname, "dashboard.css"), "utf8");
 
