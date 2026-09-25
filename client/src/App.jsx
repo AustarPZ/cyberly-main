@@ -7280,6 +7280,7 @@ function ScenariosPage() {
   const [introRetry, setIntroRetry] = useState(0);
   const scenarioLocale = normalizeLocale(activeI18n.language);
   const [filters, setFilters] = useState({ topicCode: "", difficulty: "" });
+  const [libraryRetry, setLibraryRetry] = useState(0);
   const [library, setLibrary] = useState({ loading: true, scenarios: [], recommended: [] });
   const [view, setView] = useState({ mode: "library" });
   const viewRef = useRef(view);
@@ -7426,6 +7427,7 @@ function ScenariosPage() {
       completionRefresh.locale === scenarioLocale &&
       completionRefresh.topicCode === filters.topicCode &&
       completionRefresh.difficulty === filters.difficulty) return () => { active = false; };
+    setLibrary(current => ({ ...current, loading: true, error: null }));
     Promise.all([
       dbGetScenarios({ topicCode: filters.topicCode, difficulty: filters.difficulty }, scenarioLocale),
       dbGetRecommendedScenarios(scenarioLocale),
@@ -7439,7 +7441,7 @@ function ScenariosPage() {
       });
     });
     return () => { active = false; };
-  }, [user, filters.topicCode, filters.difficulty, scenarioLocale, nestedIntro.nested, exactIsolated]);
+  }, [user, filters.topicCode, filters.difficulty, scenarioLocale, nestedIntro.nested, exactIsolated, libraryRetry]);
 
   useEffect(() => {
     if (!user || exactIsolated) return undefined;
@@ -7784,6 +7786,9 @@ function ScenariosPage() {
         <div className="scenario-library-toolbar">{filterBar}</div>
         {library.loading ? (
           <PageState title={t("scenarios.library.loadingTitle")} message={t("scenarios.library.loading")} />
+        ) : library.error ? (
+          <PageState type="error" title={t("scenarios.library.errorTitle")} message={t("scenarios.library.errorDescription")}
+            actionLabel={t("scenarios.library.retry")} onAction={() => setLibraryRetry(value => value + 1)} />
         ) : library.scenarios.length === 0 ? (
           <PageState type="empty" title={t("scenarios.library.empty")} message={t("scenarios.library.emptyDescription")} />
         ) : (
@@ -7820,21 +7825,21 @@ function ScenariosPage() {
                     <Badge>{t("scenarios.card.minutes", { count: scenario.estimatedMinutes })}</Badge>
                     <Badge>{t("scenarios.card.decisions", { count: scenario.totalSteps })}</Badge>
                   </div>
-                  {latest?.status && (
-                    <div className="scenario-card-status">
-                      <Badge tone={latest.status === "completed" ? "success" : "warning"}>
-                        {latest.status === "completed" ? t("scenarios.result.completed") : t("scenarios.card.resume")}
-                      </Badge>
-                    </div>
-                  )}
+                  <div className="scenario-card-status">
+                    <Badge tone={latest?.status === "completed" ? "success" : latest?.status === "in_progress" ? "warning" : undefined}>
+                      {latest?.status === "completed" ? t("scenarios.result.completed") : latest?.status === "in_progress" ? t("scenarios.card.inProgress") : t("scenarios.card.available")}
+                    </Badge>
+                  </div>
                   <div className="scenario-card-actions">
-                    {latest?.status === "in_progress" ? (
-                      <Button variant="primary" onClick={() => openAttempt(latest.id)}>{t("scenarios.card.resume")}</Button>
+                    {latest?.status === "completed" ? (
+                      <>
+                        <Button variant="primary" onClick={() => openResult(latest.id)}>{t("scenarios.card.viewResult")}<span aria-hidden="true"> →</span></Button>
+                        <Button onClick={() => openIntro(scenario.slug)}>{t("scenarios.card.start")}</Button>
+                      </>
+                    ) : latest?.status === "in_progress" ? (
+                      <Button variant="primary" onClick={() => openAttempt(latest.id)}>{t("scenarios.card.resume")}<span aria-hidden="true"> →</span></Button>
                     ) : (
-                      <Button variant="primary" onClick={() => openIntro(scenario.slug)}>{t("scenarios.card.start")}</Button>
-                    )}
-                    {latest?.status === "completed" && (
-                      <Button onClick={() => openResult(latest.id)}>{t("scenarios.card.viewResult")}</Button>
+                      <Button variant="primary" onClick={() => openIntro(scenario.slug)}>{t("scenarios.card.start")}<span aria-hidden="true"> →</span></Button>
                     )}
                   </div>
                 </Surface>
@@ -7987,7 +7992,7 @@ function ScenariosPage() {
   }
   return (
     <div className={`scenario-page scenario-page-${view.mode}`} ref={exactFocusRef} tabIndex={exactResume.mode === "active" ? -1 : undefined}>
-      {view.mode === "library" && renderScenarioHeader(t("scenarios.library.title"), t("scenarios.library.description"), { visual: true })}
+      {view.mode === "library" && renderScenarioHeader(t("scenarios.library.title"), t("scenarios.library.description"), { compact: true })}
       {view.mode === "intro" && renderScenarioHeader(view.scenario.title, null, { visual: false })}
       {view.mode === "attempt" && renderScenarioHeader(view.currentStep?.promptText || t("scenarios.attempt.readyToComplete"), null, { compact: true })}
       {view.mode === "result" && renderScenarioHeader(view.scenario.title, t("scenarios.result.completed"), { visual: true })}
@@ -8002,10 +8007,7 @@ function ScenariosPage() {
               onAction={nestedIntro.slug ? () => setIntroRetry(value => value + 1) : undefined} />
           </>
         ) : view.mode === "library" ? (
-          <>
-            <PageBackButton />
-            {renderLibrary()}
-          </>
+          renderLibrary()
         ) : view.mode === "attempt" ? (
           <>
             <Button variant="quiet" onClick={exitActiveScenario}>{t("scenarios.attempt.exit")}</Button>

@@ -605,6 +605,9 @@
       "recommended": "Recommended",
       "recommendedNext": "Recommended next",
       "all": "All scenarios",
+      "errorTitle": "Unable to load scenarios",
+      "errorDescription": "Your filters are unchanged. Try loading the library again.",
+      "retry": "Try again",
       "loadingTitle": "Loading scenarios",
       "loading": "Loading scenarios...",
       "empty": "No scenarios found",
@@ -622,12 +625,14 @@
       "allDifficulties": "All difficulties"
     },
     "card": {
+      "available": "Available",
+      "inProgress": "In progress",
       "estimatedTime": "Estimated time",
       "minutes": "{{count}} min",
       "decisions": "{{count}} decisions",
-      "start": "Start scenario",
-      "resume": "Resume scenario",
-      "viewResult": "View result"
+      "start": "View scenario",
+      "resume": "Continue scenario",
+      "viewResult": "Review result"
     },
     "intro": {
       "details": "Scenario details",

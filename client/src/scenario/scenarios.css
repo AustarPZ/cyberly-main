@@ -187,3 +187,34 @@
   .scenario-page *::before,
   .scenario-page *::after { animation: none; transition: none; scroll-behavior: auto; }
 }
+
+/* SC01-I01: Library composition only. Player, briefing and result stay unchanged. */
+.scenario-page-library { --scenario-library-safe-lane: 6rem; }
+.scenario-library-header { background: transparent; border-bottom: 0; }
+.scenario-library-header .scenario-page-header-layout {
+  padding-block: 1.5rem 1rem;
+  padding-inline-end: var(--scenario-library-safe-lane);
+}
+.scenario-library-header h1 { color: var(--color-brand-primary-hover); max-width: 30ch; }
+.scenario-library-header .page-identity { background: transparent; box-shadow: none; }
+.scenario-page-library .scenario-content {
+  padding-block: 0.5rem 2rem;
+  padding-inline-end: var(--scenario-library-safe-lane);
+}
+.scenario-page-library .scenario-library-section { padding-block: 0; }
+.scenario-page-library .scenario-library-filters { padding: 0 0 1rem; background: transparent; border: 0; border-bottom: 1px solid var(--border-default); border-radius: 0; }
+.scenario-page-library .scenario-library-card { box-shadow: none; }
+.scenario-page-library .scenario-library-card:hover,
+.scenario-page-library .scenario-library-card:focus-within { transform: none; }
+.scenario-page-library .scenario-library-card.recommended { background: var(--surface-raised); }
+.scenario-page-library .scenario-library-card.recommended::before { display: none; }
+.scenario-page-library .scenario-library-card.highlighted::before { display: block; }
+.scenario-page-library .scenario-card-actions { gap: 0.6rem; }
+.scenario-page-library .cy-button { white-space: normal; min-height: 44px; }
+.scenario-page-library .cy-button-primary { background: var(--color-brand-primary-hover); border-color: var(--color-brand-primary-hover); color: var(--text-on-brand); }
+.scenario-page-library .cy-button-primary:hover { background: var(--color-brand-strong); }
+.scenario-page-library .cy-button-secondary { color: var(--color-brand-primary-hover); border-color: var(--color-brand-border); background: var(--surface-raised); }
+.scenario-page-library .page-state-action { min-height: 44px; color: var(--color-brand-primary-hover); }
+.scenario-page-library :is(button, select):focus-visible { outline: 3px solid var(--color-brand-primary-hover); outline-offset: 3px; }
+/* Leave the fixed assistant and shared footer baseline intact. */
+.cy-app-shell:has(.scenario-page) > footer.cy-app-footer { padding-inline-end: max(6rem, env(safe-area-inset-right)); }

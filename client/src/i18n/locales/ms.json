@@ -605,6 +605,9 @@
       "recommended": "Dicadangkan",
       "recommendedNext": "Langkah dicadangkan",
       "all": "Semua senario",
+      "errorTitle": "Senario tidak dapat dimuatkan",
+      "errorDescription": "Penapis anda kekal sama. Cuba muatkan perpustakaan sekali lagi.",
+      "retry": "Cuba lagi",
       "loadingTitle": "Memuatkan senario",
       "loading": "Memuatkan senario...",
       "empty": "Tiada senario dijumpai",
@@ -622,12 +625,14 @@
       "allDifficulties": "Semua tahap"
     },
     "card": {
+      "available": "Tersedia",
+      "inProgress": "Sedang dijalankan",
       "estimatedTime": "Anggaran masa",
       "minutes": "{{count}} minit",
       "decisions": "{{count}} keputusan",
-      "start": "Mulakan senario",
-      "resume": "Sambung senario",
-      "viewResult": "Lihat keputusan"
+      "start": "Lihat senario",
+      "resume": "Teruskan senario",
+      "viewResult": "Semak keputusan"
     },
     "intro": {
       "details": "Butiran senario",

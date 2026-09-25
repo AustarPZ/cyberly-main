@@ -14,6 +14,15 @@ function remPaddingFor(selector) {
 }
 
 describe("Scenario Decision Trail responsive CSS", () => {
+  test("I01 limits green primary and compact orientation to Library, preserving other Scenario surfaces", () => {
+    expect(blockFor(".scenario-page-library .cy-button-primary")).toMatch(/background:\s*var\(--color-brand-primary-hover\)/);
+    expect(blockFor(".scenario-library-header")).toMatch(/background:\s*transparent/);
+    expect(blockFor(".scenario-page-library .scenario-content")).toMatch(/padding-block:/);
+    expect(blockFor(".scenario-page-library .scenario-library-section")).toMatch(/padding-block:\s*0/);
+    expect(blockFor(".scenario-page-library")).toMatch(/--scenario-library-safe-lane:/);
+    expect(css).toMatch(/\.cy-app-shell:has\(\.scenario-page\) > footer\.cy-app-footer/);
+  });
+
   test("keeps Scenario presentation scoped and touch-friendly", () => {
     expect(css).toMatch(/\.scenario-page\s*\{/);
     expect(css).toMatch(/\.scenario-library-grid\s*\{/);

@@ -128,6 +128,96 @@ describe("Scenario Decision Trail final visual migration", () => {
     listChatConversations.mockResolvedValue({ ok: true, data: { conversations: [] } });
   });
 
+  function expectNoLearningWrites() {
+    expect(startScenarioAttempt).not.toHaveBeenCalled();
+    expect(saveScenarioDecision).not.toHaveBeenCalled();
+    expect(completeScenarioAttempt).not.toHaveBeenCalled();
+  }
+
+  test("I01 separates failed catalogue recovery from successful empty and retries the active filters without mutations", async () => {
+    const { container } = render(<App />);
+    await screen.findByText(scenario.title);
+    const topic = screen.getByRole("combobox", { name: "Topic filter" });
+    const difficulty = screen.getByRole("combobox", { name: "Difficulty filter" });
+    await userEvent.selectOptions(topic, "phishing_and_scams");
+    listScenarios.mockResolvedValue({ ok: false, status: 503 });
+    await userEvent.selectOptions(difficulty, "beginner");
+    const alert = await screen.findByRole("alert");
+    expect(alert).toHaveTextContent("Unable to load scenarios");
+    expect(screen.queryByText("No scenarios found")).not.toBeInTheDocument();
+    expect(container.querySelectorAll(".scenario-card-actions button")).toHaveLength(0);
+    const before = listScenarios.mock.calls.length;
+    let resolveRetry;
+    listScenarios.mockImplementationOnce(() => new Promise(resolve => { resolveRetry = resolve; }));
+    await userEvent.click(within(alert).getByRole("button", { name: "Try again" }));
+    await waitFor(() => expect(listScenarios).toHaveBeenCalledTimes(before + 1));
+    expect(listScenarios).toHaveBeenLastCalledWith({ topicCode: "phishing_and_scams", difficulty: "beginner", locale: "en" });
+    expect(screen.getByText("Loading scenarios...")).toBeVisible();
+    expect(topic).toHaveValue("phishing_and_scams");
+    expect(difficulty).toHaveValue("beginner");
+    resolveRetry({ ok: true, data: { scenarios: [] } });
+    expect(await screen.findByText("No scenarios found")).toBeVisible();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+    expect(window.location.hash).toBe("#/scenarios");
+    expectNoLearningWrites();
+  });
+
+  test("I01 successful empty is not an error", async () => {
+    listScenarios.mockResolvedValue({ ok: true, data: { scenarios: [] } });
+    render(<App />);
+    expect(await screen.findByText("No scenarios found")).toBeVisible();
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Try again" })).not.toBeInTheDocument();
+    expectNoLearningWrites();
+  });
+
+  test("I01 View scenario browses Intro while global Dashboard navigation survives compact orientation", async () => {
+    const { container } = render(<App />);
+    const browse = await screen.findByRole("button", { name: "View scenario" });
+    expect(screen.queryByRole("button", { name: "Start scenario" })).not.toBeInTheDocument();
+    expect(container.querySelector(".scenario-library-header .scenario-decision-visual")).not.toBeInTheDocument();
+    expect(screen.getAllByRole("button", { name: "Dashboard", hidden: true }).length).toBeGreaterThan(0);
+    browse.focus();
+    expect(browse).toHaveFocus();
+    expectNoLearningWrites();
+    await userEvent.click(browse);
+    expect(await screen.findByRole("button", { name: "Start practice" })).toBeVisible();
+    expect(getScenarioBySlug).toHaveBeenCalledWith("suspicious-bank-message", { locale: "en" });
+    expectNoLearningWrites();
+  });
+
+  test("I01 Continue scenario opens the existing attempt only, without exposing its identity", async () => {
+    render(<App />);
+    const resume = await screen.findByRole("button", { name: "Continue scenario" });
+    expect(screen.queryByText(/501/)).not.toBeInTheDocument();
+    resume.focus();
+    expect(resume).toHaveFocus();
+    await userEvent.click(resume);
+    expect(await screen.findByText(currentStep.situationText)).toBeVisible();
+    expect(getScenarioAttempt).toHaveBeenCalledWith(501, { locale: "en" });
+    expectNoLearningWrites();
+  });
+
+  test("I01 completed card prioritizes canonical Review result and retains mutation-free Intro browsing", async () => {
+    listScenarios.mockResolvedValue({ ok: true, data: { scenarios: [{ ...scenario, latestAttempt: { id: 502, status: "completed" } }] } });
+    getScenarioAttemptResult.mockResolvedValue({ ok: true, data: completedResult });
+    const { container } = render(<App />);
+    const review = await screen.findByRole("button", { name: "Review result" });
+    expect(review).toHaveClass("cy-button-primary");
+    expect(screen.getByRole("button", { name: "View scenario" })).toHaveClass("cy-button-secondary");
+    expect(container.querySelector(".scenario-card-actions").firstElementChild).toBe(review);
+    expect(screen.getByText("Recommended")).toBeVisible();
+    expect(screen.queryByText(/502/)).not.toBeInTheDocument();
+    await userEvent.click(review);
+    expect(await screen.findByText("75%")).toBeVisible();
+    expect(getScenarioAttemptResult).toHaveBeenCalledWith(502, { locale: "en" });
+    await userEvent.click(screen.getByRole("button", { name: i18n.t("scenarios.result.returnToLibrary") }));
+    await userEvent.click(await screen.findByRole("button", { name: "View scenario" }));
+    expect(await screen.findByRole("button", { name: "Start practice" })).toBeVisible();
+    expectNoLearningWrites();
+  });
+
   test("presents the Scenario library as one Decision Trail practice space without rendering mutations", async () => {
     const { container } = render(<App />);
     const heading = await screen.findByRole("heading", { level: 1, name: i18n.t("scenarios.library.title") });

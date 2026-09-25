@@ -605,6 +605,9 @@
       "recommended": "推荐",
       "recommendedNext": "推荐下一步",
       "all": "所有情境",
+      "errorTitle": "无法加载情境",
+      "errorDescription": "筛选条件已保留，请重试加载情境库。",
+      "retry": "重试",
       "loadingTitle": "正在加载情境",
       "loading": "正在加载情境...",
       "empty": "未找到情境",
@@ -622,10 +625,12 @@
       "allDifficulties": "所有难度"
     },
     "card": {
+      "available": "可开始",
+      "inProgress": "进行中",
       "estimatedTime": "预计时间",
       "minutes": "{{count}} 分钟",
       "decisions": "{{count}} 个决策",
-      "start": "开始情境",
+      "start": "查看情境",
       "resume": "继续情境",
       "viewResult": "查看结果"
     },

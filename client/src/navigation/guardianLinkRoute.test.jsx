@@ -89,7 +89,7 @@ async function renderGuardedScenario() {
   startScenarioAttempt.mockResolvedValue({ ok: true, data: { scenario, attempt: { id: 8601, status: "in_progress" }, currentStep: scenarioStep, locale: { requestedLocale: "en", resolvedLocale: "en", fallbackUsed: false } } });
   render(<App />);
   await screen.findByRole("heading", { level: 1, name: "Scenario Library" });
-  await userEvent.click(await screen.findByRole("button", { name: "Start scenario" }));
+  await userEvent.click(await screen.findByRole("button", { name: "View scenario" }));
   await userEvent.click(await screen.findByRole("button", { name: "Start practice" }));
   await screen.findByText(scenarioStep.promptText);
 }
