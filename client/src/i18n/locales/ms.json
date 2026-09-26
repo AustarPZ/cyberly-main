@@ -645,6 +645,8 @@
       "continueSavedAttempt": "Teruskan percubaan tersimpan"
     },
     "attempt": {
+      "situationLabel": "Situasi",
+      "decisionLabel": "Keputusan anda",
       "stepProgress": "Langkah {{current}} daripada {{total}}",
       "confirmChoice": "Sahkan pilihan",
       "savingDecision": "Menyimpan keputusan...",

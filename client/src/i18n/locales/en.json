@@ -645,6 +645,8 @@
       "continueSavedAttempt": "Continue saved attempt"
     },
     "attempt": {
+      "situationLabel": "Situation",
+      "decisionLabel": "Your decision",
       "stepProgress": "Step {{current}} of {{total}}",
       "confirmChoice": "Confirm choice",
       "savingDecision": "Saving decision...",

@@ -136,6 +136,144 @@ describe("Scenario Decision Trail final visual migration", () => {
     expect(completeScenarioAttempt).not.toHaveBeenCalled();
   }
 
+  async function openI03() {
+    const rendered = render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "Continue scenario" }));
+    await screen.findByText(currentStep.situationText);
+    return rendered;
+  }
+  const savedI03 = (classification = "safest", nextStep = null) => ({ ok: true, data: {
+    decision: { classification, feedback: "Canonical response from the saved decision.", safetyExplanation: "Canonical lesson from the saved decision." },
+    attempt: { id: 501, status: "in_progress" }, nextStep, readyToComplete: !nextStep,
+  } });
+
+  test("I03 keeps Scenario H1, task H2, distinct situation/decision zones and unchanged zero Step-1 fill", async () => {
+    const { container } = await openI03();
+    expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
+    expect(screen.getByRole("heading", { level: 1, name: resumedScenario.title })).toBeVisible();
+    expect(screen.getByRole("heading", { level: 2, name: currentStep.promptText }).closest(".scenario-decision-zone")).toBeInTheDocument();
+    expect(screen.getByText(currentStep.situationText).closest(".scenario-context-zone")).toBeInTheDocument();
+    expect(screen.getByText("Step 1 of 2")).toBeVisible();
+    expect(container.querySelector(".scenario-progress-value")).toHaveStyle({ width: "0%" });
+    expectNoLearningWrites();
+  });
+
+  test("I03 selection and keyboard focus are local, can change before Confirm, and Exit retains Cancel guard", async () => {
+    await openI03();
+    const confirm = screen.getByRole("button", { name: "Confirm choice" });
+    expect(confirm).toBeDisabled();
+    const a = screen.getByRole("button", { name: /A\. Reply/ });
+    const b = screen.getByRole("button", { name: /B\. Pause/ });
+    a.focus(); await userEvent.keyboard("{Enter}");
+    expect(a).toHaveAttribute("aria-pressed", "true");
+    await userEvent.click(b);
+    expect(a).toHaveAttribute("aria-pressed", "false");
+    expect(b).toHaveAttribute("aria-pressed", "true");
+    expect(confirm).toBeEnabled();
+    confirm.focus(); expectNoLearningWrites();
+    await userEvent.click(screen.getByRole("button", { name: "Exit scenario" }));
+    const dialog = await screen.findByRole("dialog");
+    await userEvent.click(within(dialog).getByRole("button", { name: i18n.t("scenarios.continueScenario") }));
+    expect(b).toHaveAttribute("aria-pressed", "true");
+    expectNoLearningWrites();
+  });
+
+  test("I03 pending Confirm retains selection, freezes choice buttons and prevents duplicate PUT", async () => {
+    let finish; saveScenarioDecision.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    await openI03();
+    const a = screen.getByRole("button", { name: /A\. Reply/ });
+    const b = screen.getByRole("button", { name: /B\. Pause/ });
+    await userEvent.click(b); await userEvent.click(screen.getByRole("button", { name: "Confirm choice" }));
+    expect(await screen.findByRole("button", { name: "Saving decision..." })).toBeDisabled();
+    expect(b).toHaveAttribute("aria-pressed", "true");
+    expect(a).toBeDisabled(); expect(b).toBeDisabled();
+    await userEvent.click(a); await userEvent.click(screen.getByRole("button", { name: "Saving decision..." }));
+    expect(saveScenarioDecision).toHaveBeenCalledTimes(1);
+    expect(saveScenarioDecision).toHaveBeenCalledWith(501, { stepId: 301, selectedOptionKey: "B" }, { locale: "en" });
+    expect(screen.queryByText("Decision saved")).not.toBeInTheDocument();
+    await act(async () => finish(savedI03()));
+    expect(await screen.findByText("Decision saved")).toBeVisible();
+    expect(startScenarioAttempt).not.toHaveBeenCalled(); expect(completeScenarioAttempt).not.toHaveBeenCalled();
+  });
+
+  test("I03 failed save retains editable selection and retry publishes canonical feedback only after success", async () => {
+    saveScenarioDecision.mockResolvedValueOnce({ ok: false, status: 503 }).mockResolvedValueOnce(savedI03());
+    const { container } = await openI03();
+    const b = screen.getByRole("button", { name: /B\. Pause/ });
+    await userEvent.click(b); await userEvent.click(screen.getByRole("button", { name: "Confirm choice" }));
+    expect(await screen.findByRole("alert")).toBeVisible();
+    expect(b).toHaveAttribute("aria-pressed", "true"); expect(b).toBeEnabled();
+    expect(screen.queryByText("Decision saved")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Next" })).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: "Complete scenario" })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: "Confirm choice" }));
+    const feedback = await screen.findByRole("status", { name: "Decision saved" });
+    expect(feedback).toHaveFocus();
+    expect(container.querySelector(".scenario-step-card")).not.toContainElement(feedback);
+    expect(screen.queryByRole("alert")).not.toBeInTheDocument();
+    expect(saveScenarioDecision).toHaveBeenCalledTimes(2);
+    expect(completeScenarioAttempt).not.toHaveBeenCalled();
+  });
+
+  test.each(["safest", "partial", "unsafe"])("I03 successful %s feedback is canonical, separate, announced and focused without extra writes", async classification => {
+    saveScenarioDecision.mockResolvedValueOnce(savedI03(classification));
+    const { container } = await openI03();
+    await userEvent.click(screen.getByRole("button", { name: /B\. Pause/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Confirm choice" }));
+    const feedback = await screen.findByRole("status", { name: "Decision saved" });
+    expect(feedback).toHaveAttribute("aria-live", "polite"); expect(feedback).toHaveAttribute("tabindex", "-1");
+    expect(feedback).toHaveFocus();
+    expect(within(feedback).getByText(i18n.t(`scenarios.attempt.outcomes.${classification}`))).toBeVisible();
+    expect(within(feedback).getByText("Canonical response from the saved decision.")).toBeVisible();
+    expect(within(feedback).getByText("Canonical lesson from the saved decision.")).toBeVisible();
+    const task = container.querySelector(".scenario-step-card");
+    expect(task).not.toContainElement(feedback);
+    expect(task.compareDocumentPosition(feedback) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    expect(screen.getByRole("button", { name: /B\. Pause/ })).toHaveAttribute("aria-pressed", "true");
+    for (const choice of container.querySelectorAll(".scenario-choice")) expect(choice).toBeDisabled();
+    expect(window.HTMLElement.prototype.scrollIntoView).toHaveBeenCalledWith({ behavior: "auto", block: "start" });
+    feedback.focus(); expect(saveScenarioDecision).toHaveBeenCalledTimes(1);
+    expect(startScenarioAttempt).not.toHaveBeenCalled(); expect(completeScenarioAttempt).not.toHaveBeenCalled();
+  });
+
+  test("I03 Next advances only to canonical nextStep and final Complete remains explicit and busy-safe", async () => {
+    const next = { ...currentStep, id: 302, stepOrder: 2, promptText: "Canonical second question" };
+    saveScenarioDecision.mockResolvedValueOnce(savedI03("partial", next)).mockResolvedValueOnce(savedI03("unsafe"));
+    let finishComplete; completeScenarioAttempt.mockImplementationOnce(() => new Promise(resolve => { finishComplete = resolve; }));
+    await openI03();
+    await userEvent.click(screen.getByRole("button", { name: /B\. Pause/ })); await userEvent.click(screen.getByRole("button", { name: "Confirm choice" }));
+    await screen.findByText("Decision saved");
+    expect(screen.queryByRole("button", { name: "Complete scenario" })).not.toBeInTheDocument();
+    getScenarioAttempt.mockResolvedValue({ ok: true, data: { ...attemptPayload, currentStep: next } });
+    await userEvent.click(screen.getByRole("button", { name: "Next" }));
+    expect(await screen.findByRole("heading", { level: 2, name: next.promptText })).toBeVisible();
+    expect(screen.queryByText("Decision saved")).not.toBeInTheDocument();
+    expect(saveScenarioDecision).toHaveBeenCalledTimes(1); expect(completeScenarioAttempt).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: /A\. Reply/ })); await userEvent.click(screen.getByRole("button", { name: "Confirm choice" }));
+    await screen.findByText("Decision saved"); expect(screen.queryByRole("button", { name: "Next" })).not.toBeInTheDocument();
+    expect(saveScenarioDecision).toHaveBeenLastCalledWith(501, { stepId: 302, selectedOptionKey: "A" }, { locale: "en" });
+    expect(completeScenarioAttempt).not.toHaveBeenCalled();
+    await userEvent.click(screen.getByRole("button", { name: "Complete scenario" }));
+    const completing = await screen.findByRole("button", { name: "Completing..." }); expect(completing).toBeDisabled();
+    await userEvent.click(completing); expect(completeScenarioAttempt).toHaveBeenCalledTimes(1);
+    await act(async () => finishComplete({ ok: true, data: completedResult }));
+    expect(await screen.findByText("75%")).toBeVisible();
+  });
+
+  test("I03 ready recovery has Scenario identity and explicit Complete without phantom task or feedback", async () => {
+    getScenarioAttempt.mockResolvedValue({ ok: true, data: { ...attemptPayload, currentStep: null, readyToComplete: true } });
+    const { container } = await openI03Ready();
+    expect(screen.getByRole("heading", { level: 1, name: resumedScenario.title })).toBeVisible();
+    expect(screen.getByRole("heading", { level: 2, name: "Ready to complete" })).toBeVisible();
+    expect(screen.getByRole("button", { name: "Complete scenario" })).toBeEnabled();
+    expect(container.querySelector(".scenario-choice")).not.toBeInTheDocument(); expect(container.querySelector(".scenario-feedback")).not.toBeInTheDocument();
+    expectNoLearningWrites();
+  });
+  async function openI03Ready() {
+    const result = render(<App />); await userEvent.click(await screen.findByRole("button", { name: "Continue scenario" }));
+    await screen.findByRole("button", { name: "Complete scenario" }); return result;
+  }
+
   test("POLISH1 Intro Back has a decorative direction cue without changing its name or GET-only destination", async () => {
     window.history.replaceState({}, "", `#/scenarios/${scenario.slug}`);
     render(<App />);
@@ -437,7 +575,8 @@ describe("Scenario Decision Trail final visual migration", () => {
     const { container } = render(<App />);
     await userEvent.click(await screen.findByRole("button", { name: i18n.t("scenarios.card.resume") }));
 
-    expect(await screen.findByRole("heading", { level: 1, name: currentStep.promptText })).toBeVisible();
+    expect(await screen.findByRole("heading", { level: 1, name: resumedScenario.title })).toBeVisible();
+    expect(screen.getByRole("heading", { level: 2, name: currentStep.promptText })).toBeVisible();
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(container.querySelector(".scenario-attempt-shell")).toBeInTheDocument();
     expect(screen.getByText(currentStep.situationText)).toBeVisible();

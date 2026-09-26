@@ -13,6 +13,12 @@ function ruleBody(source, selector, startAt = 0) {
 }
 
 describe("Scenario detail responsive layout", () => {
+  test("I03 attempt has a two-zone task and an independent full-width feedback layer", () => {
+    expect(ruleBody(scenarioStyles, ".scenario-page-attempt .scenario-step-card")).toMatch(/grid-template-columns:\s*minmax\(0,\s*0.9fr\) minmax\(0,\s*1.1fr\)/);
+    expect(ruleBody(scenarioStyles, ".scenario-page-attempt .scenario-feedback")).toMatch(/scroll-margin-top:\s*calc\(var\(--nav-h\) \+ 1rem\)/);
+    expect(ruleBody(scenarioStyles, ".scenario-page-attempt .scenario-choice:disabled")).toMatch(/opacity:\s*1/);
+  });
+
   test("POLISH1 mobile removes whole-page reserved lanes while retaining desktop protection", () => {
     const mobile = scenarioStyles.lastIndexOf("@media (max-width: 40rem)");
     expect(ruleBody(scenarioStyles, ".scenario-page-library", mobile)).toMatch(/--scenario-library-safe-lane:\s*0rem/);

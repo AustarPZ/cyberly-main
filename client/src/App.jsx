@@ -7385,6 +7385,26 @@ function ScenariosPage() {
   const [busy, setBusy] = useState(false);
   const [highlightedScenarioTarget, setHighlightedScenarioTarget] = useState(null);
   const scenarioIntroRef = useRef(null);
+  const scenarioFeedbackRef = useRef(null);
+  const feedbackRevealRef = useRef({ busy: false, stamp: null, feedback: null });
+  useEffect(() => {
+    // Presentation-only receipt: a save must begin and finish in the same identity.
+    // A replacement while busy invalidates the receipt rather than adopting it.
+    const stamp = JSON.stringify([user?.id, authScopeRevision, acceptedNavigationGeneration,
+      acceptedHash, view.mode, view.attempt?.id, view.currentStep?.id, scenarioLocale,
+      pendingScenarioResume?.targetRevision, exactResume.target?.targetRevision]);
+    const previous = feedbackRevealRef.current;
+    const receipt = busy && !previous.busy ? stamp : previous.stamp === stamp ? previous.stamp : null;
+    feedbackRevealRef.current = { busy, stamp: receipt, feedback: decisionFeedback };
+    if (!decisionFeedback || decisionFeedback === previous.feedback || busy || !user ||
+      view.mode !== "attempt" || !view.currentStep || pendingScenarioResume || receipt !== stamp) return;
+    const target = scenarioFeedbackRef.current;
+    if (!target?.isConnected) return;
+    target.focus({ preventScroll: true });
+    target.scrollIntoView({ behavior: "auto", block: "start" });
+  }, [decisionFeedback, busy, user?.id, authScopeRevision, acceptedNavigationGeneration,
+    acceptedHash, view.mode, view.attempt?.id, view.currentStep?.id, scenarioLocale,
+    pendingScenarioResume?.targetRevision, exactResume.target?.targetRevision]);
   const scenarioCardRefs = useRef(new Map());
   const lastScrolledHighlightRef = useRef("");
   const highlightedScenarioSlug = highlightedScenarioTarget?.scenarioSlug || highlightedScenarioTarget?.slug || null;
@@ -7884,10 +7904,13 @@ function ScenariosPage() {
     if (!step) {
       return (
         <Surface className="scenario-ready">
+          <h2>{t("scenarios.attempt.readyToComplete")}</h2>
           <p>{t("scenarios.attempt.readyToCompleteDescription")}</p>
+          {error && <div className="field-error" role="alert">{error}</div>}
           <div className="scenario-actions">
             <Button variant="primary" onClick={completeScenario} loading={busy} loadingLabel={t("scenarios.attempt.completing")}>{t("scenarios.attempt.complete")}</Button>
           </div>
+          <Button variant="quiet" className="scenario-attempt-exit" onClick={exitActiveScenario}>{t("scenarios.attempt.exit")}</Button>
         </Surface>
       );
     }
@@ -7900,24 +7923,34 @@ function ScenariosPage() {
           </div>
         </div>
         <Surface className="scenario-step-card">
-          <div className="scenario-situation-label">{view.scenario.title}</div>
-          <p className="scenario-situation">{step.situationText}</p>
+          <section className="scenario-context-zone" aria-labelledby="scenario-situation-heading">
+            <h2 id="scenario-situation-heading" className="scenario-task-label">{t("scenarios.attempt.situationLabel")}</h2>
+            <p className="scenario-situation">{step.situationText}</p>
+          </section>
+          <section className="scenario-decision-zone" aria-labelledby="scenario-decision-heading">
+          <div className="scenario-task-label">{t("scenarios.attempt.decisionLabel")}</div>
+          <h2 id="scenario-decision-heading">{step.promptText}</h2>
           <div className="scenario-choice-list">
             {step.options.map(option => (
-              <button key={option.key} type="button" className="scenario-choice" disabled={Boolean(decisionFeedback)} aria-pressed={selectedChoice === option.key} onClick={() => setSelectedChoice(option.key)}>
+              <button key={option.key} type="button" className="scenario-choice" disabled={busy || Boolean(decisionFeedback)} aria-pressed={selectedChoice === option.key} onClick={() => setSelectedChoice(option.key)}>
                 <span className="scenario-choice-key">{option.key}.</span>
                 <span>{option.text}</span>
                 <span className="scenario-choice-marker" aria-hidden="true">&#10003;</span>
               </button>
             ))}
           </div>
-          {!decisionFeedback ? (
+          {error && <div className="field-error" role="alert">{error}</div>}
+          {!decisionFeedback && (
             <div className="scenario-actions">
               <Button variant="primary" disabled={!selectedChoice} loading={busy} loadingLabel={t("scenarios.attempt.savingDecision")} onClick={submitDecision}>{t("scenarios.attempt.confirmChoice")}</Button>
             </div>
-          ) : (
-            <Surface variant="subdued" className="scenario-feedback">
-              <div className="scenario-feedback-title">{t("scenarios.attempt.decisionSaved")}</div>
+          )}
+          <Button variant="quiet" className="scenario-attempt-exit" onClick={exitActiveScenario}>{t("scenarios.attempt.exit")}</Button>
+          </section>
+        </Surface>
+          {decisionFeedback && (
+            <Surface variant="subdued" className="scenario-feedback" ref={scenarioFeedbackRef} tabIndex={-1} role="status" aria-live="polite" aria-labelledby="scenario-feedback-heading">
+              <h2 id="scenario-feedback-heading" className="scenario-feedback-title">{t("scenarios.attempt.decisionSaved")}</h2>
               {decisionClassification && (
                 <div className={`scenario-feedback-outcome is-${decisionClassification}`}>
                   <span>{t("scenarios.attempt.outcomeLabel")}</span>
@@ -7933,7 +7966,6 @@ function ScenariosPage() {
               </div>
             </Surface>
           )}
-        </Surface>
       </div>
     );
   }
@@ -7994,10 +8026,10 @@ function ScenariosPage() {
     <div className={`scenario-page scenario-page-${view.mode}`} ref={exactFocusRef} tabIndex={exactResume.mode === "active" ? -1 : undefined}>
       {view.mode === "library" && renderScenarioHeader(t("scenarios.library.title"), t("scenarios.library.description"), { compact: true })}
       {view.mode === "intro" && renderScenarioHeader(view.scenario.title, null, { visual: false })}
-      {view.mode === "attempt" && renderScenarioHeader(view.currentStep?.promptText || t("scenarios.attempt.readyToComplete"), null, { compact: true })}
+      {view.mode === "attempt" && renderScenarioHeader(view.scenario.title, null, { compact: true })}
       {view.mode === "result" && renderScenarioHeader(view.scenario.title, t("scenarios.result.completed"), { visual: true })}
       <PageContainer width="wide" className="scenario-content">
-        {error && <div className="field-error" role="alert" style={{ marginBottom: "1rem" }}>{error}</div>}
+        {error && view.mode !== "attempt" && <div className="field-error" role="alert" style={{ marginBottom: "1rem" }}>{error}</div>}
         {view.mode === "intro-loading" || view.mode === "intro-unavailable" ? (
           <>
             <Button variant="quiet" onClick={() => requestHashNavigation("#/scenarios")}>{t("scenarios.library.backToLibrary")}</Button>
@@ -8010,7 +8042,6 @@ function ScenariosPage() {
           renderLibrary()
         ) : view.mode === "attempt" ? (
           <>
-            <Button variant="quiet" onClick={exitActiveScenario}>{t("scenarios.attempt.exit")}</Button>
             {renderLocaleFallbackNotice(view.locale)}
             {renderAttempt()}
           </>

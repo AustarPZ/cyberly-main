@@ -703,3 +703,27 @@ Precheck: clean develop / ae597d75e9a408459204fcc1c9ec3a436290eb4d, matching loc
 RED: 5 expected failures; focused final 5 PASS; targeted 5 suites / 78 PASS; regression 3 / 19 PASS. Exactly one full-client: Test Suites: 112 passed, 112 total; Tests:       1170 passed, 1170 total; Time:        300.573 s, estimated 335 s. No timeout/retry/skip/assertion weakening. Historical runtime timing watch remains; no permanent fix claimed. Locale, isolated build, diff and fresh browser evidence PASS.
 
 Evidence: C:/Users/AsusT/.codex/visualizations/2026/09/24/01a0d487-d6fa-7ab3-9d0b-964e20805f29/PILOT-SC01-I02-POLISH1/REPORT.md; final package, contrast/geometry/request records and hash manifests alongside. BEFORE and CSS experiments explicitly separated from final build AFTER. No commit/push/deploy/DB/provider/ref movement. S3/S4-ready/S5 smoke only; no SC01-I03. PRODUCTION = NOT CERTIFIED.
+
+
+### PILOT-SC01-I03 — bounded S3/S4 candidate, frozen exact-resume contract blocker
+
+2026-09-26 — **PILOT-SC01-I03_SCOPE_ESCALATION_REQUIRED**. NOT OWNER_VISUAL_REVIEW_READY. **PRODUCTION = NOT CERTIFIED**.
+
+Precheck clean develop / 3957d6d4a6dd536db094f5268bf876968fb07b58, matching local origin/develop and origin/master, empty index. Local unfinished candidate recomposes Scenario H1 → progress → situation/task → independent confirmed feedback; adds presentation-only identity-bound focus/reveal refs, pending choice disabling, local mobile control/feedback clearance, and two UI labels in EN/MS/ZH. Submit/Next/Complete/Exit handlers unchanged; no new business state owner. New tests preserve local selection, explicit saves, failure retry, locking/canonical feedback, focus, final completion and identity boundaries.
+
+RED: 11 expected failures / 4 passes. First GREEN: 14 pass / 1 fail (exact-resume Ready). Source inspection establishes an existing frozen-contract incompatibility: guidance/scenarioContinuation.js requires record(currentStep), so it rejects null Ready as INCONSISTENT_ATTEMPT. Existing backend GET legitimately returns null after all decisions, retaining final currentStepOrder. Corrected the new Ready fixture to this actual shape; bounded diagnostic: active PASS, ready FAIL. No assertion weakened, no validator/backend/controller edit.
+
+The I03 request requires exact-resume Ready and explicitly says to STOP if a controller/state-owner change is needed. Stopped at this boundary. Targeted/regression/full-client/locale/fresh build/AFTER not run; full-client attempts = 0. BEFORE has 34 genuine baseline PNGs, labelled historical, not candidate visual verification. Existing tests/old evidence preserved. Need bounded authorization for validator + its direct contract tests before resuming I03; do not start I04.
+
+Report/proposal/hash manifest/BEFORE gallery: C:/Users/AsusT/.codex/visualizations/2026/09/24/01a0d487-d6fa-7ab3-9d0b-964e20805f29/PILOT-SC01-I03/REPORT.md; PILOT-SC01-I03-blocked-evidence.zip. This append preserves prior closure history. No commit/push/deploy/ref movement/DB/provider/dependencies/RAG operations. PRODUCTION = NOT CERTIFIED.
+
+
+### PILOT-SC01-I03 AMD1 — exact Ready convergence and final S3/S4 review candidate
+
+2026-09-26 — **PILOT-SC01-I03_OWNER_VISUAL_REVIEW_READY**. Owner visual acceptance remains pending. **PRODUCTION = NOT CERTIFIED**.
+
+AMD1 adds a strict null-currentStep Ready branch after unchanged identity/status checks. Positive safe total, final order, exactly N unique valid decision IDs/orders covering 1..N are required; readyToComplete is neither authority nor requirement. Original Active validation and outer rejection handling are unchanged. Direct RED 3 failures/73 passes → GREEN 76/76; focused 15/15; targeted 93/93; regression 41/41. Exactly one fresh full-client run: Test Suites: 112 passed, 112 total; Tests:       1217 passed, 1217 total; Time:        323.796 s, estimated 327 s. Locale, isolated pilot.invalid build and diff checks pass. Historical failures remain preserved; no timeout/retry/skip changes.
+
+I03 retains Scenario H1, situation/task zones, local unsaved selection, explicit Confirm PUT, locked canonical feedback, identity-bound status focus/reveal, existing Next/Complete/Exit owners and progress formula. Exact Ready render/focus is GET-only; completion remains explicit and duplicate-protected. S1/S2/S5 smoke included. 116 fresh AFTER PNGs across EN 1440/390/320 and MS/ZH 390; controls/error/feedback geometry and focus evidence attached. All browser requests fixture-intercepted; passive/live writes zero. English authored Scenario fallback follows existing locale authority. Ordinary prose/FAB global watch and historical test timing watch remain, not claimed fixed.
+
+Full report, hashes, ledger, gallery and self-contained review ZIP: C:/Users/AsusT/.codex/visualizations/2026/09/24/01a0d487-d6fa-7ab3-9d0b-964e20805f29/PILOT-SC01-I03/AMD1/REPORT.md. Eleven authorized modified paths; develop / 3957d6d4a6dd536db094f5268bf876968fb07b58, empty index. No commit/push/deploy/ref movement/backend/DB/migrations/provider/RAG/dependency changes. I04 not started. Prior blocker entry retained as history and resolved by explicit AMD1 authorization.

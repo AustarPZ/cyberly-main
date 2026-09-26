@@ -645,6 +645,8 @@
       "continueSavedAttempt": "继续已保存的尝试"
     },
     "attempt": {
+      "situationLabel": "情境",
+      "decisionLabel": "你的决定",
       "stepProgress": "第 {{current}} 步，共 {{total}} 步",
       "confirmChoice": "确认选择",
       "savingDecision": "正在保存决策...",

@@ -30,6 +30,23 @@ export function validateScenarioResumeResponse(target, response) {
   const { attempt, scenario, currentStep: step, decisions } = response;
   if (attempt?.id !== target.attemptId || scenario?.slug !== target.scenarioSlug) return 'IDENTITY_MISMATCH';
   if (attempt.status !== 'in_progress') return 'NOT_IN_PROGRESS';
+  if (step === null) {
+    if (!id(scenario.totalSteps) || attempt.currentStepOrder !== scenario.totalSteps
+      || !Array.isArray(decisions) || decisions.length !== scenario.totalSteps) return 'INCONSISTENT_ATTEMPT';
+    const readyIds = new Set();
+    const readyOrders = new Set();
+    for (const decision of decisions) {
+      if (!record(decision) || !id(decision.stepId) || !id(decision.stepOrder)
+        || typeof decision.selectedOptionKey !== 'string' || decision.selectedOptionKey.length < 1
+        || decision.selectedOptionKey.length > 10 || decision.selectedOptionKey !== decision.selectedOptionKey.trim()
+        || decision.stepOrder > scenario.totalSteps
+        || readyIds.has(decision.stepId) || readyOrders.has(decision.stepOrder)) return 'INCONSISTENT_ATTEMPT';
+      readyIds.add(decision.stepId);
+      readyOrders.add(decision.stepOrder);
+    }
+    // N distinct positive orders bounded by N cover exactly 1..N.
+    return null;
+  }
   if (!id(scenario.totalSteps) || !record(step) || !id(step.id) || !id(step.stepOrder)
     || step.stepOrder !== attempt.currentStepOrder || step.stepOrder > scenario.totalSteps
     || !Array.isArray(step.options) || !step.options.length

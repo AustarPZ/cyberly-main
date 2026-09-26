@@ -231,6 +231,49 @@ test.each([
   expect(screen.queryByRole('heading', { name: 'Scenario Library' })).not.toBeInTheDocument();
 });
 
+test.each([false, true])('I03 exact resume preserves identity in recomposed active/ready (ready=%s)', async ready => {
+  const value = payload();
+  if (ready) { value.currentStep = null; value.attempt.currentStepOrder = 2; value.decisions = [{ stepId: 11, stepOrder: 1, selectedOptionKey: 'A' }, { stepId: 12, stepOrder: 2, selectedOptionKey: 'A' }]; }
+  getScenarioAttempt.mockResolvedValue({ ok: true, data: value });
+  await boot(); await request();
+  expect(await screen.findByRole('heading', { level: 1, name: 'Parcel SMS' })).toBeVisible();
+  expect(screen.getAllByRole('heading', { level: 1 })).toHaveLength(1);
+  expect(screen.getByRole('heading', { level: 2, name: ready ? 'Ready to complete' : 'Attempt 7' })).toBeVisible();
+  expect(getScenarioAttempt).toHaveBeenCalledWith(7, { locale: 'en' });
+  noAutomaticMutations();
+  if (ready) {
+    const completion = deferred();
+    completeScenarioAttempt.mockReturnValueOnce(completion.promise);
+    const button = screen.getByRole('button', { name: i18n.t('scenarios.attempt.complete') });
+    button.focus();
+    noAutomaticMutations();
+    await userEvent.click(button);
+    expect(completeScenarioAttempt).toHaveBeenCalledTimes(1);
+    expect(button).toBeDisabled();
+    await userEvent.click(button);
+    expect(completeScenarioAttempt).toHaveBeenCalledTimes(1);
+    await act(async () => completion.resolve({ ok: false, status: 503, error: 'Try again' }));
+    expect(saveScenarioDecision).not.toHaveBeenCalled();
+    expect(startScenarioAttempt).not.toHaveBeenCalled();
+  }
+});
+
+test.each(['replacement', 'logout', 'navigation'])('I03 old pending save cannot steal focus after %s identity boundary', async cause => {
+  const old = deferred(); saveScenarioDecision.mockReturnValueOnce(old.promise);
+  await boot(); await request(); await screen.findByText('Situation 7');
+  await userEvent.click(screen.getByRole('button', { name: /Pause and verify/ }));
+  await userEvent.click(screen.getByRole('button', { name: 'Confirm choice' }));
+  if (cause === 'replacement') await request(target(8));
+  else await act(async () => { if (cause === 'logout') mockContext.logout(); else mockContext.requestHashNavigation('#/about'); });
+  if (screen.queryByRole('dialog')) await userEvent.click(screen.getByRole('button', { name: i18n.t('scenarios.leaveScenario') }));
+  if (cause === 'replacement') await screen.findByText('Situation 8');
+  const focus = jest.spyOn(HTMLElement.prototype, 'focus'); focus.mockClear();
+  await act(async () => old.resolve({ ok: true, data: { attempt: { id: 7, status: 'in_progress' }, decision: { classification: 'safest', feedback: 'Old saved feedback', safetyExplanation: 'Old lesson' }, nextStep: null, readyToComplete: true } }));
+  expect(focus.mock.instances.some(node => node.classList?.contains('scenario-feedback'))).toBe(false);
+  focus.mockRestore();
+  expect(saveScenarioDecision).toHaveBeenCalledTimes(1); expect(completeScenarioAttempt).not.toHaveBeenCalled();
+});
+
 test('active exact exit cancellation preserves isolation and accepted exit restores Library', async () => {
   await boot(); await request(); await screen.findByText('Situation 7');
   await userEvent.click(screen.getByRole('button', { name: i18n.t('scenarios.attempt.exit') }));
