@@ -136,6 +136,20 @@ describe("Scenario Decision Trail final visual migration", () => {
     expect(completeScenarioAttempt).not.toHaveBeenCalled();
   }
 
+  test("POLISH1 Intro Back has a decorative direction cue without changing its name or GET-only destination", async () => {
+    window.history.replaceState({}, "", `#/scenarios/${scenario.slug}`);
+    render(<App />);
+    const back = await screen.findByRole("button", { name: "Back to Scenario Library", exact: true });
+    expect(back).toHaveClass("scenario-intro-back", "cy-button-quiet");
+    expect(back.querySelector('[aria-hidden="true"]')).toHaveTextContent("←");
+    expect(screen.getAllByRole("button", { name: "Back to Scenario Library", exact: true })).toHaveLength(1);
+    expectNoLearningWrites();
+    userEvent.click(back);
+    expect(await screen.findByRole("heading", { name: "Scenario Library" })).toBeVisible();
+    expect(window.location.hash).toBe("#/scenarios");
+    expectNoLearningWrites();
+  });
+
   test("I02 Intro keeps one title and summary before grouped lightweight metadata, with a decorative visual", async () => {
     window.history.replaceState({}, "", `#/scenarios/${scenario.slug}`);
     const { container } = render(<App />);

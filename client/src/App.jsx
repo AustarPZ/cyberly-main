@@ -8017,7 +8017,7 @@ function ScenariosPage() {
         ) : view.mode === "intro" ? (
           <div className="scenario-detail-layout">
             <div className="scenario-detail-back-rail">
-              <Button variant="quiet" onClick={() => { if (nestedIntro.nested) requestHashNavigation("#/scenarios"); else setView({ mode: "library" }); }}>{t("scenarios.library.backToLibrary")}</Button>
+              <Button variant="quiet" className="scenario-intro-back" onClick={() => { if (nestedIntro.nested) requestHashNavigation("#/scenarios"); else setView({ mode: "library" }); }}><span aria-hidden="true">←</span>{t("scenarios.library.backToLibrary")}</Button>
             </div>
             <div className="scenario-detail-main">
               {renderIntro()}

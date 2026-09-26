@@ -14,6 +14,17 @@ function remPaddingFor(selector) {
 }
 
 describe("Scenario Decision Trail responsive CSS", () => {
+  test.each([
+    ".scenario-page-library .cy-button-primary:hover",
+    ".scenario-page-intro .scenario-actions .cy-button-primary:hover",
+  ])("POLISH1 %s locks readable foreground, background and border without an undefined token", selector => {
+    const hover = blockFor(selector);
+    expect(hover).toMatch(/color:\s*var\(--text-on-brand\)/);
+    expect(hover).toMatch(/border-color:\s*var\(--scenario-primary-hover\)/);
+    expect(hover).toMatch(/background:\s*var\(--scenario-primary-hover\)/);
+    expect(css).toMatch(/--scenario-primary-hover:\s*color-mix\(in srgb, var\(--color-brand-primary-hover\) 85%, black\)/);
+  });
+
   test("PERSIST1 canonical recommendation owns orange on a white surface without an arrival target", () => {
     expect(blockFor(".scenario-library-card.recommended")).toMatch(/border-color:\s*var\(--cyberly-warning\)/);
     expect(blockFor(".scenario-page-library .scenario-library-card.recommended")).toMatch(/background:\s*var\(--surface-raised\)/);

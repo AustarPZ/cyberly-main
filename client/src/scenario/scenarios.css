@@ -187,7 +187,7 @@
 }
 
 /* SC01-I01: Library composition only. Player, briefing and result stay unchanged. */
-.scenario-page-library { --scenario-library-safe-lane: 6rem; }
+.scenario-page-library { --scenario-library-safe-lane: 6rem; --scenario-primary-hover: color-mix(in srgb, var(--color-brand-primary-hover) 85%, black); }
 .scenario-library-header { background: transparent; border-bottom: 0; }
 .scenario-library-header .scenario-page-header-layout {
   padding-block: 1.5rem 1rem;
@@ -209,7 +209,8 @@
 .scenario-page-library .scenario-card-actions { gap: 0.6rem; }
 .scenario-page-library .cy-button { white-space: normal; min-height: 44px; }
 .scenario-page-library .cy-button-primary { background: var(--color-brand-primary-hover); border-color: var(--color-brand-primary-hover); color: var(--text-on-brand); }
-.scenario-page-library .cy-button-primary:hover { background: var(--color-brand-strong); }
+.scenario-page-library .cy-button-primary:hover { background: var(--scenario-primary-hover); border-color: var(--scenario-primary-hover); color: var(--text-on-brand); }
+.scenario-page-library .cy-button-primary:active { background: var(--scenario-primary-hover); border-color: var(--scenario-primary-hover); color: var(--text-on-brand); }
 .scenario-page-library .cy-button-secondary { color: var(--color-brand-primary-hover); border-color: var(--color-brand-border); background: var(--surface-raised); }
 .scenario-page-library .page-state-action { min-height: 44px; color: var(--color-brand-primary-hover); }
 .scenario-page-library :is(button, select):focus-visible { outline: 3px solid var(--color-brand-primary-hover); outline-offset: 3px; }
@@ -217,7 +218,7 @@
 .cy-app-shell:has(.scenario-page) > footer.cy-app-footer { padding-inline-end: max(6rem, env(safe-area-inset-right)); }
 
 /* SC01-I02: Intro presentation only; library and player selectors stay untouched. */
-.scenario-page-intro { --scenario-intro-safe-lane: 6rem; }
+.scenario-page-intro { --scenario-intro-safe-lane: 6rem; --scenario-primary-hover: color-mix(in srgb, var(--color-brand-primary-hover) 85%, black); }
 .scenario-page-intro .scenario-page-header { background: transparent; border-bottom: 0; }
 .scenario-page-intro .scenario-page-header-layout {
   grid-template-columns: minmax(0, 1fr);
@@ -229,7 +230,8 @@
 .scenario-page-intro .page-identity { background: transparent; box-shadow: none; }
 .scenario-page-intro .scenario-content { max-width: 72rem; padding-block: 0.25rem 2rem; padding-inline-end: var(--scenario-intro-safe-lane); }
 .scenario-page-intro .scenario-detail-layout { gap: 0.75rem; }
-.scenario-page-intro .scenario-detail-back-rail .cy-button { padding-inline: 0; color: var(--color-brand-primary-hover); }
+.scenario-page-intro .scenario-intro-back { min-height: 44px; padding-inline: 0.65rem; gap: 0.5rem; border-radius: var(--cyberly-radius-control); background: transparent; color: var(--color-brand-primary-hover); }
+.scenario-page-intro .scenario-intro-back:hover { background: var(--color-brand-soft); color: var(--color-brand-primary-hover); }
 .scenario-page-intro .scenario-briefing { grid-template-columns: minmax(0, 1fr) minmax(10rem, 17rem); gap: clamp(1.5rem, 4vw, 3rem); padding: 0; border: 0; box-shadow: none; background: transparent; align-items: start; }
 .scenario-page-intro .scenario-briefing:focus { outline: none; }
 .scenario-page-intro .scenario-briefing-summary { max-width: 60ch; margin: 0 0 1rem; font-size: 1.05rem; line-height: 1.7; }
@@ -238,7 +240,8 @@
 .scenario-page-intro .scenario-locale-fallback { margin: 1rem 0 0; padding: 0.65rem 0.8rem; border: 0; border-radius: var(--cyberly-radius-control); }
 .scenario-page-intro .scenario-actions { margin-top: 1.5rem; }
 .scenario-page-intro .scenario-actions .cy-button-primary { background: var(--color-brand-primary-hover); border-color: var(--color-brand-primary-hover); color: var(--text-on-brand); min-height: 48px; }
-.scenario-page-intro .scenario-actions .cy-button-primary:hover { background: var(--color-brand-strong); }
+.scenario-page-intro .scenario-actions .cy-button-primary:hover { background: var(--scenario-primary-hover); border-color: var(--scenario-primary-hover); color: var(--text-on-brand); }
+.scenario-page-intro .scenario-actions .cy-button-primary:active { background: var(--scenario-primary-hover); border-color: var(--scenario-primary-hover); color: var(--text-on-brand); }
 .scenario-page-intro :is(button, a):focus-visible { outline: 3px solid var(--color-brand-primary-hover); outline-offset: 3px; }
 .scenario-page-intro .scenario-decision-visual { max-height: 12rem; }
 .scenario-page:is(.scenario-page-intro-loading, .scenario-page-intro-unavailable) .scenario-content { max-width: 72rem; padding-inline-end: 6rem; }
@@ -247,6 +250,18 @@
   .scenario-page-intro .scenario-decision-visual { max-width: 15rem; max-height: 9rem; }
 }
 @media (max-width: 40rem) {
+  .scenario-page-library { --scenario-library-safe-lane: 0rem; }
+  .scenario-page-intro { --scenario-intro-safe-lane: 0rem; }
+  .scenario-page-library .scenario-page-header-layout,
+  .scenario-page-library .scenario-content,
+  .scenario-page-intro .scenario-page-header-layout,
+  .scenario-page-intro .scenario-content { padding-inline-end: var(--cyberly-space-page-gutter); }
+  /* Reserve room only beside controls/locale guidance, not the whole reading column. */
+  .scenario-page-library .scenario-card-actions { margin-inline-end: 3rem; }
+  .scenario-page-library .scenario-library-filters { padding-inline-end: 4.25rem; }
+  .scenario-page-intro .scenario-actions,
+  .scenario-page-intro .scenario-intro-back,
+  .scenario-page-intro .scenario-locale-fallback { max-width: calc(100% - 4.25rem); }
   .scenario-page-intro .scenario-page-header-layout { padding-block: 1.25rem 0.25rem; }
   .scenario-page-intro .scenario-briefing { gap: 1.25rem; }
   .scenario-page-intro .scenario-briefing-summary { font-size: 1rem; }

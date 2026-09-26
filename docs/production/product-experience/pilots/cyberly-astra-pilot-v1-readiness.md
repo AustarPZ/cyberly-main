@@ -690,3 +690,16 @@ RED before implementation: 3 expected presentation/hierarchy failures / 4 existi
 Fresh isolated build/diff PASS. AFTER browser evidence, request ledger, viewport/locale/fallback/focus measurements and full-page unchanged sibling smoke comparisons are in the external package. S4 smoke uses existing ready state via GET; Feedback renderer/semantics remain source-verified and covered by unchanged tests. Only one explicit intercepted Start POST; passive/live writes zero.
 
 Evidence: C:/Users/AsusT/.codex/visualizations/2026/09/24/01a0d487-d6fa-7ab3-9d0b-964e20805f29/PILOT-SC01-I02/REPORT.md and PILOT-SC01-I02-review.zip. Exact changed paths and hashes recorded; this is the only readiness append. No commit/push/deploy/ref movement, DB/migration/provider/RAG/dependency operation. PRODUCTION = NOT CERTIFIED.
+
+
+### PILOT-SC01-I02-POLISH1 — Scenario interaction affordance / mobile safe lane
+
+2026-09-26 — **PILOT-SC01-I02-POLISH1_OWNER_VISUAL_REVIEW_READY**; Owner visual acceptance not claimed. **PRODUCTION = NOT CERTIFIED**.
+
+Precheck: clean develop / ae597d75e9a408459204fcc1c9ec3a436290eb4d, matching local origin/develop and origin/master, empty index. Bounded Library/Intro CSS and existing Intro Back presentation only. Real BEFORE browser evidence confirms undefined --color-brand-strong makes hovered primary backgrounds transparent: Library Continue contrast 1.00:1, Intro Start 1.09:1, normal both 5.36:1. Explicit scoped hover/active foreground/background/border now use a darker mix of the defined brand token. Back retains the exact handler and translated name; adds aria-hidden left arrow, quiet mint hover and visible keyboard focus, minimum 44px.
+
+390/320 BEFORE scrollWidth equals viewport: no horizontal overflow; header/content right padding 96px causes the blank lane, FAB fixed inside viewport with no transform. Mobile header/content now use the standard 16px gutter (desktop 6rem preserved). Browser experiment showed reset alone exposes Library CTA to FAB overlap: only control rows / fallback retain local clearance. Cards, summary and title use normal width. Existing Scenario footer protection, global Button, AppShell, launcher and all lifecycle/guards/authority code unchanged.
+
+RED: 5 expected failures; focused final 5 PASS; targeted 5 suites / 78 PASS; regression 3 / 19 PASS. Exactly one full-client: Test Suites: 112 passed, 112 total; Tests:       1170 passed, 1170 total; Time:        300.573 s, estimated 335 s. No timeout/retry/skip/assertion weakening. Historical runtime timing watch remains; no permanent fix claimed. Locale, isolated build, diff and fresh browser evidence PASS.
+
+Evidence: C:/Users/AsusT/.codex/visualizations/2026/09/24/01a0d487-d6fa-7ab3-9d0b-964e20805f29/PILOT-SC01-I02-POLISH1/REPORT.md; final package, contrast/geometry/request records and hash manifests alongside. BEFORE and CSS experiments explicitly separated from final build AFTER. No commit/push/deploy/DB/provider/ref movement. S3/S4-ready/S5 smoke only; no SC01-I03. PRODUCTION = NOT CERTIFIED.

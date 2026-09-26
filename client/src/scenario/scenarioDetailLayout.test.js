@@ -13,6 +13,20 @@ function ruleBody(source, selector, startAt = 0) {
 }
 
 describe("Scenario detail responsive layout", () => {
+  test("POLISH1 mobile removes whole-page reserved lanes while retaining desktop protection", () => {
+    const mobile = scenarioStyles.lastIndexOf("@media (max-width: 40rem)");
+    expect(ruleBody(scenarioStyles, ".scenario-page-library", mobile)).toMatch(/--scenario-library-safe-lane:\s*0rem/);
+    expect(ruleBody(scenarioStyles, ".scenario-page-intro", mobile)).toMatch(/--scenario-intro-safe-lane:\s*0rem/);
+    expect(ruleBody(scenarioStyles, ".scenario-page-library")).toMatch(/--scenario-library-safe-lane:\s*6rem/);
+    expect(ruleBody(scenarioStyles, ".scenario-page-intro")).toMatch(/--scenario-intro-safe-lane:\s*6rem/);
+  });
+
+  test("POLISH1 Intro Back has a quiet 44px target with distinct hover and visible focus", () => {
+    expect(ruleBody(scenarioStyles, ".scenario-page-intro .scenario-intro-back")).toMatch(/min-height:\s*44px/);
+    expect(ruleBody(scenarioStyles, ".scenario-page-intro .scenario-intro-back:hover")).toMatch(/background:\s*var\(--color-brand-soft\)/);
+    expect(ruleBody(scenarioStyles, ".scenario-page-intro :is(button, a):focus-visible")).toMatch(/outline:\s*3px solid/);
+  });
+
   test("I02 Intro uses an editorial surface and quiet guidance without changing other Scenario modes", () => {
     expect(ruleBody(scenarioStyles, ".scenario-page-intro .scenario-page-header")).toMatch(/background:\s*transparent/);
     expect(ruleBody(scenarioStyles, ".scenario-page-intro .scenario-briefing")).toMatch(/border:\s*0/);
