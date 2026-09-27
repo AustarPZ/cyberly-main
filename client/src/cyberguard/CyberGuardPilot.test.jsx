@@ -2690,4 +2690,129 @@ describe("CyberGuard public beta pilot baseline", () => {
     await userEvent.click(within(drawer).getByRole("button", { name: /open menu for Today phishing check/i }));
     expect(screen.getAllByRole("menuitem", { name: /^Export conversation$/i })).toHaveLength(1);
   });
+
+  // CG-ASTRA-I01 / CONT1 focused contract tests
+  test("Astra compact companion uses privacy-safe identity, safe-use notice, focus, and Escape return", async () => {
+    await renderCyberGuardPilotFixture({ route: "#/home" });
+
+    const launcher = await screen.findByRole("button", { name: /open chat widget/i });
+    await userEvent.click(launcher);
+
+    const panel = document.querySelector(".chat-panel");
+    expect(panel).not.toBeNull();
+    expect(within(panel).getByText(/Current chat/i)).toBeInTheDocument();
+    expect(within(panel).queryByText(/CyberGuard Learner/i)).not.toBeInTheDocument();
+    expect(within(panel).getByText(/AI-supported guidance/i)).toBeInTheDocument();
+
+    const input = within(panel).getByRole("textbox", { name: /type your chat message/i });
+    await waitFor(() => expect(input).toHaveFocus());
+
+    await userEvent.keyboard("{Escape}");
+    await waitFor(() => expect(document.querySelector(".chat-panel")).not.toBeInTheDocument());
+    expect(launcher).toHaveFocus();
+  });
+
+  test("compact draft stays in memory across Full Page and New Chat clears it", async () => {
+    await renderCyberGuardPilotFixture({ route: "#/home" });
+
+    const launcher = await screen.findByRole("button", { name: /open chat widget/i });
+    await userEvent.click(launcher);
+    const panel = document.querySelector(".chat-panel");
+    const input = within(panel).getByRole("textbox", { name: /type your chat message/i });
+    const draft = "Keep this draft only in memory";
+    await waitFor(() => expect(input).toBeEnabled());
+    await userEvent.type(input, draft);
+    expect(input).toHaveValue(draft);
+
+    const persisted = Array.from({ length: window.localStorage.length }, (_, index) => {
+      const key = window.localStorage.key(index);
+      return key + "=" + window.localStorage.getItem(key);
+    }).join("\n");
+    expect(persisted).not.toContain(draft);
+
+    await userEvent.click(within(panel).getByRole("button", { name: /open chatbot full page/i }));
+    await waitFor(() => expect(window.location.hash).toBe("#/ai-chat"));
+
+    const fullInput = await screen.findByRole("textbox", { name: /type your chat message/i });
+    expect(fullInput).toHaveValue(draft);
+
+    await userEvent.click(screen.getByRole("button", { name: /^New Chat$/i }));
+    await waitFor(() => expect(screen.getByRole("textbox", { name: /type your chat message/i })).toHaveValue(""));
+  });
+
+  test("header close and FAB close both return focus to the launcher", async () => {
+    await renderCyberGuardPilotFixture({ route: "#/home" });
+
+    const launcher = await screen.findByRole("button", { name: /open chat widget/i });
+    await userEvent.click(launcher);
+    let panel = document.querySelector(".chat-panel");
+    await userEvent.click(within(panel).getByRole("button", { name: /^close$/i }));
+    await waitFor(() => expect(document.querySelector(".chat-panel")).not.toBeInTheDocument());
+    expect(launcher).toHaveFocus();
+
+    await userEvent.click(launcher);
+    panel = document.querySelector(".chat-panel");
+    await waitFor(() => expect(within(panel).getByRole("textbox", { name: /type your chat message/i })).toHaveFocus());
+    await userEvent.click(launcher);
+    await waitFor(() => expect(document.querySelector(".chat-panel")).not.toBeInTheDocument());
+    expect(launcher).toHaveFocus();
+  });
+
+  test("mobile companion is modal-sheet semantics and traps Tab inside the sheet", async () => {
+    await renderCyberGuardPilotFixture({ route: "#/home", mobile: true });
+
+    const launcher = await screen.findByRole("button", { name: /open chat widget/i });
+    await userEvent.click(launcher);
+
+    const panel = document.querySelector(".chat-panel");
+    expect(panel).toHaveAttribute("role", "dialog");
+    expect(panel).toHaveAttribute("aria-modal", "true");
+
+    const input = within(panel).getByRole("textbox", { name: /type your chat message/i });
+    await waitFor(() => expect(input).toHaveFocus());
+
+    const focusable = Array.from(panel.querySelectorAll(
+      'button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+    ));
+    const first = focusable[0];
+    const last = focusable[focusable.length - 1];
+
+    last.focus();
+    await userEvent.tab();
+    expect(first).toHaveFocus();
+
+    first.focus();
+    await userEvent.tab({ shift: true });
+    expect(last).toHaveFocus();
+  });
+
+  test("Full Workspace launcher focuses the existing composer without opening a second assistant", async () => {
+    await renderCyberGuardPilotFixture();
+
+    const input = await screen.findByRole("textbox", { name: /type your chat message/i });
+    input.blur();
+
+    const launcher = screen.getByRole("button", { name: /Message CyberGuard/i });
+    await userEvent.click(launcher);
+
+    await waitFor(() => expect(input).toHaveFocus());
+    expect(document.querySelector(".chat-panel")).not.toBeInTheDocument();
+  });
+
+  test("guest compact boundary remains sign-in only", async () => {
+    await renderCyberGuardPilotFixture({
+      route: "#/home",
+      user: null,
+      authResult: { ok: false, data: null },
+    });
+
+    await userEvent.click(await screen.findByRole("button", { name: /open chat widget/i }));
+    const panel = document.querySelector(".chat-panel");
+
+    expect(within(panel).getByText(/^Guest$/i)).toBeInTheDocument();
+    expect(within(panel).getByText(/Sign in to preview/i)).toBeInTheDocument();
+    expect(within(panel).queryByRole("textbox", { name: /type your chat message/i })).not.toBeInTheDocument();
+    expect(within(panel).queryByRole("button", { name: /open chatbot full page/i })).not.toBeInTheDocument();
+  });
+
 });

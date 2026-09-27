@@ -2062,10 +2062,10 @@ body {
 .chat-fab:hover { opacity: 0.88; }
 .chat-panel {
   position: fixed; bottom: 4.5rem; right: 1.5rem; z-index: 199;
-  width: 340px; background: var(--surface-raised); border-radius: 16px;
+  width: min(430px, calc(100vw - 3rem)); background: var(--surface-raised); border-radius: 16px;
   border: 1px solid var(--border-default); box-shadow: var(--shadow-raised);
   display: flex; flex-direction: column; overflow: hidden;
-  max-height: min(560px, calc(100vh - 6rem));
+  max-height: min(620px, calc(100vh - 6rem));
 }
 .chat-header {
   background: var(--teal); color: #fff;
@@ -2074,6 +2074,13 @@ body {
   gap: 0.75rem;
 }
 .chat-header-sub { font-size: 0.75rem; font-weight: 400; opacity: 0.8; }
+.chat-compact-ai-notice {
+  display: grid; gap: 0.18rem; padding: 0.68rem 0.85rem;
+  background: var(--teal-lt); color: #365149; border-bottom: 1px solid rgba(29,158,117,0.16);
+  font-size: 0.74rem; line-height: 1.45;
+}
+.chat-compact-ai-notice strong { color: var(--teal); font-size: 0.76rem; }
+.chat-compact-ai-notice span { display: block; }
 .chat-header-actions { display: flex; align-items: center; gap: 0.4rem; flex: 0 0 auto; }
 .chat-header-button {
   border: 1px solid rgba(255,255,255,0.28); background: rgba(255,255,255,0.12); color: #fff;
@@ -2408,7 +2415,19 @@ body {
 }
 .dashboard-ai-preview-text { color: #52615b; font-size: 0.88rem; line-height: 1.6; margin: 0.65rem 0 1rem; }
 @media (max-width: 820px) {
-  .chat-panel { left: 1rem; right: 1rem; width: auto; }
+  .chat-panel {
+    inset: 0;
+    width: 100vw;
+    height: 100vh;
+    height: 100dvh;
+    max-height: none;
+    border: none;
+    border-radius: 0;
+    z-index: 210;
+  }
+  .chat-panel .chat-compact-messages { flex: 1 1 auto; min-height: 0; height: auto; }
+  .chat-panel .chat-composer-wrap { flex: 0 0 auto; }
+  .chat-fab { z-index: 211; }
 }
 @media (max-width: 430px) {
   .chat-header { align-items: flex-start; }
@@ -3295,6 +3314,8 @@ function ChatProvider({ user, children }) {
   const [mutationError, setMutationError] = useState("");
   const [legacyNoticeVisible, setLegacyNoticeVisible] = useState(false);
   const [generationByMessageId, setGenerationByMessageId] = useState({});
+  const [composerDraft, setComposerDraftValue] = useState("");
+  const [composerFocusRequest, setComposerFocusRequest] = useState(0);
   const listRequestRef = useRef(0);
   const detailRequestRef = useRef(0);
   const userIdRef = useRef(null);
@@ -3400,6 +3421,11 @@ function ChatProvider({ user, children }) {
     return true;
   }, []);
 
+  useLayoutEffect(() => {
+    setComposerDraftValue("");
+    setComposerFocusRequest(0);
+  }, [userId]);
+
   useEffect(() => {
     userIdRef.current = userId || null;
     listRequestRef.current += 1;
@@ -3455,6 +3481,19 @@ function ChatProvider({ user, children }) {
   }, [userId, activeConversationId, applyConversationDetailResult]);
 
   const activeConversation = conversations.find(conversation => conversation.id === activeConversationId) || null;
+
+  function setComposerDraft(nextValue) {
+    setComposerDraftValue(String(nextValue || ""));
+  }
+
+  function clearComposerDraft() {
+    setComposerDraftValue("");
+  }
+
+  function requestComposerFocus() {
+    setComposerFocusRequest(current => current + 1);
+  }
+
   const generationActive = Object.values(generationByMessageId).some(item => item.status === "generating");
   const activeGeneratingMessageIds = activeMessages
     .filter(message => message.role === "user" && generationByMessageId[message.id]?.status === "generating")
@@ -3641,6 +3680,7 @@ function ChatProvider({ user, children }) {
     setConversationError("");
     setMutationError("");
     setGenerationByMessageId({});
+    clearComposerDraft();
     writeSavedActiveConversationId(userId, null);
     return null;
   }
@@ -3698,6 +3738,7 @@ function ChatProvider({ user, children }) {
   function selectConversation(id) {
     const conversationId = Number(id);
     if (!conversations.some(conversation => conversation.id === conversationId)) return;
+    if (activeConversationIdRef.current !== conversationId) clearComposerDraft();
     setActiveConversationId(conversationId);
     setConversationError("");
     setMutationError("");
@@ -3739,6 +3780,7 @@ function ChatProvider({ user, children }) {
       const nextActiveId = activeConversationId === conversationId ? remaining[0]?.id || null : activeConversationId;
       setActiveConversationId(nextActiveId);
       if (activeConversationId === conversationId) {
+        clearComposerDraft();
         setActiveMessages([]);
         setGenerationByMessageId({});
       }
@@ -3827,6 +3869,11 @@ function ChatProvider({ user, children }) {
     mutationError,
     emailVerificationRequired,
     legacyNoticeVisible,
+    composerDraft,
+    setComposerDraft,
+    clearComposerDraft,
+    composerFocusRequest,
+    requestComposerFocus,
     disabledAssistantNotice: activeMessages.length > 0,
     createConversation,
     createConversationFromMessage,
@@ -6367,8 +6414,19 @@ function ChatComposer({
   composerGuidance = "",
 }) {
   const { t } = useTranslation();
-  const { sendMessage, sending, syncing, generating, conversationLoading, mutationError, emailVerificationRequired } = useChat();
-  const [input, setInput] = useState("");
+  const {
+    sendMessage,
+    sending,
+    syncing,
+    generating,
+    conversationLoading,
+    mutationError,
+    emailVerificationRequired,
+    composerDraft,
+    setComposerDraft,
+    clearComposerDraft,
+    composerFocusRequest,
+  } = useChat();
   const inputRef = useRef(null);
   const lastDraftRequestIdRef = useRef(null);
 
@@ -6376,17 +6434,23 @@ function ChatComposer({
     if (!draftRequest?.requestId) return;
     if (lastDraftRequestIdRef.current === draftRequest.requestId) return;
     lastDraftRequestIdRef.current = draftRequest.requestId;
-    setInput(draftRequest.text || "");
+    setComposerDraft(draftRequest.text || "");
     onDraftAccepted?.(draftRequest.requestId);
-  }, [draftRequest, onDraftAccepted]);
+  }, [draftRequest, onDraftAccepted, setComposerDraft]);
+
+  useEffect(() => {
+    if (!composerFocusRequest) return;
+    if (sending || syncing || generating || conversationLoading || emailVerificationRequired) return;
+    window.setTimeout(() => inputRef.current?.focus(), 0);
+  }, [composerFocusRequest, sending, syncing, generating, conversationLoading, emailVerificationRequired]);
 
   async function send(event) {
     event?.preventDefault?.();
-    const text = input.trim();
+    const text = composerDraft.trim();
     if (!text || sending || syncing || generating || conversationLoading || emailVerificationRequired) return;
     const result = await sendMessage(text);
     if (result?.ok) {
-      setInput("");
+      clearComposerDraft();
     } else {
       window.setTimeout(() => inputRef.current?.focus(), 0);
     }
@@ -6405,9 +6469,9 @@ function ChatComposer({
       className="chat-input"
       rows={compact ? 1 : 2}
       placeholder={t("chat.placeholder")}
-      value={input}
+      value={composerDraft}
       aria-label={t("chat.accessibility.composer")}
-      onChange={event => setInput(event.target.value)}
+      onChange={event => setComposerDraft(event.target.value)}
       onKeyDown={event => {
         if (event.key === "Enter" && !event.shiftKey) {
           event.preventDefault();
@@ -6435,7 +6499,7 @@ function ChatComposer({
               variant="primary"
               loading={sending || syncing}
               loadingLabel={t("chat.sending")}
-              disabled={interactionDisabled || !input.trim()}
+              disabled={interactionDisabled || !composerDraft.trim()}
               aria-label={t("chat.accessibility.send")}
             >
               {generating ? t("chat.generation.preparingShort") : t("chat.send")}
@@ -6456,8 +6520,8 @@ function ChatComposer({
     <div className="chat-composer-wrap">
       <div className="chat-input-row">
         {textarea}
-        <button className="chat-send" onClick={send} disabled={interactionDisabled || !input.trim()} aria-label={t("chat.accessibility.send")}>
-          {sending || syncing ? (compact ? "…" : t("chat.sending")) : generating ? (compact ? "…" : t("chat.generation.preparingShort")) : compact ? "↑" : t("chat.send")}
+        <button className="chat-send" onClick={send} disabled={interactionDisabled || !composerDraft.trim()} aria-label={t("chat.accessibility.send")}>
+          {sending || syncing ? (compact ? "..." : t("chat.sending")) : generating ? (compact ? "..." : t("chat.generation.preparingShort")) : compact ? "\u2191" : t("chat.send")}
         </button>
       </div>
       {emailVerificationRequired && (
@@ -10252,25 +10316,125 @@ function AIChatPage() {
 // ─── Chat Widget (floating) ────────────────────────────────────────
 function ChatWidget() {
   const { t } = useTranslation();
-  const { user, go } = useApp();
-  const [open,     setOpen]     = useState(false);
-  const displayName = user?.displayName || user?.name;
-  const group = user ? getAgeGroup(user.age) : null;
+  const { user, go, page } = useApp();
+  const { requestComposerFocus } = useChat();
+  const [open, setOpen] = useState(false);
+  const [mobileSheet, setMobileSheet] = useState(() => (
+    typeof window !== "undefined" &&
+    typeof window.matchMedia === "function" &&
+    window.matchMedia("(max-width: 820px)").matches
+  ));
+  const panelRef = useRef(null);
+  const launcherRef = useRef(null);
+  const closeButtonRef = useRef(null);
+
+  const closeCompanion = useCallback(() => {
+    setOpen(false);
+    window.setTimeout(() => launcherRef.current?.focus(), 0);
+  }, []);
+
+  useEffect(() => {
+    if (typeof window === "undefined" || typeof window.matchMedia !== "function") return undefined;
+    const query = window.matchMedia("(max-width: 820px)");
+    const sync = event => setMobileSheet(Boolean(event.matches));
+    setMobileSheet(Boolean(query.matches));
+    if (typeof query.addEventListener === "function") {
+      query.addEventListener("change", sync);
+      return () => query.removeEventListener("change", sync);
+    }
+    query.addListener(sync);
+    return () => query.removeListener(sync);
+  }, []);
+
+  useEffect(() => {
+    if (!open) return undefined;
+
+    function handleKeyDown(event) {
+      if (event.key === "Escape" && !event.defaultPrevented) {
+        event.preventDefault();
+        closeCompanion();
+        return;
+      }
+
+      if (!mobileSheet || event.key !== "Tab") return;
+      const panel = panelRef.current;
+      if (!panel) return;
+      const focusable = Array.from(panel.querySelectorAll(
+        'button:not([disabled]), textarea:not([disabled]), input:not([disabled]), select:not([disabled]), a[href], [tabindex]:not([tabindex="-1"])'
+      )).filter(element => !element.hasAttribute("hidden") && element.getAttribute("aria-hidden") !== "true");
+      if (focusable.length === 0) return;
+      const first = focusable[0];
+      const last = focusable[focusable.length - 1];
+      const active = document.activeElement;
+
+      if (event.shiftKey && (active === first || !panel.contains(active))) {
+        event.preventDefault();
+        last.focus();
+      } else if (!event.shiftKey && (active === last || !panel.contains(active))) {
+        event.preventDefault();
+        first.focus();
+      }
+    }
+
+    document.addEventListener("keydown", handleKeyDown);
+    return () => document.removeEventListener("keydown", handleKeyDown);
+  }, [closeCompanion, mobileSheet, open]);
+
+  function openCompanion() {
+    setOpen(true);
+    if (user) {
+      requestComposerFocus();
+    } else {
+      window.setTimeout(() => closeButtonRef.current?.focus(), 0);
+    }
+  }
 
   function openFullPage() {
     setOpen(false);
     go(user ? "ai-chat" : "login");
+    if (user) window.setTimeout(() => requestComposerFocus(), 0);
+  }
+
+  function handleLauncher() {
+    if (page === "ai-chat") {
+      requestComposerFocus();
+      return;
+    }
+    if (open) {
+      closeCompanion();
+      return;
+    }
+    openCompanion();
+  }
+
+  if (page === "ai-chat") {
+    return (
+      <button
+        ref={launcherRef}
+        className="chat-fab"
+        onClick={handleLauncher}
+        aria-label={t("chat.pilot.composer.label")}
+      >
+        {"\u{1F4AC}"}
+      </button>
+    );
   }
 
   return (
     <>
       {open && (
-        <div className="chat-panel">
+        <div
+          ref={panelRef}
+          className="chat-panel"
+          role={mobileSheet ? "dialog" : "region"}
+          aria-modal={mobileSheet ? "true" : undefined}
+          aria-label={t("chat.title")}
+        >
           <div className="chat-header">
             <div>
-              💬 {t("chat.title")}
+              {"\u{1F4AC}"} {t("chat.title")}
               <div className="chat-header-sub">
-                {user ? `${displayName} · ${t(`settings.ageGroups.${group.key}`, { defaultValue: group.label })}` : t("chat.guest")}
+                {user ? t("chat.pilot.header.currentConversation") : t("chat.guest")}
               </div>
             </div>
             <div className="chat-header-actions">
@@ -10282,21 +10446,28 @@ function ChatWidget() {
                   title={t("chat.actions.fullPage")}
                   aria-label={t("chat.accessibility.fullPage")}
                 >
-                  ↗ {t("chat.actions.fullPage")}
+                  {"\u2197"} {t("chat.actions.fullPage")}
                 </button>
               )}
               <button
+                ref={closeButtonRef}
                 type="button"
                 className="chat-header-button"
-                onClick={() => setOpen(false)}
+                onClick={closeCompanion}
                 aria-label={t("common.close")}
               >
-                ×
+                {"\u00D7"}
               </button>
             </div>
           </div>
+          {user && (
+            <div className="chat-compact-ai-notice" role="note">
+              <strong>{t("chat.pilot.notice.title")}</strong>
+              <span>{t("chat.pilot.notice.description")}</span>
+            </div>
+          )}
           {!user ? (
-            <div className="chat-messages">
+            <div className="chat-messages chat-compact-messages">
               <div className="chat-login-prompt">
                 <p>{t("chat.signInPrompt")}</p>
                 <button onClick={() => { setOpen(false); go("login"); }}>{t("chat.signInCta")}</button>
@@ -10304,20 +10475,24 @@ function ChatWidget() {
             </div>
           ) : (
             <>
-              <ChatMessageList emptyCompact />
+              <ChatMessageList className="chat-messages chat-compact-messages" emptyCompact />
               <ChatComposer compact />
             </>
           )}
         </div>
       )}
-      <button className="chat-fab" onClick={() => setOpen(o => !o)} aria-label={t(open ? "common.close" : "chat.accessibility.openWidget")}>
-        {open ? "✕" : "💬"}
+      <button
+        ref={launcherRef}
+        className="chat-fab"
+        onClick={handleLauncher}
+        aria-label={t(open ? "common.close" : "chat.accessibility.openWidget")}
+      >
+        {open ? "\u2715" : "\u{1F4AC}"}
       </button>
     </>
   );
 }
 
-// ─── Navbar ───────────────────────────────────────────────────────
 const LANGUAGE_OPTIONS = [
   { locale: "en", label: "English" },
   { locale: "ms", label: "Bahasa Melayu" },
@@ -11288,7 +11463,7 @@ export default function App() {
           navigation={<Navbar page={page} />}
           mainClassName={`page-wrap${page === "ai-chat" ? " cyberguard-page-wrap" : ""}`}
           footer={page !== "ai-chat" ? <Footer /> : null}
-          floating={!checkingSession && page !== "ai-chat" ? <ChatWidget /> : null}
+          floating={!checkingSession ? <ChatWidget /> : null}
         >
           {checkingSession && page !== "privacy" && page !== "guardian-link-verify" ? (
             <div className="section">
