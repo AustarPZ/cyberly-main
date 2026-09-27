@@ -7898,11 +7898,14 @@ function ScenariosPage() {
 
   function renderAttempt() {
     const step = view.currentStep;
+    const exitControl = <Button variant="quiet" className="scenario-attempt-exit" onClick={exitActiveScenario}>{t("scenarios.attempt.exit")}</Button>;
     const decisionClassification = ["safest", "partial", "unsafe"].includes(decisionFeedback?.classification)
       ? decisionFeedback.classification
       : null;
     if (!step) {
       return (
+        <div className="scenario-attempt-shell">
+          <div className="scenario-attempt-utility scenario-attempt-utility-ready">{exitControl}</div>
         <Surface className="scenario-ready">
           <h2>{t("scenarios.attempt.readyToComplete")}</h2>
           <p>{t("scenarios.attempt.readyToCompleteDescription")}</p>
@@ -7910,17 +7913,20 @@ function ScenariosPage() {
           <div className="scenario-actions">
             <Button variant="primary" onClick={completeScenario} loading={busy} loadingLabel={t("scenarios.attempt.completing")}>{t("scenarios.attempt.complete")}</Button>
           </div>
-          <Button variant="quiet" className="scenario-attempt-exit" onClick={exitActiveScenario}>{t("scenarios.attempt.exit")}</Button>
         </Surface>
+        </div>
       );
     }
     return (
       <div className="scenario-attempt-shell">
+        <div className="scenario-attempt-utility">
         <div className="scenario-attempt-progress">
           <div className="scenario-attempt-progress-label">{t("scenarios.attempt.stepProgress", { current: step.stepOrder, total: view.scenario.totalSteps })}</div>
           <div className="scenario-progress-track" aria-hidden="true">
             <div className="scenario-progress-value" style={{ width: `${((step.stepOrder - 1) / view.scenario.totalSteps) * 100}%` }} />
           </div>
+        </div>
+          {exitControl}
         </div>
         <Surface className="scenario-step-card">
           <section className="scenario-context-zone" aria-labelledby="scenario-situation-heading">
@@ -7945,7 +7951,6 @@ function ScenariosPage() {
               <Button variant="primary" disabled={!selectedChoice} loading={busy} loadingLabel={t("scenarios.attempt.savingDecision")} onClick={submitDecision}>{t("scenarios.attempt.confirmChoice")}</Button>
             </div>
           )}
-          <Button variant="quiet" className="scenario-attempt-exit" onClick={exitActiveScenario}>{t("scenarios.attempt.exit")}</Button>
           </section>
         </Surface>
           {decisionFeedback && (

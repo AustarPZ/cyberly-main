@@ -11,7 +11,9 @@
 .scenario-page-attempt .page-identity { background: transparent; box-shadow: none; }
 .scenario-page-attempt .scenario-content { max-width: 72rem; padding-block: 0.5rem 2rem; }
 .scenario-page-attempt .scenario-attempt-shell { max-width: none; gap: 1.5rem; }
-.scenario-page-attempt .scenario-attempt-progress { max-width: 38rem; }
+.scenario-page-attempt .scenario-attempt-utility { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 0.75rem 1rem; min-width: 0; }
+.scenario-page-attempt .scenario-attempt-utility-ready { justify-content: flex-end; }
+.scenario-page-attempt .scenario-attempt-progress { flex: 1 1 9rem; min-width: 0; max-width: 38rem; }
 .scenario-page-attempt .scenario-attempt-progress-label { color: var(--color-brand-primary-hover); }
 .scenario-page-attempt .scenario-step-card { display: grid; grid-template-columns: minmax(0, 0.9fr) minmax(0, 1.1fr); gap: clamp(1.5rem, 4vw, 3rem); padding: 0; background: transparent; border: 0; box-shadow: none; align-items: start; }
 .scenario-page-attempt .scenario-context-zone { min-width: 0; padding: 1.5rem; border-radius: var(--cyberly-radius-panel); background: var(--color-brand-soft); }
@@ -27,7 +29,7 @@
 .scenario-page-attempt .cy-button-primary { background: var(--color-brand-primary-hover); border-color: var(--color-brand-primary-hover); color: var(--text-on-brand); min-height: 48px; white-space: normal; }
 .scenario-page-attempt .cy-button-primary:hover,
 .scenario-page-attempt .cy-button-primary:active { background: var(--scenario-primary-hover); border-color: var(--scenario-primary-hover); color: var(--text-on-brand); }
-.scenario-page-attempt .scenario-attempt-exit { margin-top: 0.75rem; min-height: 44px; color: var(--color-brand-primary-hover); }
+.scenario-page-attempt .scenario-attempt-exit { margin: 0; min-height: 44px; max-width: 100%; padding-inline: 0.5rem; color: var(--text-secondary); font-size: 0.875rem; font-weight: 500; white-space: normal; text-align: start; }
 .scenario-page-attempt :is(button, a):focus-visible { outline: 3px solid var(--color-brand-primary-hover); outline-offset: 3px; }
 .scenario-page-attempt .scenario-feedback { padding: clamp(1.25rem, 3vw, 2rem); border: 0; border-inline-start: 4px solid var(--color-brand-primary-hover); box-shadow: none; background: var(--color-brand-soft); scroll-margin-top: calc(var(--nav-h) + 1rem); }
 .scenario-page-attempt .scenario-feedback:focus { outline: 3px solid var(--color-brand-primary-hover); outline-offset: 3px; }
@@ -41,10 +43,10 @@
   .scenario-page-attempt .scenario-step-card { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 40rem) {
+  .scenario-page-attempt .scenario-attempt-utility { padding-inline-end: 4.25rem; }
   .scenario-page-attempt .scenario-context-zone { padding: 1rem; }
   .scenario-page-attempt .scenario-choice-list,
   .scenario-page-attempt .scenario-actions,
-  .scenario-page-attempt .scenario-attempt-exit,
   .scenario-page-attempt .field-error,
   .scenario-page-attempt .scenario-feedback > :not(.scenario-actions) { max-width: calc(100% - 4.25rem); }
 }

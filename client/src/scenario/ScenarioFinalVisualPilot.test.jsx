@@ -138,7 +138,9 @@ describe("Scenario Decision Trail final visual migration", () => {
 
   async function openI03() {
     const rendered = render(<App />);
-    await userEvent.click(await screen.findByRole("button", { name: "Continue scenario" }));
+    const continueButton = await screen.findByRole("button", { name: "Continue scenario" });
+    // Settle the attempt response and its reload/guard effects before returning.
+    await act(async () => { await userEvent.click(continueButton); });
     await screen.findByText(currentStep.situationText);
     return rendered;
   }
@@ -146,6 +148,67 @@ describe("Scenario Decision Trail final visual migration", () => {
     decision: { classification, feedback: "Canonical response from the saved decision.", safetyExplanation: "Canonical lesson from the saved decision." },
     attempt: { id: 501, status: "in_progress" }, nextStep, readyToComplete: !nextStep,
   } });
+
+  test.each(["active", "selected", "pending", "error", "feedback", "final", "ready"])("STG-C01 keeps one attempt utility Exit outside the learning sequence: %s", async state => {
+    let finish;
+    const next = { ...currentStep, id: 302, stepOrder: 2 };
+    if (state === "ready") getScenarioAttempt.mockResolvedValue({ ok: true, data: { ...attemptPayload, currentStep: null } });
+    if (state === "pending") saveScenarioDecision.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    else if (state === "error") saveScenarioDecision.mockResolvedValueOnce({ ok: false, status: 503 });
+    else saveScenarioDecision.mockResolvedValueOnce(savedI03("safest", state === "feedback" ? next : null));
+    const { container } = state === "ready" ? await openI03Ready() : await openI03();
+    if (!["active", "ready"].includes(state)) await userEvent.click(screen.getByRole("button", { name: /B\. Pause/ }));
+    if (["pending", "error", "feedback", "final"].includes(state)) {
+      await userEvent.click(screen.getByRole("button", { name: "Confirm choice" }));
+      if (state === "error") await screen.findByRole("alert");
+      if (["feedback", "final"].includes(state)) await screen.findByRole("status", { name: "Decision saved" });
+    }
+    const exits = screen.getAllByRole("button", { name: "Exit scenario", exact: true });
+    expect(exits).toHaveLength(1);
+    const exit = exits[0];
+    expect(exit.closest(".scenario-decision-zone,.scenario-feedback,.scenario-ready")).toBeNull();
+    expect(exit.closest(".scenario-attempt-utility")).toBeInTheDocument();
+    const task = container.querySelector(".scenario-step-card");
+    if (task) expect(exit.compareDocumentPosition(task) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    if (["active", "selected", "error"].includes(state)) expect(screen.getByRole("button", { name: "Confirm choice" }).closest(".scenario-decision-zone")).toBeInTheDocument();
+    if (["active", "selected", "ready"].includes(state)) expectNoLearningWrites();
+    if (state === "pending") {
+      expect(screen.getByRole("button", { name: /B\. Pause/ })).toHaveAttribute("aria-pressed", "true");
+      const saving = screen.getByRole("button", { name: "Saving decision..." });
+      expect(saving).toBeDisabled(); await userEvent.click(saving); expect(saveScenarioDecision).toHaveBeenCalledTimes(1);
+      await act(async () => finish(savedI03()));
+    }
+    if (state === "error") {
+      expect(screen.getByRole("button", { name: /B\. Pause/ })).toHaveAttribute("aria-pressed", "true");
+      expect(screen.getByRole("button", { name: "Confirm choice" })).toBeEnabled();
+      expect(container.querySelector(".scenario-feedback")).toBeNull();
+      expect(screen.queryByRole("button", { name: "Next" })).not.toBeInTheDocument();
+      expect(screen.queryByRole("button", { name: "Complete scenario" })).not.toBeInTheDocument();
+    }
+    if (["feedback", "final"].includes(state)) {
+      const feedback = screen.getByRole("status", { name: "Decision saved" });
+      expect(feedback).toHaveFocus(); expect(feedback).toHaveAttribute("aria-live", "polite");
+      expect(task.nextElementSibling).toBe(feedback);
+      expect(within(feedback).getByRole("button", { name: state === "feedback" ? "Next" : "Complete scenario" })).toBeEnabled();
+    }
+    if (state === "ready") {
+      expect(screen.getByRole("button", { name: "Complete scenario" }).closest(".scenario-ready")).toBeInTheDocument();
+      expect(task).toBeNull(); expect(container.querySelector(".scenario-feedback")).toBeNull();
+    }
+    expect(completeScenarioAttempt).not.toHaveBeenCalled(); expect(startScenarioAttempt).not.toHaveBeenCalled();
+  });
+
+  test("STG-C01 relocated Exit preserves guard Cancel and confirmed Library destination", async () => {
+    await openI03();
+    await userEvent.click(screen.getByRole("button", { name: /B\. Pause/ }));
+    await userEvent.click(screen.getByRole("button", { name: "Exit scenario" }));
+    await userEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: i18n.t("scenarios.continueScenario") }));
+    expect(screen.getByRole("button", { name: /B\. Pause/ })).toHaveAttribute("aria-pressed", "true");
+    await userEvent.click(screen.getByRole("button", { name: "Exit scenario" }));
+    await userEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: i18n.t("scenarios.leaveScenario") }));
+    expect(await screen.findByRole("heading", { level: 1, name: "Scenario Library" })).toBeVisible();
+    expect(window.location.hash).toBe("#/scenarios"); expectNoLearningWrites();
+  });
 
   test("I03 keeps Scenario H1, task H2, distinct situation/decision zones and unchanged zero Step-1 fill", async () => {
     const { container } = await openI03();
@@ -197,16 +260,22 @@ describe("Scenario Decision Trail final visual migration", () => {
   });
 
   test("I03 failed save retains editable selection and retry publishes canonical feedback only after success", async () => {
-    saveScenarioDecision.mockResolvedValueOnce({ ok: false, status: 503 }).mockResolvedValueOnce(savedI03());
+    let failSave;
+    let finishRetry;
+    const failedSave = new Promise(resolve => { failSave = resolve; });
+    const successfulRetry = new Promise(resolve => { finishRetry = resolve; });
+    saveScenarioDecision.mockReturnValueOnce(failedSave).mockReturnValueOnce(successfulRetry);
     const { container } = await openI03();
     const b = screen.getByRole("button", { name: /B\. Pause/ });
     await userEvent.click(b); await userEvent.click(screen.getByRole("button", { name: "Confirm choice" }));
+    await act(async () => { failSave({ ok: false, status: 503 }); await failedSave; });
     expect(await screen.findByRole("alert")).toBeVisible();
     expect(b).toHaveAttribute("aria-pressed", "true"); expect(b).toBeEnabled();
     expect(screen.queryByText("Decision saved")).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Next" })).not.toBeInTheDocument();
     expect(screen.queryByRole("button", { name: "Complete scenario" })).not.toBeInTheDocument();
     await userEvent.click(screen.getByRole("button", { name: "Confirm choice" }));
+    await act(async () => { finishRetry(savedI03()); await successfulRetry; });
     const feedback = await screen.findByRole("status", { name: "Decision saved" });
     expect(feedback).toHaveFocus();
     expect(container.querySelector(".scenario-step-card")).not.toContainElement(feedback);
