@@ -666,6 +666,10 @@
       "readyToCompleteDescription": "所有决策都已提交。完成情境后将计算你的结果并更新进度。"
     },
     "result": {
+      "reflectTitle": "回顾你的决定",
+      "thisAttempt": "本次尝试",
+      "reviewUnavailable": "本次尝试暂无决定回顾。",
+      "decisionScore": "决定得分",
       "completed": "情境已完成",
       "result": "结果",
       "score": "分数",

@@ -716,6 +716,112 @@ describe("Scenario Decision Trail final visual migration", () => {
     expect(await screen.findByText("75%")).toBeVisible();
   });
 
+  async function openI04(payload = completedResult, locale = "en") {
+    await i18n.changeLanguage(locale);
+    restoreSession.mockResolvedValue({ ok: true, data: {
+      user: { id: 91, displayName: "Alya", age: 15, role: "user", accountStatus: "active", emailVerified: true },
+      profile: { exists: true, onboardingCompleted: true, preferredLanguage: { en: "english", ms: "bahasa_melayu", "zh-CN": "chinese" }[locale] },
+    } });
+    listScenarios.mockResolvedValue({ ok: true, data: { scenarios: [{ ...scenario, latestAttempt: { id: 502, status: "completed" } }] } });
+    getScenarioAttemptResult.mockResolvedValue({ ok: true, data: payload });
+    const rendered = render(<App />);
+    const reviewButton = await screen.findByRole("button", { name: i18n.t("scenarios.card.viewResult") });
+    await act(async () => { await userEvent.click(reviewButton); });
+    await screen.findByRole("heading", { level: 1, name: scenario.title });
+    return rendered;
+  }
+
+  test("I04 leads with every canonical decision before attempt metrics, without synthesizing a main lesson", async () => {
+    const payload = { ...completedResult, review: [
+      { ...completedResult.review[0], awardedScore: 0 },
+      { id: 802, stepOrder: 2, selectedOptionKey: "A", awardedScore: 3, feedback: "Second canonical feedback.", safetyExplanation: "Second canonical lesson." },
+    ] };
+    const before = JSON.stringify(payload);
+    const { container } = await openI04(payload);
+    expect(screen.getByText("Scenario completed")).toBeVisible();
+    const review = screen.getByRole("region", { name: "Reflect on your decisions" });
+    const attempt = screen.getByRole("region", { name: "This attempt" });
+    expect(review.compareDocumentPosition(attempt) & Node.DOCUMENT_POSITION_FOLLOWING).toBeTruthy();
+    const items = within(review).getAllByRole("article");
+    expect(items).toHaveLength(2);
+    payload.review.forEach((item, index) => {
+      expect(within(items[index]).getByText(item.feedback)).toBeVisible();
+      expect(within(items[index]).getByText(item.safetyExplanation)).toBeVisible();
+      expect(within(items[index]).getByText(`Your choice: ${item.selectedOptionKey}`)).toBeVisible();
+      expect(within(items[index]).getByText(`Decision score: ${item.awardedScore}`)).toBeVisible();
+    });
+    expect(within(attempt).getByText("3/4")).toBeVisible();
+    expect(within(attempt).getByText("75%")).toBeVisible();
+    expect(within(attempt).getByText("+2")).toBeVisible();
+    expect(screen.getByText(completedResult.recommendation.reasonText)).toBeVisible();
+    expect(container.querySelectorAll(".scenario-result-metric")).toHaveLength(0);
+    expect(screen.queryByText(/main lesson|ask cyberguard about|try this scenario next/i)).not.toBeInTheDocument();
+    expect(JSON.stringify(payload)).toBe(before);
+    expectNoLearningWrites();
+  });
+
+  test("I04 qualifies the result band within This attempt", async () => {
+    await openI04();
+    expect(within(screen.getByRole("region", { name: "This attempt" })).getByText(i18n.t("scenarioResults.developing"))).toBeVisible();
+  });
+
+  test.each(["ms", "zh-CN"])("I04 exposes server locale fallback honestly in %s", async locale => {
+    const { container } = await openI04({ ...completedResult, locale: { requestedLocale: locale, resolvedLocale: "en", fallbackUsed: true } }, locale);
+    expect(container.querySelector(".scenario-locale-fallback")).toHaveTextContent(i18n.t("scenarios.localeFallback", {
+      requested: i18n.t(`admin.scenarioEditor.locales.${locale}`), displayed: i18n.t("admin.scenarioEditor.locales.en"),
+    }));
+    expect(screen.getByText(completedResult.review[0].feedback)).toBeVisible();
+    expectNoLearningWrites();
+  });
+
+  test("I04 empty review is truthful and missing recommendation creates no substitute", async () => {
+    const { container } = await openI04({ ...completedResult, review: [], recommendation: null });
+    expect(screen.getByText("Decision review is not available for this attempt.")).toBeVisible();
+    expect(container.querySelectorAll(".scenario-result-review")).toHaveLength(0);
+    expect(container.querySelector(".scenario-result-recommendation")).not.toBeInTheDocument();
+    expect(screen.getByText("75%")).toBeVisible();
+    expectNoLearningWrites();
+  });
+
+  test("I04 preserves real zeros and does not manufacture absent progress impact", async () => {
+    const { unmount } = await openI04({ ...completedResult, attempt: { ...completedResult.attempt, totalScore: 0, percentage: 0 }, progressImpact: { masteryDelta: 0 } });
+    const attempt = screen.getByRole("region", { name: "This attempt" });
+    expect(within(attempt).getByText("0/4")).toBeVisible();
+    expect(within(attempt).getByText("0%")).toBeVisible();
+    expect(within(attempt).getByText("0")).toBeVisible();
+    unmount();
+    await openI04({ ...completedResult, progressImpact: null });
+    expect(screen.queryByText(i18n.t("scenarios.result.masteryDelta"))).not.toBeInTheDocument();
+    expectNoLearningWrites();
+  });
+
+  test.each([["Library", "#/scenarios"], ["Dashboard", "#/dashboard"], ["Progress", "#/dashboard"]])("I04 retains the existing %s destination and passive zero-write behavior", async (action, destination) => {
+    const { container } = await openI04();
+    const summary = container.querySelector(".scenario-result-summary");
+    const buttons = within(summary).getAllByRole("button");
+    expect(buttons).toHaveLength(3);
+    buttons[0].focus();
+    window.dispatchEvent(new Event("scroll"));
+    expectNoLearningWrites();
+    const label = action === "Library" ? "Return to scenario library" : action === "Dashboard" ? "Dashboard" : "View progress";
+    await act(async () => { await userEvent.click(within(summary).getByRole("button", { name: label })); });
+    expect(window.location.hash).toBe(destination);
+    if (action === "Library") expect(await screen.findByRole("button", { name: "Review result" })).toBeVisible();
+    expectNoLearningWrites();
+  });
+
+  test("I04 result GET failure retains existing library recovery and never fabricates zero success", async () => {
+    listScenarios.mockResolvedValue({ ok: true, data: { scenarios: [{ ...scenario, latestAttempt: { id: 502, status: "completed" } }] } });
+    getScenarioAttemptResult.mockResolvedValue({ ok: false, status: 503 });
+    const { container } = render(<App />);
+    await userEvent.click(await screen.findByRole("button", { name: "Review result" }));
+    expect(await screen.findByRole("alert")).toBeVisible();
+    expect(container.querySelector(".scenario-result-summary")).not.toBeInTheDocument();
+    expect(screen.queryByText("0%")).not.toBeInTheDocument();
+    expect(screen.getByRole("button", { name: "Review result" })).toBeVisible();
+    expectNoLearningWrites();
+  });
+
   test("presents a completed scenario as a reflective review with canonical evidence", async () => {
     listScenarios.mockResolvedValue({
       ok: true,

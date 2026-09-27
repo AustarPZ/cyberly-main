@@ -666,6 +666,10 @@
       "readyToCompleteDescription": "Semua keputusan telah dihantar. Selesaikan senario untuk mengira keputusan anda dan mengemas kini kemajuan."
     },
     "result": {
+      "reflectTitle": "Renungkan keputusan anda",
+      "thisAttempt": "Percubaan ini",
+      "reviewUnavailable": "Ulasan keputusan tidak tersedia untuk percubaan ini.",
+      "decisionScore": "Skor keputusan",
       "completed": "Senario selesai",
       "result": "Keputusan",
       "score": "Skor",

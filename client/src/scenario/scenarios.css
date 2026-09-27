@@ -191,24 +191,41 @@
 .scenario-feedback p { margin: 0; line-height: 1.65; }
 .scenario-ready { max-width: 48rem; margin-inline: auto; padding: clamp(1.2rem, 4vw, 2rem); }
 
-.scenario-result-summary { display: grid; gap: 1.25rem; }
-.scenario-result-metrics { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 0.75rem; }
-.scenario-result-metric { padding: 1rem; }
-.scenario-result-metric strong { display: block; font-family: "Space Grotesk", sans-serif; font-size: 1.35rem; }
-.scenario-result-metric span { color: var(--text-muted); font-size: 0.78rem; }
-.scenario-result-review-list { display: grid; gap: 0.85rem; }
-.scenario-result-review { padding: 1rem; }
-.scenario-result-review h2 { margin: 0 0 0.55rem; font-size: 1rem; }
-.scenario-result-review-meta { display: flex; flex-wrap: wrap; gap: 0.75rem; color: var(--text-muted); font-size: 0.8rem; }
-.scenario-result-review p { margin: 0.35rem 0 0; line-height: 1.65; }
-.scenario-result-recommendation { padding: 1rem; }
+/* I04: canonical review first; all rules remain Result-local. */
+.scenario-page-result .scenario-page-header { background: transparent; border-bottom: 0; }
+.scenario-page-result .scenario-page-header-layout { padding-block: 1.5rem 0; grid-template-columns: minmax(0, 1fr); }
+.scenario-page-result .scenario-page-header h1 { max-width: 30ch; }
+.scenario-result-summary { display: grid; gap: 2rem; min-width: 0; overflow-wrap: anywhere; }
+.scenario-result-summary h2 { margin: 0 0 1rem; font-size: clamp(1.3rem, 2vw, 1.65rem); color: var(--color-brand-strong); }
+.scenario-result-reflection { padding: clamp(1rem, 3vw, 2rem); border-radius: var(--cyberly-radius-panel); background: var(--color-brand-soft); }
+.scenario-result-review-list { display: grid; }
+.scenario-result-review { display: grid; grid-template-columns: 7rem minmax(0, 1fr); gap: 1rem; padding-block: 1.5rem; border-top: 1px solid var(--color-brand-border); }
+.scenario-result-review:last-child { padding-bottom: 0; }
+.scenario-result-review h3 { margin: 0; font-size: 1rem; color: var(--color-brand-strong); }
+.scenario-result-review-copy { min-width: 0; }
+.scenario-result-review-meta { display: flex; flex-wrap: wrap; gap: 0.4rem 1rem; color: var(--text-secondary); font-size: 0.85rem; }
+.scenario-result-review p { margin: 0.35rem 0 0; line-height: 1.7; }
+.scenario-result-empty { margin: 0; line-height: 1.65; }
+.scenario-result-attempt, .scenario-result-recommendation { padding-block-start: 1.5rem; border-top: 1px solid var(--border-default); }
+.scenario-result-band { margin: 0 0 1rem; font-size: 1.1rem; font-weight: 700; }
+.scenario-result-evidence { display: flex; flex-wrap: wrap; gap: 1rem 2.5rem; margin: 0; }
+.scenario-result-evidence dt { color: var(--text-secondary); font-size: 0.85rem; }
+.scenario-result-evidence dd { margin: 0.3rem 0 0; font-size: 1.1rem; font-weight: 600; }
+.scenario-result-evidence .scenario-result-impact { color: var(--text-secondary); }
+.scenario-result-recommendation p { margin: 0; line-height: 1.7; }
+.scenario-page-result .scenario-result-actions { margin-top: 0; padding-block-start: 1.5rem; border-top: 1px solid var(--border-default); padding-inline-end: 4.25rem; }
+.scenario-page-result .scenario-result-actions button { white-space: normal; min-width: 0; }
+.scenario-result-summary .scenario-locale-fallback { margin: 0; max-width: none; }
+@media (max-width: 40rem) {
+  .scenario-result-review { grid-template-columns: minmax(0, 1fr); gap: 0.75rem; }
+  .scenario-result-evidence { gap: 1rem 2rem; }
+}
 .scenario-locale-fallback { max-width: 54rem; margin: 0 auto 1rem; padding: 0.75rem 0.9rem; border: 1px solid var(--color-brand-border); border-radius: var(--cyberly-radius-panel); background: var(--color-brand-soft); color: var(--text-secondary); font-size: 0.84rem; line-height: 1.5; }
 
 @media (max-width: 50rem) {
   .scenario-page-header-layout,
   .scenario-briefing { grid-template-columns: minmax(0, 1fr); }
   .scenario-page-header-visual { max-width: 26rem; }
-  .scenario-result-metrics { grid-template-columns: repeat(2, minmax(0, 1fr)); }
 }
 
 @media (max-width: 40rem) {
@@ -224,7 +241,6 @@
   .scenario-actions > button { width: 100%; flex: 0 0 auto; }
   .scenario-card-actions { display: grid; grid-template-columns: minmax(0, 1fr); }
   .scenario-card-actions > button { width: 100%; }
-  .scenario-result-metrics { grid-template-columns: minmax(0, 1fr); }
   .scenario-choice { grid-template-columns: 1.5rem minmax(0, 1fr) 1rem; padding: 0.8rem; }
 }
 

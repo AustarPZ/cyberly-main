@@ -7979,38 +7979,47 @@ function ScenariosPage() {
     const result = view;
     return (
       <div className="scenario-result-summary">
-        <div className="scenario-result-metrics">
-          <Surface variant="outlined" className="scenario-result-metric"><strong>{result.attempt.totalScore}/{result.attempt.maximumScore}</strong><span>{t("scenarios.result.score")}</span></Surface>
-          <Surface variant="outlined" className="scenario-result-metric"><strong>{result.attempt.percentage}%</strong><span>{t("scenarios.result.percentage")}</span></Surface>
-          <Surface variant="outlined" className="scenario-result-metric"><strong>{t(`scenarioResults.${result.attempt.resultLevel}`, { defaultValue: scenarioResultLabel(result.attempt.resultLevel) })}</strong><span>{t("scenarios.result.performanceLevel")}</span></Surface>
-          <Surface variant="outlined" className="scenario-result-metric"><strong>+{result.progressImpact?.masteryDelta || 0}</strong><span>{t("scenarios.result.masteryDelta")}</span></Surface>
-        </div>
-        <h2>{t("scenarios.result.decisionsReviewed")}</h2>
-        <div className="scenario-result-review-list">
-          {result.review.map(item => (
-            <Surface key={item.id} variant="outlined" className="scenario-result-review">
-              <h2>{t("scenarios.result.step", { step: item.stepOrder })}</h2>
+        {renderLocaleFallbackNotice(result.locale)}
+        <section className="scenario-result-reflection" aria-labelledby="scenario-result-reflection-title">
+          <h2 id="scenario-result-reflection-title">{t("scenarios.result.reflectTitle")}</h2>
+          {result.review?.length ? <div className="scenario-result-review-list">
+          {result.review.map((item, index) => (
+            <article key={item.id ?? item.stepId ?? index} className="scenario-result-review">
+              <h3>{t("scenarios.result.step", { step: item.stepOrder })}</h3>
+              <div className="scenario-result-review-copy">
               <div className="scenario-result-review-meta">
                 <span>{t("scenarios.result.yourChoice")}: {item.selectedOptionKey}</span>
                 {item.recommendedOptionKey && <span>{t("scenarios.result.recommendedChoice")}: {item.recommendedOptionKey}</span>}
+                {item.awardedScore != null && <span>{t("scenarios.result.decisionScore")}: {item.awardedScore}</span>}
               </div>
               <div className="scenario-feedback-label">{t("scenarios.result.feedback")}</div>
               <p>{item.feedback}</p>
               <div className="scenario-feedback-label">{t("scenarios.result.keyLesson")}</div>
               <p>{item.safetyExplanation}</p>
-            </Surface>
+              </div>
+            </article>
           ))}
-        </div>
+          </div> : <p className="scenario-result-empty">{t("scenarios.result.reviewUnavailable")}</p>}
+        </section>
+        <section className="scenario-result-attempt" aria-labelledby="scenario-result-attempt-title">
+          <h2 id="scenario-result-attempt-title">{t("scenarios.result.thisAttempt")}</h2>
+          {result.attempt.resultLevel != null && <p className="scenario-result-band">{t(`scenarioResults.${result.attempt.resultLevel}`, { defaultValue: scenarioResultLabel(result.attempt.resultLevel) })}</p>}
+          <dl className="scenario-result-evidence">
+            {(result.attempt.totalScore != null || result.attempt.maximumScore != null) && <div><dt>{t("scenarios.result.score")}</dt><dd>{result.attempt.totalScore ?? "—"}/{result.attempt.maximumScore ?? "—"}</dd></div>}
+            {result.attempt.percentage != null && <div><dt>{t("scenarios.result.percentage")}</dt><dd>{result.attempt.percentage}%</dd></div>}
+            {result.progressImpact?.masteryDelta != null && <div className="scenario-result-impact"><dt>{t("scenarios.result.masteryDelta")}</dt><dd>{result.progressImpact.masteryDelta > 0 ? "+" : ""}{result.progressImpact.masteryDelta}</dd></div>}
+          </dl>
+        </section>
         {result.recommendation && (
-          <Surface variant="subdued" className="scenario-result-recommendation">
-            <strong>{t("scenarios.result.updatedRecommendation")}</strong>
+          <section className="scenario-result-recommendation">
+            <h2>{t("scenarios.result.updatedRecommendation")}</h2>
             <p>{result.recommendation.reasonText}</p>
-          </Surface>
+          </section>
         )}
-        <div className="scenario-actions">
+        <div className="scenario-actions scenario-result-actions">
           <Button variant="primary" onClick={() => { if (nestedIntro.nested) requestHashNavigation("#/scenarios"); else setView({ mode: "library" }); }}>{t("scenarios.result.returnToLibrary")}</Button>
-          <Button onClick={() => go("dashboard")}>{t("nav.dashboard")}</Button>
-          <Button onClick={() => go("progress")}>{t("scenarios.result.viewProgress")}</Button>
+          <Button variant="quiet" onClick={() => go("dashboard")}>{t("nav.dashboard")}</Button>
+          <Button variant="quiet" onClick={() => go("progress")}>{t("scenarios.result.viewProgress")}</Button>
         </div>
       </div>
     );
@@ -8032,7 +8041,7 @@ function ScenariosPage() {
       {view.mode === "library" && renderScenarioHeader(t("scenarios.library.title"), t("scenarios.library.description"), { compact: true })}
       {view.mode === "intro" && renderScenarioHeader(view.scenario.title, null, { visual: false })}
       {view.mode === "attempt" && renderScenarioHeader(view.scenario.title, null, { compact: true })}
-      {view.mode === "result" && renderScenarioHeader(view.scenario.title, t("scenarios.result.completed"), { visual: true })}
+      {view.mode === "result" && renderScenarioHeader(view.scenario.title, t("scenarios.result.completed"), { compact: true })}
       <PageContainer width="wide" className="scenario-content">
         {error && view.mode !== "attempt" && <div className="field-error" role="alert" style={{ marginBottom: "1rem" }}>{error}</div>}
         {view.mode === "intro-loading" || view.mode === "intro-unavailable" ? (

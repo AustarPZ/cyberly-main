@@ -666,6 +666,10 @@
       "readyToCompleteDescription": "All decisions are submitted. Complete the scenario to calculate your result and apply progress."
     },
     "result": {
+      "reflectTitle": "Reflect on your decisions",
+      "thisAttempt": "This attempt",
+      "reviewUnavailable": "Decision review is not available for this attempt.",
+      "decisionScore": "Decision score",
       "completed": "Scenario completed",
       "result": "Result",
       "score": "Score",
