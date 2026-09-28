@@ -10201,10 +10201,12 @@ function AIChatPage() {
         historyControls={historyUsesDrawer ? historyDrawerId : historyListId}
         historyExpanded={historyUsesDrawer ? historyDrawerOpen : !sidebarCollapsed}
         newChatDisabled={initialLoading}
-      />
-      <CyberGuardAiNotice
-        title={t("chat.pilot.notice.title")}
-        description={t("chat.pilot.notice.description")}
+        transparencyNotice={
+          <CyberGuardAiNotice
+            title={t("chat.pilot.notice.title")}
+            description={t("chat.pilot.notice.description")}
+          />
+        }
       />
 
       <CyberGuardChatShell

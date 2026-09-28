@@ -2816,3 +2816,16 @@ describe("CyberGuard public beta pilot baseline", () => {
   });
 
 });
+
+
+test("I02 full workspace keeps one transparency notice in the header before the unchanged chat shell", async () => {
+  await renderCyberGuardPilotFixture();
+  const header = screen.getByRole("banner", { name: "CyberGuard" });
+  const notice = within(header).getByRole("complementary", { name: "AI-supported guidance" });
+  expect(document.querySelectorAll(".cyberguard-ai-notice")).toHaveLength(1);
+  expect(notice).toHaveAttribute("aria-labelledby", "cyberguard-ai-notice-title");
+  expect(notice).toHaveAttribute("aria-describedby", "cyberguard-ai-notice-description");
+  expect(follows(header, document.querySelector(".cyberguard-chat-shell"))).toBe(true);
+  expect(document.querySelectorAll(".cyberguard-chat-shell textarea")).toHaveLength(1);
+  expect(within(header).getByText(cyberGuardPilotConversation.title)).toBeVisible();
+});

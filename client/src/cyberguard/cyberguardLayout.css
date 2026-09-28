@@ -95,12 +95,13 @@
 }
 
 .cyberguard-page {
+  --cyberly-teal-700: #087b68;
   background: var(--cyberly-page-bg);
   height: auto;
   min-height: 0;
   max-height: none;
   display: grid;
-  grid-template-rows: auto auto auto;
+  grid-template-rows: auto auto;
   gap: 0.65rem;
   padding: 1rem 1rem 1.25rem;
   overflow: visible;
@@ -113,7 +114,7 @@
   border-radius: var(--cyberly-radius-panel);
   background: var(--cyberly-surface-primary);
   box-shadow: var(--cyberly-shadow-soft);
-  padding: 1rem;
+  padding: 0.75rem 1rem;
   margin-bottom: 0;
 }
 
@@ -167,10 +168,10 @@
 
 .cyberguard-workspace-description {
   max-width: 44rem;
-  margin: 0.45rem 0 0;
+  margin: 0.25rem 0 0;
   color: var(--cyberly-text-secondary);
-  font-size: 0.96rem;
-  line-height: 1.55;
+  font-size: 0.875rem;
+  line-height: 1.4;
 }
 
 .cyberguard-workspace-actions {
@@ -190,8 +191,8 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 0.35rem 0.6rem;
-  margin-top: 0.9rem;
-  padding-top: 0.8rem;
+  margin-top: 0.4rem;
+  padding-top: 0.4rem;
   border-top: 1px solid var(--cyberly-border-soft);
   color: var(--cyberly-text-secondary);
   font-size: 0.84rem;
@@ -263,7 +264,7 @@
 .cyberguard-chat-shell {
   width: min(1180px, 100%);
   min-width: 0;
-  height: clamp(34rem, calc(100dvh - var(--nav-h) - 3rem), 48rem);
+  height: clamp(34rem, calc(100dvh - var(--nav-h) - 14rem), 48rem);
   min-height: 0;
   margin: 0 auto;
   display: grid;
@@ -606,7 +607,7 @@
 }
 
 .cyberguard-chat-shell-messages .chat-bubble.user {
-  background: var(--cyberly-indigo-600);
+  background: var(--cyberly-teal-700);
   color: var(--cyberly-surface-primary);
 }
 
@@ -745,7 +746,7 @@
 }
 
 .cyberguard-composer-frame .chat-send {
-  background: var(--cyberly-indigo-600);
+  background: var(--cyberly-teal-700);
   color: var(--cyberly-surface-primary);
 }
 
@@ -835,7 +836,7 @@
     height: auto;
     min-height: calc(100vh - var(--nav-h));
     min-height: calc(100dvh - var(--nav-h));
-    grid-template-rows: auto auto auto;
+    grid-template-rows: auto auto;
     overflow: visible;
   }
 
@@ -871,6 +872,11 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
+  /* Keep mobile controls and guidance left of the unchanged launcher. */
+  .cyberguard-page .cyberguard-composer-frame {
+    padding-right: calc(52px + 1.5rem);
+  }
+
   .ai-chat-drawer-layer {
     display: block;
     position: fixed;
@@ -893,4 +899,41 @@
   .ai-chat-history-group-chevron {
     transition: none;
   }
+}
+
+/* I02: full-workspace composition; shared primitives stay unchanged. */
+.cyberguard-workspace-header .cyberguard-ai-notice {
+  width: 100%;
+  margin: 0.4rem 0 0;
+  padding: 0.4rem 0 0;
+  border: 0;
+  border-top: 1px solid var(--cyberly-border-soft);
+  border-radius: 0;
+  box-shadow: none;
+  gap: 0.5rem;
+}
+
+.cyberguard-workspace-actions .cy-button-primary {
+  background: var(--cyberly-teal-700);
+  color: var(--cyberly-surface-primary);
+}
+
+.cyberguard-workspace-actions .cy-button-primary:hover:not(:disabled),
+.cyberguard-composer-frame .chat-send:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--cyberly-teal-700) 85%, black);
+}
+
+.cyberguard-workspace-actions .cy-button-primary:focus-visible,
+.cyberguard-composer-frame .chat-send:focus-visible {
+  outline: 2px solid var(--cyberly-teal-700);
+  outline-offset: 3px;
+}
+
+.cyberguard-workspace-actions .cy-button-primary:disabled,
+.cyberguard-composer-frame .chat-send:disabled {
+  background: var(--cyberly-surface-secondary);
+  color: var(--cyberly-text-secondary);
+  border-color: var(--cyberly-border-soft);
+  opacity: 1;
+  cursor: not-allowed;
 }

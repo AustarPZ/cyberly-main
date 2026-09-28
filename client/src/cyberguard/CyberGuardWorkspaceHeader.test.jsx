@@ -1,6 +1,8 @@
-import { render, screen } from "@testing-library/react";
+import { render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import CyberGuardWorkspaceHeader from "./CyberGuardWorkspaceHeader";
+
+import CyberGuardAiNotice from "./CyberGuardAiNotice";
 
 const mockIconButtonRenderSpy = jest.fn();
 
@@ -54,6 +56,19 @@ describe("CyberGuardWorkspaceHeader", () => {
     expect(screen.getByText(defaultProps.description)).toBeInTheDocument();
     expect(screen.queryByText(/AI Gateway phase/i)).not.toBeInTheDocument();
     expect(screen.queryByText(/Live AI replies/i)).not.toBeInTheDocument();
+  });
+
+  test("I02 composes one semantic transparency notice inside the workspace identity", () => {
+    render(<CyberGuardWorkspaceHeader {...defaultProps} transparencyNotice={
+      <CyberGuardAiNotice title="AI-supported guidance" description="Check important information with trusted sources." />
+    } />);
+    const header = screen.getByRole("banner", { name: "CyberGuard" });
+    const notice = within(header).getByRole("complementary", { name: "AI-supported guidance" });
+    expect(notice.tagName).toBe("ASIDE");
+    expect(notice).toHaveAttribute("aria-describedby", "cyberguard-ai-notice-description");
+    expect(screen.getAllByRole("complementary")).toHaveLength(1);
+    expect(within(notice).getByText("Check important information with trusted sources.")).toBeVisible();
+    expect(within(header).getByText(defaultProps.conversationTitle)).toBeVisible();
   });
 
   test("renders active conversation context only when provided", () => {

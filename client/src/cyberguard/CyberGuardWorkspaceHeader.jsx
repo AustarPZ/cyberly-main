@@ -27,6 +27,7 @@ function CompanionMark() {
 
 export default function CyberGuardWorkspaceHeader({
   title,
+  transparencyNotice,
   description,
   conversationLabel,
   conversationTitle,
@@ -88,6 +89,7 @@ export default function CyberGuardWorkspaceHeader({
           {updatedLabel && <span className="cyberguard-workspace-conversation-meta">{updatedLabel}</span>}
         </div>
       )}
+      {transparencyNotice}
     </header>
   );
 }

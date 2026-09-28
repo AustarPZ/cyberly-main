@@ -74,7 +74,7 @@ describe("CyberGuard Task 4 layout CSS", () => {
     expect(page).toMatch(/overflow\s*:\s*visible/);
     expect(page).not.toMatch(/overflow-x\s*:\s*(?:hidden|clip|auto|scroll)/);
     expect(page).not.toMatch(/grid-template-rows\s*:\s*auto auto minmax\(0,\s*1fr\)/);
-    expect(page).toMatch(/grid-template-rows\s*:\s*auto auto auto/);
+    expect(page).toMatch(/grid-template-rows\s*:\s*auto auto\s*;/);
     expect(blockFor(".cyberguard-chat-shell")).toMatch(/min-height\s*:/);
     expect(blockFor(".cyberguard-chat-shell-main > .ai-chat-main")).toMatch(/grid-template-rows\s*:\s*minmax\(0,\s*1fr\)\s+auto/);
   });
@@ -176,7 +176,7 @@ describe("CyberGuard Task 4 layout CSS", () => {
     expect(mobilePage).toMatch(/height\s*:\s*auto/);
     expect(mobilePage).toMatch(/overflow\s*:\s*visible/);
     expect(mobilePage).not.toMatch(/overflow-x\s*:\s*(?:hidden|clip|auto|scroll)/);
-    expect(mobilePage).toMatch(/grid-template-rows\s*:\s*auto auto auto/);
+    expect(mobilePage).toMatch(/grid-template-rows\s*:\s*auto auto\s*;/);
     expect(mobileMain).toMatch(/height\s*:\s*clamp\(24rem,\s*68dvh,\s*44rem\)/);
     expect(mobileMain).toMatch(/min-height\s*:\s*0/);
     expect(css).not.toMatch(/height\s*:\s*clamp\(28rem,\s*68dvh,\s*42rem\)/);
@@ -319,5 +319,38 @@ describe("CyberGuard final visual alignment CSS", () => {
     expect(css).toMatch(/@media \(prefers-reduced-motion: reduce\)[\s\S]*?\.cyberguard-quick-prompt/);
     expect(css).not.toMatch(/body\s*\{[\s\S]*?overflow-x\s*:\s*hidden/);
     expect(css).not.toMatch(/!important/);
+  });
+});
+
+
+describe("I02 bounded workspace presentation", () => {
+  test("budgets desktop header space while retaining internal scroll and non-fixed composer", () => {
+    expect(blockFor(".cyberguard-chat-shell")).toMatch(/calc\(100dvh - var\(--nav-h\) - 14rem\)/);
+    expect(blockFor(".cyberguard-workspace-header .cyberguard-ai-notice")).toMatch(/border\s*:\s*0/);
+    expect(blockFor(".cyberguard-workspace-header .cyberguard-ai-notice")).not.toMatch(/display\s*:\s*none/);
+    expect(blockFor(".cyberguard-chat-shell-messages")).toMatch(/overflow-y\s*:\s*auto/);
+    expect(blockFor(".cyberguard-chat-shell-composer")).not.toMatch(/position\s*:\s*(fixed|sticky)/);
+  });
+  test("converges only workspace user/send/new-chat to green without changing shared primary", () => {
+    expect(blockFor(".cyberguard-chat-shell-messages .chat-bubble.user")).toMatch(/background\s*:\s*var\(--cyberly-teal-700\)/);
+    expect(blockFor(".cyberguard-composer-frame .chat-send")).toMatch(/background\s*:\s*var\(--cyberly-teal-700\)/);
+    expect(blockFor(".cyberguard-workspace-actions .cy-button-primary")).toMatch(/background\s*:\s*var\(--cyberly-teal-700\)/);
+    expect(blockFor(".cy-button-primary")).toMatch(/background\s*:\s*var\(--cyberly-indigo-600\)/);
+  });
+});
+
+
+describe("I02 C01 mobile composer safe area", () => {
+  test("reserves the fixed 52px launcher plus right offset inside only the mobile workspace composer", () => {
+    const frame = mediaBlockFor("@media (max-width: 820px)", ".cyberguard-page .cyberguard-composer-frame");
+    expect(frame).toMatch(/padding-right\s*:\s*calc\(52px\s*\+\s*1\.5rem\)/);
+    expect(frame).not.toMatch(/position\s*:\s*(?:fixed|sticky)/);
+    expect(blockFor(".cyberguard-composer-frame")).not.toMatch(/position\s*:\s*(?:fixed|sticky)/);
+    const page = mediaBlockFor("@media (max-width: 820px)", ".cyberguard-page");
+    expect(page).toMatch(/height\s*:\s*auto/);
+    expect(page).toMatch(/overflow\s*:\s*visible/);
+    expect(mediaBlockFor("@media (max-width: 820px)", ".cyberguard-composer-main")).toMatch(/grid-template-columns\s*:\s*minmax\(0,\s*1fr\)/);
+    expect(css).not.toContain(".chat-fab");
+    expect(css).not.toMatch(/(?:^|\n)\s*(?:textarea|form|button|body)\s*\{/);
   });
 });
