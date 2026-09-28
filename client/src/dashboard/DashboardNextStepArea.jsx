@@ -38,12 +38,14 @@ export default function DashboardNextStepArea(props) {
 }
 
 function ScopedNextStep({ stamp, guidance, inventory, recommendationObservation: observation, recommendation,
-  recommendationTitle, requestScenarioExactResume, requestAssessmentExactResume, onFollow, onComplete, onRetry,
+  recommendationTitle, requestScenarioExactResume, requestAssessmentExactResume, onFollow, onComplete, onRetry, onAssessmentEntry,
   completing = false, completionError = false, successFeedback = null }) {
   const { t } = useTranslation();
   const [manualFamily, setManualFamily] = useState(null);
   const savedLabels = useRef(new Map());
   const currentGuidance = sameStamp(guidance?.stamp,stamp);
+  const hasAssessmentEntry = currentGuidance && guidance.kind === 'assessment' && guidance.action?.owner === 'assessment'
+    && guidance.action.sourceIdentity === null && guidance.action.target?.type === 'assessment';
   const hasResume = currentGuidance && ['resume','resume_choice'].includes(guidance.kind);
   const currentRecommendation = sameStamp(observation?.stamp,stamp);
   const actionable = isActionableDashboardRecommendation(observation,stamp,recommendation);
@@ -78,7 +80,12 @@ function ScopedNextStep({ stamp, guidance, inventory, recommendationObservation:
         : <div className="dashboard-recommendation-panel">
           {successFeedback}
           {completionError && <p role="alert">{t('dashboard.integrated.completionUnavailable')}</p>}
-          {currentRecommendation && observation.state === 'loading' ? <PageState message={t('dashboard.recommendation.loading')} />
+          {hasAssessmentEntry ? <>
+            <h3>{t('dashboard.recommendation.initialAssessment')}</h3>
+            <div className="dashboard-next-step-actions">
+              <Button variant="primary" className="dashboard-primary-action" onClick={onAssessmentEntry}><span className="dashboard-action-label">{t('dashboard.recommendation.startAssessment')}</span><span className="dashboard-action-arrow" aria-hidden="true">→</span></Button>
+            </div>
+          </> : currentRecommendation && observation.state === 'loading' ? <PageState message={t('dashboard.recommendation.loading')} />
             : recommendationAbsent ? <PageState type="empty" message={t('dashboard.recommendation.empty')} />
               : actionable ? <>
                 <h3>{recommendationTitle}</h3>

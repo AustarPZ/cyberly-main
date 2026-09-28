@@ -286,14 +286,35 @@ async function run() {
     const cookieB = userB.cookieHeader;
     await saveProfile(cookieA);
 
+    // UG01-S3: a read must not create a recommendation or alter progress.
+    async function learnerState() {
+      const state = {};
+      for (const table of ['learner_recommendations', 'learner_topic_progress', 'learner_progress_summary', 'assessment_attempts', 'scenario_attempts']) {
+        const [rows] = await pool.query(`SELECT * FROM ${table} WHERE user_id = ? ORDER BY id`, [userA.json.user.id]);
+        state[table] = rows;
+      }
+      return JSON.parse(JSON.stringify(state));
+    }
+    const beforeRead = await learnerState();
     result = await request('GET', '/api/recommendations/current', undefined, cookieA);
+    const afterRead = await learnerState();
+    console.log('UG01-S3 GET purity:', JSON.stringify({ case: 'new-user-no-current', before: beforeRead, after: afterRead }));
+    assert.deepEqual(afterRead, beforeRead, 'Current recommendation GET must leave learner rows unchanged');
     assert.equal(result.response.status, 200);
-    assert.equal(result.json.recommendation.reasonCode, 'assessment_pending');
-    assert.equal(result.json.recommendation.target, null);
-    assert.equal(
-      result.json.recommendation.reasonText,
-      'Take the initial cyber-wellness assessment when you’re ready to give Cyberly a starting baseline for more specific topic recommendations.',
-    );
+    assert.deepEqual(result.json, { exists: false, recommendation: null });
+    async function assertReadPurity(caseName) {
+      const before = await learnerState();
+      const first = await request('GET', '/api/recommendations/current', undefined, cookieA);
+      const second = await request('GET', '/api/recommendations/current', undefined, cookieA);
+      const after = await learnerState();
+      console.log('UG01-S3 GET purity:', JSON.stringify({ case: caseName, before, after, first: first.json, second: second.json }));
+      assert.equal(first.response.status, 200);
+      assert.equal(second.response.status, 200);
+      assert.deepEqual(after, before, `${caseName}: GET must not mutate learner state`);
+      assert.deepEqual(second.json, first.json, `${caseName}: identical reads must preserve projection identity/lifecycle`);
+      return first.json;
+    }
+    await assertReadPurity('repeated-new-user-no-current');
 
     const { attemptId } = await completeAssessment(pool, cookieA);
 
@@ -374,6 +395,7 @@ async function run() {
     assert.ok(result.json.recommendation.targetScenarioId);
     assert.ok(result.json.recommendation.targetScenarioSlug);
     const recommendationId = result.json.recommendation.id;
+    await assertReadPurity('active-canonical-target');
 
     let scenarioRecommendation = await request('GET', '/api/scenarios/recommended', undefined, cookieA);
     assert.equal(scenarioRecommendation.response.status, 200);
@@ -389,6 +411,7 @@ async function run() {
     result = await request('POST', `/api/recommendations/${recommendationId}/viewed`, {}, cookieA);
     assert.equal(result.response.status, 200);
     assert.equal(result.json.recommendation.status, 'viewed');
+    await assertReadPurity('viewed-canonical-target');
     result = await request('POST', `/api/recommendations/${recommendationId}/completed`, {}, cookieA);
     assert.equal(result.response.status, 200, JSON.stringify(result.json));
     assert.equal(result.json.completedRecommendation.status, 'completed');
@@ -405,6 +428,7 @@ async function run() {
     assert.equal(currentAfterComplete.response.status, 200);
     assert.equal(currentAfterComplete.json.recommendation.id, result.json.recommendation.id);
     assert.notEqual(currentAfterComplete.json.recommendation.id, recommendationId);
+    await assertReadPurity('replacement-after-explicit-completion');
 
     result = await request('GET', '/api/progress', undefined, cookieA);
     assert.equal(result.response.status, 200);
@@ -449,6 +473,14 @@ async function run() {
     assert.equal(topicProgressCount.count, 4);
     const [[activeRecommendationCount]] = await pool.query("SELECT COUNT(*) AS count FROM learner_recommendations WHERE user_id = ? AND status IN ('active', 'viewed')", [userA.json.user.id]);
     assert.equal(activeRecommendationCount.count, 1);
+
+    // Fixture-only changes expose read cases without changing the catalogue.
+    await pool.query("UPDATE learner_recommendations SET topic_code = NULL WHERE user_id = ? AND status IN ('active', 'viewed')", [userA.json.user.id]);
+    const unavailable = await assertReadPurity('active-without-projectable-topic');
+    assert.equal(unavailable.recommendation.target, null);
+    await pool.query("UPDATE learner_recommendations SET status = 'completed' WHERE user_id = ? AND status IN ('active', 'viewed')", [userA.json.user.id]);
+    const noCurrent = await assertReadPurity('completed-assessment-no-current-recommendation');
+    assert.deepEqual(noCurrent, {exists: false, recommendation: null});
 
     result = await request('POST', '/api/auth/logout', {}, cookieA);
     assert.equal(result.response.status, 200);

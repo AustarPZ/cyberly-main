@@ -6105,6 +6105,9 @@ function DashboardPage() {
           recommendationTitle={recommendationTitle}
           requestScenarioExactResume={requestScenarioExactResume} requestAssessmentExactResume={requestAssessmentExactResume}
           onFollow={followRecommendation} onComplete={completeRecommendation} onRetry={retryDashboard}
+          onAssessmentEntry={() => {
+            if (resolveGuidance(guidanceInput).kind === 'assessment') go('assessment');
+          }}
           completing={recommendationCompleting} completionError={completionError}
           successFeedback={recommendationCompleteSaved ? <SuccessFeedback message={t("progress.recommendation.completedSaved")} /> : null}
         />

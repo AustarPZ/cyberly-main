@@ -139,3 +139,17 @@ test.each([{scopeKey:'new-learner',revision:0},{scopeKey:stamp.scopeKey,revision
   rerender(<DashboardNextStepArea {...props({scope})}/>);
   expect(screen.getByRole('button',{name:'Continue',exact:true})).toHaveAttribute('aria-pressed','true');
 });
+
+test('UG01-S3 Assessment entry is explicit and never recommendation-owned', () => {
+  const p = {...props({attempts: [], recommendation: null}), onAssessmentEntry: jest.fn()};
+  render(<DashboardNextStepArea {...p} />);
+  const button = screen.getByRole('button', {name: i18n.t('dashboard.recommendation.startAssessment')});
+  button.focus();
+  expect(p.onAssessmentEntry).not.toHaveBeenCalled();
+  expect(p.onFollow).not.toHaveBeenCalled();
+  expect(p.onComplete).not.toHaveBeenCalled();
+  fireEvent.click(button);
+  expect(p.onAssessmentEntry).toHaveBeenCalledTimes(1);
+  expect(p.onFollow).not.toHaveBeenCalled();
+  expect(p.requestAssessmentExactResume).not.toHaveBeenCalled();
+});

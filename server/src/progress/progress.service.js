@@ -252,23 +252,16 @@ function createProgressService(repository) {
 
   async function getCurrentRecommendation(userId, localeInput) {
     const locale = normalizeLocale(localeInput);
-    return repository.withTransaction(async (connection) => {
-      let recommendation = await repository.getCurrentRecommendation(userId, connection);
-      if (!recommendation) {
-        const latestAttempt = await repository.findLatestCompletedInitialAttempt(userId, connection);
-        if (!latestAttempt) {
-          await repository.supersedeActiveRecommendations(userId, connection);
-          const savedRecommendation = await repository.createRecommendation(userId, selectRecommendation([]), connection);
-          const actionableRecommendation = await ensureActionableCurrentRecommendation(userId, savedRecommendation, locale, connection);
-          return { exists: true, recommendation: mapRecommendation(actionableRecommendation, locale) };
-        }
-        const result = await syncInitialAssessment(userId, latestAttempt.id, connection, locale);
-        recommendation = result.recommendation;
-        return { exists: true, recommendation };
-      }
-      const actionableRecommendation = await ensureActionableCurrentRecommendation(userId, recommendation, locale, connection);
-      return { exists: Boolean(actionableRecommendation), recommendation: mapRecommendation(actionableRecommendation, locale) };
-    });
+    const recommendation = await repository.getCurrentRecommendation(userId);
+    if (!recommendation) return { exists: false, recommendation: null };
+    // A read can project a target, but cannot replace persisted authority.
+    // Cross-topic reconciliation remains owned by explicit write events.
+    const scenario = await selectCanonicalScenario(userId, recommendation, locale);
+    const coherentScenario = scenario && scenarioTopicCode(scenario) === recommendation.topic_code ? scenario : null;
+    return { exists: true, recommendation: mapRecommendation({
+      ...recommendation,
+      ...scenarioTargetExtras(coherentScenario),
+    }, locale) };
   }
 
   async function markViewed(userId, id, localeInput) {

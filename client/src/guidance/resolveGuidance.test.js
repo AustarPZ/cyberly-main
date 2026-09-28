@@ -33,13 +33,19 @@ const freeze = value => {
 };
 
 describe('resolveGuidance authority and precedence', () => {
+  test('UG01-S3 new learner gets an Assessment-owned entry action without a recommendation identity', () => {
+    const result = resolveGuidance(freeze(input()));
+    expect(result).toMatchObject({ kind: 'assessment', effect: 'none', action: {
+      owner: 'assessment', sourceIdentity: null, target: { type: 'assessment' },
+    } });
+  });
   test('resumes the one owned Assessment without turning pending into resume', () => {
     const result = resolveGuidance(input({ assessmentState: ready({ state: 'in_progress', attemptId: 1 }) }));
     expect(result).toMatchObject({ kind: 'resume', effect: 'none', action: {
       owner: 'assessment', sourceIdentity: { type: 'assessment_attempt', attemptId: 1 },
       target: { type: 'resume_assessment', attemptId: 1 }, actionKey: 'guidance.actions.resumeAssessment',
     } });
-    expect(resolveGuidance(input()).kind).toBe('browse');
+    expect(resolveGuidance(input()).kind).toBe('assessment');
   });
 
   test('resumes the exact sole Scenario ahead of a recommendation', () => {
@@ -97,7 +103,7 @@ describe('resolveGuidance authority and precedence', () => {
   });
 
   test('does not promote an editorial relation globally or onto another Resource', () => {
-    expect(resolveGuidance(resource({ pageContext: { page: 'dashboard' } })).kind).toBe('browse');
+    expect(resolveGuidance(resource({ pageContext: { page: 'dashboard' } })).kind).toBe('assessment');
     const result = resolveGuidance(resource({ editorialRelation: ready({ resourceSlug: 'other', scenarioSlug: 'parcel-sms' }) }));
     expect(result.kind).toBe('recovery');
     expect(result).not.toHaveProperty('action');
@@ -119,8 +125,8 @@ describe('resolveGuidance authority and precedence', () => {
     expect(resolveGuidance(resource({ currentRecommendation: observation('error', { retryable: true }) }))).toMatchObject({ kind: 'recovery', issues: [{ owner: 'recommendation', reason: 'error' }] });
   });
 
-  test('confirmed absence permits exploration without requiring Assessment', () => {
-    expect(resolveGuidance(input())).toMatchObject({ kind: 'browse', messageKey: 'guidance.browse', action: { target: { type: 'resources' } } });
+  test('confirmed absence offers Assessment entry while unknown Assessment remains recovery', () => {
+    expect(resolveGuidance(input())).toMatchObject({ kind: 'assessment', messageKey: 'dashboard.recommendation.initialAssessment', action: { target: { type: 'assessment' } } });
     expect(resolveGuidance(input({ assessmentState: observation('empty-confirmed') })).kind).toBe('recovery');
   });
 
@@ -201,10 +207,10 @@ describe('resolveGuidance authority and precedence', () => {
     }
   });
 
-  test('optional Assessment adds no prerequisite action; recovery retains exploration', () => {
+  test('Assessment entry is explicit and recovery retains exploration', () => {
     const result = resolveGuidance(input({ assessmentState: observation('unknown') }));
     expect(result.secondaryActions).toEqual([{ owner: 'guidance', sourceIdentity: null, actionKey: 'guidance.actions.browse', target: { type: 'resources' } }]);
-    expect(resolveGuidance(input()).action.target).toEqual({ type: 'resources' });
+    expect(resolveGuidance(input()).action.target).toEqual({ type: 'assessment' });
   });
 
   test.each([0, -1, 1.5, Number.MAX_SAFE_INTEGER + 1, '1'])('rejects invalid attempt ID %j', attemptId => {
@@ -270,6 +276,6 @@ describe('resolveGuidance authority and precedence', () => {
       input({ scenarioState: complete(scenario(2), scenario(3)) }), input({ currentRecommendation: recommendation() }),
       input({ scenarioState: observation('loading') }), input({ scenarioState: observation('error', { retryable: true }) }),
       input({ scenarioState: complete(scenario()), pageContext: { page: 'scenario_attempt', attemptId: 2 } })];
-    expect(cases.map(value => isolated(freeze(value)).kind)).toEqual(['browse', 'related', 'resume', 'resume_choice', 'recommendation', 'loading', 'recovery', 'none']);
+    expect(cases.map(value => isolated(freeze(value)).kind)).toEqual(['assessment', 'related', 'resume', 'resume_choice', 'recommendation', 'loading', 'recovery', 'none']);
   });
 });

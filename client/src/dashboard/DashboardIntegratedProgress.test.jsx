@@ -5,7 +5,7 @@ import { act, cleanup, fireEvent, render, screen, waitFor, within } from "@testi
 import App from "../App";
 import i18n from "../i18n";
 import { restoreSession } from "../api/authApi";
-import { getInitialAssessmentStatus } from "../api/assessmentApi";
+import { getInitialAssessment, createInitialAssessmentAttempt, getInitialAssessmentStatus } from "../api/assessmentApi";
 import { getProgress } from "../api/progressApi";
 import { getCurrentRecommendation, markRecommendationViewed, markRecommendationCompleted } from "../api/recommendationApi";
 import { listScenarios, getRecommendedScenarios, getScenarioDashboard } from "../api/scenarioApi";
@@ -105,6 +105,27 @@ describe("Dashboard integrated Progress", () => {
     getRecommendedScenarios.mockResolvedValue({ ok: true, data: { scenarios: [{ id: 9, slug: "bank-message", title: "Suspicious bank message", topicCode: "phishing", difficulty: "beginner", estimatedMinutes: 5 }] } });
     getScenarioDashboard.mockResolvedValue({ ok: true, data: { completedCount: 1, inProgress: null } });
     listChatConversations.mockResolvedValue({ ok: true, data: { conversations: [] } });
+  });
+
+  test('UG01-S3 pending learner opens Assessment intro without passive or navigation-time attempt creation', async () => {
+    getScenarioDashboard.mockResolvedValue({ok:true,data:{completedCount:0,inProgressAttempts:[]}});
+    getCurrentRecommendation.mockResolvedValue({ok:true,data:{exists:false,recommendation:null}});
+    getInitialAssessment.mockResolvedValue({ok:true,data:{assessment:{id:1,title:'Initial assessment'},questions:[]}});
+    createInitialAssessmentAttempt.mockResolvedValue({ok:false,data:{message:'Synthetic start blocked'}});
+    await renderDashboardWithSettledOverview();
+    const area = document.querySelector('#dashboard-recommended-next-step');
+    const entry = await within(area).findByRole('button',{name:i18n.t('dashboard.recommendation.startAssessment')});
+    entry.focus();
+    expect(createInitialAssessmentAttempt).not.toHaveBeenCalled();
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
+    fireEvent.click(entry);
+    await waitFor(()=>expect(window.location.hash).toBe('#/assessment'));
+    const start = await screen.findByRole('button',{name:i18n.t('assessment.start'),exact:true});
+    expect(createInitialAssessmentAttempt).not.toHaveBeenCalled();
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
+    fireEvent.click(start);
+    await waitFor(()=>expect(createInitialAssessmentAttempt).toHaveBeenCalledTimes(1));
   });
 
   test("integrates detailed progress with one response owner", async () => {

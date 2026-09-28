@@ -39,7 +39,7 @@
  * @typedef {'guidance.actions.browse'|'guidance.actions.resumeAssessment'|'guidance.actions.resumeScenario'|
  * 'guidance.actions.openRecommendation'|'guidance.actions.relatedPractice'|
  * 'guidance.actions.retryAssessment'|'guidance.actions.retryScenario'|
- * 'guidance.actions.retryRecommendation'|'guidance.actions.retryResource'} ActionKey
+ * 'guidance.actions.retryRecommendation'|'guidance.actions.retryResource'|'dashboard.recommendation.startAssessment'} ActionKey
  * @typedef {{owner: Owner, sourceIdentity: SourceIdentity, actionKey: ActionKey, target: ActionTarget}} Action
  * @typedef {{owner: Owner, reason: 'unknown'|'error'|'stale'|'invalid_input'|'incomplete_coverage'|'unusable_target', state?: 'loading'}} Issue
  * @typedef {{stamp: Stamp, effect: 'none', secondaryActions: Action[]}} Common
@@ -47,6 +47,7 @@
  * {kind: 'resume', action: Action, messageKey: 'guidance.resume'} |
  * {kind: 'resume_choice', choices: Action[], messageKey: 'guidance.resumeChoice'} |
  * {kind: 'recommendation', lifecycle: 'active'|'viewed', action: Action, messageKey: 'guidance.recommendation'} |
+ * {kind: 'assessment', action: Action, messageKey: 'dashboard.recommendation.initialAssessment'} |
  * {kind: 'related', action: Action, messageKey: 'guidance.relatedPractice'} |
  * {kind: 'recovery', issues: Issue[], retryActions: Action[], messageKey: 'guidance.recovery'} |
  * {kind: 'browse', action: Action, messageKey: 'guidance.browse'} |
@@ -102,8 +103,7 @@ function navigationTarget(value) {
 
 /**
  * Returns descriptors only. effect:none describes this function, not a future
- * learner-selected action. Refresh intents are never executed here (the existing
- * Current Recommendation request can reconcile records). No clock, I/O or imports.
+ * learner-selected action. Refresh intents are never executed here. No clock, I/O or imports.
  * The caller must discard output after its scope/revision changes.
  * @param {GuidanceInput} input
  * @returns {Guidance}
@@ -221,6 +221,12 @@ export function resolveGuidance(input) {
           owner: 'recommendation', sourceIdentity: { type: 'recommendation', id: value.id }, actionKey: 'guidance.actions.openRecommendation', target,
         } };
       }
+    }
+    if (page.page === 'dashboard' && assessment.value.state === 'pending'
+      && recommendation.state === 'empty-confirmed') {
+      return { ...common(), kind: 'assessment', messageKey: 'dashboard.recommendation.initialAssessment', action: {
+        owner: 'assessment', sourceIdentity: null, actionKey: 'dashboard.recommendation.startAssessment', target: { type: 'assessment' },
+      } };
     }
   }
 
