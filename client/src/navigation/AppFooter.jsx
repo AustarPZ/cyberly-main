@@ -9,7 +9,7 @@ export default function AppFooter({ onNavigate, helpHref }) {
     }
   }
   return <footer className="cy-app-footer">
-    <div className="cy-footer-identity"><p>{t("footer.builtWithCare")} · <strong>Cyberly</strong> · {new Date().getFullYear()}</p><p>{t("footer.description")}</p></div>
+    <div className="cy-footer-identity"><p>{t("footer.builtWithCare")} · <strong>Cyberly</strong> · {new Date().getFullYear()}</p><p>{t("footer.description")}</p><p lang="en">(©️ 2026 Taylor’s University)</p></div>
     <div className="cy-footer-links">
       <a href="#/about" onClick={event => follow(event, "about")}>{t("footer.aboutCyberly")}</a>
       <a className="cy-footer-privacy-link" href="#/privacy" onClick={event => follow(event, "privacy")}>{t("privacyNotice.linkLabel")}</a>

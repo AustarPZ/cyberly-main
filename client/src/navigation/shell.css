@@ -44,3 +44,9 @@ footer.cy-app-footer { display: flex; align-items: center; justify-content: spac
   .cy-global-navigation .nav-utility { gap: 0.3rem; }
   .cy-global-navigation .nav-language select { max-width: 76px; }
 }
+
+@media (min-width: 601px) {
+  footer.cy-app-footer {
+    padding-inline-end: 6rem;
+  }
+}

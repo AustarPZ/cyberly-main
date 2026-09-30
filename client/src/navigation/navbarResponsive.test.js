@@ -30,4 +30,14 @@ describe("narrow mobile navbar contract", () => {
     expect(fs.readFileSync(path.join(__dirname, "AccountMenu.jsx"), "utf8")).toMatch(/<AvatarVisual\s+presetId=\{avatarModel\.presetId\}/);
     expect(appSource).toMatch(/getInitialAvatarText/);
   });
+  test("reserves a desktop footer safe lane without moving the FAB or removing mobile clearance", () => {
+    const css = fs.readFileSync(path.join(__dirname, "shell.css"), "utf8");
+    const desktop = css.match(/@media\s*\(min-width:\s*601px\)\s*\{\s*footer\.cy-app-footer\s*\{([^}]+)\}/);
+    expect(desktop).not.toBeNull();
+    const reservation = desktop[1].match(/padding-inline-end:\s*([\d.]+)(rem|px)\s*;/);
+    expect(reservation).not.toBeNull();
+    expect(Number(reservation[1]) * (reservation[2] === "rem" ? 16 : 1)).toBeGreaterThanOrEqual(92);
+    expect(css).toMatch(/@media\s*\(max-width:\s*600px\)\s*\{\s*footer\.cy-app-footer\s*\{[^}]*padding-bottom:\s*5\.5rem\s*;/);
+    expect(css).not.toMatch(/\.chat-fab\b/);
+  });
 });

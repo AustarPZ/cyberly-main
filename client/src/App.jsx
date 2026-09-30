@@ -6905,6 +6905,15 @@ function AboutPage() {
             ))}
           </ul>
         </PageSection>
+        <PageSection className="cy-about-section" lang="en">
+          <div className="cy-about-section-heading">
+            <h2>Copyright / Intellectual Property</h2>
+          </div>
+          <Surface className="cy-about-capability-card">
+            <p>The expression of this work is a copyrighted material and ownership of associated Intellectual Properties belongs to Taylor’s University. The authors/inventors assert their moral rights relating to the Copyright and associated Intellectual Properties.</p>
+            <p>(©️ 2026 Taylor’s University)</p>
+          </Surface>
+        </PageSection>
       </PageContainer>
     </div>
   );

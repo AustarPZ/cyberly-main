@@ -1,5 +1,6 @@
 import { render, screen } from "@testing-library/react";
 import App from "../App";
+import AppFooter from "./AppFooter";
 import i18n from "../i18n";
 import { restoreSession } from "../api/authApi";
 import { getProgress } from "../api/progressApi";
@@ -106,4 +107,14 @@ describe("AppShell route landmark ownership", () => {
     expect(container.querySelector(".admin-workspace-main")).toBeInTheDocument();
     expect(container.querySelector(".admin-workspace-main").tagName).not.toBe("MAIN");
   });
+});
+
+test("shows the exact fixed university copyright alongside the existing footer identity", () => {
+  render(<AppFooter helpHref="#/help" />);
+  expect(screen.getByText("(©️ 2026 Taylor’s University)", { exact: true })).toBeVisible();
+  expect(screen.getByText("Cyberly", { exact: true })).toBeVisible();
+  expect(screen.getByText(i18n.t("footer.description"), { exact: true })).toBeVisible();
+  expect(screen.getByRole("link", { name: i18n.t("footer.aboutCyberly") })).toHaveAttribute("href", "#/about");
+  expect(screen.getByRole("link", { name: i18n.t("privacyNotice.linkLabel") })).toHaveAttribute("href", "#/privacy");
+  expect(screen.getByRole("link", { name: i18n.t("nav.help") })).toHaveAttribute("href", "#/help");
 });

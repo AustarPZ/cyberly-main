@@ -152,4 +152,25 @@ describe("About Project Story and Trust Overview", () => {
     expect(within(about).getByRole("heading", { level: 3, name: i18n.t("about.capabilities.items.cyberguard.title") })).toBeVisible();
     expect(about).not.toHaveTextContent(/56%|11%|84\.6%|96%/);
   });
+  test.each(["en", "ms", "zh-CN"])("preserves the exact English legal statement with localized About content in %s", async locale => {
+    const { container } = await renderAbout({ locale });
+    const about = within(container.querySelector(".cy-about-page"));
+    const title = i18n.getFixedT(locale)("about.hero.title");
+    expect(about.getByRole("heading", { level: 1, name: title })).toBeVisible();
+    if (locale !== "en") expect(title).not.toBe(i18n.getFixedT("en")("about.hero.title"));
+    const statement = "The expression of this work is a copyrighted material and ownership of associated Intellectual Properties belongs to Taylor’s University. The authors/inventors assert their moral rights relating to the Copyright and associated Intellectual Properties.";
+    expect(about.getAllByText(statement, { exact: true })).toHaveLength(1);
+    expect(about.getByText(statement, { exact: true })).toBeVisible();
+    expect(about.getByText(statement, { exact: true }).textContent).toBe(statement);
+    expect(about.getByRole("heading", { level: 2, name: "Copyright / Intellectual Property" })).toBeVisible();
+  });
+
+  test.each(["en", "ms", "zh-CN"])("shows the exact fixed copyright once in About content in %s", async locale => {
+    const { container } = await renderAbout({ locale });
+    const about = within(container.querySelector(".cy-about-page"));
+    const line = "(©️ 2026 Taylor’s University)";
+    expect(about.getAllByText(line, { exact: true })).toHaveLength(1);
+    expect(about.getByText(line, { exact: true })).toBeVisible();
+    expect(about.getByText(line, { exact: true }).textContent).toBe(line);
+  });
 });
