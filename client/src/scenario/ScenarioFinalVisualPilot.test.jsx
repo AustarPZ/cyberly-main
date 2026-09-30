@@ -4,6 +4,7 @@ import App from "../App";
 import i18n from "../i18n";
 import { restoreSession } from "../api/authApi";
 import {
+  getScenarioDashboard,
   completeScenarioAttempt,
   getRecommendedScenarios,
   getScenarioAttempt,
@@ -13,9 +14,13 @@ import {
   saveScenarioDecision,
   startScenarioAttempt,
 } from "../api/scenarioApi";
+import { getInitialAssessmentStatus } from "../api/assessmentApi";
+import { getCurrentRecommendation, markRecommendationViewed, markRecommendationCompleted } from "../api/recommendationApi";
 import { listChatConversations } from "../chat/chatApi";
 import { buildRecommendedScenarioNavigation, clearRecommendedScenarioTarget } from "../chat/chatActions";
 
+jest.mock("../api/assessmentApi", () => ({ getInitialAssessmentStatus: jest.fn() }));
+jest.mock("../api/recommendationApi", () => ({ getCurrentRecommendation: jest.fn(), markRecommendationViewed: jest.fn(), markRecommendationCompleted: jest.fn() }));
 jest.mock("react-markdown", () => ({ __esModule: true, default: ({ children }) => <div>{children}</div> }));
 jest.mock("remark-gfm", () => ({ __esModule: true, default: () => null }));
 jest.mock("../api/authApi", () => ({
@@ -120,6 +125,9 @@ describe("Scenario Decision Trail final visual migration", () => {
         profile: { exists: true, onboardingCompleted: true, familiarityLevel: "beginner", preferredLanguage: "english", learningStyle: "step_by_step", helpTopics: ["phishing"] },
       },
     });
+    getInitialAssessmentStatus.mockResolvedValue({ ok: true, data: { status: "pending" } });
+    getScenarioDashboard.mockResolvedValue({ ok: true, data: { inProgressAttempts: [] } });
+    getCurrentRecommendation.mockResolvedValue({ ok: true, data: { recommendation: null } });
     listScenarios.mockResolvedValue({ ok: true, data: { scenarios: [scenario, resumedScenario] } });
     getRecommendedScenarios.mockResolvedValue({ ok: true, data: { scenarios: [scenario] } });
     getScenarioBySlug.mockResolvedValue({
@@ -716,13 +724,13 @@ describe("Scenario Decision Trail final visual migration", () => {
     expect(await screen.findByText("75%")).toBeVisible();
   });
 
-  async function openI04(payload = completedResult, locale = "en") {
+  async function openI04(payload = completedResult, locale = "en", additionalScenarios = []) {
     await i18n.changeLanguage(locale);
     restoreSession.mockResolvedValue({ ok: true, data: {
       user: { id: 91, displayName: "Alya", age: 15, role: "user", accountStatus: "active", emailVerified: true },
       profile: { exists: true, onboardingCompleted: true, preferredLanguage: { en: "english", ms: "bahasa_melayu", "zh-CN": "chinese" }[locale] },
     } });
-    listScenarios.mockResolvedValue({ ok: true, data: { scenarios: [{ ...scenario, latestAttempt: { id: 502, status: "completed" } }] } });
+    listScenarios.mockResolvedValue({ ok: true, data: { scenarios: [{ ...scenario, latestAttempt: { id: 502, status: "completed" } }, ...additionalScenarios] } });
     getScenarioAttemptResult.mockResolvedValue({ ok: true, data: payload });
     const rendered = render(<App />);
     const reviewButton = await screen.findByRole("button", { name: i18n.t("scenarios.card.viewResult") });
@@ -730,6 +738,17 @@ describe("Scenario Decision Trail final visual migration", () => {
     await screen.findByRole("heading", { level: 1, name: scenario.title });
     return rendered;
   }
+
+  test("UG01-S4 RED Scenario result recommendation is governed and passive", async () => {
+    getInitialAssessmentStatus.mockResolvedValue({ ok: true, data: { status: "pending" } });
+    getScenarioDashboard.mockResolvedValue({ ok: true, data: { inProgressAttempts: [] } });
+    getCurrentRecommendation.mockResolvedValue({ ok: true, data: { recommendation: { id: 702, status: "active", target: { page: "scenarios", scenarioSlug: "group-chat-pressure" } } } });
+    await openI04();
+    window.dispatchEvent(new Event("focus"));
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
+    expect(await screen.findByRole("button", { name: i18n.t("dashboard.recommendation.openRecommendation") })).toBeEnabled();
+  });
 
   test("I04 leads with every canonical decision before attempt metrics, without synthesizing a main lesson", async () => {
     const payload = { ...completedResult, review: [
@@ -753,7 +772,7 @@ describe("Scenario Decision Trail final visual migration", () => {
     expect(within(attempt).getByText("3/4")).toBeVisible();
     expect(within(attempt).getByText("75%")).toBeVisible();
     expect(within(attempt).getByText("+2")).toBeVisible();
-    expect(screen.getByText(completedResult.recommendation.reasonText)).toBeVisible();
+    expect(screen.queryByText(completedResult.recommendation.reasonText)).not.toBeInTheDocument();
     expect(container.querySelectorAll(".scenario-result-metric")).toHaveLength(0);
     expect(screen.queryByText(/main lesson|ask cyberguard about|try this scenario next/i)).not.toBeInTheDocument();
     expect(JSON.stringify(payload)).toBe(before);
@@ -778,7 +797,7 @@ describe("Scenario Decision Trail final visual migration", () => {
     const { container } = await openI04({ ...completedResult, review: [], recommendation: null });
     expect(screen.getByText("Decision review is not available for this attempt.")).toBeVisible();
     expect(container.querySelectorAll(".scenario-result-review")).toHaveLength(0);
-    expect(container.querySelector(".scenario-result-recommendation")).not.toBeInTheDocument();
+    expect(screen.queryByRole("button", { name: i18n.t("dashboard.recommendation.openRecommendation") })).not.toBeInTheDocument();
     expect(screen.getByText("75%")).toBeVisible();
     expectNoLearningWrites();
   });
@@ -798,16 +817,26 @@ describe("Scenario Decision Trail final visual migration", () => {
   test.each([["Library", "#/scenarios"], ["Dashboard", "#/dashboard"], ["Progress", "#/dashboard"]])("I04 retains the existing %s destination and passive zero-write behavior", async (action, destination) => {
     const { container } = await openI04();
     const summary = container.querySelector(".scenario-result-summary");
-    const buttons = within(summary).getAllByRole("button");
+    const secondary = summary.querySelector(".scenario-result-actions");
+    const buttons = within(secondary).getAllByRole("button");
     expect(buttons).toHaveLength(3);
+    expect(buttons.map(button => button.textContent)).toEqual(["Return to scenario library", "Dashboard", "View progress"]);
+    const governed = within(summary).getByRole("region", { name: i18n.t("dashboard.nextStep.eyebrow") });
+    const nextStep = await within(governed).findByRole("button", { name: i18n.t("nav.resources") });
+    expect(secondary).not.toContainElement(nextStep);
     buttons[0].focus();
+    expect(buttons[0]).toHaveFocus();
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
     window.dispatchEvent(new Event("scroll"));
     expectNoLearningWrites();
     const label = action === "Library" ? "Return to scenario library" : action === "Dashboard" ? "Dashboard" : "View progress";
-    await act(async () => { await userEvent.click(within(summary).getByRole("button", { name: label })); });
+    await act(async () => { await userEvent.click(within(secondary).getByRole("button", { name: label })); });
     expect(window.location.hash).toBe(destination);
     if (action === "Library") expect(await screen.findByRole("button", { name: "Review result" })).toBeVisible();
     expectNoLearningWrites();
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
   });
 
   test("I04 result GET failure retains existing library recovery and never fabricates zero success", async () => {
@@ -846,4 +875,62 @@ describe("Scenario Decision Trail final visual migration", () => {
     expect(saveScenarioDecision).not.toHaveBeenCalled();
     expect(completeScenarioAttempt).not.toHaveBeenCalled();
   });
+  async function openS4Result(additionalScenarios = []) {
+    await openI04(completedResult, "en", additionalScenarios);
+    return screen.findByRole("region", { name: i18n.t("dashboard.nextStep.eyebrow") });
+  }
+  test.each(["active", "viewed", "completed", "absent", "malformed", "error"])("UG01-S4 result authority %s", async mode => {
+    getScenarioDashboard.mockResolvedValue({ ok: true, data: { inProgressAttempts: [] } });
+    getCurrentRecommendation.mockResolvedValue(mode === "error" ? { ok: false } : { ok: true, data: { recommendation: mode === "absent" ? null : {
+      id: 703, status: mode === "viewed" || mode === "completed" ? mode : "active", target: mode === "malformed" ? null : { page: "scenarios" },
+    } } });
+    const area = await openS4Result();
+    if (["active", "viewed"].includes(mode)) expect(await within(area).findByRole("button", { name: i18n.t("dashboard.recommendation.openRecommendation") })).toBeEnabled();
+    else if (["error", "malformed"].includes(mode)) expect(await within(area).findByRole("alert")).toBeVisible();
+    else expect(await within(area).findByRole("button", { name: i18n.t("nav.resources") })).toBeEnabled();
+    area.focus(); window.dispatchEvent(new Event("focus"));
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
+  });
+  test.each(["success", "failure", "stale"])("UG01-S4 explicit viewed %s waits and never completes", async mode => {
+    const intendedScenario = { ...resumedScenario, latestAttempt: null };
+    getRecommendedScenarios.mockResolvedValue({ ok: true, data: { scenarios: [intendedScenario] } });
+    let finish;
+    markRecommendationViewed.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    getScenarioDashboard.mockResolvedValue({ ok: true, data: { inProgressAttempts: [] } });
+    getCurrentRecommendation.mockResolvedValue({ ok: true, data: { recommendation: { id: 704, status: "active", target: { page: "scenarios", scenarioSlug: "group-chat-pressure" } } } });
+    const area = await openS4Result([intendedScenario]);
+    const button = await within(area).findByRole("button", { name: i18n.t("dashboard.recommendation.openRecommendation") });
+    const before = window.location.hash;
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
+    await userEvent.click(button); await userEvent.click(button);
+    expect(markRecommendationViewed).toHaveBeenCalledTimes(1);
+    expect(markRecommendationViewed).toHaveBeenCalledWith(704, { locale: "en" });
+    expect(window.location.hash).toBe(before);
+    if (mode === "stale") await act(async () => { await i18n.changeLanguage("ms"); });
+    await act(async () => finish({ ok: mode !== "failure", data: {} }));
+    if (mode === "success") {
+      await waitFor(() => expect(window.location.hash).toBe("#/scenarios"));
+      const card = (await screen.findByRole("heading", { name: intendedScenario.title, exact: true })).closest(".scenario-library-card");
+      await waitFor(() => expect(card).toHaveClass("highlighted"));
+      expect(card).toHaveClass("recommended");
+      expect(within(card).getByText(i18n.t("scenarios.library.recommendedNext"), { exact: true })).toBeVisible();
+      expect(intendedScenario.slug).toBe("group-chat-pressure");
+      expect(card).toBeVisible();
+    }
+    else expect(window.location.hash).toBe(before);
+    if (mode === "failure") expect(within(area).getByRole("alert")).toBeVisible();
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
+  });
+  test("UG01-S4 exact resume wins with zero lifecycle writes", async () => {
+    getInitialAssessmentStatus.mockResolvedValue({ ok: true, data: { status: "in_progress", attempt: { id: 711 } } });
+    getCurrentRecommendation.mockResolvedValue({ ok: true, data: { recommendation: { id: 704, status: "active", target: { page: "resources" } } } });
+    const area = await openS4Result();
+    await userEvent.click(await within(area).findByRole("button", { name: i18n.t("dashboard.resumeAssessment") }));
+    await waitFor(() => expect(window.location.hash).toBe("#/assessment"));
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
+  });
+
 });

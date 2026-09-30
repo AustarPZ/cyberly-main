@@ -279,3 +279,16 @@ describe('resolveGuidance authority and precedence', () => {
     expect(cases.map(value => isolated(freeze(value)).kind)).toEqual(['assessment', 'related', 'resume', 'resume_choice', 'recommendation', 'loading', 'recovery', 'none']);
   });
 });
+
+test.each(['assessment_result', 'scenario_result'])('completed result context %s uses existing authority without dashboard Assessment entry', page => {
+  const value = input({ pageContext: { page, attemptId: 99 }, scenarioState: complete() });
+  expect(resolveGuidance(value).kind).toBe('browse');
+  for (const lifecycle of ['active', 'viewed']) {
+    expect(resolveGuidance({ ...value, currentRecommendation: recommendation({ type: 'scenarios' }, lifecycle) }).kind).toBe('recommendation');
+  }
+  expect(resolveGuidance({ ...value, currentRecommendation: recommendation(null, 'completed') }).kind).toBe('browse');
+  expect(resolveGuidance({ ...value, currentRecommendation: recommendation(null) }).kind).toBe('recovery');
+  expect(resolveGuidance({ ...value, currentRecommendation: observation('error', { retryable: true }) }).kind).toBe('recovery');
+  expect(resolveGuidance({ ...value, assessmentState: ready({ state: 'in_progress', attemptId: 7 }), currentRecommendation: recommendation() }).action.target)
+    .toEqual({ type: 'resume_assessment', attemptId: 7 });
+});

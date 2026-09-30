@@ -5,6 +5,8 @@ import App from '../App';
 import i18n from '../i18n';
 import { restoreSession, logout } from '../api/authApi';
 import * as api from '../api/assessmentApi';
+import { getScenarioDashboard } from '../api/scenarioApi';
+import { getCurrentRecommendation, markRecommendationViewed, markRecommendationCompleted } from '../api/recommendationApi';
 
 let mockContext;
 jest.mock('../design-system/layout/AppShell', () => {
@@ -16,6 +18,8 @@ jest.mock('react-markdown', () => ({ __esModule: true, default: ({ children }) =
 jest.mock('remark-gfm', () => ({ __esModule: true, default: () => null }));
 jest.mock('../api/authApi', () => ({ register: jest.fn(), login: jest.fn(), restoreSession: jest.fn(), refreshCurrentUser: jest.fn(), verifyEmail: jest.fn(), resendVerificationEmail: jest.fn(), logout: jest.fn() }));
 jest.mock('../api/assessmentApi', () => ({ getInitialAssessment: jest.fn(), getInitialAssessmentStatus: jest.fn(), getInitialAssessmentResult: jest.fn(), createInitialAssessmentAttempt: jest.fn(), getAssessmentAttempt: jest.fn(), saveAssessmentAnswer: jest.fn(), submitAssessmentAttempt: jest.fn() }));
+jest.mock('../api/scenarioApi', () => ({ getScenarioDashboard: jest.fn() }));
+jest.mock('../api/recommendationApi', () => ({ getCurrentRecommendation: jest.fn(), markRecommendationViewed: jest.fn(), markRecommendationCompleted: jest.fn() }));
 jest.mock('../chat/chatApi', () => ({ listChatConversations: jest.fn().mockResolvedValue({ ok: true, data: { conversations: [] } }), createChatConversation: jest.fn(), getChatConversation: jest.fn(), renameChatConversation: jest.fn(), deleteChatConversation: jest.fn(), createChatUserMessage: jest.fn(), generateChatAssistantReply: jest.fn(), createLearnerActionProposal: jest.fn(), confirmLearnerActionProposal: jest.fn(), cancelLearnerActionProposal: jest.fn() }));
 
 const account = { id: 91, displayName: 'Learner', age: 15, role: 'user', emailVerified: true };
@@ -47,6 +51,8 @@ beforeEach(async () => {
   restoreSession.mockResolvedValue({ ok: true, data: { user: account, profile } });
   logout.mockResolvedValue({ ok: true, data: {} });
   require('../chat/chatApi').listChatConversations.mockResolvedValue({ ok: true, data: { conversations: [] } });
+  getScenarioDashboard.mockResolvedValue({ ok: true, data: { inProgressAttempts: [] } });
+  getCurrentRecommendation.mockResolvedValue({ ok: true, data: { recommendation: null } });
   api.getInitialAssessment.mockResolvedValue({ ok: true, data: content() });
   api.getInitialAssessmentStatus.mockResolvedValue({ ok: true, data: { status: 'pending' } });
   api.getAssessmentAttempt.mockImplementation(async id => ({ ok: true, data: { attempt: attempt(id) } }));
@@ -315,20 +321,63 @@ test('active ordinary Assessment guard cancellation preserves it and confirmatio
 });
 
 test('explicit answer saving and confirmed submission still use the exact attempt', async () => {
+  // Phase A: exact player remains isolated through the unresolved submission.
   await boot(); await request(); await player(); isolated();
+  expect(api.getAssessmentAttempt.mock.calls).toEqual([[7, { locale: 'en' }]]);
   api.saveAssessmentAnswer.mockResolvedValue({ ok: true, data: { attempt: { ...attempt(), answers: [...attempt().answers, { questionId: 102, selectedOptionKey: 'A' }] } } });
   await userEvent.click(screen.getByRole('button', { name: i18n.t('assessment.next') }));
   await act(async () => userEvent.click(selected('Check the source')));
-  expect(api.saveAssessmentAnswer).toHaveBeenCalledWith(7, { questionId: 102, selectedOptionKey: 'A' });
+  expect(api.saveAssessmentAnswer.mock.calls).toEqual([[7, { questionId: 102, selectedOptionKey: 'A' }]]);
+  const noOrdinaryPlayer = () => {
+    expect(api.getInitialAssessmentStatus).not.toHaveBeenCalled();
+    expect(api.getInitialAssessmentResult).not.toHaveBeenCalled();
+    expect(api.createInitialAssessmentAttempt).not.toHaveBeenCalled();
+    expect(getScenarioDashboard).not.toHaveBeenCalled();
+    expect(getCurrentRecommendation).not.toHaveBeenCalled();
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
+  };
+  noOrdinaryPlayer();
   await userEvent.click(screen.getByRole('button', { name: i18n.t('assessment.submit') }));
   expect(api.submitAssessmentAttempt).not.toHaveBeenCalled();
-  api.submitAssessmentAttempt.mockResolvedValue({ ok: true, data: { attempt: { ...attempt(), status: 'completed', totalScore: 2, maximumScore: 2, percentage: 100 }, topicScores: [], review: [] } });
+  noOrdinaryPlayer();
+  const submission = deferred();
+  api.submitAssessmentAttempt.mockReturnValueOnce(submission.promise);
   await act(async () => userEvent.click(within(screen.getByRole('dialog')).getByRole('button', { name: i18n.t('assessment.submit') })));
-  expect(api.submitAssessmentAttempt).toHaveBeenCalledWith(7, { locale: 'en' });
+  expect(api.submitAssessmentAttempt.mock.calls).toEqual([[7, { locale: 'en' }]]);
+  expect(screen.queryByText(i18n.t('assessment.completed'))).not.toBeInTheDocument();
+  noOrdinaryPlayer();
+
+  // Phase B starts only after successful submit and completed Result rendering.
+  const result = { attempt: { ...attempt(), status: 'completed', totalScore: 2, maximumScore: 2, percentage: 100 }, topicScores: [], review: [] };
+  api.getInitialAssessmentStatus.mockResolvedValue({ ok: true, data: { status: 'completed', result } });
+  await act(async () => submission.resolve({ ok: true, data: result }));
   expect(await screen.findByText(i18n.t('assessment.completed'))).toBeVisible();
+  const settleGuidance = async () => {
+    const area = await screen.findByRole('region', { name: i18n.t('dashboard.nextStep.eyebrow') });
+    expect(await within(area).findByRole('button', { name: i18n.t('nav.resources') })).toBeEnabled();
+  };
+  const unchangedWritesAndExactOwner = () => {
+    expect(api.getAssessmentAttempt.mock.calls).toEqual([[7, { locale: 'en' }]]);
+    expect(api.getInitialAssessmentResult).not.toHaveBeenCalled();
+    expect(api.createInitialAssessmentAttempt).not.toHaveBeenCalled();
+    expect(api.saveAssessmentAnswer.mock.calls).toEqual([[7, { questionId: 102, selectedOptionKey: 'A' }]]);
+    expect(api.submitAssessmentAttempt.mock.calls).toEqual([[7, { locale: 'en' }]]);
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
+  };
+  await settleGuidance();
+  expect(api.getInitialAssessmentStatus.mock.calls).toEqual([[{ locale: 'en' }]]);
+  expect(getScenarioDashboard.mock.calls).toEqual([[{ locale: 'en' }]]);
+  expect(getCurrentRecommendation.mock.calls).toEqual([[{ locale: 'en' }]]);
+  unchangedWritesAndExactOwner();
+
   await act(async () => i18n.changeLanguage('ms'));
-  expect(api.getAssessmentAttempt).toHaveBeenCalledTimes(1);
-  expect(api.getInitialAssessmentStatus).not.toHaveBeenCalled(); expect(api.getInitialAssessmentResult).not.toHaveBeenCalled();
+  await settleGuidance();
+  expect(api.getInitialAssessmentStatus.mock.calls).toEqual([[{ locale: 'en' }], [{ locale: 'ms' }]]);
+  expect(getScenarioDashboard.mock.calls).toEqual([[{ locale: 'en' }], [{ locale: 'ms' }]]);
+  expect(getCurrentRecommendation.mock.calls).toEqual([[{ locale: 'en' }], [{ locale: 'ms' }]]);
+  unchangedWritesAndExactOwner();
 });
 
 test.each(['navigation', 'locale'])('late content cannot overwrite or clear auth after %s', async cause => {

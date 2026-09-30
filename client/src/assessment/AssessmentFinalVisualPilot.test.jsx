@@ -1,4 +1,4 @@
-import { render, screen, waitFor, within } from "@testing-library/react";
+import { act, render, screen, waitFor, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import App from "../App";
 import i18n from "../i18n";
@@ -12,8 +12,8 @@ import {
 } from "../api/assessmentApi";
 import { listChatConversations } from "../chat/chatApi";
 import { getProgress } from "../api/progressApi";
-import { getCurrentRecommendation } from "../api/recommendationApi";
-import { getRecommendedScenarios, getScenarioDashboard } from "../api/scenarioApi";
+import { getCurrentRecommendation, markRecommendationViewed, markRecommendationCompleted } from "../api/recommendationApi";
+import { listScenarios, getScenarioAttempt, getRecommendedScenarios, getScenarioDashboard } from "../api/scenarioApi";
 
 jest.mock("react-markdown", () => ({ __esModule: true, default: ({ children }) => <div>{children}</div> }));
 jest.mock("remark-gfm", () => ({ __esModule: true, default: () => null }));
@@ -125,6 +125,18 @@ describe("Assessment final visual migration", () => {
     getRecommendedScenarios.mockResolvedValue({ ok: true, data: { scenarios: [] } });
     getScenarioDashboard.mockResolvedValue({ ok: true, data: { completedCount: 0, inProgress: null } });
     listChatConversations.mockResolvedValue({ ok: true, data: { conversations: [] } });
+  });
+
+  test.each(["recommendation", "resume"])("UG01-S4 RED Assessment result %s is governed and passive", async mode => {
+    getInitialAssessmentStatus.mockResolvedValue({ ok: true, data: { status: "completed", result: completedResult } });
+    getScenarioDashboard.mockResolvedValue({ ok: true, data: { inProgressAttempts: mode === "resume" ? [{ attemptId: 501, scenarioSlug: "group-chat-pressure", title: "Saved practice" }] : [] } });
+    getCurrentRecommendation.mockResolvedValue({ ok: true, data: { recommendation: { id: 701, status: "active", target: { page: "scenarios", scenarioSlug: "suspicious-bank-message" } } } });
+    render(<App />);
+    await screen.findByText(i18n.t("assessment.measuredLevel"));
+    window.dispatchEvent(new Event("focus"));
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
+    expect(await screen.findByRole("button", { name: i18n.t(mode === "resume" ? "dashboard.resumeScenario" : "dashboard.recommendation.openRecommendation") })).toBeEnabled();
   });
 
   test.each(["status", "network", "unknown", "content"])("ordinary %s failure exposes recovery without an actionable assessment", async failure => {
@@ -357,4 +369,66 @@ describe("Assessment final visual migration", () => {
     expect(submitAssessmentAttempt).toHaveBeenCalledWith(712, { locale: "en" });
     expect(await screen.findByRole("heading", { level: 1, name: i18n.t("assessment.completed") })).toBeVisible();
   });
+  async function openS4Result() {
+    getInitialAssessmentStatus.mockResolvedValue({ ok: true, data: { status: "completed", result: completedResult } });
+    render(<App />);
+    await screen.findByText(i18n.t("assessment.measuredLevel"));
+    return screen.findByRole("region", { name: i18n.t("dashboard.nextStep.eyebrow") });
+  }
+  test.each(["active", "viewed", "completed", "absent", "malformed", "error"])("UG01-S4 result authority %s", async mode => {
+    getScenarioDashboard.mockResolvedValue({ ok: true, data: { inProgressAttempts: [] } });
+    getCurrentRecommendation.mockResolvedValue(mode === "error" ? { ok: false } : { ok: true, data: { recommendation: mode === "absent" ? null : {
+      id: 703, status: mode === "viewed" || mode === "completed" ? mode : "active", target: mode === "malformed" ? null : { page: "scenarios" },
+    } } });
+    const area = await openS4Result();
+    if (["active", "viewed"].includes(mode)) expect(await within(area).findByRole("button", { name: i18n.t("dashboard.recommendation.openRecommendation") })).toBeEnabled();
+    else if (["error", "malformed"].includes(mode)) expect(await within(area).findByRole("alert")).toBeVisible();
+    else expect(await within(area).findByRole("button", { name: i18n.t("nav.resources") })).toBeEnabled();
+    area.focus(); window.dispatchEvent(new Event("focus"));
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
+  });
+  test.each(["success", "failure", "stale"])("UG01-S4 explicit viewed %s waits and never completes", async mode => {
+    const intendedScenario = { id: 10, slug: "group-chat-pressure", title: "Pressure in a group chat", summary: "Consider a safe response to group pressure.", topicCode: "cyberbullying", difficulty: "beginner", estimatedMinutes: 6, totalSteps: 2, latestAttempt: null };
+    listScenarios.mockResolvedValue({ ok: true, data: { scenarios: [intendedScenario] } });
+    getRecommendedScenarios.mockResolvedValue({ ok: true, data: { scenarios: [intendedScenario] } });
+    window.HTMLElement.prototype.scrollIntoView = jest.fn();
+    let finish;
+    markRecommendationViewed.mockImplementationOnce(() => new Promise(resolve => { finish = resolve; }));
+    getScenarioDashboard.mockResolvedValue({ ok: true, data: { inProgressAttempts: [] } });
+    getCurrentRecommendation.mockResolvedValue({ ok: true, data: { recommendation: { id: 704, status: "active", target: { page: "scenarios", scenarioSlug: "group-chat-pressure" } } } });
+    const area = await openS4Result();
+    const button = await within(area).findByRole("button", { name: i18n.t("dashboard.recommendation.openRecommendation") });
+    const before = window.location.hash;
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
+    await userEvent.click(button); await userEvent.click(button);
+    expect(markRecommendationViewed).toHaveBeenCalledTimes(1);
+    expect(markRecommendationViewed).toHaveBeenCalledWith(704, { locale: "en" });
+    expect(window.location.hash).toBe(before);
+    if (mode === "stale") await act(async () => { await i18n.changeLanguage("ms"); });
+    await act(async () => finish({ ok: mode !== "failure", data: {} }));
+    if (mode === "success") {
+      await waitFor(() => expect(window.location.hash).toBe("#/scenarios"));
+      const card = (await screen.findByRole("heading", { name: intendedScenario.title, exact: true })).closest(".scenario-library-card");
+      await waitFor(() => expect(card).toHaveClass("highlighted"));
+      expect(card).toHaveClass("recommended");
+      expect(within(card).getByText(i18n.t("scenarios.library.recommendedNext"), { exact: true })).toBeVisible();
+      expect(intendedScenario.slug).toBe("group-chat-pressure");
+      expect(card).toBeVisible();
+    }
+    else expect(window.location.hash).toBe(before);
+    if (mode === "failure") expect(within(area).getByRole("alert")).toBeVisible();
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
+  });
+  test("UG01-S4 exact resume wins with zero lifecycle writes", async () => {
+    getScenarioDashboard.mockResolvedValue({ ok: true, data: { inProgressAttempts: [{ attemptId: 501, scenarioSlug: "group-chat-pressure" }] } });
+    getCurrentRecommendation.mockResolvedValue({ ok: true, data: { recommendation: { id: 704, status: "active", target: { page: "resources" } } } });
+    const area = await openS4Result();
+    await userEvent.click(await within(area).findByRole("button", { name: i18n.t("dashboard.resumeScenario") }));
+    await waitFor(() => expect(getScenarioAttempt).toHaveBeenCalledWith(501, { locale: "en" }));
+    expect(markRecommendationViewed).not.toHaveBeenCalled();
+    expect(markRecommendationCompleted).not.toHaveBeenCalled();
+  });
+
 });

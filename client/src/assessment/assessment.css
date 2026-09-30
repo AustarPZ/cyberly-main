@@ -364,3 +364,7 @@
     transition: none;
   }
 }
+
+.assessment-page .scenario-result-recommendation {
+  margin-block-end: 1.5rem;
+}

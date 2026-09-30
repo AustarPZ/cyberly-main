@@ -6,7 +6,7 @@ export function dashboardGuidanceStamp(userId, locale, revision) {
 
 // Owner request provenance is checked before attaching the current render stamp.
 // Never relabel values retained by React across a learner/locale/reload change.
-export function dashboardGuidanceInput({ stamp, assessment, scenario, recommendation }) {
+export function dashboardGuidanceInput({ stamp, assessment, scenario, recommendation, pageContext = { page: 'dashboard' } }) {
   function observe(owner, normalize) {
     const source = owner?.guidanceStamp;
     if (!source || source.scopeKey !== stamp.scopeKey || source.revision !== stamp.revision) return { state: 'unknown', stamp };
@@ -16,8 +16,9 @@ export function dashboardGuidanceInput({ stamp, assessment, scenario, recommenda
   }
   return {
     requestState: { audience: 'learner', stamp },
-    pageContext: { page: 'dashboard' },
+    pageContext,
     assessmentState: observe(assessment, owner => {
+      if (pageContext.page === 'assessment_result' && owner.status === 'in_progress' && owner.attempt?.id === pageContext.attemptId) return { state: 'error', retryable: true };
       if (owner.status === 'pending') return { state: 'ready', value: { state: 'pending' } };
       if (['in_progress', 'completed'].includes(owner.status)) return {
         state: 'ready', value: { state: owner.status, attemptId: owner.status === 'completed' ? owner.result?.attempt?.id : owner.attempt?.id },
@@ -27,6 +28,7 @@ export function dashboardGuidanceInput({ stamp, assessment, scenario, recommenda
     scenarioState: observe(scenario, owner => {
       const inventory = owner.dashboard?.inProgressAttempts;
       if (!Array.isArray(inventory)) return { state: 'unknown' };
+      if (pageContext.page === 'scenario_result' && inventory.some(attempt => attempt?.attemptId === pageContext.attemptId)) return { state: 'error', retryable: true };
       // Preserve every entry, including malformed identities, for frozen S1 validation.
       return { state: 'ready', value: { coverage: 'complete', unfinished: inventory.map(attempt => ({
         attemptId: attempt?.attemptId, scenarioSlug: attempt?.scenarioSlug,

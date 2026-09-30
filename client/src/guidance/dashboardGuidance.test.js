@@ -63,3 +63,21 @@ test('old scope or revision cannot be restamped as current authority', () => {
     expect(input({ status: 'in_progress', attempt: { id: 7 }, guidanceStamp }).assessmentState.state).toBe('unknown');
   }
 });
+
+// Completed-result identity conflicts must recover, never silently drop inventory.
+test.each(['assessment_result', 'scenario_result'])('result %s rejects its own unfinished identity', page => {
+  const value = dashboardGuidanceInput({ stamp, pageContext: { page, attemptId: 7 },
+    assessment: owner(page === 'assessment_result' ? { status: 'in_progress', attempt: { id: 7 } } : { status: 'pending' }),
+    scenario: owner({ dashboard: { inProgressAttempts: page === 'scenario_result' ? [{ attemptId: 7, scenarioSlug: 'sms' }] : [] } }),
+    recommendation: owner({ recommendation: null }) });
+  expect(value.pageContext).toEqual({ page, attemptId: 7 });
+  expect(resolveGuidance(value).kind).toBe('recovery');
+});
+test.each(['assessment_result', 'scenario_result'])('result %s preserves all other equal unfinished choices', page => {
+  const value = dashboardGuidanceInput({ stamp, pageContext: { page, attemptId: 99 },
+    assessment: owner({ status: 'in_progress', attempt: { id: 7 } }),
+    scenario: owner({ dashboard: { inProgressAttempts: [{ attemptId: 8, scenarioSlug: 'sms' }, { attemptId: 9, scenarioSlug: 'sms' }] } }),
+    recommendation: owner({ recommendation: { id: 1, status: 'active', target: { page: 'resources' } } }) });
+  expect(resolveGuidance(value).kind).toBe('resume_choice');
+  expect(resolveGuidance(value).choices.map(action => action.target.attemptId)).toEqual([7, 8, 9]);
+});

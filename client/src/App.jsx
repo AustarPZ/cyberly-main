@@ -6910,6 +6910,96 @@ function AboutPage() {
   );
 }
 
+// Result observations are scoped to the displayed completed attempt. Changing any
+// identity remounts this boundary; refresh generations never restamp old values.
+function ResultNextStep({ page, attemptId }) {
+  const { user } = useApp();
+  const { i18n: activeI18n } = useTranslation();
+  const locale = normalizeLocale(activeI18n.language);
+  const scopeKey = JSON.stringify([user?.id, locale, page, attemptId]);
+  return <ResultNextStepScope key={scopeKey} scopeKey={scopeKey} page={page} attemptId={attemptId} locale={locale} />;
+}
+
+function ResultNextStepScope({ scopeKey, page, attemptId, locale }) {
+  const { t } = useTranslation();
+  const { user, handleChatAction, requestAssessmentExactResume, requestScenarioExactResume } = useApp();
+  const [revision, setRevision] = useState(0);
+  const [owners, setOwners] = useState(null);
+  const [busy, setBusy] = useState(false);
+  const [actionError, setActionError] = useState(false);
+  const inFlight = useRef(false);
+  const live = useRef(null);
+  const stamp = useMemo(() => ({ scopeKey, revision }), [scopeKey, revision]);
+  const loading = { guidanceStamp: stamp, loading: true };
+  const currentOwners = owners?.stamp === stamp ? owners : null;
+  const input = dashboardGuidanceInput({ stamp, pageContext: { page, attemptId },
+    assessment: currentOwners?.assessment || loading, scenario: currentOwners?.scenario || loading,
+    recommendation: currentOwners?.recommendation || loading });
+  const guidance = resolveGuidance(input);
+  const actions = guidance.kind === "resume_choice" ? guidance.choices : guidance.action ? [guidance.action] : [];
+  // Layout cleanup invalidates pending explicit actions before another page can act.
+  useLayoutEffect(() => {
+    live.current = { stamp, guidance };
+    return () => { live.current = null; };
+  });
+  useEffect(() => {
+    let active = true;
+    if (!user?.id) return () => { active = false; };
+    setActionError(false);
+    Promise.all([dbGetAssessmentStatus(locale), dbGetScenarioDashboard(locale), dbGetCurrentRecommendation(locale)])
+      .then(([assessment, scenario, recommendation]) => {
+        if (!active) return;
+        const observe = result => ({ ...result, guidanceStamp: stamp, loading: false, error: !result.ok });
+        setOwners({ stamp, assessment: observe(assessment),
+          scenario: { ...observe(scenario), dashboard: scenario.ok ? scenario : null },
+          recommendation: observe(recommendation) });
+      });
+    return () => { active = false; };
+  }, [user?.id, locale, stamp]);
+
+  function isCurrent(action) {
+    const value = live.current;
+    if (value?.stamp !== stamp || actionError) return false;
+    const available = value.guidance.kind === "resume_choice" ? value.guidance.choices : [value.guidance.action];
+    return available.some(item => item && JSON.stringify(item) === JSON.stringify(action));
+  }
+  function refresh() {
+    live.current = null;
+    setRevision(value => value + 1);
+  }
+  async function activate(action) {
+    if (inFlight.current || !isCurrent(action)) return;
+    const target = action.target;
+    if (target.type === "resume_assessment") { requestAssessmentExactResume(target); return; }
+    if (target.type === "resume_scenario") { requestScenarioExactResume(target); return; }
+    if (guidance.kind === "recommendation") {
+      if (action.sourceIdentity?.type !== "recommendation" || action.sourceIdentity.id !== input.currentRecommendation.value?.id) return;
+      inFlight.current = true; setBusy(true);
+      const response = await dbMarkRecommendationViewed(action.sourceIdentity.id, locale);
+      inFlight.current = false;
+      if (!isCurrent(action)) return;
+      setBusy(false);
+      if (!response.ok) { setActionError(true); return; }
+    } else if (guidance.kind !== "browse") return;
+    // Translate only the resolver-validated target, never the raw response target.
+    const routeTarget = target.type === "scenario_intro" ? { page: "scenarios", scenarioSlug: target.scenarioSlug }
+      : target.type === "resource" ? { page: "resources", resourceSlug: target.resourceSlug }
+        : target.type === "progress" ? { page: "progress", sectionId: target.sectionId } : { page: target.type };
+    handleChatAction({ target: routeTarget });
+  }
+  const recovery = actionError || guidance.kind === "recovery";
+  return <section className="scenario-result-recommendation" aria-label={t("dashboard.nextStep.eyebrow")}>
+    <h2>{t(actions.some(action => action.owner === "assessment" || action.owner === "scenario") ? "dashboard.continueLearning" : "dashboard.nextStep.eyebrow")}</h2>
+    {guidance.kind === "loading" && <p role="status">{t("dashboard.nextStep.ownerLoading")}</p>}
+    {recovery ? <><p role="alert">{t("dashboard.nextStep.ownerUnavailable")}</p><Button variant="quiet" onClick={refresh}>{t("common.retry")}</Button></>
+      : <div className="scenario-actions">{actions.map((action, index) => <Button key={JSON.stringify(action.sourceIdentity) + index} variant="primary" disabled={busy} onClick={() => activate(action)}>
+        {t(action.target.type === "resume_assessment" ? "dashboard.resumeAssessment" : action.target.type === "resume_scenario" ? "dashboard.resumeScenario"
+          : guidance.kind === "recommendation" ? "dashboard.recommendation.openRecommendation" : "nav.resources")}
+        {guidance.kind === "resume_choice" && action.target.type === "resume_scenario" && <span> · {t("dashboard.nextStep.savedPracticeNumber", { number: index + 1 })}</span>}
+      </Button>)}</div>}
+  </section>;
+}
+
 // ─── Page: Initial Assessment ────────────────────────────────────
 function AssessmentPage() {
   const { t, i18n: activeI18n } = useTranslation();
@@ -7230,6 +7320,7 @@ function AssessmentPage() {
           </div>
             </Surface>
 
+        <ResultNextStep page="assessment_result" attemptId={attemptResult?.id} />
         <h2 className="section-title">{t("assessment.topicBreakdown")}</h2>
         <div className="assessment-topic-grid">
           {(result?.topicScores || []).map(topic => (
@@ -8077,12 +8168,7 @@ function ScenariosPage() {
             {result.progressImpact?.masteryDelta != null && <div className="scenario-result-impact"><dt>{t("scenarios.result.masteryDelta")}</dt><dd>{result.progressImpact.masteryDelta > 0 ? "+" : ""}{result.progressImpact.masteryDelta}</dd></div>}
           </dl>
         </section>
-        {result.recommendation && (
-          <section className="scenario-result-recommendation">
-            <h2>{t("scenarios.result.updatedRecommendation")}</h2>
-            <p>{result.recommendation.reasonText}</p>
-          </section>
-        )}
+        <ResultNextStep page="scenario_result" attemptId={result.attempt?.id} />
         <div className="scenario-actions scenario-result-actions">
           <Button variant="primary" onClick={() => { if (nestedIntro.nested) requestHashNavigation("#/scenarios"); else setView({ mode: "library" }); }}>{t("scenarios.result.returnToLibrary")}</Button>
           <Button variant="quiet" onClick={() => go("dashboard")}>{t("nav.dashboard")}</Button>
