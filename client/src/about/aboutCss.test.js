@@ -19,6 +19,28 @@ function remPaddingFor(selector) {
 }
 
 describe("About CSS contract", () => {
+  test("binds About to current neutral surface and text roles", () => {
+    const page = blockFor(".cy-about-page");
+    ["--surface-page", "--surface-raised", "--surface-subtle", "--text-primary", "--text-secondary", "--border-default"].forEach(role => {
+      expect(page).toContain(`var(${role})`);
+    });
+    expect(blockFor(".cy-about-header")).toContain("background: var(--cyberly-surface-primary)");
+    expect(blockFor(".cy-about-header")).toContain("var(--shadow-card)");
+  });
+
+  test("uses shared typography and restrained brand information roles", () => {
+    expect(css).not.toMatch(/linear-gradient|cyberly-indigo|Space Grotesk/);
+    expect(blockFor(".cy-about-avatar")).toContain("var(--surface-interactive)");
+    expect(blockFor(".cy-about-agentic-note")).toContain("var(--cyberly-surface-secondary)");
+  });
+
+  test("keeps content and Back wrap-safe with a local mobile reading lane", () => {
+    expect(blockFor(".cy-about-back")).toMatch(/white-space:\s*normal/);
+    expect(css).toMatch(/@media\s*\(max-width:\s*40rem\)[\s\S]*padding-inline-end:\s*var\(--about-reading-clearance\)/);
+    expect(css).not.toMatch(/\.cy-about-page\s*\{[^}]*(?:padding-inline-end|width:\s*calc)/);
+    expect(css).not.toMatch(/overflow(?:-x)?:\s*(?:hidden|clip)/);
+  });
+
   test("owns About presentation through a token-based namespace", () => {
     expect(fs.existsSync(cssPath)).toBe(true);
     expect(css).toMatch(/\.cy-about-page\s*\{/);

@@ -1,9 +1,13 @@
 .cy-about-page {
+  --cyberly-page-bg: var(--surface-page);
+  --cyberly-surface-primary: var(--surface-raised);
+  --cyberly-surface-secondary: var(--surface-subtle);
+  --cyberly-text-primary: var(--text-primary);
+  --cyberly-text-secondary: var(--text-secondary);
+  --cyberly-border-soft: var(--border-default);
   min-width: 0;
   padding-block: clamp(1rem, 3vw, 2rem) clamp(3rem, 7vw, 5rem);
-  background:
-    linear-gradient(180deg, color-mix(in srgb, var(--cyberly-indigo-600) 6%, transparent), transparent 24rem),
-    var(--cyberly-page-bg);
+  background: var(--cyberly-page-bg);
   color: var(--cyberly-text-primary);
 }
 
@@ -22,6 +26,9 @@
 
 .cy-about-back {
   margin-bottom: 1rem;
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .cy-about-header {
@@ -30,16 +37,14 @@
   padding: clamp(1.5rem, 5vw, 3rem);
   border: 1px solid var(--cyberly-border-soft);
   border-radius: var(--cyberly-radius-panel);
-  background:
-    linear-gradient(135deg, color-mix(in srgb, var(--cyberly-mint-500) 13%, var(--cyberly-surface-primary)), var(--cyberly-surface-primary) 58%),
-    var(--cyberly-surface-primary);
-  box-shadow: 0 18px 50px color-mix(in srgb, var(--cyberly-indigo-600) 10%, transparent);
+  background: var(--cyberly-surface-primary);
+  box-shadow: var(--shadow-card);
 }
 
 .cy-about-title {
   max-width: 18ch;
   margin: 0;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: inherit;
   font-size: clamp(2rem, 5vw, 3.5rem);
   line-height: 1.08;
   overflow-wrap: anywhere;
@@ -82,7 +87,7 @@
 
 .cy-about-section-heading h2 {
   margin: 0;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: inherit;
   font-size: clamp(1.55rem, 3vw, 2.15rem);
   line-height: 1.2;
   overflow-wrap: anywhere;
@@ -139,7 +144,7 @@
   place-items: center;
   border-radius: var(--cyberly-radius-control);
   background: color-mix(in srgb, var(--cyberly-mint-500) 14%, var(--cyberly-surface-primary));
-  color: var(--cyberly-indigo-600);
+  color: var(--color-brand-primary-hover);
   font-size: 1.2rem;
   font-weight: 800;
 }
@@ -149,7 +154,7 @@
 .cy-about-team-card h3,
 .cy-about-supervisor h3 {
   margin: 0;
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: inherit;
   font-size: 1rem;
   line-height: 1.35;
   overflow-wrap: anywhere;
@@ -161,9 +166,9 @@
   max-width: 72ch;
   margin-top: 1.25rem;
   padding: 1rem 1.15rem;
-  border: 1px solid color-mix(in srgb, var(--cyberly-indigo-600) 24%, var(--cyberly-border-soft));
+  border: 1px solid var(--cyberly-border-soft);
   border-radius: var(--cyberly-radius-control);
-  background: color-mix(in srgb, var(--cyberly-indigo-600) 5%, var(--cyberly-surface-primary));
+  background: var(--cyberly-surface-secondary);
 }
 
 .cy-about-journey {
@@ -182,7 +187,7 @@
 
 .cy-about-step-number {
   color: var(--cyberly-brand-primary);
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: inherit;
   font-weight: 800;
 }
 
@@ -254,8 +259,8 @@
   margin-bottom: 0.35rem;
   place-items: center;
   border-radius: 50%;
-  background: var(--cyberly-indigo-600);
-  color: var(--cyberly-surface-primary);
+  background: var(--surface-interactive);
+  color: var(--color-brand-primary-hover);
   font-weight: 800;
 }
 
@@ -303,3 +308,25 @@
     height: 2.75rem;
   }
 }
+
+/* Keep the About surfaces full width; reserve only their mobile reading area.
+   The existing launcher begins 76px from the right edge. The container already
+   supplies 16px, so 4rem inside each text surface leaves a small clear gap. */
+@media (max-width: 40rem) {
+  .cy-about-page { --about-reading-clearance: 4rem; }
+  .cy-about-header,
+  .cy-about-section-heading,
+  .cy-about-purpose,
+  .cy-about-capability-card,
+  .cy-about-agentic-note,
+  .cy-about-journey li,
+  .cy-about-supervisor,
+  .cy-about-team-card {
+    padding-inline-end: var(--about-reading-clearance);
+  }
+  .cy-about-objectives { padding-inline-end: var(--about-reading-clearance); }
+  .cy-about-objectives .cy-about-section-heading { padding-inline-end: 0; }
+}
+.cy-about-page .cy-badge { max-width: 100%; overflow-wrap: anywhere; }
+.cy-about-back:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 3px; }
+.cy-about-section[lang="en"] .cy-about-capability-card { max-width: 76ch; }
