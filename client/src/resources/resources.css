@@ -50,18 +50,3 @@
 .resources-reader { background: var(--cyberly-page-bg); }
 .resources-reader-back { max-width: 100%; overflow-wrap: anywhere; text-underline-offset: 0.2em; }
 .resources-reader-practice a { color: var(--color-brand-primary-hover); text-underline-offset: 0.2em; }
-/* Reserve only the mobile content/control regions, not the page container.
-   The fixed launcher occupies the last 76px; the existing 16px gutter plus
-   this clearance keeps actionable cards and reading text to its left. */
-@media (max-width: 40rem) {
-  .resources-page, .resources-reader { --resources-safe-clearance: 4rem; }
-  .resources-context-header .cy-context-header-copy,
-  .resources-filter-region,
-  .resources-grid,
-  .resources-focus { max-width: calc(100% - var(--resources-safe-clearance)); }
-  .resources-tip,
-  .resources-reader article > header,
-  .resources-reader-body,
-  .resources-source-row,
-  .resources-reader-practice { padding-inline-end: var(--resources-safe-clearance); }
-}

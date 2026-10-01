@@ -44,8 +44,11 @@ describe("Auth route CSS contract", () => {
     expect(css).toMatch(/\.cy-auth-field\s+input\s*\{[^}]*box-sizing:\s*border-box/);
   });
 
-  test("reserves a mobile Auth reading lane beside the unchanged assistant", () => {
+  test("STG mobile Auth keeps normal shell width and existing panel and action layout", () => {
     const mobileRules = css.slice(css.indexOf("@media (max-width: 40rem)"));
-    expect(mobileRules).toMatch(/\.cy-auth-shell\s*\{[^}]*padding-inline-end:/);
+    expect(mobileRules).not.toMatch(/\.cy-auth-shell\s*\{[^}]*padding-inline-end:/);
+    expect(mobileRules).toMatch(/\.cy-auth-panel\s*\{\s*padding:\s*1\.1rem/);
+    expect(mobileRules).toMatch(/\.cy-auth-actions\s*\{[^}]*grid-template-columns:\s*minmax\(0,\s*1fr\)/);
+    expect(mobileRules).toMatch(/\.cy-auth-actions \.cy-button\s*\{[^}]*width:\s*100%/);
   });
 });

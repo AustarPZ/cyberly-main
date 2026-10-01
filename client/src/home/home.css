@@ -244,18 +244,7 @@
 }
 
 @media (max-width: 47.9375rem) {
-  /* Keep full-width surfaces; reserve space inside reading/control groups only. */
-  .cy-home-page { --cy-home-content-clearance: 4.5rem; }
   .cy-home-hero .cy-explorer-hero-layout { grid-template-columns: minmax(0, 1fr); }
-  .cy-home-hero .cy-explorer-hero-content,
-  .cy-home-awareness-title,
-  .cy-home-section-heading,
-  .cy-home-topic-list,
-  .cy-home-journey-list { padding-inline-end: var(--cy-home-content-clearance); }
-  .cy-home-feature-card,
-  .cy-home-stat-item,
-  .cy-home-threat-card,
-  .cy-home-final-card { padding-inline-end: var(--cy-home-content-clearance); }
   .cy-home-awareness-title,
   .cy-home-section-heading-centered { text-align: left; }
   .cy-home-gateway-visual { width: min(100%, 11rem); }

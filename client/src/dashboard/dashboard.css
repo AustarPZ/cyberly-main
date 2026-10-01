@@ -159,8 +159,8 @@
 .dashboard-chat-disclosure { margin-top: 1.5rem; border-top: 1px solid var(--border-default); padding-block: 0.75rem; }
 .dashboard-chat-disclosure[open] > .chat-window { margin-top: 1rem; }
 .dashboard-utilities { display: flex; flex-wrap: wrap; gap: 0.75rem; margin-top: 0.75rem; }
-/* Dashboard-only lane for the fixed assistant; shared mobile footer clearance is retained. */
-@media (min-width: 601px) {
+/* Preserve the desktop footer reservation; mobile uses shared shell clearance. */
+@media (min-width: 821px) {
   .cy-app-shell:has(.dashboard-astra) > footer.cy-app-footer {
     padding-inline-end: max(6rem, env(safe-area-inset-right));
   }
@@ -173,10 +173,7 @@
 .dashboard-astra .dashboard-wellness .btn-ghost, .dashboard-astra .dashboard-explore .btn-ghost { border-color: transparent; background: transparent; padding-inline: 0; color: var(--color-brand-primary-hover); font-weight: 700; }
 .dashboard-astra .dashboard-utilities .btn-ghost { font-weight: 400; }
 .dashboard-astra #dashboard-initial-assessment > div:first-child { flex-direction: column; align-items: flex-start !important; }
-/* Leave the existing floating assistant a clear lane beside the narrow shortcut. */
 @media (max-width: 48rem) {
   .dashboard-astra-aside { border-top: 2px solid var(--color-brand-primary); }
-  .dashboard-progress-shortcut { width: calc(100% - 4.5rem); border-top: 0; }
-  /* The fixed launcher may cross any tip line while the learner scrolls. */
-  .dashboard-astra-aside .dashboard-wellness { padding-inline-end: 4.5rem; }
+  .dashboard-progress-shortcut { border-top: 0; }
 }

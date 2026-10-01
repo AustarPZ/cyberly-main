@@ -34,9 +34,9 @@ describe("About CSS contract", () => {
     expect(blockFor(".cy-about-agentic-note")).toContain("var(--cyberly-surface-secondary)");
   });
 
-  test("keeps content and Back wrap-safe with a local mobile reading lane", () => {
+  test("keeps content and Back wrap-safe without a local mobile reading lane", () => {
     expect(blockFor(".cy-about-back")).toMatch(/white-space:\s*normal/);
-    expect(css).toMatch(/@media\s*\(max-width:\s*40rem\)[\s\S]*padding-inline-end:\s*var\(--about-reading-clearance\)/);
+    expect(css).not.toContain("--about-reading-clearance");
     expect(css).not.toMatch(/\.cy-about-page\s*\{[^}]*(?:padding-inline-end|width:\s*calc)/);
     expect(css).not.toMatch(/overflow(?:-x)?:\s*(?:hidden|clip)/);
   });

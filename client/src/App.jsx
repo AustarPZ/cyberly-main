@@ -2427,7 +2427,11 @@ body {
   }
   .chat-panel .chat-compact-messages { flex: 1 1 auto; min-height: 0; height: auto; }
   .chat-panel .chat-composer-wrap { flex: 0 0 auto; }
-  .chat-fab { z-index: 211; }
+  .chat-fab {
+    z-index: 211;
+    bottom: calc(1.5rem + env(safe-area-inset-bottom, 0px));
+    right: calc(1.5rem + env(safe-area-inset-right, 0px));
+  }
 }
 @media (max-width: 430px) {
   .chat-header { align-items: flex-start; }
@@ -10427,7 +10431,7 @@ function AIChatPage() {
 // ─── Chat Widget (floating) ────────────────────────────────────────
 function ChatWidget() {
   const { t } = useTranslation();
-  const { user, go, page } = useApp();
+  const { user, go, page, navigationRevision } = useApp();
   const { requestComposerFocus } = useChat();
   const [open, setOpen] = useState(false);
   const [mobileSheet, setMobileSheet] = useState(() => (
@@ -10443,6 +10447,12 @@ function ChatWidget() {
     setOpen(false);
     window.setTimeout(() => launcherRef.current?.focus(), 0);
   }, []);
+
+  // Accepted canonical navigation includes nested and repeated destinations.
+  // Do not close on a proposal request or a route blocked by an activity guard.
+  useEffect(() => {
+    setOpen(false);
+  }, [navigationRevision]);
 
   useEffect(() => {
     if (typeof window === "undefined" || typeof window.matchMedia !== "function") return undefined;
@@ -10817,6 +10827,7 @@ export default function App() {
     return prepareGuardianRouteBootstrap(initialHash);
   });
   const [page, setPage] = useState(() => parseHashPage(acceptedHash));
+  const [navigationRevision, setNavigationRevision] = useState(0);
   const resetPasswordTokenRef = useRef(undefined);
   if (page === "reset-password" && resetPasswordTokenRef.current === undefined) {
     const query = acceptedHash.includes("?") ? acceptedHash.slice(acceptedHash.indexOf("?")) : "";
@@ -10919,6 +10930,7 @@ export default function App() {
     historyIndexRef.current = Number.isInteger(historyIndex) ? historyIndex : historyIndexRef.current;
     setAcceptedHash(nextHash);
     setPage(nextPage);
+    setNavigationRevision(value => value + 1);
   }, []);
 
   const commitHashRoute = useCallback((hashValue, options = {}) => {
@@ -11548,6 +11560,7 @@ export default function App() {
     clearPendingProgressSection: () => setPendingProgressSection(null),
     handleChatAction,
     acceptedHash,
+    navigationRevision,
     registerActivityGuard,
     requestHashNavigation,
     completeGuardedActivity,

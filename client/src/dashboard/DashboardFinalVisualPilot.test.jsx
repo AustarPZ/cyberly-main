@@ -357,7 +357,7 @@ describe("Dashboard final visual migration", () => {
 
   test("footer safe lane requires Dashboard context and preserves the shared mobile baseline", () => {
     const css = fs.readFileSync(path.join(__dirname, "dashboard.css"), "utf8");
-    expect(css).toMatch(/@media\s*\(min-width:\s*601px\)\s*\{\s*\.cy-app-shell:has\(\.dashboard-astra\)\s*>\s*footer\.cy-app-footer\s*\{\s*padding-inline-end:\s*max\(6rem,\s*env\(safe-area-inset-right\)\);/);
+    expect(css).toMatch(/@media\s*\(min-width:\s*821px\)\s*\{\s*\.cy-app-shell:has\(\.dashboard-astra\)\s*>\s*footer\.cy-app-footer\s*\{\s*padding-inline-end:\s*max\(6rem,\s*env\(safe-area-inset-right\)\);/);
   });
 
   test("the single shared footer follows and remains outside Dashboard", async () => {

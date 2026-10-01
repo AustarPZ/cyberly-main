@@ -413,21 +413,3 @@
 .assessment-page .scenario-result-recommendation {
   margin-block-end: 1.5rem;
 }
-
-/* Mobile scroll measurements show the fixed companion crossing intro copy,
-   the Start control and result review text. Keep their reading area clear
-   without narrowing the page or changing the companion. */
-@media (max-width: 40rem) {
-  .assessment-intro {
-    padding-inline-end: calc(1.25rem + 4rem);
-  }
-
-  .assessment-review-card {
-    padding-inline-end: calc(1.1rem + 4rem);
-  }
-
-  .assessment-result-summary .assessment-actions,
-  .assessment-page .scenario-result-recommendation .scenario-actions {
-    padding-inline-end: 4rem;
-  }
-}

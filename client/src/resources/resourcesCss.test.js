@@ -32,9 +32,8 @@ describe("Resources responsive CSS contract", () => {
     expect(css).toMatch(/\.resources-source-link\s*\{[^}]*text-decoration:\s*underline/);
   });
 
-  test("reserves mobile clearance on reading and control regions without narrowing the page", () => {
-    expect(css).toContain("--resources-safe-clearance");
-    expect(css).toMatch(/\.resources-reader-body[^}]*padding-inline-end:\s*var\(--resources-safe-clearance\)/);
+  test("uses normal mobile reading and control width with shared shell clearance", () => {
+    expect(css).not.toContain("--resources-safe-clearance");
     expect(css).not.toMatch(/\.resources-(?:page|reader)\s*\{[^}]*(?:padding-inline-end|width:\s*calc)/);
     expect(css).not.toMatch(/overflow(?:-x)?:\s*(?:hidden|clip)/);
   });

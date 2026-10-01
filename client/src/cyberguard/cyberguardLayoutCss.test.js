@@ -341,11 +341,18 @@ describe("I02 bounded workspace presentation", () => {
 
 
 describe("I02 C01 mobile composer safe area", () => {
-  test("reserves the fixed 52px launcher plus right offset inside only the mobile workspace composer", () => {
+  test("STG mobile composer uses shared end clearance because its whole panel can scroll above the FAB", () => {
     const frame = mediaBlockFor("@media (max-width: 820px)", ".cyberguard-page .cyberguard-composer-frame");
-    expect(frame).toMatch(/padding-right\s*:\s*calc\(52px\s*\+\s*1\.5rem\)/);
+    expect(frame).not.toMatch(/padding-right\s*:/);
     expect(frame).not.toMatch(/position\s*:\s*(?:fixed|sticky)/);
     expect(blockFor(".cyberguard-composer-frame")).not.toMatch(/position\s*:\s*(?:fixed|sticky)/);
+    expect(blockFor(".cyberguard-chat-shell-composer")).not.toMatch(/position\s*:\s*(?:fixed|sticky)/);
+    expect(blockFor(".cyberguard-chat-shell-main")).not.toMatch(/position\s*:\s*(?:fixed|sticky)/);
+    const routeWrap = appSource.match(/\.page-wrap\.cyberguard-page-wrap\s*\{([^}]+)\}/)?.[1] || "";
+    expect(routeWrap).toMatch(/height\s*:\s*auto/);
+    expect(routeWrap).toMatch(/overflow\s*:\s*visible/);
+    const shellCss = fs.readFileSync(path.join(__dirname, "..", "navigation", "shell.css"), "utf8");
+    expect(shellCss).toMatch(/\.cy-app-shell-with-floating\s*\{[^}]*padding-bottom:\s*calc\(52px \+ 1\.5rem \+ 1rem \+ env\(safe-area-inset-bottom, 0px\)\)/);
     const page = mediaBlockFor("@media (max-width: 820px)", ".cyberguard-page");
     expect(page).toMatch(/height\s*:\s*auto/);
     expect(page).toMatch(/overflow\s*:\s*visible/);

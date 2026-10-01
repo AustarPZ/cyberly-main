@@ -44,9 +44,8 @@ describe("Home route CSS contract", () => {
     expect(css).toMatch(/\.cy-home-page\s+\.cy-button:focus-visible\s*\{[^}]*outline:/);
   });
 
-  test("reserves content-level mobile assistant clearance and keeps reduced motion", () => {
-    expect(css).toMatch(/--cy-home-content-clearance:/);
-    expect(css).toMatch(/padding-inline-end:\s*var\(--cy-home-content-clearance\)/);
+  test("uses normal content width with shared shell clearance and keeps reduced motion", () => {
+    expect(css).not.toContain("--cy-home-content-clearance");
     expect(css).toContain("prefers-reduced-motion: reduce");
     expect(css).not.toMatch(/\.cy-home-page\s*\{[^}]*padding-inline-end:/);
   });

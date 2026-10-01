@@ -23,9 +23,9 @@ import {
   confirmLearnerActionProposal,
   cancelLearnerActionProposal,
 } from "../chat/chatApi";
-import { listScenarios, startScenarioAttempt, saveScenarioDecision, completeScenarioAttempt } from "../api/scenarioApi";
+import { listScenarios, getScenarioBySlug, startScenarioAttempt, saveScenarioDecision, completeScenarioAttempt } from "../api/scenarioApi";
 import { markRecommendationViewed, markRecommendationCompleted } from "../api/recommendationApi";
-import { listResources } from "../api/resourceApi";
+import { listResources, getResourceBySlug } from "../api/resourceApi";
 import { pinnedConversationStorageKey } from "../chat/chatPinning";
 import { archivedConversationStorageKey } from "../chat/chatArchiving";
 import {
@@ -98,11 +98,12 @@ jest.mock("../api/scenarioApi", () => ({
   getRecommendedScenarios: jest.fn(),
   getScenarioDashboard: jest.fn(),
   listScenarios: jest.fn(),
+  getScenarioBySlug: jest.fn(),
   startScenarioAttempt: jest.fn(),
   saveScenarioDecision: jest.fn(),
   completeScenarioAttempt: jest.fn(),
 }));
-jest.mock("../api/resourceApi", () => ({ ...jest.requireActual("../api/resourceApi"), listResources: jest.fn() }));
+jest.mock("../api/resourceApi", () => ({ ...jest.requireActual("../api/resourceApi"), listResources: jest.fn(), getResourceBySlug: jest.fn() }));
 
 function follows(before, after) {
   return Boolean(before.compareDocumentPosition(after) & Node.DOCUMENT_POSITION_FOLLOWING);
@@ -2756,6 +2757,69 @@ describe("CyberGuard public beta pilot baseline", () => {
     await userEvent.click(launcher);
     await waitFor(() => expect(document.querySelector(".chat-panel")).not.toBeInTheDocument());
     expect(launcher).toHaveFocus();
+  });
+
+  test.each([
+    [true, "#/home", "resources", "recognising-suspicious-messages"],
+    [true, "#/resources", "resources", "recognising-suspicious-messages"],
+    [true, "#/resources/recognising-suspicious-messages", "resources", "recognising-suspicious-messages"],
+    [true, "#/home", "scenarios", "phishing-message-check"],
+    [true, "#/scenarios", "scenarios", "phishing-message-check"],
+    [false, "#/home", "resources", "recognising-suspicious-messages"],
+    [false, "#/home", "scenarios", "phishing-message-check"],
+  ])("STG confirmed navigation uncovers destination (mobile=%s, from=%s, to=%s)", async (mobile, route, page, slug) => {
+    listResources.mockResolvedValue({ ok: true, data: { resources: [] } });
+    listScenarios.mockResolvedValue({ ok: true, data: { scenarios: [] } });
+    getResourceBySlug.mockResolvedValue({ ok: false, status: 404 });
+    getScenarioBySlug.mockResolvedValue({ ok: false, status: 404 });
+    const target = { page, [page === "resources" ? "resourceSlug" : "scenarioSlug"]: slug };
+    await renderCyberGuardPilotFixture({ route, mobile, chatOverrides: {
+      getChatConversation: async () => ({
+        ok: true, conversation: cyberGuardPilotConversation,
+        messages: [cyberGuardPilotAssistantMessage],
+        actions: [{ messageId: cyberGuardPilotAssistantMessage.id, actions: [{ ...cyberGuardPilotAction, target }] }],
+        sources: [], generations: [],
+      }),
+    } });
+    const proposal = { proposalId: "stg-proposal", confirmationToken: "mock-token", actionType: page === "resources" ? "open_resource" : "open_scenario", status: "pending" };
+    createLearnerActionProposal.mockResolvedValue({ ok: true, proposal });
+    const confirmation = createDeferred();
+    confirmLearnerActionProposal.mockReturnValue(confirmation.promise);
+    await userEvent.click(await screen.findByRole("button", { name: /open chat widget/i }));
+    const panel = document.querySelector(".chat-panel");
+    expect(panel).toHaveAttribute("role", mobile ? "dialog" : "region");
+    await userEvent.click(await within(panel).findByRole("button", { name: /Try a phishing practice scenario/i }));
+    await userEvent.click(await within(panel).findByRole("button", { name: page === "resources" ? /^Open resource$/i : /^View scenario$/i }));
+    expect(confirmLearnerActionProposal).toHaveBeenCalledWith("stg-proposal", "mock-token");
+    expect(window.location.hash).toBe(route);
+    expect(panel).toBeInTheDocument();
+    await act(async () => confirmation.resolve({ ok: true, proposal: { ...proposal, status: "completed" }, result: { target } }));
+    await waitFor(() => expect(window.location.hash).toBe(page === "resources" ? `#/resources/${slug}` : "#/scenarios"));
+    expect(document.querySelector(".chat-panel")).not.toBeInTheDocument();
+    expect(createChatUserMessage).not.toHaveBeenCalled();
+    expect(generateChatAssistantReply).not.toHaveBeenCalled();
+    expect(startScenarioAttempt).not.toHaveBeenCalled();
+  });
+
+  test.each(["cancel", "failed", "expired", "invalid-target"])("STG keeps companion open when a proposal is %s", async outcome => {
+    await renderCyberGuardPilotFixture({ route: "#/home", mobile: true });
+    const proposal = { proposalId: "stg-proposal", confirmationToken: "mock-token", actionType: "open_scenario", status: "pending" };
+    createLearnerActionProposal.mockResolvedValue({ ok: true, proposal });
+    confirmLearnerActionProposal.mockResolvedValue(outcome === "invalid-target"
+      ? { ok: true, result: { target: { page: "unsupported" } } }
+      : { ok: false, code: outcome === "expired" ? "ACTION_PROPOSAL_EXPIRED" : "FAILED", error: "Mock confirmation failure" });
+    await userEvent.click(await screen.findByRole("button", { name: /open chat widget/i }));
+    const panel = document.querySelector(".chat-panel");
+    await userEvent.click(await within(panel).findByRole("button", { name: /Try a phishing practice scenario/i }));
+    const decision = await within(panel).findByRole("button", { name: outcome === "cancel" ? /^Cancel$/i : /^View scenario$/i });
+    await act(async () => { await userEvent.click(decision); });
+    expect(window.location.hash).toBe("#/home");
+    expect(panel).toBeInTheDocument();
+    if (outcome === "cancel") expect(confirmLearnerActionProposal).not.toHaveBeenCalled();
+    else expect(confirmLearnerActionProposal).toHaveBeenCalledWith("stg-proposal", "mock-token");
+    expect(createChatUserMessage).not.toHaveBeenCalled();
+    expect(generateChatAssistantReply).not.toHaveBeenCalled();
+    expect(startScenarioAttempt).not.toHaveBeenCalled();
   });
 
   test("mobile companion is modal-sheet semantics and traps Tab inside the sheet", async () => {

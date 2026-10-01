@@ -872,11 +872,6 @@
     grid-template-columns: minmax(0, 1fr);
   }
 
-  /* Keep mobile controls and guidance left of the unchanged launcher. */
-  .cyberguard-page .cyberguard-composer-frame {
-    padding-right: calc(52px + 1.5rem);
-  }
-
   .ai-chat-drawer-layer {
     display: block;
     position: fixed;

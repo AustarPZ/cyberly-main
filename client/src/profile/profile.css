@@ -484,20 +484,6 @@
 }
 
 @media (max-width: 40rem) {
-  /* Measured mobile scrolling crosses the fixed companion's lane. Reserve
-     space in affected form/reading regions, preserving the page and panels. */
-  .profile-avatar-grid,
-  .profile-panel > .profile-form-grid,
-  .profile-panel > .profile-field-wide,
-  .profile-topic-fieldset,
-  .profile-panel > .profile-actions,
-  .profile-identity-note,
-  .profile-email-change,
-  .profile-privacy-requests,
-  .profile-settings-panel > .guardian-link {
-    margin-inline-end: 4rem;
-  }
-
   .profile-avatar-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
   }

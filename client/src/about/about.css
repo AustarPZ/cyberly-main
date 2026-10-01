@@ -309,24 +309,6 @@
   }
 }
 
-/* Keep the About surfaces full width; reserve only their mobile reading area.
-   The existing launcher begins 76px from the right edge. The container already
-   supplies 16px, so 4rem inside each text surface leaves a small clear gap. */
-@media (max-width: 40rem) {
-  .cy-about-page { --about-reading-clearance: 4rem; }
-  .cy-about-header,
-  .cy-about-section-heading,
-  .cy-about-purpose,
-  .cy-about-capability-card,
-  .cy-about-agentic-note,
-  .cy-about-journey li,
-  .cy-about-supervisor,
-  .cy-about-team-card {
-    padding-inline-end: var(--about-reading-clearance);
-  }
-  .cy-about-objectives { padding-inline-end: var(--about-reading-clearance); }
-  .cy-about-objectives .cy-about-section-heading { padding-inline-end: 0; }
-}
 .cy-about-page .cy-badge { max-width: 100%; overflow-wrap: anywhere; }
 .cy-about-back:focus-visible { outline: 3px solid var(--border-focus); outline-offset: 3px; }
 .cy-about-section[lang="en"] .cy-about-capability-card { max-width: 76ch; }
