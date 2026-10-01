@@ -1,9 +1,14 @@
 .cy-auth-route {
+  /* Auth-local roles inherit the existing Astra surface palette. */
+  --cyberly-page-bg: var(--surface-page);
+  --cyberly-surface-primary: var(--surface-raised);
+  --cyberly-surface-secondary: var(--surface-subtle);
+  --cyberly-text-primary: var(--text-primary);
+  --cyberly-text-secondary: var(--text-secondary);
+  --cyberly-border-soft: var(--border-default);
   min-width: 0;
-  padding-block: clamp(1rem, 4vw, 3rem);
-  background:
-    radial-gradient(circle at 85% 8%, color-mix(in srgb, var(--cyberly-mint-500) 12%, transparent), transparent 28rem),
-    var(--cyberly-page-bg);
+  padding-block: clamp(1rem, 3vw, 2rem) clamp(2rem, 4vw, 3rem);
+  background: var(--cyberly-page-bg);
   color: var(--cyberly-text-primary);
 }
 
@@ -27,12 +32,13 @@
   width: min(100%, 38rem);
   min-width: 0;
   padding: clamp(1.25rem, 4vw, 2.25rem);
-  box-shadow: 0 16px 40px color-mix(in srgb, var(--cyberly-indigo-600) 10%, transparent);
+  border: 1px solid var(--cyberly-border-soft);
+  box-shadow: var(--shadow-card);
 }
 
 .cy-auth-login,
 .cy-auth-verification {
-  width: min(100%, 32rem);
+  width: min(100%, 28rem);
 }
 
 .cy-auth-logo {
@@ -42,19 +48,29 @@
 }
 
 .cy-auth-logo .auth-logo-image {
-  width: min(100%, 10rem);
+  width: min(100%, 7rem);
   height: auto;
 }
 
 .cy-auth-identity {
   margin-bottom: 0.75rem;
+  padding-inline: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+  color: var(--color-brand-primary-hover);
+}
+
+.cy-auth-identity .cy-page-identity-icon {
+  background: var(--surface-interactive);
 }
 
 .cy-auth-step-title {
   margin: 0;
   color: var(--cyberly-text-primary);
-  font-family: 'Space Grotesk', sans-serif;
-  font-size: clamp(1.5rem, 4vw, 2rem);
+  font-family: inherit;
+  font-size: clamp(1.5rem, 4vw, 1.8rem);
   line-height: 1.2;
   overflow-wrap: anywhere;
 }
@@ -80,6 +96,7 @@
 }
 
 .cy-auth-field input {
+  box-sizing: border-box;
   width: 100%;
   max-width: 100%;
   min-height: 2.75rem;
@@ -124,7 +141,7 @@
 .cy-auth-progress-fill {
   height: 100%;
   border-radius: inherit;
-  background: linear-gradient(90deg, var(--cyberly-brand-primary), var(--cyberly-mint-500));
+  background: var(--color-brand-primary-hover);
   transition: width var(--cyberly-motion-panel) ease;
 }
 
@@ -228,6 +245,31 @@
   min-width: min(100%, 9rem);
 }
 
+.cy-auth-panel .cy-button {
+  max-width: 100%;
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.cy-auth-route .cy-button-primary {
+  background: var(--color-brand-primary-hover);
+  border-color: var(--color-brand-primary-hover);
+  color: var(--text-on-brand);
+}
+
+.cy-auth-route .cy-button-primary:hover:not(:disabled) {
+  background: var(--color-brand-primary);
+}
+
+.cy-auth-route .cy-button-quiet {
+  color: var(--color-brand-primary-hover);
+}
+
+.cy-auth-route .cy-button:focus-visible {
+  outline: 3px solid var(--border-focus);
+  outline-offset: 3px;
+}
+
 .cy-auth-login-actions .cy-button {
   width: 100%;
 }
@@ -236,6 +278,7 @@
   display: flex;
   flex-wrap: wrap;
   align-items: center;
+  justify-content: center;
   gap: 0.25rem;
   margin-top: 1.25rem;
   color: var(--cyberly-text-secondary);
@@ -244,6 +287,35 @@
 
 .cy-auth-switch .cy-button {
   min-height: 2.75rem;
+  border: 1px solid var(--cyberly-border-soft);
+  background: var(--cyberly-surface-primary);
+}
+
+.cy-auth-login .cy-auth-switch {
+  flex-direction: column;
+  gap: 0.5rem;
+}
+
+.cy-auth-login .cy-auth-switch .cy-button {
+  width: 100%;
+}
+
+.cy-auth-privacy-entry {
+  margin-top: 1.25rem;
+  text-align: center;
+}
+
+.cy-auth-privacy-link {
+  display: inline-flex;
+  min-height: 2.75rem;
+  align-items: center;
+  color: var(--color-brand-primary-hover);
+  text-underline-offset: 0.2em;
+}
+
+.cy-auth-privacy-link:focus-visible {
+  outline: 3px solid var(--border-focus);
+  outline-offset: 3px;
 }
 
 .cy-auth-form-error {
@@ -255,6 +327,7 @@
   flex-wrap: wrap;
   align-items: center;
   gap: 0.25rem 1rem;
+  justify-content: space-between;
 }
 
 .cy-auth-forgot-link,
@@ -275,7 +348,7 @@
 }
 
 .cy-auth-password-reset-route {
-  padding-block: clamp(1rem, 6vw, 4rem);
+  padding-block: clamp(1rem, 3vw, 2rem) clamp(2rem, 4vw, 3rem);
 }
 
 .cy-auth-password-reset {
@@ -300,7 +373,7 @@
 }
 
 .cy-auth-verification-route {
-  padding-block: clamp(2rem, 8vw, 5rem);
+  padding-block: clamp(1rem, 3vw, 2rem) clamp(2rem, 4vw, 3rem);
 }
 
 .cy-auth-verification {
@@ -343,6 +416,11 @@
 @media (max-width: 40rem) {
   .cy-auth-route {
     padding-block: 0.75rem 2rem;
+  }
+
+  .cy-auth-shell {
+    /* Keep the reading column clear of the existing 52px fixed companion. */
+    padding-inline-end: 4rem;
   }
 
   .cy-auth-panel {

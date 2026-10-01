@@ -27,4 +27,25 @@ describe("Auth route CSS contract", () => {
     expect(css).toMatch(/@media\s*\(prefers-reduced-motion:\s*reduce\)/);
     expect(css).toMatch(/\.cy-auth-progress-fill[^}]*transition:\s*none/);
   });
+
+  test("keeps the Auth reading surface calm rather than decorative", () => {
+    expect(css).not.toMatch(/(?:radial|linear)-gradient/);
+    expect(css).not.toContain("var(--cyberly-indigo-600)");
+  });
+
+  test("scopes primary and secondary action emphasis to Auth", () => {
+    expect(css).toMatch(/\.cy-auth-route\s+\.cy-button-primary\s*\{/);
+    expect(css).toMatch(/\.cy-auth-route\s+\.cy-button-quiet\s*\{/);
+    expect(css).toMatch(/\.cy-auth-switch\s+\.cy-button\s*\{[^}]*border:/);
+  });
+
+  test("protects wrapped action text and input sizing within the panel", () => {
+    expect(css).toMatch(/\.cy-auth-panel\s+\.cy-button\s*\{[^}]*white-space:\s*normal/);
+    expect(css).toMatch(/\.cy-auth-field\s+input\s*\{[^}]*box-sizing:\s*border-box/);
+  });
+
+  test("reserves a mobile Auth reading lane beside the unchanged assistant", () => {
+    const mobileRules = css.slice(css.indexOf("@media (max-width: 40rem)"));
+    expect(mobileRules).toMatch(/\.cy-auth-shell\s*\{[^}]*padding-inline-end:/);
+  });
 });
