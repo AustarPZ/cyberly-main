@@ -20,6 +20,25 @@ function extractMediaBlock(stylesheet, mediaPattern) {
 }
 
 describe("Resources responsive CSS contract", () => {
+  test("binds both Resource surfaces to current neutral roles and shared typography", () => {
+    ["--surface-page", "--surface-raised", "--surface-subtle", "--text-primary", "--text-secondary", "--border-default"].forEach(role => expect(css).toContain(`var(${role})`));
+    expect(css).not.toMatch(/Space Grotesk|linear-gradient|cyberly-indigo/);
+    expect(css).toMatch(/\.resources-card\s*\{[^}]*box-shadow:\s*var\(--shadow-card\)/);
+  });
+
+  test("distinguishes supporting attribution from the bounded next step", () => {
+    expect(css).toMatch(/\.resources-source-row\s*\{[^}]*color:\s*var\(--cyberly-text-secondary\)/);
+    expect(css).toMatch(/\.resources-reader-practice\s*\{[^}]*border:\s*1px solid var\(--cyberly-border-soft\)/);
+    expect(css).toMatch(/\.resources-source-link\s*\{[^}]*text-decoration:\s*underline/);
+  });
+
+  test("reserves mobile clearance on reading and control regions without narrowing the page", () => {
+    expect(css).toContain("--resources-safe-clearance");
+    expect(css).toMatch(/\.resources-reader-body[^}]*padding-inline-end:\s*var\(--resources-safe-clearance\)/);
+    expect(css).not.toMatch(/\.resources-(?:page|reader)\s*\{[^}]*(?:padding-inline-end|width:\s*calc)/);
+    expect(css).not.toMatch(/overflow(?:-x)?:\s*(?:hidden|clip)/);
+  });
+
   test("reader is centered with narrow measure, wrapping and no modal dependency", () => {
     expect(css).toMatch(/\.resources-reader\s*\{[^}]*max-width:\s*48rem[^}]*margin-inline:\s*auto/);
     expect(css).toMatch(/\.resources-source-link\s*\{[^}]*max-width:\s*100%[^}]*overflow-wrap:\s*anywhere/);
@@ -41,13 +60,16 @@ describe("Resources responsive CSS contract", () => {
   });
 
   test("uses a bounded one-row mobile Topic rail without hiding document overflow", () => {
+    const mobileCss = extractMediaBlock(css, /@media\s*\(max-width:\s*40rem\)/);
     expect(css).toContain(".resources-filter-region");
     expect(css).toContain(".resources-filter-scroll");
     expect(css).toMatch(/@media\s*\(max-width:\s*40rem\)/);
-    expect(css).toMatch(/\.resources-filter-scroll\s*\{[^}]*flex-wrap:\s*nowrap/);
-    expect(css).toMatch(/\.resources-filter-scroll\s*\{[^}]*overflow-x:\s*auto/);
-    expect(css).toMatch(/\.resources-filter\s*\{[^}]*flex:\s*0\s+0\s+auto/);
-    expect(css).toMatch(/\.resources-filter\s*\{[^}]*white-space:\s*nowrap/);
+    expect(mobileCss).toMatch(/\.resources-filter-scroll\s*\{[^}]*flex-wrap:\s*nowrap/);
+    expect(mobileCss).toMatch(/\.resources-filter-scroll\s*\{[^}]*overflow-x:\s*auto/);
+    expect(mobileCss).toMatch(/\.resources-filter\s*\{[^}]*flex:\s*0\s+0\s+auto/);
+    expect(mobileCss).toMatch(/\.resources-filter\s*\{[^}]*max-inline-size:\s*100%/);
+    expect(mobileCss).toMatch(/\.resources-filter\s*\{[^}]*white-space:\s*normal/);
+    expect(mobileCss).toMatch(/\.resources-filter\s*\{[^}]*scroll-snap-align:\s*start/);
     expect(css).not.toMatch(/(?:html|body|\.resources-page)\s*\{[^}]*overflow-x:\s*hidden/);
   });
 
