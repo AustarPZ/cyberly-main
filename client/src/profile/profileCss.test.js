@@ -4,6 +4,25 @@ import path from "path";
 const css = fs.readFileSync(path.join(__dirname, "profile.css"), "utf8");
 
 describe("Learner Profile responsive CSS", () => {
+  test("binds Profile to current shared page, surface, text and border roles", () => {
+    const page = css.match(/\.profile-page\s*\{([^}]*)\}/)[1];
+    for (const role of ["--surface-page", "--surface-raised", "--surface-subtle", "--text-primary", "--text-secondary", "--border-default", "--border-focus"]) {
+      expect(page).toContain(`var(${role})`);
+    }
+    expect(css).not.toMatch(/Space Grotesk/);
+  });
+  test("uses neutral identity and green selection without changing avatar ownership", () => {
+    expect(css).toMatch(/\.profile-identity-summary\s*\{[^}]*background:\s*var\(--surface-subtle\)/);
+    expect(css).toMatch(/\.profile-avatar-option:has\(input:checked\)\s*\{[^}]*background:\s*var\(--color-brand-soft\)/);
+    expect(css).toMatch(/\.profile-topic-chip\[aria-pressed="true"\]\s*\{[^}]*background:\s*var\(--color-brand-soft\)/);
+    expect(css).toMatch(/\.profile-page\s+\.cy-button-primary\s*\{[^}]*var\(--color-brand-primary-hover\)/);
+  });
+  test("retains readonly, validation and focus cues and separates security sections", () => {
+    expect(css).toMatch(/\.profile-form-control\[readonly\]\s*\{[^}]*background:/);
+    expect(css).toMatch(/\.profile-form-control\[aria-invalid="true"\]\s*\{[^}]*border-color:/);
+    expect(css).toMatch(/\.profile-avatar-option:has\(input:focus-visible\)\s*\{[^}]*box-shadow:/);
+    expect(css).toMatch(/\.profile-privacy-requests\s*\{[^}]*border-top:/);
+  });
   test("keeps Profile presentation scoped, readable and touch friendly", () => {
     expect(css).toMatch(/\.profile-page\s*\{/);
     expect(css).toMatch(/\.profile-form-control[\s\S]*min-height\s*:\s*44px/);
