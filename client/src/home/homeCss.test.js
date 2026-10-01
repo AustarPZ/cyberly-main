@@ -27,4 +27,27 @@ describe("Home route CSS contract", () => {
     expect(css).not.toContain("!important");
     expect(css).not.toMatch(/#1a2e1a|#2d4a2d|#ff9800|#e65100|#fff8e1|#fff3e0|#ffe082/i);
   });
+
+  test("binds Home to the current public surface roles without competing decorative brands", () => {
+    expect(css).toMatch(/--cyberly-page-bg:\s*var\(--surface-page\)/);
+    expect(css).not.toMatch(/var\(--cyberly-(?:indigo|coral|gold)-\d+\)/);
+    expect(css).not.toMatch(/\.cy-home-awareness-band\s*\{[^}]*background:\s*var\(--cyberly-text-primary\)/);
+  });
+
+  test("owns a calm Hero and green primary emphasis locally", () => {
+    expect(css).toMatch(/\.cy-home-hero\s*\{[^}]*background:\s*var\(--surface-raised\)/);
+    expect(css).toMatch(/\.cy-home-page\s+\.cy-button-primary\s*\{[^}]*background:\s*var\(--color-brand-primary-hover\)/);
+  });
+
+  test("keeps controls wrap-safe with visible keyboard focus", () => {
+    expect(css).toMatch(/\.cy-home-page\s+\.cy-button\s*\{[^}]*white-space:\s*normal/);
+    expect(css).toMatch(/\.cy-home-page\s+\.cy-button:focus-visible\s*\{[^}]*outline:/);
+  });
+
+  test("reserves content-level mobile assistant clearance and keeps reduced motion", () => {
+    expect(css).toMatch(/--cy-home-content-clearance:/);
+    expect(css).toMatch(/padding-inline-end:\s*var\(--cy-home-content-clearance\)/);
+    expect(css).toContain("prefers-reduced-motion: reduce");
+    expect(css).not.toMatch(/\.cy-home-page\s*\{[^}]*padding-inline-end:/);
+  });
 });
