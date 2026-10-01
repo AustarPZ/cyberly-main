@@ -1,9 +1,44 @@
 .assessment-page {
+  --cyberly-page-bg: var(--surface-page);
+  --cyberly-surface-primary: var(--surface-raised);
+  --cyberly-surface-secondary: var(--surface-subtle);
+  --cyberly-text-primary: var(--text-primary);
+  --cyberly-text-secondary: var(--text-secondary);
+  --cyberly-border-soft: var(--border-default);
+  --cyberly-focus-ring: 0 0 0 3px color-mix(in srgb, var(--border-focus) 28%, transparent);
+  background: var(--surface-page);
+  color: var(--text-primary);
   padding-block: 1.5rem 3rem;
 }
 
 .assessment-checkpoint-hero {
   margin-block-end: 1.5rem;
+  background: var(--surface-subtle);
+  border-color: var(--border-default);
+  box-shadow: var(--shadow-card);
+}
+
+.assessment-checkpoint-hero .cy-compact-header-title {
+  font-family: inherit;
+}
+
+.assessment-page .cy-button-primary {
+  background: var(--color-brand-primary-hover);
+  border-color: var(--color-brand-primary-hover);
+  color: var(--text-on-brand);
+}
+
+.assessment-page .cy-button-primary:hover:not(:disabled) {
+  background: var(--color-brand-primary);
+}
+
+.assessment-page .cy-button-quiet {
+  color: var(--color-brand-primary-hover);
+}
+
+.assessment-page .cy-button:focus-visible {
+  outline: 3px solid var(--border-focus);
+  outline-offset: 3px;
 }
 
 .assessment-checkpoint-hero .cy-compact-header {
@@ -32,7 +67,7 @@
 
 .assessment-checkpoint-route {
   fill: none;
-  stroke: var(--cyberly-gold-500);
+  stroke: var(--color-brand-primary);
   stroke-linecap: round;
   stroke-width: 8;
   stroke-dasharray: 3 15;
@@ -46,7 +81,7 @@
 
 .assessment-checkpoint-compass circle {
   fill: var(--surface-raised);
-  stroke: var(--cyberly-indigo-600);
+  stroke: var(--color-brand-primary);
   stroke-width: 3;
   opacity: 0.82;
 }
@@ -58,7 +93,7 @@
 }
 
 .assessment-checkpoint-compass path {
-  fill: var(--cyberly-gold-500);
+  fill: var(--color-brand-primary);
 }
 
 .assessment-checkpoint-marker path {
@@ -91,7 +126,7 @@
 
 .assessment-checkpoint-digital {
   fill: none;
-  stroke: var(--cyberly-indigo-600);
+  stroke: var(--text-secondary);
   stroke-width: 3;
   opacity: 0.58;
 }
@@ -103,7 +138,7 @@
 .assessment-intro,
 .assessment-result-summary,
 .assessment-question-card {
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-default);
   background: var(--surface-raised);
   box-shadow: var(--shadow-card);
 }
@@ -127,9 +162,9 @@
 .assessment-briefing-stat,
 .assessment-result-metric {
   padding: 1rem;
-  border: 1px solid var(--border-subtle);
+  border: 1px solid var(--border-default);
   border-radius: var(--cyberly-radius-control);
-  background: var(--surface-muted);
+  background: var(--surface-subtle);
 }
 
 .assessment-briefing-stat {
@@ -139,7 +174,7 @@
 .assessment-briefing-value,
 .assessment-result-value {
   color: var(--color-brand-primary);
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: inherit;
   font-size: 1.25rem;
   font-weight: 700;
 }
@@ -193,9 +228,10 @@
   max-width: 46rem;
   margin: 0;
   color: var(--text-primary);
-  font-family: 'Space Grotesk', sans-serif;
+  font-family: inherit;
   font-size: clamp(1.35rem, 2.6vw, 2rem);
   line-height: 1.25;
+  overflow-wrap: anywhere;
 }
 
 .assessment-options {
@@ -214,6 +250,7 @@
   color: var(--text-primary);
   text-align: start;
   white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .assessment-option:hover {
@@ -270,7 +307,7 @@
 }
 
 .assessment-topic-grid {
-  grid-template-columns: repeat(auto-fit, minmax(13rem, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(min(100%, 13rem), 1fr));
   margin-block-end: 1.5rem;
 }
 
@@ -278,6 +315,14 @@
 .assessment-insights,
 .assessment-review-card {
   padding: 1.1rem;
+  background: var(--surface-raised);
+  border: 1px solid var(--border-default);
+  box-shadow: var(--shadow-card);
+}
+
+.assessment-page [role="alert"]:focus {
+  outline: 3px solid var(--border-focus);
+  outline-offset: 3px;
 }
 
 .assessment-topic-result-label {
@@ -367,4 +412,22 @@
 
 .assessment-page .scenario-result-recommendation {
   margin-block-end: 1.5rem;
+}
+
+/* Mobile scroll measurements show the fixed companion crossing intro copy,
+   the Start control and result review text. Keep their reading area clear
+   without narrowing the page or changing the companion. */
+@media (max-width: 40rem) {
+  .assessment-intro {
+    padding-inline-end: calc(1.25rem + 4rem);
+  }
+
+  .assessment-review-card {
+    padding-inline-end: calc(1.1rem + 4rem);
+  }
+
+  .assessment-result-summary .assessment-actions,
+  .assessment-page .scenario-result-recommendation .scenario-actions {
+    padding-inline-end: 4rem;
+  }
 }
