@@ -157,6 +157,70 @@ describe("Scenario Decision Trail final visual migration", () => {
     attempt: { id: 501, status: "in_progress" }, nextStep, readyToComplete: !nextStep,
   } });
 
+  async function clickScenarioNavbar(mobile) {
+    if (mobile) {
+      // jsdom does not evaluate App's responsive CSS media query. Match the
+      // mobile wrapper display rule while exercising the real mobile menu.
+      document.querySelector(".mobile-menu-wrap").style.display = "block";
+      await userEvent.click(screen.getByRole("button", { name: i18n.t("nav.openMenuAriaLabel") }));
+      await userEvent.click(screen.getByRole("menuitem", { name: i18n.t("nav.scenarios") }));
+    } else {
+      await userEvent.click(within(screen.getByLabelText(i18n.t("nav.primaryAriaLabel"))).getByRole("button", { name: i18n.t("nav.scenarios") }));
+    }
+  }
+
+  test.each([false, true].flatMap(mobile => ["library", "intro", "nested", "result", "active", "feedback", "ready"].map(state => [mobile, state])))
+    ("NIGHT-RUN Navbar canonical return mobile=%s state=%s preserves guard and writes", async (mobile, state) => {
+      window.matchMedia = jest.fn(query => ({ matches: mobile && query.includes("max-width"), media: query, addEventListener: jest.fn(), removeEventListener: jest.fn() }));
+      if (state === "nested") window.history.replaceState({}, "", `#/scenarios/${scenario.slug}`);
+      if (state === "result") {
+        listScenarios.mockResolvedValue({ ok: true, data: { scenarios: [completedResult.scenario] } });
+        getScenarioAttemptResult.mockResolvedValue({ ok: true, data: completedResult });
+      }
+      if (state === "ready") getScenarioAttempt.mockResolvedValue({ ok: true, data: { ...attemptPayload, currentStep: null, readyToComplete: true } });
+      if (["active", "feedback"].includes(state)) await openI03();
+      else if (state === "ready") await openI03Ready();
+      else {
+        render(<App />);
+        if (state === "nested") await screen.findByRole("button", { name: "Start practice" });
+        else {
+          await screen.findByRole("heading", { name: "Scenario Library" });
+          if (state === "intro") {
+            await userEvent.click(await screen.findByRole("button", { name: "View scenario" }));
+            await screen.findByRole("button", { name: "Start practice" });
+          }
+          if (state === "result") {
+            await userEvent.click(await screen.findByRole("button", { name: "Review result" }));
+            await screen.findByText("75%");
+          }
+        }
+      }
+      if (["active", "feedback"].includes(state)) await userEvent.click(screen.getByRole("button", { name: /B\. Pause/ }));
+      if (state === "feedback") {
+        saveScenarioDecision.mockResolvedValueOnce(savedI03("safest", { ...currentStep, id: 302, stepOrder: 2 }));
+        await userEvent.click(screen.getByRole("button", { name: "Confirm choice" }));
+        await screen.findByRole("status", { name: "Decision saved" });
+      }
+      const before = saveScenarioDecision.mock.calls.length;
+      await clickScenarioNavbar(mobile);
+      if (["active", "feedback", "ready"].includes(state)) {
+        const dialog = await screen.findByRole("dialog");
+        await userEvent.click(within(dialog).getByRole("button", { name: i18n.t("scenarios.continueScenario") }));
+        expect(screen.getByRole("heading", { level: 1, name: resumedScenario.title })).toBeVisible();
+        if (state === "active") expect(screen.getByRole("button", { name: /B\. Pause/ })).toHaveAttribute("aria-pressed", "true");
+        if (state === "feedback") expect(screen.getByRole("status", { name: "Decision saved" })).toBeVisible();
+        if (state === "ready") expect(screen.getByRole("button", { name: "Complete scenario" })).toBeEnabled();
+        expect(getScenarioAttempt.mock.calls.every(([id]) => id === 501)).toBe(true);
+        await clickScenarioNavbar(mobile);
+        await userEvent.click(within(await screen.findByRole("dialog")).getByRole("button", { name: i18n.t("scenarios.leaveScenario") }));
+      } else expect(screen.queryByRole("dialog")).not.toBeInTheDocument();
+      expect(await screen.findByRole("heading", { name: "Scenario Library" })).toBeVisible();
+      expect(window.location.hash).toBe("#/scenarios");
+      expect(saveScenarioDecision).toHaveBeenCalledTimes(before);
+      expect(startScenarioAttempt).not.toHaveBeenCalled();
+      expect(completeScenarioAttempt).not.toHaveBeenCalled();
+    });
+
   test.each(["active", "selected", "pending", "error", "feedback", "final", "ready"])("STG-C01 keeps one attempt utility Exit outside the learning sequence: %s", async state => {
     let finish;
     const next = { ...currentStep, id: 302, stepOrder: 2 };

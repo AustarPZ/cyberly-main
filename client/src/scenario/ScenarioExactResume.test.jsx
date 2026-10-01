@@ -60,6 +60,32 @@ test('exact GET opens the existing player independent of published Library membe
   expect(document.activeElement).toContainElement(screen.getByText('Situation 7'));
   noAutomaticMutations();
 });
+
+test.each(['loading', 'active', 'recovery'])('NIGHT-RUN Navbar abandons exact %s safely without replaying its target', async state => {
+  const pending = deferred();
+  if (state === 'loading') getScenarioAttempt.mockReturnValue(pending.promise);
+  if (state === 'recovery') getScenarioAttempt.mockResolvedValue({ ok: false, status: 404, data: {} });
+  await boot(); await request();
+  if (state === 'active') await screen.findByText('Situation 7');
+  if (state === 'recovery') await screen.findByText(i18n.t('scenarios.resume.unavailable'));
+  const navbar = () => within(screen.getByLabelText(i18n.t('nav.primaryAriaLabel'))).getByRole('button', { name: i18n.t('nav.scenarios') });
+  if (state === 'active') await userEvent.click(screen.getByRole('button', { name: /A\. Pause/ }));
+  await userEvent.click(navbar());
+  if (state === 'active') {
+    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: i18n.t('scenarios.continueScenario') }));
+    expect(screen.getByText('Situation 7')).toBeVisible();
+    expect(screen.getByRole('button', { name: /A\. Pause/ })).toHaveAttribute('aria-pressed', 'true');
+    await userEvent.click(navbar());
+    await userEvent.click(within(await screen.findByRole('dialog')).getByRole('button', { name: i18n.t('scenarios.leaveScenario') }));
+  }
+  expect(await screen.findByRole('heading', { name: i18n.t('scenarios.library.title') })).toBeVisible();
+  if (state === 'loading') await act(async () => pending.resolve({ ok: true, data: payload() }));
+  expect(screen.queryByText('Situation 7')).not.toBeInTheDocument();
+  expect(mockContext.pendingScenarioResume).toBe(null);
+  expect(getScenarioAttempt.mock.calls).toEqual([[7, { locale: 'en' }]]);
+  expect(window.location.hash).toBe('#/scenarios');
+  for (const fn of [startScenarioAttempt, saveScenarioDecision, completeScenarioAttempt]) expect(fn).not.toHaveBeenCalled();
+});
 test('invalid producer input does not publish, navigate or request', async () => {
   await boot(); let result;
   act(() => { result = mockContext.requestScenarioExactResume({ ...target(), attemptId: '7' }); });

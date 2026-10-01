@@ -7441,6 +7441,7 @@ function ScenariosPage() {
     pendingScenarioResume,
     clearPendingScenarioResume,
     scenarioResumeAuthority,
+    scenarioRootNavigation,
     clearLocalAuthenticatedUserState,
   } = useApp();
   const nestedIntro = parseLearningDetailRoute(acceptedHash, "scenarios");
@@ -7478,6 +7479,16 @@ function ScenariosPage() {
     if (pendingScenarioResume) clearPendingScenarioResume(pendingScenarioResume.targetRevision);
     publishExact({ mode: "idle" });
   }, [pendingScenarioResume, clearPendingScenarioResume, publishExact]);
+
+  const previousRootNavigation = useRef(scenarioRootNavigation);
+  useEffect(() => {
+    if (previousRootNavigation.current === scenarioRootNavigation) return;
+    previousRootNavigation.current = scenarioRootNavigation;
+    leaveExactResume();
+    setSelectedChoice("");
+    setDecisionFeedback(null);
+    setView({ mode: "library" });
+  }, [scenarioRootNavigation, leaveExactResume]);
 
   useEffect(() => {
     let active = true;
@@ -10754,7 +10765,7 @@ function LogoutConfirmModal({ onCancel, onConfirm }) {
 }
 
 function Navbar({ page }) {
-  const { go, user, logout, openAuth, requestLogoutWithGuard } = useApp();
+  const { navigatePrimary, user, logout, openAuth, requestLogoutWithGuard } = useApp();
   const [logoutModalOpen, setLogoutModalOpen] = useState(false);
   const logoutReturnFocusRef = useRef(null);
   const navItems = navigationItemsForUser(user);
@@ -10780,7 +10791,7 @@ function Navbar({ page }) {
 
   return (
     <>
-      <GlobalNavigation page={page} user={user} items={navItems} onNavigate={go} openAuth={openAuth}
+      <GlobalNavigation page={page} user={user} items={navItems} onNavigate={navigatePrimary} openAuth={openAuth}
         onRequestLogout={requestLogout} languageControl={<LanguageSelector />} logo={cyberlyNavbarLogo} />
       {logoutModalOpen && (
         <LogoutConfirmModal
@@ -10822,6 +10833,7 @@ export default function App() {
   const [pendingResourceTarget, setPendingResourceTarget] = useState(null);
   const [pendingScenarioTarget, setPendingScenarioTarget] = useState(null);
   const [pendingScenarioResume, setPendingScenarioResume] = useState(null);
+  const [scenarioRootNavigation, setScenarioRootNavigation] = useState(0);
   const [pendingAssessmentResume, setPendingAssessmentResume] = useState(null);
   const [, renderAssessmentResumeAuthority] = useState(0);
   const assessmentResumeAuthority = useRef({ authScopeRevision: 0, targetRevision: 0, acceptedNavigationGeneration: 0 });
@@ -11297,6 +11309,17 @@ export default function App() {
     }
     completeNavigation(safePage, options.replace, options.authMode);
   }
+  function navigatePrimary(nextPage) {
+    if (nextPage !== "scenarios") return go(nextPage);
+    // Navbar selects the library, even when an internal child shares its hash.
+    // The existing action guard owns cancellation and confirmed activity leave.
+    return requestGuardedAction(() => {
+      setPendingScenarioResume(null);
+      setPendingScenarioTarget(null);
+      setScenarioRootNavigation(value => value + 1);
+      completeNavigation("scenarios");
+    }, { actionType: "scenario-library-navigation" });
+  }
   function requestHashNavigation(hashValue, options = {}) {
     const nextHash = normalizeHashRoute(hashValue);
     const blocker = options.guard || activityGuardRef.current;
@@ -11492,6 +11515,8 @@ export default function App() {
     clearPendingScenarioResume,
     scenarioResumeAuthority,
     requestScenarioExactResume,
+    scenarioRootNavigation,
+    navigatePrimary,
     resolvedUiLocale: resolveLanguageAuthority({
       explicitLocale: explicitLocaleRef.current,
       profileLanguage: userProfilePreferredLanguage || userPreferredLanguage,
