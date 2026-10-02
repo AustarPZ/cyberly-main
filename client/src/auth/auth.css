@@ -245,6 +245,10 @@
   min-width: min(100%, 9rem);
 }
 
+.cy-auth-register .cy-auth-actions .cy-button-primary {
+  margin-inline-start: auto;
+}
+
 .cy-auth-panel .cy-button {
   max-width: 100%;
   white-space: normal;
@@ -287,17 +291,9 @@
 
 .cy-auth-switch .cy-button {
   min-height: 2.75rem;
-  border: 1px solid var(--cyberly-border-soft);
-  background: var(--cyberly-surface-primary);
-}
-
-.cy-auth-login .cy-auth-switch {
-  flex-direction: column;
-  gap: 0.5rem;
-}
-
-.cy-auth-login .cy-auth-switch .cy-button {
-  width: 100%;
+  border: 1px solid transparent;
+  background: transparent;
+  font-size: 0.85rem;
 }
 
 .cy-auth-privacy-entry {

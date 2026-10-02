@@ -87,7 +87,7 @@ describe("Privacy Request protected routing", () => {
 
   test("sends an unauthenticated direct visit to Login and returns there after successful login", async () => {
     await renderRoute("#/privacy-requests", { ok: false, error: "Not authenticated" });
-    await screen.findByRole("heading", { level: 1, name: i18n.t("auth.welcomeBack") });
+    await screen.findByRole("heading", { level: 1, name: i18n.t("auth.signInButton") });
     expect(window.location.hash).toBe("#/login");
 
     login.mockResolvedValue(session);
@@ -101,7 +101,7 @@ describe("Privacy Request protected routing", () => {
 
   test("keeps protected content hidden after a failed login", async () => {
     await renderRoute("#/privacy-requests", { ok: false, error: "Not authenticated" });
-    await screen.findByRole("heading", { level: 1, name: i18n.t("auth.welcomeBack") });
+    await screen.findByRole("heading", { level: 1, name: i18n.t("auth.signInButton") });
     login.mockResolvedValue({ ok: false, error: "Invalid credentials" });
 
     await userEvent.type(screen.getByLabelText(i18n.t("auth.email")), "learner@example.test");
@@ -115,12 +115,12 @@ describe("Privacy Request protected routing", () => {
 
   test("clears the protected return intent after explicit navigation away", async () => {
     await renderRoute("#/privacy-requests", { ok: false, error: "Not authenticated" });
-    await screen.findByRole("heading", { level: 1, name: i18n.t("auth.welcomeBack") });
+    await screen.findByRole("heading", { level: 1, name: i18n.t("auth.signInButton") });
 
     navigateTo("#/home");
     await screen.findByRole("heading", { level: 1, name: i18n.t("home.hero.title") });
     navigateTo("#/login");
-    await screen.findByRole("heading", { level: 1, name: i18n.t("auth.welcomeBack") });
+    await screen.findByRole("heading", { level: 1, name: i18n.t("auth.signInButton") });
 
     login.mockResolvedValue(session);
     await userEvent.type(screen.getByLabelText(i18n.t("auth.email")), "learner@example.test");

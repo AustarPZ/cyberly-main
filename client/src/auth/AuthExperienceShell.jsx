@@ -4,7 +4,7 @@ import "./authExperience.css";
 export default function AuthExperienceShell({ mode, children }) {
   return (
     <div className={`cy-auth-experience cy-auth-experience-${mode}`}>
-      <AuthBrandPanel mode={mode} />
+      <AuthBrandPanel />
       {children}
     </div>
   );

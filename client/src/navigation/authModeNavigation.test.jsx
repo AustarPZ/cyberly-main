@@ -43,7 +43,7 @@ describe("explicit authentication mode navigation", () => {
 
     expect(window.location.hash).toBe("#/login");
     expect(await screen.findByRole("heading", { level: 1, name: i18n.t("auth.createAccount") })).toBeVisible();
-    expect(screen.queryByRole("heading", { level: 1, name: i18n.t("auth.welcomeBack") })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 1, name: i18n.t("auth.signInButton") })).not.toBeInTheDocument();
     expect(register).not.toHaveBeenCalled();
     expect(login).not.toHaveBeenCalled();
   });
@@ -54,7 +54,7 @@ describe("explicit authentication mode navigation", () => {
     await userEvent.click(screen.getByRole("button", { name: i18n.t("nav.signIn") }));
 
     expect(window.location.hash).toBe("#/login");
-    expect(await screen.findByRole("heading", { level: 1, name: i18n.t("auth.welcomeBack") })).toBeVisible();
+    expect(await screen.findByRole("heading", { level: 1, name: i18n.t("auth.signInButton") })).toBeVisible();
     expect(register).not.toHaveBeenCalled();
     expect(login).not.toHaveBeenCalled();
   });
@@ -62,7 +62,7 @@ describe("explicit authentication mode navigation", () => {
   test("defaults a generic direct Login route to Login mode", async () => {
     await renderRoute("#/login");
 
-    expect(await screen.findByRole("heading", { level: 1, name: i18n.t("auth.welcomeBack") })).toBeVisible();
+    expect(await screen.findByRole("heading", { level: 1, name: i18n.t("auth.signInButton") })).toBeVisible();
     expect(screen.queryByText(i18n.t("auth.createAccount"))).not.toBeInTheDocument();
     expect(register).not.toHaveBeenCalled();
     expect(login).not.toHaveBeenCalled();

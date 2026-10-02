@@ -29,7 +29,7 @@ export default function GlobalNavigation({ page, user, items, onNavigate, openAu
     return () => { document.removeEventListener("mousedown", close); document.removeEventListener("keydown", close); };
   }, [open]);
   const select = action => { setOpen(false); action(); };
-  return <nav className={`navbar cy-global-navigation${page === "ai-chat" ? " cyberguard-nav-flow" : ""}`}>
+  return <nav className={`navbar cy-global-navigation${!user ? " cy-guest-navigation" : ""}${page === "ai-chat" ? " cyberguard-nav-flow" : ""}`}>
     <button type="button" className="nav-logo" onClick={() => onNavigate(user ? "dashboard" : "home")} aria-label={t(user ? "nav.brandDashboardAriaLabel" : "nav.brandHomeAriaLabel")}>
       <img className="navbar-logo" src={logo} alt="Cyberly" />
     </button>

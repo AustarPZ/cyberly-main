@@ -130,15 +130,17 @@ describe("About Project Story and Trust Overview", () => {
     expect(within(about).getAllByText(/Cybersecurity Hub DISS/i).length).toBeGreaterThan(0);
   });
 
-  test("preserves the guest Back destination", async () => {
+  test("omits top-level Back while preserving the guest logo destination", async () => {
     await renderAbout();
-    await userEvent.click(screen.getByRole("button", { name: i18n.t("common.backToHome") }));
+    expect(screen.queryByRole("button", { name: i18n.t("common.backToHome") })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: i18n.t("nav.brandHomeAriaLabel") }));
     expect(window.location.hash).toBe("#/home");
   });
 
-  test("preserves the authenticated Back destination", async () => {
+  test("omits top-level Back while preserving the authenticated logo destination", async () => {
     const { unmount } = await renderAbout({ authenticated: true });
-    await userEvent.click(screen.getByRole("button", { name: i18n.t("common.backToDashboard") }));
+    expect(screen.queryByRole("button", { name: i18n.t("common.backToDashboard") })).not.toBeInTheDocument();
+    await userEvent.click(screen.getByRole("button", { name: i18n.t("nav.brandDashboardAriaLabel") }));
     expect(window.location.hash).toBe("#/dashboard");
     unmount();
   });

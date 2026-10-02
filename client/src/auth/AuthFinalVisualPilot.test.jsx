@@ -35,7 +35,7 @@ describe("Auth final visual foundation", () => {
 
   test("presents Login as a bounded accessible Safe Entry surface", async () => {
     const { container } = await renderRoute("#/login");
-    await screen.findByRole("heading", { level: 1, name: i18n.t("auth.welcomeBack") });
+    await screen.findByRole("heading", { level: 1, name: i18n.t("auth.signInButton") });
 
     expect(container.querySelector(".cy-auth-route")).toBeInTheDocument();
     expect(container.querySelector(".cy-auth-login")).toHaveClass("cy-surface");
@@ -43,7 +43,7 @@ describe("Auth final visual foundation", () => {
     expect(screen.getByLabelText(i18n.t("auth.email"))).toHaveAttribute("type", "email");
     expect(screen.getByLabelText(i18n.t("auth.password"))).toHaveAttribute("type", "password");
     expect(screen.getByRole("button", { name: i18n.t("auth.signInButton") })).toHaveClass("cy-button-primary");
-    expect(screen.getByRole("button", { name: i18n.t("common.backToHome") })).not.toHaveAttribute("style");
+    expect(screen.queryByRole("button", { name: i18n.t("common.backToHome") })).not.toBeInTheDocument();
   });
 
   test("presents Registration as a seven-step Explorer Setup journey", async () => {

@@ -74,6 +74,19 @@ test("real categories filter library without fetching detail per card", async ()
   expect(getResourceBySlug).not.toHaveBeenCalled();
 });
 
+test("Library omits top-level return while Reader retains contextual return", async () => {
+  render(<App />);
+  const card = await screen.findByRole("button", { name: /Spot phishing messages/ });
+  expect(screen.queryByRole("button", { name: i18n.t("common.backToHome") })).not.toBeInTheDocument();
+  expect(screen.queryByRole("button", { name: i18n.t("common.backToDashboard") })).not.toBeInTheDocument();
+  await userEvent.click(card);
+  await screen.findByRole("heading", { level: 1, name: resources[0].title });
+  const back = screen.getByRole("link", { name: i18n.t("resources.reader.back") });
+  expect(back).toHaveAttribute("href", "#/resources");
+  await userEvent.click(back);
+  await screen.findByRole("heading", { name: "Cyber Wellness Resources" });
+});
+
 test("card routes to reader; browser Back and Forward restore addressable pages", async () => {
   render(<App />);
   await userEvent.click(await screen.findByRole("button", { name: /Spot phishing messages/ }));

@@ -91,7 +91,7 @@ async function renderRoute(route = "#/login") {
   render(<App />);
   await waitFor(() => expect(restoreSession).toHaveBeenCalledTimes(1));
   if (route === "#/login") {
-    await screen.findByRole("heading", { level: 1, name: i18n.t("auth.welcomeBack") });
+    await screen.findByRole("heading", { level: 1, name: i18n.t("auth.signInButton") });
   }
 }
 

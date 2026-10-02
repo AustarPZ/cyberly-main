@@ -24,9 +24,9 @@ beforeEach(() => {
 test.each(["en", "ms", "zh-CN"])("recovered shell and keyboard-accessible neutral help in %s", async locale => {
   await i18n.changeLanguage(locale);
   const { container } = render(<App />);
-  await screen.findByRole("heading", { level: 1, name: i18n.t("auth.welcomeBack") });
+  await screen.findByRole("heading", { level: 1, name: i18n.t("auth.signInButton") });
   expect(container.querySelector(".cy-auth-experience")).toBeInTheDocument();
-  expect(container.querySelectorAll(".cy-auth-brand li")).toHaveLength(3);
+  expect(container.querySelector(".cy-auth-brand")).toHaveTextContent(i18n.t("auth.experience.confidence"));
   const help = screen.getByRole("group", { name: i18n.t("auth.experience.accessHelp") });
   const links = within(help).getAllByRole("link");
   expect(links).toHaveLength(2);
@@ -55,6 +55,6 @@ test("responsive contract collapses below desktop without clipping or a FAB righ
   const css = fs.readFileSync(path.join(__dirname, "authExperience.css"), "utf8");
   expect(css).toMatch(/42fr\) minmax\(0, 58fr\)/);
   expect(css).toMatch(/@media \(max-width: 1023px\)/);
-  expect(css).toMatch(/\.cy-auth-brand-values[\s\S]*display: none/);
+  expect(css).toMatch(/\.cy-auth-brand\s*\{\s*display: none/);
   expect(css).not.toMatch(/overflow:\s*hidden|max-height:|position:\s*fixed|padding-right:/);
 });

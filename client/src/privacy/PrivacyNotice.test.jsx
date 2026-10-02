@@ -266,7 +266,7 @@ describe("Privacy Notice", () => {
 
     await userEvent.click(screen.getByRole("link", { name: "Manage privacy requests" }));
 
-    await screen.findByRole("heading", { level: 1, name: i18n.t("auth.welcomeBack") });
+    await screen.findByRole("heading", { level: 1, name: i18n.t("auth.signInButton") });
     expect(window.location.hash).toBe("#/login");
     expect(restoreSession).toHaveBeenCalledTimes(1);
     expect(screen.queryByRole("heading", { level: 1, name: i18n.t("privacyRequests.title") })).not.toBeInTheDocument();
@@ -336,7 +336,7 @@ describe("Privacy Notice", () => {
   test.each([
     { route: "#/login", openRegistration: false },
     { route: "#/home", openRegistration: true },
-  ])("provides a neutral Privacy Notice entry from $route", async ({ route, openRegistration }) => {
+  ])("keeps Privacy Notice in the footer without duplicating it in Auth from $route", async ({ route, openRegistration }) => {
     window.history.replaceState({}, "", route);
     window.scrollTo = jest.fn();
     window.matchMedia = jest.fn().mockReturnValue({ matches: false, addEventListener: jest.fn(), removeEventListener: jest.fn() });
@@ -347,11 +347,12 @@ describe("Privacy Notice", () => {
     if (openRegistration) {
       await userEvent.click((await screen.findAllByRole("button", { name: i18n.t("home.hero.cta") }))[0]);
     } else {
-      await screen.findByRole("heading", { level: 1, name: i18n.t("auth.welcomeBack") });
+      await screen.findByRole("heading", { level: 1, name: i18n.t("auth.signInButton") });
     }
 
     const authPanel = document.querySelector(".cy-auth-panel");
-    const authLink = within(authPanel).getByRole("link", { name: i18n.t("privacyNotice.linkLabel") });
+    expect(within(authPanel).queryByRole("link", { name: i18n.t("privacyNotice.linkLabel") })).not.toBeInTheDocument();
+    const authLink = within(screen.getByRole("contentinfo")).getByRole("link", { name: i18n.t("privacyNotice.linkLabel") });
     expect(authLink).toHaveAttribute("href", "#/privacy");
     await userEvent.click(authLink);
     await waitFor(() => expect(window.location.hash).toBe("#/privacy"));

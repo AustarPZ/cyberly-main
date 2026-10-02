@@ -45,6 +45,9 @@ footer.cy-app-footer { display: flex; align-items: center; justify-content: spac
   .cy-global-navigation .nav-language select { max-width: 76px; }
 }
 
+/* Guest navigation has room for full language names beside the logo and menu. */
+.cy-global-navigation.cy-guest-navigation .nav-language select { max-width: none; }
+
 /* Let every final control, including footer links, scroll above the fixed FAB.
    Keep normal page width; clearance follows the mobile companion breakpoint. */
 @media (max-width: 820px) {

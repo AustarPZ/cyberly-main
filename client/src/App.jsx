@@ -5188,7 +5188,7 @@ function RegisterPage({ onSwitch }) {
           </Button>
         </div>
 
-        <div className="cy-auth-switch">
+        {step === 1 && <div className="cy-auth-switch">
           {t("auth.signInPrompt")}{" "}
 
           <Button
@@ -5198,10 +5198,7 @@ function RegisterPage({ onSwitch }) {
           >
             {t("auth.goToLogin")}
           </Button>
-        </div>
-        <p className="cy-auth-privacy-entry">
-          <a className="cy-auth-privacy-link" href="#/privacy">{t("privacyNotice.linkLabel")}</a>
-        </p>
+        </div>}
       </Surface>
     </AuthExperienceShell>
   );
@@ -5299,7 +5296,7 @@ function LoginPage({ onSwitch }) {
   return (
     <AuthExperienceShell mode="login">
       <Surface className="cy-auth-panel cy-auth-login">
-        <h1 className="cy-auth-step-title">{t("auth.welcomeBack")}</h1>
+        <h1 className="cy-auth-step-title">{t("auth.signInButton")}</h1>
 
         <p className="cy-auth-step-description">{t("auth.loginDescription")}</p>
 
@@ -5406,9 +5403,6 @@ function LoginPage({ onSwitch }) {
             {t("auth.goToRegister")}
           </Button>
         </div>
-        <p className="cy-auth-privacy-entry">
-          <a className="cy-auth-privacy-link" href="#/privacy">{t("privacyNotice.linkLabel")}</a>
-        </p>
       </Surface>
     </AuthExperienceShell>
   );
@@ -5416,23 +5410,12 @@ function LoginPage({ onSwitch }) {
 
 // ─── Auth Gate (toggles between Login & Register) ─────────────────
 function AuthGate() {
-  const { t } = useTranslation();
-  const { go, authMode, setAuthMode } = useApp();
+  const { authMode, setAuthMode } = useApp();
   const mode = authMode;
   const setMode = setAuthMode;
   return (
     <div className="cy-auth-route">
       <PageContainer width="content" className="cy-auth-route-container">
-      <Button
-        variant="quiet"
-        className="cy-auth-back"
-        onClick={() => go("home")}
-      >
-        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M19 12H5M12 5l-7 7 7 7"/>
-        </svg>
-        {t("common.backToHome")}
-      </Button>
       {mode === "login"
         ? <LoginPage    onSwitch={() => setMode("register")} />
         : <RegisterPage onSwitch={() => setMode("login")}    />
@@ -6660,7 +6643,6 @@ function ResourcesPage() {
     <div className="resources-page">
       <PageContainer>
         <PageSection>
-          <PageBackButton />
           <ContextHeader
             className="resources-context-header"
             title={t("resources.title")}
@@ -6787,7 +6769,6 @@ function AboutPage() {
   return (
     <div className="cy-about-page">
       <PageContainer className="cy-about-header-wrap">
-        <PageBackButton className="cy-about-back" />
         <header className="cy-about-header">
           <PageIdentity label={t("about.hero.eyebrow")} icon="◇" />
           <h1 className="cy-about-title">{t("about.hero.title")}</h1>
