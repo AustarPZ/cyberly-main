@@ -40,6 +40,16 @@
     }
   },
   "auth": {
+    "experience": {
+      "loginWelcome": "Welcome back to your safer digital world.",
+      "registerWelcome": "Your next safe step starts here.",
+      "loginLabel": "Welcome back",
+      "registerLabel": "Join Cyberly",
+      "learn": "Learn about online safety at your own pace.",
+      "practice": "Practise everyday digital decisions.",
+      "confidence": "Build confidence, one safe step at a time.",
+      "accessHelp": "Need help accessing your account?"
+    },
     "login": "Login",
     "register": "Register",
     "getStarted": "Get started",

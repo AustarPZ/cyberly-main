@@ -40,6 +40,16 @@
     }
   },
   "auth": {
+    "experience": {
+      "loginWelcome": "欢迎回到更安全的数字世界。",
+      "registerWelcome": "从这里迈出安全的下一步。",
+      "loginLabel": "欢迎回来",
+      "registerLabel": "加入 Cyberly",
+      "learn": "按自己的节奏学习网络安全。",
+      "practice": "练习日常数字生活中的决策。",
+      "confidence": "每一个安全行动，都让你更有信心。",
+      "accessHelp": "需要帮助访问账户？"
+    },
     "login": "登录",
     "register": "注册",
     "getStarted": "开始使用",

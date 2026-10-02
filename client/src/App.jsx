@@ -22,6 +22,8 @@ import "./scenario/scenarios.css";
 import "./profile/profile.css";
 import "./home/home.css";
 import "./auth/auth.css";
+import AuthExperienceShell from "./auth/AuthExperienceShell";
+import AuthAccessHelp from "./auth/AuthAccessHelp";
 import "./about/about.css";
 import "./privacy/privacy.css";
 import CyberGuardWorkspaceHeader from "./cyberguard/CyberGuardWorkspaceHeader";
@@ -203,7 +205,6 @@ import {
   buildResourceHeaderStats,
 } from "./product/productSemantics";
 import cyberlyNavbarLogo from "./assets/Cyberly-navbar-logo-transparent.png";
-import cyberlyAuthLogo from "./assets/CyberlyLogo-transparent.png";
 
 // ─── Design tokens ────────────────────────────────────────────────
 /*const COLORS = {
@@ -4370,6 +4371,7 @@ function StepCredentials({ data, onChange, errors }) {
         )}
       </div>
 
+      <div className="cy-auth-credentials-grid">
       <div className="cy-auth-field">
         <label htmlFor="register-display-name">
           {t("auth.displayName")}
@@ -4433,6 +4435,8 @@ function StepCredentials({ data, onChange, errors }) {
             {errors.age}
           </div>
         )}
+      </div>
+
       </div>
 
       <div className="cy-auth-field">
@@ -5054,13 +5058,8 @@ function RegisterPage({ onSwitch }) {
   );
 
   return (
-    <div className="cy-auth-shell">
+    <AuthExperienceShell mode="register">
       <Surface className="cy-auth-panel cy-auth-register">
-        <div className="cy-auth-logo">
-          <img className="auth-logo-image" src={cyberlyAuthLogo} alt="Cyberly" />
-        </div>
-        <PageIdentity label={t("auth.createAccount")} icon="◇" className="cy-auth-identity" />
-
         <div
           className="cy-auth-progress"
           role="progressbar"
@@ -5206,7 +5205,7 @@ function RegisterPage({ onSwitch }) {
           <a className="cy-auth-privacy-link" href="#/privacy">{t("privacyNotice.linkLabel")}</a>
         </p>
       </Surface>
-    </div>
+    </AuthExperienceShell>
   );
 }
 
@@ -5300,13 +5299,8 @@ function LoginPage({ onSwitch }) {
   }
 
   return (
-    <div className="cy-auth-shell">
+    <AuthExperienceShell mode="login">
       <Surface className="cy-auth-panel cy-auth-login">
-        <div className="cy-auth-logo">
-          <img className="auth-logo-image" src={cyberlyAuthLogo} alt="Cyberly" />
-        </div>
-        <PageIdentity label={t("auth.login")} icon="◇" className="cy-auth-identity" />
-
         <h1 className="cy-auth-step-title">{t("auth.welcomeBack")}</h1>
 
         <p className="cy-auth-step-description">{t("auth.loginDescription")}</p>
@@ -5379,15 +5373,6 @@ function LoginPage({ onSwitch }) {
           )}
         </div>
 
-        <div className="cy-auth-recovery-links">
-          <a className="cy-auth-forgot-link" href="#/forgot-password">
-            {t("auth.passwordReset.forgotLink")}
-          </a>
-          <a className="cy-auth-forgot-link" href="#/forgot-password">
-            {t("auth.passwordReset.findAccountLink")}
-          </a>
-        </div>
-
         {errors.form && (
           <div
             className="field-error cy-auth-form-error"
@@ -5408,6 +5393,8 @@ function LoginPage({ onSwitch }) {
           </Button>
         </div>
 
+        <AuthAccessHelp />
+
         <div className="cy-auth-switch">
           <span>
             {t("auth.registerPrompt")}
@@ -5425,7 +5412,7 @@ function LoginPage({ onSwitch }) {
           <a className="cy-auth-privacy-link" href="#/privacy">{t("privacyNotice.linkLabel")}</a>
         </p>
       </Surface>
-    </div>
+    </AuthExperienceShell>
   );
 }
 
@@ -5437,7 +5424,7 @@ function AuthGate() {
   const setMode = setAuthMode;
   return (
     <div className="cy-auth-route">
-      <PageContainer width="reading" className="cy-auth-route-container">
+      <PageContainer width="content" className="cy-auth-route-container">
       <Button
         variant="quiet"
         className="cy-auth-back"

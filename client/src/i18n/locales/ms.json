@@ -40,6 +40,16 @@
     }
   },
   "auth": {
+    "experience": {
+      "loginWelcome": "Selamat kembali ke dunia digital yang lebih selamat.",
+      "registerWelcome": "Langkah selamat anda bermula di sini.",
+      "loginLabel": "Selamat kembali",
+      "registerLabel": "Sertai Cyberly",
+      "learn": "Pelajari keselamatan dalam talian mengikut rentak anda.",
+      "practice": "Latih diri membuat keputusan digital harian.",
+      "confidence": "Bina keyakinan melalui setiap langkah selamat.",
+      "accessHelp": "Perlukan bantuan mengakses akaun anda?"
+    },
     "login": "Log masuk",
     "register": "Daftar",
     "getStarted": "Mula",
