@@ -2706,5 +2706,18 @@
     "password_and_account_security": "Kata Laluan & Keselamatan Akaun",
     "privacy_and_personal_information": "Privasi & Perlindungan Data Peribadi",
     "misinformation_and_deepfakes": "Maklumat Palsu, Media & Keselamatan AI"
+  },
+  "accountCenter": {
+  "title": "Pusat Akaun",
+  "profileDescription": "Identiti, avatar dan ringkasan pembelajaran anda.",
+  "settingsDescription": "Sesuaikan Cyberly untuk anda. Pilih bahagian untuk bermula.",
+  "openSettings": "Buka Tetapan",
+  "relatedSettings": "Laraskan pilihan pembelajaran, urus keselamatan akaun atau semak privasi dan Pautan Penjaga dalam Tetapan.",
+  "sectionsLabel": "Bahagian tetapan",
+  "sections": {
+    "learning": "Pilihan Pembelajaran",
+    "security": "Akaun & Keselamatan",
+    "privacy": "Privasi & Pautan Penjaga"
   }
+}
 }

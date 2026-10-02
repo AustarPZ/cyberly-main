@@ -84,39 +84,26 @@ describe("Learner Profile final visual migration", () => {
     listChatConversations.mockResolvedValue({ ok: true, data: { conversations: [] } });
   });
 
-  test("presents one Explorer Passport workspace without mutating account or profile data on render", async () => {
+  test("presents a Profile workspace without mutating account or profile data on render", async () => {
     const { container } = render(<App />);
-    const heading = await screen.findByRole("heading", { level: 1, name: i18n.t("settings.title") });
-
+    await screen.findByRole("heading", { level: 1, name: i18n.t("nav.profile") });
     expect(screen.getAllByRole("main")).toHaveLength(1);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    expect(screen.getByRole("heading", { level: 2, name: i18n.t("settings.profileGroup") })).toBeVisible();
-    const settingsGroup = screen.getByRole("heading", { level: 2, name: i18n.t("settings.settingsGroup") }).closest("section");
-    expect(within(settingsGroup).getByLabelText(i18n.t("settings.email"))).toHaveAttribute("readonly");
-    expect(within(settingsGroup).getByLabelText(i18n.t("settings.preferredLanguage"))).toHaveValue(profile.preferredLanguage);
-    expect(heading.closest(".profile-header")).toBeInTheDocument();
-    expect(within(heading.closest(".profile-header")).getByText(i18n.t("settings.learnerProfile"))).toHaveClass("cy-page-identity-label");
-    expect(container.querySelector(".profile-page")).toBeInTheDocument();
     expect(container.querySelector(".profile-identity-summary")).toBeInTheDocument();
     expect(container.querySelector('.profile-page [style*="linear-gradient"]')).not.toBeInTheDocument();
-    expect(screen.getByRole("heading", { level: 3, name: i18n.t("settings.accountInformation") })).toBeVisible();
-    expect(screen.getByRole("heading", { level: 3, name: i18n.t("settings.learningPreferences") })).toBeVisible();
-    expect(screen.getByDisplayValue(learner.email)).toHaveAttribute("readonly");
-    expect(screen.getByDisplayValue(profile.aiNickname)).toBeVisible();
-    expect(screen.getByLabelText(i18n.t("settings.educationLevel"))).toHaveValue(profile.educationLevel);
-    expect(screen.getByLabelText(i18n.t("settings.preferredLanguage"))).toHaveValue(profile.preferredLanguage);
-    expect(screen.getByLabelText(i18n.t("settings.familiarity"))).toHaveValue(profile.familiarityLevel);
-    expect(screen.getByLabelText(i18n.t("settings.learningStyle"))).toHaveValue(profile.learningStyle);
+    expect(screen.getByRole("heading", { level: 2, name: i18n.t("settings.accountInformation") })).toBeVisible();
+    expect(screen.queryByLabelText(i18n.t("settings.email"))).not.toBeInTheDocument();
+    expect(screen.queryByLabelText(i18n.t("settings.preferredLanguage"))).not.toBeInTheDocument();
     expect(saveAccount).not.toHaveBeenCalled();
     expect(saveProfile).not.toHaveBeenCalled();
   });
 
   test("offers one initials choice and six localized preset radios with a local preview", async () => {
     const { container } = render(<App />);
-    await screen.findByRole("heading", { level: 1, name: i18n.t("settings.title") });
+    await screen.findByRole("heading", { level: 1, name: i18n.t("nav.profile") });
 
     const group = screen.getByRole("group", { name: i18n.t("settings.avatar.legend") });
-    expect(screen.getByRole("heading", { level: 3, name: i18n.t("settings.avatar.title") })).toBeVisible();
+    expect(screen.getByRole("heading", { level: 2, name: i18n.t("settings.avatar.title") })).toBeVisible();
     const radios = within(group).getAllByRole("radio");
     expect(radios).toHaveLength(7);
     expect(radios.map(radio => radio.value)).toEqual([
@@ -183,14 +170,14 @@ describe("Learner Profile final visual migration", () => {
 
     restoreProfile({ user: { displayName: "陈小明" }, profile: { avatarPreset: "https://example.test/avatar.png" } });
     render(<App />);
-    await screen.findByRole("heading", { level: 1, name: i18n.t("settings.title") });
+    await screen.findByRole("heading", { level: 1, name: i18n.t("nav.profile") });
     expect(screen.getAllByText("陈").length).toBeGreaterThanOrEqual(2);
     expect(document.querySelector(".profile-avatar .avatar-visual, .nav-avatar .avatar-visual")).not.toBeInTheDocument();
   });
 
   test("orders the learner account menu as Profile, Settings, Log out", async () => {
     render(<App />);
-    await screen.findByRole("heading", { level: 1, name: i18n.t("settings.title") });
+    await screen.findByRole("heading", { level: 1, name: i18n.t("nav.profile") });
     await userEvent.click(screen.getByRole("button", { name: i18n.t("nav.accountMenu.triggerAriaLabel", { name: learner.displayName }) }));
     const menu = screen.getByRole("menu", { name: i18n.t("nav.accountMenu.menuAriaLabel") });
     expect(within(menu).getAllByRole("menuitem").map(item => item.textContent.trim())).toEqual([
@@ -203,7 +190,7 @@ describe("Learner Profile final visual migration", () => {
   test("global language choice updates runtime, storage, and a freshly loaded full profile", async () => {
     saveProfile.mockResolvedValue({ ok: true, data: { profile: { ...profile, preferredLanguage: "bahasa_melayu" } } });
     render(<App />);
-    await screen.findByRole("heading", { level: 1, name: i18n.t("settings.title") });
+    await screen.findByRole("heading", { level: 1, name: i18n.t("nav.profile") });
 
     await userEvent.selectOptions(screen.getByRole("combobox", { name: i18n.t("nav.languageAriaLabel") }), "ms");
 
@@ -222,6 +209,7 @@ describe("Learner Profile final visual migration", () => {
       data: { profile: { ...payload } },
     }));
     await i18n.changeLanguage("zh-CN");
+    window.history.replaceState({}, "", "#/settings");
     render(<App />);
 
     const nickname = await screen.findByDisplayValue(profile.aiNickname);
@@ -261,8 +249,9 @@ describe("Learner Profile final visual migration", () => {
     restoreProfile({ profile: { preferredLanguage: "chinese" } });
     getProfile.mockResolvedValue({ ok: false, error: "Unable to load profile." });
     await i18n.changeLanguage("zh-CN");
+    window.history.replaceState({}, "", "#/settings");
     render(<App />);
-    await screen.findByRole("heading", { level: 1, name: i18n.t("settings.title") });
+    await screen.findByRole("heading", { level: 1, name: i18n.t("nav.settings") });
 
     await userEvent.selectOptions(screen.getByRole("combobox", { name: i18n.t("nav.languageAriaLabel") }), "en");
 
@@ -279,6 +268,7 @@ describe("Learner Profile final visual migration", () => {
 
   test("Profile language control uses the same runtime and persistence authority", async () => {
     saveProfile.mockResolvedValue({ ok: true, data: { profile: { ...profile, preferredLanguage: "chinese" } } });
+    window.history.replaceState({}, "", "#/settings");
     render(<App />);
     const language = await screen.findByLabelText(i18n.t("settings.preferredLanguage"));
 
@@ -294,11 +284,12 @@ describe("Learner Profile final visual migration", () => {
     let resolveFreshProfile;
     getProfile.mockReturnValue(new Promise(resolve => { resolveFreshProfile = resolve; }));
     saveProfile.mockResolvedValue({ ok: true, data: { profile: { ...profile, aiNickname: "Nova" } } });
+    window.history.replaceState({}, "", "#/settings");
     render(<App />);
-    await screen.findByRole("heading", { level: 1, name: i18n.t("settings.title") });
+    await screen.findByRole("heading", { level: 1, name: i18n.t("nav.settings") });
 
     await userEvent.selectOptions(screen.getByRole("combobox", { name: i18n.t("nav.languageAriaLabel") }), "ms");
-    const preferences = screen.getByRole("heading", { level: 3, name: i18n.t("settings.learningPreferences") }).closest("section");
+    const preferences = screen.getByRole("heading", { level: 2, name: i18n.t("accountCenter.sections.learning") }).closest("section");
     const nickname = within(preferences).getByLabelText(i18n.t("settings.aiNickname"));
     await userEvent.clear(nickname);
     await userEvent.type(nickname, "Nova");
@@ -318,7 +309,7 @@ describe("Learner Profile final visual migration", () => {
     });
     render(<App />);
 
-    const section = (await screen.findByRole("heading", { level: 3, name: i18n.t("settings.accountInformation") })).closest("section");
+    const section = (await screen.findByRole("heading", { level: 2, name: i18n.t("settings.accountInformation") })).closest("section");
     const displayName = within(section).getByLabelText(i18n.t("settings.displayName"));
     const age = within(section).getByLabelText(i18n.t("settings.age"));
     await userEvent.clear(displayName);
@@ -335,7 +326,7 @@ describe("Learner Profile final visual migration", () => {
 
   test.each([12, 18])("blocks unsupported account age %i before the API call", async ageValue => {
     render(<App />);
-    const section = (await screen.findByRole("heading", { level: 3, name: i18n.t("settings.accountInformation") })).closest("section");
+    const section = (await screen.findByRole("heading", { level: 2, name: i18n.t("settings.accountInformation") })).closest("section");
     const age = within(section).getByLabelText(i18n.t("settings.age"));
     await userEvent.clear(age);
     await userEvent.type(age, String(ageValue));
@@ -352,7 +343,7 @@ describe("Learner Profile final visual migration", () => {
       data: { account: { ...learner, age: ageValue } },
     });
     render(<App />);
-    const section = (await screen.findByRole("heading", { level: 3, name: i18n.t("settings.accountInformation") })).closest("section");
+    const section = (await screen.findByRole("heading", { level: 2, name: i18n.t("settings.accountInformation") })).closest("section");
     const age = within(section).getByLabelText(i18n.t("settings.age"));
 
     expect(age).toHaveAttribute("min", "13");
@@ -366,9 +357,10 @@ describe("Learner Profile final visual migration", () => {
 
   test("preserves the exact learner-profile payload", async () => {
     saveProfile.mockResolvedValue({ ok: true, data: { profile: { ...profile, aiNickname: "Nova" } } });
+    window.history.replaceState({}, "", "#/settings");
     render(<App />);
 
-    const section = (await screen.findByRole("heading", { level: 3, name: i18n.t("settings.learningPreferences") })).closest("section");
+    const section = (await screen.findByRole("heading", { level: 2, name: i18n.t("accountCenter.sections.learning") })).closest("section");
     const nickname = within(section).getByLabelText(i18n.t("settings.aiNickname"));
     await userEvent.clear(nickname);
     await userEvent.type(nickname, "Nova");
@@ -389,8 +381,9 @@ describe("Learner Profile final visual migration", () => {
 
   test("exposes help-topic selection state and enforces the existing maximum of three", async () => {
     saveProfile.mockResolvedValue({ ok: true, data: { profile } });
+    window.history.replaceState({}, "", "#/settings");
     render(<App />);
-    await screen.findByRole("heading", { level: 1, name: i18n.t("settings.title") });
+    await screen.findByRole("heading", { level: 1, name: i18n.t("nav.settings") });
     const phishing = screen.getByRole("button", { name: i18n.t("profileOptions.helpTopics.staying_safe_online") });
     const privacy = screen.getByRole("button", { name: i18n.t("profileOptions.helpTopics.protecting_privacy") });
     const scams = screen.getByRole("button", { name: i18n.t("profileOptions.helpTopics.avoiding_scams") });
@@ -419,7 +412,7 @@ describe("Learner Profile final visual migration", () => {
       data: { error: "Please check your account details.", errors: { displayName: "Display name is required." } },
     });
     render(<App />);
-    const section = (await screen.findByRole("heading", { level: 3, name: i18n.t("settings.accountInformation") })).closest("section");
+    const section = (await screen.findByRole("heading", { level: 2, name: i18n.t("settings.accountInformation") })).closest("section");
     await userEvent.click(within(section).getByRole("button", { name: i18n.t("settings.saveAccount") }));
 
     expect(await screen.findByText("Display name is required.")).toHaveAttribute("role", "alert");
@@ -432,7 +425,7 @@ describe("Learner Profile final visual migration", () => {
       data: { error: "Please check your account details.", errors: { age: "Age must be a whole number from 13 to 17." } },
     });
     render(<App />);
-    const section = (await screen.findByRole("heading", { level: 3, name: i18n.t("settings.accountInformation") })).closest("section");
+    const section = (await screen.findByRole("heading", { level: 2, name: i18n.t("settings.accountInformation") })).closest("section");
     await userEvent.clear(within(section).getByLabelText(i18n.t("settings.age")));
     await userEvent.type(within(section).getByLabelText(i18n.t("settings.age")), "16");
     await userEvent.click(within(section).getByRole("button", { name: i18n.t("settings.saveAccount") }));
@@ -447,7 +440,8 @@ describe("Learner Profile final visual migration", () => {
 
     expect(await screen.findByText(i18n.t("settings.finishOnboarding"))).toBeVisible();
     expect(screen.getByText(i18n.t("settings.finishOnboardingDescription"))).toBeVisible();
-    const preferences = screen.getByRole("heading", { level: 3, name: i18n.t("settings.learningPreferences") }).closest("section");
+    await userEvent.click(screen.getByRole("link", { name: i18n.t("accountCenter.openSettings") }));
+    const preferences = screen.getByRole("heading", { level: 2, name: i18n.t("accountCenter.sections.learning") }).closest("section");
     expect(within(preferences).queryByRole("button", { name: i18n.t("nav.dashboard") })).not.toBeInTheDocument();
   });
 });

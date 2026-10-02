@@ -178,12 +178,12 @@ describe("Privacy Notice", () => {
 
     await waitFor(() => expect(restoreSession).toHaveBeenCalledTimes(1));
     expect(window.location.hash).toBe("#/profile");
-    expect(screen.queryByRole("heading", { level: 1, name: i18n.t("settings.title") })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 1, name: i18n.t("nav.profile") })).not.toBeInTheDocument();
     expect(screen.getByText(i18n.t("app.checkingSession"))).toBeInTheDocument();
 
     act(() => deferredSession.resolve(authenticatedSession("en")));
 
-    await screen.findByRole("heading", { level: 1, name: i18n.t("settings.title") });
+    await screen.findByRole("heading", { level: 1, name: i18n.t("nav.profile") });
     expect(window.location.hash).toBe("#/profile");
     expect(restoreSession).toHaveBeenCalledTimes(1);
   });
@@ -197,12 +197,12 @@ describe("Privacy Notice", () => {
 
     await waitFor(() => expect(restoreSession).toHaveBeenCalledTimes(1));
     expect(window.location.hash).toBe("#/profile");
-    expect(screen.queryByRole("heading", { level: 1, name: i18n.t("settings.title") })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 1, name: i18n.t("nav.profile") })).not.toBeInTheDocument();
 
     act(() => deferredSession.resolve({ ok: false, error: "Not authenticated" }));
 
     await waitFor(() => expect(window.location.hash).toBe("#/home"));
-    expect(screen.queryByRole("heading", { level: 1, name: i18n.t("settings.title") })).not.toBeInTheDocument();
+    expect(screen.queryByRole("heading", { level: 1, name: i18n.t("nav.profile") })).not.toBeInTheDocument();
     expect(restoreSession).toHaveBeenCalledTimes(1);
   });
 

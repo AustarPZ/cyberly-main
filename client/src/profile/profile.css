@@ -521,3 +521,118 @@
     transition: none;
   }
 }
+
+/* Shared Account Center: route navigation and forms use the normal page gutter. */
+.account-center-layout {
+  display: grid;
+  grid-template-columns: minmax(10rem, 13rem) minmax(0, 1fr);
+  align-items: start;
+  gap: clamp(1.25rem, 3vw, 2.5rem);
+  padding-top: 1.5rem;
+}
+
+.account-center-nav {
+  display: grid;
+  gap: 0.35rem;
+  padding: 0.75rem;
+  border: 1px solid var(--border-default);
+  border-radius: var(--cyberly-radius-control);
+  background: var(--surface-subtle);
+}
+
+.account-center-label {
+  padding: 0.5rem 0.75rem;
+  color: var(--text-secondary);
+  font-size: 0.78rem;
+  font-weight: 700;
+}
+
+.account-center-nav a,
+.account-settings-nav button {
+  display: flex;
+  align-items: center;
+  min-height: 44px;
+  min-width: 0;
+  padding: 0.65rem 0.85rem;
+  border: 1px solid transparent;
+  border-radius: var(--cyberly-radius-control);
+  background: transparent;
+  color: var(--text-primary);
+  font: inherit;
+  text-decoration: none;
+  text-align: start;
+  overflow-wrap: anywhere;
+  cursor: pointer;
+}
+
+.account-center-nav a[aria-current="page"],
+.account-settings-nav button[aria-pressed="true"] {
+  background: var(--surface-raised);
+  border-color: var(--border-default);
+  color: var(--color-brand-primary-hover);
+  font-weight: 700;
+}
+
+.account-center-nav a:hover,
+.account-settings-nav button:hover {
+  background: var(--color-brand-soft);
+}
+
+.account-center a:focus-visible,
+.account-settings-nav button:focus-visible {
+  outline: 3px solid var(--border-focus);
+  outline-offset: 3px;
+}
+
+.account-center-main,
+.account-center-content,
+.account-center-content > section {
+  min-width: 0;
+}
+
+.account-center-content {
+  display: grid;
+  gap: 1rem;
+}
+
+.account-center .profile-header {
+  padding-top: 0;
+}
+
+.account-center .profile-header h1[tabindex="-1"]:focus { outline: none; }
+
+.account-settings-nav {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.35rem;
+  padding: 0.35rem;
+  border-radius: var(--cyberly-radius-control);
+  background: var(--surface-subtle);
+}
+
+.account-settings-nav button {
+  flex: 1 1 10rem;
+  font-size: 0.88rem;
+}
+
+.account-section-heading {
+  margin: 0 0 0.85rem;
+  font-size: 1.25rem;
+  line-height: 1.35;
+}
+
+.account-center .profile-settings-panel { margin-top: 0; }
+.account-center .profile-field + .profile-field-wide { margin-top: 1rem; }
+.account-profile-save { padding-block: 0; box-shadow: none; }
+.account-profile-save .profile-actions { margin-top: 0; }
+.account-related-settings p { color: var(--text-secondary); line-height: 1.6; margin-bottom: 1rem; }
+.account-center .cy-button { max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+
+@media (max-width: 48rem) {
+  .account-center-layout { grid-template-columns: minmax(0, 1fr); gap: 1rem; padding-top: 1rem; }
+  .account-center-nav { grid-template-columns: repeat(2, minmax(0, 1fr)); padding: 0.35rem; }
+  .account-center-label { grid-column: 1 / -1; padding: 0.25rem 0.65rem; }
+  .account-center-nav a { justify-content: center; }
+  .account-settings-nav button { flex-basis: 8rem; }
+  .account-center { padding-bottom: calc(5.5rem + env(safe-area-inset-bottom)); }
+}

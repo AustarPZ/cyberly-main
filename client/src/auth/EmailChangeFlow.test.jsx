@@ -73,6 +73,7 @@ async function renderRoute(route, { user = learner, locale = "en", restoreResult
   getProfile.mockResolvedValue({ ok: true, data: { profile } });
   render(<App />);
   await waitFor(() => expect(restoreSession).toHaveBeenCalled());
+  if (route === "#/settings") await userEvent.click(await screen.findByRole("button", { name: i18n.t("accountCenter.sections.security"), exact: true }));
 }
 
 describe("Email Change frontend integration", () => {
@@ -82,7 +83,7 @@ describe("Email Change frontend integration", () => {
   });
 
   test("keeps canonical email readonly and opens a secure request form", async () => {
-    await renderRoute("#/profile");
+    await renderRoute("#/settings");
     const email = await screen.findByDisplayValue(learner.email);
     expect(email).toHaveAttribute("readonly");
     expect(screen.queryByLabelText(i18n.t("auth.emailChange.newEmail"))).not.toBeInTheDocument();
@@ -101,7 +102,7 @@ describe("Email Change frontend integration", () => {
     ["an inactive learner", { ...learner, accountStatus: "disabled" }],
     ["an account with unknown eligibility", { ...learner, role: undefined, accountStatus: undefined }],
   ])("does not expose Email Change to %s", async (_label, user) => {
-    await renderRoute("#/profile", { user });
+    await renderRoute("#/settings", { user });
 
     expect(await screen.findByDisplayValue(user.email)).toHaveAttribute("readonly");
     expect(screen.queryByRole("button", { name: i18n.t("auth.emailChange.changeAction") })).not.toBeInTheDocument();
@@ -112,7 +113,7 @@ describe("Email Change frontend integration", () => {
 
   test("validates required request fields and shows accepted state without changing canonical email", async () => {
     requestEmailChange.mockResolvedValue({ ok: true, status: 202, data: { status: "accepted", expiresInSeconds: 3600 } });
-    await renderRoute("#/profile");
+    await renderRoute("#/settings");
     await userEvent.click(await screen.findByRole("button", { name: i18n.t("auth.emailChange.changeAction") }));
     await userEvent.click(screen.getByRole("button", { name: i18n.t("auth.emailChange.submit") }));
     expect(requestEmailChange).not.toHaveBeenCalled();
@@ -134,7 +135,7 @@ describe("Email Change frontend integration", () => {
   test("prevents duplicate request submission while the first request is pending", async () => {
     let resolveRequest;
     requestEmailChange.mockReturnValue(new Promise(resolve => { resolveRequest = resolve; }));
-    await renderRoute("#/profile");
+    await renderRoute("#/settings");
     await userEvent.click(await screen.findByRole("button", { name: i18n.t("auth.emailChange.changeAction") }));
     await userEvent.type(screen.getByLabelText(i18n.t("auth.emailChange.newEmail")), "new@example.test");
     await userEvent.type(screen.getByLabelText(i18n.t("auth.emailChange.currentPassword")), "Current123");
@@ -161,7 +162,7 @@ describe("Email Change frontend integration", () => {
     ["EMAIL_SEND_FAILED", "form", "deliveryFailed"],
   ])("maps request error %s safely", async (code, target, messageKey) => {
     requestEmailChange.mockResolvedValue({ ok: false, status: 400, data: { error: { code } } });
-    await renderRoute("#/profile");
+    await renderRoute("#/settings");
     await userEvent.click(await screen.findByRole("button", { name: i18n.t("auth.emailChange.changeAction") }));
     await userEvent.type(screen.getByLabelText(i18n.t("auth.emailChange.newEmail")), "new@example.test");
     await userEvent.type(screen.getByLabelText(i18n.t("auth.emailChange.currentPassword")), "Current123");

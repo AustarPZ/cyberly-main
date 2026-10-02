@@ -2724,5 +2724,18 @@
     "password_and_account_security": "Passwords & Account Security",
     "privacy_and_personal_information": "Privacy & Personal Data Protection",
     "misinformation_and_deepfakes": "Misinformation, Media & AI Safety"
+  },
+  "accountCenter": {
+  "title": "Account Center",
+  "profileDescription": "Your identity, avatar and learning at a glance.",
+  "settingsDescription": "Make Cyberly work for you. Choose a section to get started.",
+  "openSettings": "Open Settings",
+  "relatedSettings": "Adjust your learning preferences, manage account security, or review privacy and Guardian Link in Settings.",
+  "sectionsLabel": "Settings sections",
+  "sections": {
+    "learning": "Learning Preferences",
+    "security": "Account & Security",
+    "privacy": "Privacy & Guardian Link"
   }
+}
 }

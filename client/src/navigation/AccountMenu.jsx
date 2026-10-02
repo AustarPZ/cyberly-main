@@ -10,10 +10,9 @@ export default function AccountMenu({ user, onNavigate, onRequestLogout }) {
   const initialIndex = useRef(0);
   const displayName = user?.displayName || user?.name || t("nav.accountMenu.userFallback");
   const avatarModel = resolveAvatarModel({ avatarPreset: user?.profile?.avatarPreset, displayName });
-  // I01 compatibility: both entries use the existing settings experience.
   const items = [
     { label: t("nav.profile"), page: "profile" },
-    { label: t("nav.settings"), page: "profile" },
+    { label: t("nav.settings"), page: "settings" },
     ...(user?.role === "admin" ? [{ label: t("nav.accountMenu.adminConsole"), page: "admin" }] : []),
     { label: t("nav.accountMenu.logOut"), logout: true },
   ];

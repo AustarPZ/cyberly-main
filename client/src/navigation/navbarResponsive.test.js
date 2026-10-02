@@ -28,7 +28,7 @@ describe("narrow mobile navbar contract", () => {
     expect(appSource).toMatch(/\.nav-avatar\s*\{[^}]*width:\s*30px;[^}]*height:\s*30px;/);
     expect(appSource).toMatch(/\.nav-avatar\s+\.avatar-visual\s*\{[^}]*width:\s*100%;[^}]*height:\s*100%;/);
     expect(fs.readFileSync(path.join(__dirname, "AccountMenu.jsx"), "utf8")).toMatch(/<AvatarVisual\s+presetId=\{avatarModel\.presetId\}/);
-    expect(appSource).toMatch(/getInitialAvatarText/);
+    expect(fs.readFileSync(path.join(__dirname, "..", "profile", "AccountCenterViews.jsx"), "utf8")).toMatch(/getInitialAvatarText/);
   });
   test("preserves desktop footer clearance and delegates mobile clearance to the shell", () => {
     const css = fs.readFileSync(path.join(__dirname, "shell.css"), "utf8");

@@ -2700,5 +2700,18 @@
     "password_and_account_security": "密码与账户安全",
     "privacy_and_personal_information": "隐私与个人数据保护",
     "misinformation_and_deepfakes": "错误信息、媒体与 AI 安全"
+  },
+  "accountCenter": {
+  "title": "账户中心",
+  "profileDescription": "查看你的身份、头像和学习概况。",
+  "settingsDescription": "按你的需要设置 Cyberly。选择一个部分开始。",
+  "openSettings": "打开设置",
+  "relatedSettings": "在设置中调整学习偏好、管理账户安全，或查看隐私与监护人关联。",
+  "sectionsLabel": "设置部分",
+  "sections": {
+    "learning": "学习偏好",
+    "security": "账户与安全",
+    "privacy": "隐私与监护人关联"
   }
+}
 }

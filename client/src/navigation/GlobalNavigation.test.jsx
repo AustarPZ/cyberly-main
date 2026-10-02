@@ -32,7 +32,7 @@ test("public navigation keeps public destinations and explicit sign in", () => {
   expect(screen.queryByRole("button", { name: "Help" })).not.toBeInTheDocument();
   expect(screen.queryByRole("button", { name: "Assessment" })).not.toBeInTheDocument();
 });
-test("account menu uses real avatar authority, keyboard controls and compatible Profile/Settings targets", async () => {
+test("account menu uses real avatar authority, keyboard controls and distinct Profile/Settings targets", async () => {
   const onNavigate = jest.fn(), onRequestLogout = jest.fn();
   render(<AccountMenu user={learner} onNavigate={onNavigate} onRequestLogout={onRequestLogout} />);
   const trigger = screen.getByRole("button", { name: /Shell Test/ });
@@ -53,7 +53,7 @@ test("account menu uses real avatar authority, keyboard controls and compatible 
   expect(onNavigate).toHaveBeenLastCalledWith("profile");
   userEvent.click(trigger);
   userEvent.click(screen.getByRole("menuitem", { name: "Settings" }));
-  expect(onNavigate).toHaveBeenLastCalledWith("profile");
+  expect(onNavigate).toHaveBeenLastCalledWith("settings");
   userEvent.click(trigger);
   fireEvent.keyDown(document, { key: "Escape" });
   expect(trigger).toHaveFocus();
