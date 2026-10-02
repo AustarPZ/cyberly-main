@@ -170,7 +170,7 @@ describe("CyberGuard public beta pilot baseline", () => {
     });
 
     await userEvent.click(screen.getByRole("button", { name: /^sign in$/i }));
-    const authPanel = (await screen.findByRole("heading", { name: /welcome back/i })).closest(".cy-auth-panel");
+    const authPanel = (await screen.findByRole("heading", { name: /sign in/i })).closest(".cy-auth-panel");
     const email = "u2@example.test";
     const password = "SafePass1!";
     await userEvent.type(within(authPanel).getByLabelText(/email/i), email);
@@ -2892,4 +2892,5 @@ test("I02 full workspace keeps one transparency notice in the header before the 
   expect(follows(header, document.querySelector(".cyberguard-chat-shell"))).toBe(true);
   expect(document.querySelectorAll(".cyberguard-chat-shell textarea")).toHaveLength(1);
   expect(within(header).getByText(cyberGuardPilotConversation.title)).toBeVisible();
+  expect(within(document.querySelector(".ai-chat-main")).queryByText(cyberGuardPilotConversation.title)).not.toBeInTheDocument();
 });

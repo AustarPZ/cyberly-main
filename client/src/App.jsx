@@ -9998,6 +9998,7 @@ function AIChatPage() {
           <CyberGuardAiNotice
             title={t("chat.pilot.notice.title")}
             description={t("chat.pilot.notice.description")}
+            shortNotice={t("chat.pilot.notice.short")}
           />
         }
       />
@@ -10011,18 +10012,6 @@ function AIChatPage() {
         }
         conversation={
           <section className="ai-chat-main" aria-label={t("chat.page.chatAreaLabel")}>
-            <div className="ai-chat-main-header">
-              <div style={{ display: "flex", justifyContent: "space-between", gap: "1rem", flexWrap: "wrap", alignItems: "center" }}>
-                <div style={{ minWidth: 0, flex: "1 1 auto" }}>
-                  <div style={{ fontWeight: 800, overflow: "hidden", textOverflow: "ellipsis", whiteSpace: "nowrap" }}>
-                    {activeConversationTitle}
-                  </div>
-                  <div style={{ color: "#77827d", fontSize: "0.8rem", marginTop: "0.15rem" }}>
-                    {activeConversationMeta}
-                  </div>
-                </div>
-              </div>
-            </div>
             <ChatMessageList
               className="ai-chat-full-messages cyberguard-chat-shell-messages"
               emptyState={fullPageEmptyState}

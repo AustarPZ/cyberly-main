@@ -1,9 +1,22 @@
 import { render, screen } from "@testing-library/react";
+import userEvent from "@testing-library/user-event";
 import CyberGuardAiNotice from "./CyberGuardAiNotice";
 
 describe("CyberGuardAiNotice", () => {
   const title = "AI-supported guidance";
   const description = "CyberGuard may make mistakes. Check important information with trusted sources or a trusted adult. Learner-controlled actions still require your confirmation.";
+
+  test("keeps safety guidance available in a collapsed disclosure", async () => {
+    render(<CyberGuardAiNotice title={title} description={description} />);
+    const summary = screen.getByText(title).closest("summary");
+    expect(summary).toBeInTheDocument();
+    expect(summary.closest("details")).not.toHaveAttribute("open");
+    expect(screen.getByText(description)).not.toBeVisible();
+    await userEvent.click(summary);
+    expect(screen.getByText(description)).toBeVisible();
+    await userEvent.click(summary);
+    expect(screen.getByText(description)).not.toBeVisible();
+  });
 
   test("renders persistent transparency copy as an informational aside", () => {
     render(<CyberGuardAiNotice title={title} description={description} />);

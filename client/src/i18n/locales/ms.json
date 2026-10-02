@@ -1126,6 +1126,7 @@
       },
       "notice": {
         "title": "Panduan dibantu AI",
+        "short": "AI boleh membuat kesilapan.",
         "description": "CyberGuard mungkin membuat kesilapan. Semak maklumat penting dengan sumber yang dipercayai atau orang dewasa yang dipercayai. Tindakan yang dikawal oleh pelajar masih memerlukan pengesahan anda."
       },
       "empty": {

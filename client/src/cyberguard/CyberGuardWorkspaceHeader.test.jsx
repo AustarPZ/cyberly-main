@@ -58,7 +58,7 @@ describe("CyberGuardWorkspaceHeader", () => {
     expect(screen.queryByText(/Live AI replies/i)).not.toBeInTheDocument();
   });
 
-  test("I02 composes one semantic transparency notice inside the workspace identity", () => {
+  test("I02 composes one semantic transparency notice inside the workspace identity", async () => {
     render(<CyberGuardWorkspaceHeader {...defaultProps} transparencyNotice={
       <CyberGuardAiNotice title="AI-supported guidance" description="Check important information with trusted sources." />
     } />);
@@ -67,6 +67,7 @@ describe("CyberGuardWorkspaceHeader", () => {
     expect(notice.tagName).toBe("ASIDE");
     expect(notice).toHaveAttribute("aria-describedby", "cyberguard-ai-notice-description");
     expect(screen.getAllByRole("complementary")).toHaveLength(1);
+    await userEvent.click(within(notice).getByText("AI-supported guidance"));
     expect(within(notice).getByText("Check important information with trusted sources.")).toBeVisible();
     expect(within(header).getByText(defaultProps.conversationTitle)).toBeVisible();
   });
@@ -75,6 +76,8 @@ describe("CyberGuardWorkspaceHeader", () => {
     const { rerender } = render(<CyberGuardWorkspaceHeader {...defaultProps} />);
     expect(screen.getByText("Phishing safety baseline")).toBeInTheDocument();
     expect(screen.getByText("Current chat")).toBeInTheDocument();
+    expect(screen.getByText("Phishing safety baseline").closest(".cyberguard-workspace-header-main"))
+      .toContainElement(screen.getByRole("button", { name: "New Chat" }));
 
     rerender(
       <CyberGuardWorkspaceHeader

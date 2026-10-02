@@ -264,7 +264,7 @@
 .cyberguard-chat-shell {
   width: min(1180px, 100%);
   min-width: 0;
-  height: clamp(34rem, calc(100dvh - var(--nav-h) - 14rem), 48rem);
+  height: clamp(34rem, calc(100dvh - var(--nav-h) - 11rem), 48rem);
   min-height: 0;
   margin: 0 auto;
   display: grid;
@@ -931,4 +931,36 @@
   border-color: var(--cyberly-border-soft);
   opacity: 1;
   cursor: not-allowed;
+}
+
+/* R3 conversation-first workspace. */
+.cyberguard-workspace-header { padding: .6rem .85rem; box-shadow: none; }
+.cyberguard-workspace-header-main { align-items: center; }
+.cyberguard-workspace-heading { font-size: 1.2rem; }
+.cyberguard-workspace-conversation { border: 0; padding: 0; margin-top: .2rem; gap: .3rem .6rem; }
+.cyberguard-workspace-conversation-title { white-space: normal; overflow-wrap: anywhere; max-width: 34rem; }
+.cyberguard-workspace-description { font-size: .8rem; }
+.cyberguard-workspace-history-control { display: inline-flex; }
+.cyberguard-ai-notice-copy { width: 100%; }
+.cyberguard-ai-notice-copy summary { min-height: 44px; display: flex; align-items: center; flex-wrap: wrap; gap: .4rem; cursor: pointer; font-size: .8rem; color: var(--cyberly-text-secondary); }
+.cyberguard-ai-notice-copy summary::after { content: "+"; margin-inline-start: auto; font-size: 1rem; }
+.cyberguard-ai-notice-copy[open] summary::after { content: "-"; }
+.cyberguard-ai-notice-copy summary:focus-visible { outline: 2px solid var(--cyberly-teal-700); outline-offset: 2px; }
+.cyberguard-ai-notice-copy .cyberguard-ai-notice-icon { width: 1.25rem; height: 1.25rem; border: 0; background: transparent; flex: 0 0 auto; }
+.cyberguard-ai-notice-copy p { padding: .25rem 0 .5rem; }
+.cyberguard-ai-notice-short { font-weight: 600; }
+@media (max-width: 640px) {
+  .cyberguard-page { padding: .5rem; gap: .4rem; }
+  .cyberguard-workspace-header-main { flex-direction: row; align-items: flex-start; gap: .4rem; }
+  .cyberguard-workspace-copy { grid-template-columns: minmax(0, 1fr); gap: 0; }
+  .cyberguard-workspace-identity-mark, .cyberguard-workspace-description, .cyberguard-workspace-conversation-label, .cyberguard-workspace-conversation-meta { display: none; }
+  .cyberguard-workspace-actions { width: auto; flex: 0 0 auto; gap: .3rem; }
+  .cyberguard-workspace-actions .cy-button { padding-inline: .6rem; max-width: 7.5rem; }
+  .cyberguard-workspace-conversation-title { font-size: .78rem; font-weight: 500; }
+  .cyberguard-ai-notice-short { width: 100%; padding-inline-start: 1.65rem; }
+  .cyberguard-ai-notice-copy summary { gap: .15rem .4rem; }
+}
+@media (max-width: 360px) {
+  .cyberguard-workspace-header-main { flex-direction: column; }
+  .cyberguard-workspace-actions { width: 100%; justify-content: flex-end; }
 }

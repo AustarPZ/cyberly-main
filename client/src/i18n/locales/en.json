@@ -1126,6 +1126,7 @@
       },
       "notice": {
         "title": "AI-supported guidance",
+        "short": "AI can make mistakes.",
         "description": "CyberGuard may make mistakes. Check important information with trusted sources or a trusted adult. Learner-controlled actions still require your confirmation."
       },
       "empty": {

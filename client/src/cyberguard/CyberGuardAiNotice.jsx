@@ -16,20 +16,21 @@ function NoticeIcon() {
   );
 }
 
-export default function CyberGuardAiNotice({ title, description }) {
+export default function CyberGuardAiNotice({ title, description, shortNotice }) {
   return (
     <aside
       className="cyberguard-ai-notice"
       aria-labelledby="cyberguard-ai-notice-title"
       aria-describedby="cyberguard-ai-notice-description"
     >
-      <span className="cyberguard-ai-notice-icon">
-        <NoticeIcon />
-      </span>
-      <div className="cyberguard-ai-notice-copy">
-        <h2 id="cyberguard-ai-notice-title">{title}</h2>
+      <details className="cyberguard-ai-notice-copy">
+        <summary>
+          <span className="cyberguard-ai-notice-icon"><NoticeIcon /></span>
+          <span id="cyberguard-ai-notice-title">{title}</span>
+          {shortNotice && <span className="cyberguard-ai-notice-short">{shortNotice}</span>}
+        </summary>
         <p id="cyberguard-ai-notice-description">{description}</p>
-      </div>
+      </details>
     </aside>
   );
 }

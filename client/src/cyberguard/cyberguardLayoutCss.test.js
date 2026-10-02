@@ -325,7 +325,7 @@ describe("CyberGuard final visual alignment CSS", () => {
 
 describe("I02 bounded workspace presentation", () => {
   test("budgets desktop header space while retaining internal scroll and non-fixed composer", () => {
-    expect(blockFor(".cyberguard-chat-shell")).toMatch(/calc\(100dvh - var\(--nav-h\) - 14rem\)/);
+    expect(blockFor(".cyberguard-chat-shell")).toMatch(/calc\(100dvh - var\(--nav-h\) - 11rem\)/);
     expect(blockFor(".cyberguard-workspace-header .cyberguard-ai-notice")).toMatch(/border\s*:\s*0/);
     expect(blockFor(".cyberguard-workspace-header .cyberguard-ai-notice")).not.toMatch(/display\s*:\s*none/);
     expect(blockFor(".cyberguard-chat-shell-messages")).toMatch(/overflow-y\s*:\s*auto/);
@@ -341,6 +341,10 @@ describe("I02 bounded workspace presentation", () => {
 
 
 describe("I02 C01 mobile composer safe area", () => {
+  test("wraps workspace controls below identity on the narrowest screens", () => {
+    expect(mediaBlockFor("@media (max-width: 360px)", ".cyberguard-workspace-header-main")).toMatch(/flex-direction\s*:\s*column/);
+    expect(mediaBlockFor("@media (max-width: 360px)", ".cyberguard-workspace-actions")).toMatch(/width\s*:\s*100%/);
+  });
   test("STG mobile composer uses shared end clearance because its whole panel can scroll above the FAB", () => {
     const frame = mediaBlockFor("@media (max-width: 820px)", ".cyberguard-page .cyberguard-composer-frame");
     expect(frame).not.toMatch(/padding-right\s*:/);

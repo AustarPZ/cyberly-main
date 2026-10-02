@@ -59,6 +59,13 @@ export default function CyberGuardWorkspaceHeader({
             <h1 id="cyberguard-workspace-title" className="cyberguard-workspace-heading">
               {title}
             </h1>
+            {hasConversation && (
+              <div className="cyberguard-workspace-conversation">
+                <span className="cyberguard-workspace-conversation-label">{conversationLabel}</span>
+                <span className="cyberguard-workspace-conversation-title">{conversationTitle}</span>
+                {updatedLabel && <span className="cyberguard-workspace-conversation-meta">{updatedLabel}</span>}
+              </div>
+            )}
             <p className="cyberguard-workspace-description">{description}</p>
           </div>
         </div>
@@ -82,13 +89,6 @@ export default function CyberGuardWorkspaceHeader({
         </div>
       </div>
 
-      {hasConversation && (
-        <div className="cyberguard-workspace-conversation">
-          <span className="cyberguard-workspace-conversation-label">{conversationLabel}</span>
-          <span className="cyberguard-workspace-conversation-title">{conversationTitle}</span>
-          {updatedLabel && <span className="cyberguard-workspace-conversation-meta">{updatedLabel}</span>}
-        </div>
-      )}
       {transparencyNotice}
     </header>
   );

@@ -1126,6 +1126,7 @@
       },
       "notice": {
         "title": "AI 辅助指导",
+        "short": "AI 可能出错。",
         "description": "CyberGuard 可能会出错。请用可信来源或向可信任的成年人核对重要信息。由学习者控制的操作仍需要你确认。"
       },
       "empty": {
