@@ -84,8 +84,8 @@
     "signInButton": "Sign in",
     "goToRegister": "Create an account",
     "displayNameRequired": "Display name must be 2 to 50 characters.",
-    "ageInvalid": "Please enter a whole-number age from 13 to 17.",
-    "ageGuidance": "Cyberly v1 is for learners aged 13 to 17.",
+    "ageInvalid": "Please enter a whole-number age from 1 to 99.",
+    "ageGuidance": "Enter your age as a whole number from 1 to 99.",
     "emailVerification": {
       "bannerTitle": "Verify your email",
       "bannerDescription": "Verification is required before CyberGuard can generate new replies.",
@@ -464,7 +464,7 @@
     "preferencesSaved": "Preferences saved.",
     "cancel": "Cancel",
     "displayNameRequired": "Display name must be 2 to 50 characters.",
-    "ageInvalid": "Please enter a whole-number age from 13 to 17.",
+    "ageInvalid": "Please enter a whole-number age from 1 to 99.",
     "nicknameRequired": "Please enter a nickname for the AI to use.",
     "chooseOne": "Choose one",
     "learnerProfile": "Learner Profile",
@@ -1421,7 +1421,7 @@
         "title": "Learners aged 13–17",
         "paragraphs": [
           "Cyberly v1 is designed for learners aged 13–17.",
-          "Registration is available only to learners within this age range.",
+          "Registration is available to learners aged 1–99. Ages 13–17 are our primary learning audience; learners outside that range also receive platform service.",
           "Cyberly currently stores the learner’s age and derives the relevant age group from that information.",
           "Guardian Link is an optional, learner-initiated feature. A learner may voluntarily provide one Guardian contact email address at a time. Cyberly uses the Guardian contact email to send Guardian Link invitations, resent invitations, acceptance confirmations and revocation notices, perform the email-control verification flow, and operate the Guardian Link lifecycle.",
           "Cyberly uses the selected communication language only to localize Guardian Link communications and user-facing Guardian Link text where applicable. Cyberly maintains relationship and lifecycle records to represent Guardian Link state, support Accept, Decline, Resend, Revoke and Expiry actions, and maintain the bounded lifecycle and security record of the feature.",

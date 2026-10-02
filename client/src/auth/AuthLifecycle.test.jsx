@@ -203,7 +203,7 @@ describe("authentication and registration lifecycle", () => {
     await waitFor(() => expect(window.location.hash).toBe("#/assessment"));
   }, 10000);
 
-  test.each([12, 18])("blocks unsupported registration age %i before submit", async age => {
+  test.each([0, 100, -1, 1.5])("blocks unsupported registration age %i before submit", async age => {
     const registration = await enterRegistration();
     const ageInput = registration.getByLabelText(i18n.t("auth.age"));
 
@@ -218,12 +218,12 @@ describe("authentication and registration lifecycle", () => {
     expect(register).not.toHaveBeenCalled();
   });
 
-  test.each([13, 17])("allows supported registration age %i", async age => {
+  test.each([1, 12, 13, 17, 18, 24, 25, 99])("allows supported registration age %i", async age => {
     const registration = await enterRegistration();
     const ageInput = registration.getByLabelText(i18n.t("auth.age"));
 
-    expect(ageInput).toHaveAttribute("min", "13");
-    expect(ageInput).toHaveAttribute("max", "17");
+    expect(ageInput).toHaveAttribute("min", "1");
+    expect(ageInput).toHaveAttribute("max", "99");
     expect(registration.getByText(i18n.t("auth.ageGuidance"))).toBeVisible();
     await userEvent.type(registration.getByLabelText(i18n.t("auth.email")), accountUser.email);
     await userEvent.type(registration.getByLabelText(i18n.t("auth.displayName")), accountUser.displayName);

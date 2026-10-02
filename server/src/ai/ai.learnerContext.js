@@ -169,7 +169,7 @@ function buildLearnerContext({ locale, data = {} }) {
 
   const context = {
     locale: normalizeLocale(locale),
-    ageBand: '13-17',
+    ageBand: ({ child: '1-12', teen: '13-17', young_adult: '18-24', adult: '25+' })[data.profile?.age_group] || '13-17',
     learnerLevel: learnerLevelForScore(score, confidence),
   };
 

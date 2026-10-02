@@ -110,9 +110,10 @@ function createAiRepository(pool) {
 
   async function loadLearnerContextData(userId, connection) {
     const [profiles] = await db(connection).query(
-      `SELECT education_level
-       FROM learner_profiles
-       WHERE user_id = ?
+      `SELECT lp.education_level, u.age_group
+       FROM users u
+       LEFT JOIN learner_profiles lp ON lp.user_id = u.id
+       WHERE u.id = ?
        LIMIT 1`,
       [userId]
     );

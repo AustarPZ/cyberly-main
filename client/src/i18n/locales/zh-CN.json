@@ -84,8 +84,8 @@
     "signInButton": "登录",
     "goToRegister": "创建账号",
     "displayNameRequired": "显示名称必须是 2 到 50 个字符。",
-    "ageInvalid": "请输入 13 到 17 之间的整数年龄。",
-    "ageGuidance": "Cyberly v1 适用于 13 至 17 岁的学习者。",
+    "ageInvalid": "请输入 1 到 99 之间的整数年龄。",
+    "ageGuidance": "请输入 1 至 99 岁的整数年龄。",
     "emailVerification": {
       "bannerTitle": "验证你的电子邮箱",
       "bannerDescription": "你需要先完成邮箱验证，CyberGuard 才能生成新的回复。",
@@ -464,7 +464,7 @@
     "preferencesSaved": "偏好已保存。",
     "cancel": "取消",
     "displayNameRequired": "显示名称必须是 2 到 50 个字符。",
-    "ageInvalid": "请输入 13 到 17 之间的整数年龄。",
+    "ageInvalid": "请输入 1 到 99 之间的整数年龄。",
     "nicknameRequired": "请输入 AI 要使用的昵称。",
     "chooseOne": "请选择",
     "learnerProfile": "学习者资料",
@@ -1421,7 +1421,7 @@
         "title": "13–17 岁的学习者",
         "paragraphs": [
           "Cyberly v1 专为 13–17 岁的学习者设计。",
-          "只有处于此年龄范围内的学习者才能注册。",
+          "1–99 岁的学习者均可注册。13–17 岁是我们的主要学习群体；其他年龄段的学习者也可使用平台服务。",
           "Cyberly 目前会存储学习者的年龄，并根据该信息得出相关年龄组。",
           "监护人关联是一项由学习者主动发起的可选功能。学习者每次可以自愿提供一个监护人联系人电子邮箱。Cyberly 使用监护人联系人电子邮箱发送监护人关联邀请、重新发送的邀请、接受确认和撤销通知，执行电子邮箱控制权验证流程，并运行监护人关联的生命周期。",
           "Cyberly 仅使用所选通信语言对监护人关联通信及适用的用户界面文本进行本地化。Cyberly 保存关系及生命周期记录，以表示监护人关联状态，支持接受、拒绝、重新发送、撤销和到期操作，并维护该功能有限的生命周期及安全记录。",

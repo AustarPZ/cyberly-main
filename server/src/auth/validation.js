@@ -22,12 +22,12 @@ function validatePassword(password) {
   return null;
 }
 
-const MIN_LEARNER_AGE = 13;
-const MAX_LEARNER_AGE = 17;
-const AGE_VALIDATION_MESSAGE = 'Age must be a whole number from 13 to 17.';
+const MIN_LEARNER_AGE = 1;
+const MAX_LEARNER_AGE = 99;
+const AGE_VALIDATION_MESSAGE = 'Age must be a whole number from 1 to 99.';
 
 function validateAge(age) {
-  const value = Number(age);
+  const value = age;
   if (
     !Number.isInteger(value) ||
     value < MIN_LEARNER_AGE ||

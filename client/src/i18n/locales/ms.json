@@ -84,8 +84,8 @@
     "signInButton": "Log masuk",
     "goToRegister": "Cipta akaun",
     "displayNameRequired": "Nama paparan mesti antara 2 hingga 50 aksara.",
-    "ageInvalid": "Sila masukkan umur dalam nombor bulat dari 13 hingga 17.",
-    "ageGuidance": "Cyberly v1 adalah untuk pelajar berumur 13 hingga 17 tahun.",
+    "ageInvalid": "Sila masukkan umur dalam nombor bulat dari 1 hingga 99.",
+    "ageGuidance": "Masukkan umur anda sebagai nombor bulat dari 1 hingga 99.",
     "emailVerification": {
       "bannerTitle": "Sahkan e-mel anda",
       "bannerDescription": "Pengesahan diperlukan sebelum CyberGuard boleh menjana balasan baharu.",
@@ -464,7 +464,7 @@
     "preferencesSaved": "Pilihan disimpan.",
     "cancel": "Batal",
     "displayNameRequired": "Nama paparan mesti antara 2 hingga 50 aksara.",
-    "ageInvalid": "Masukkan umur nombor bulat dari 13 hingga 17.",
+    "ageInvalid": "Masukkan umur nombor bulat dari 1 hingga 99.",
     "nicknameRequired": "Masukkan nama panggilan untuk AI gunakan.",
     "chooseOne": "Pilih satu",
     "learnerProfile": "Profil Pelajar",
@@ -1421,7 +1421,7 @@
         "title": "Pelajar berumur 13–17 tahun",
         "paragraphs": [
           "Cyberly v1 direka untuk pelajar berumur 13–17 tahun.",
-          "Pendaftaran hanya tersedia kepada pelajar dalam lingkungan umur ini.",
+          "Pendaftaran tersedia kepada pelajar berumur 1–99 tahun. Umur 13–17 ialah kumpulan pembelajaran utama kami; pelajar di luar lingkungan itu juga menerima perkhidmatan platform.",
           "Cyberly pada masa ini menyimpan umur pelajar dan menentukan kumpulan umur yang berkaitan berdasarkan maklumat tersebut.",
           "Pautan Penjaga ialah ciri pilihan yang dimulakan oleh pelajar. Pelajar boleh memberikan secara sukarela satu alamat e-mel kenalan Penjaga pada satu-satu masa. Cyberly menggunakan e-mel kenalan Penjaga untuk menghantar jemputan Pautan Penjaga, jemputan semula, pengesahan penerimaan dan notis pembatalan, melaksanakan aliran pengesahan kawalan e-mel, serta mengendalikan kitar hayat Pautan Penjaga.",
           "Cyberly menggunakan bahasa komunikasi yang dipilih hanya untuk menyetempatkan komunikasi Pautan Penjaga dan teks Pautan Penjaga yang dipaparkan kepada pengguna, jika berkenaan. Cyberly menyimpan rekod hubungan dan kitar hayat untuk menunjukkan status Pautan Penjaga, menyokong tindakan Terima, Tolak, Hantar Semula, Batalkan dan Tamat Tempoh, serta mengekalkan rekod kitar hayat dan keselamatan terhad bagi ciri tersebut.",
