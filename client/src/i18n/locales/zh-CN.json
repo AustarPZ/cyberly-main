@@ -788,6 +788,11 @@
   },
   "resources": {
     "reader": {
+      "inGuide": "本指南内容",
+      "onPage": "本页目录",
+      "introduction": "简介",
+      "readGuide": "阅读指南",
+      "sourcesNext": "来源与下一步",
       "back": "返回资源库",
       "externalSource": "查看外部来源",
       "practice": "将所学付诸实践",

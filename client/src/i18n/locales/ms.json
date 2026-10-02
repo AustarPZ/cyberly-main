@@ -788,6 +788,11 @@
   },
   "resources": {
     "reader": {
+      "inGuide": "Dalam panduan ini",
+      "onPage": "Pada halaman ini",
+      "introduction": "Pengenalan",
+      "readGuide": "Baca panduan",
+      "sourcesNext": "Sumber & langkah seterusnya",
       "back": "Kembali ke Sumber",
       "externalSource": "Lihat sumber luar",
       "practice": "Praktikkan apa yang dipelajari",

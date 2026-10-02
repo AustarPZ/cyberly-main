@@ -1,4 +1,4 @@
-import { act, render, screen } from "@testing-library/react";
+import { act, render, screen, within } from "@testing-library/react";
 import userEvent from "@testing-library/user-event";
 import i18n from "../i18n";
 import { getResourceBySlug } from "../api/resourceApi";
@@ -8,7 +8,7 @@ jest.mock("../api/resourceApi", () => ({ getResourceBySlug: jest.fn() }));
 const resource = { slug: "phishing", title: "Phishing guide", categoryCode: "Scams", summary: "Pause first", content: ["Check the sender", "Use a trusted channel"], sourceLabel: "Publisher", sourceUrl: "https://example.org/source", relatedScenario: { slug: "parcel" } };
 const reply = (overrides = {}) => ({ ok: true, data: { resource: { ...resource, ...overrides } } });
 const deferred = () => { let resolve; const promise = new Promise(r => { resolve = r; }); return { promise, resolve }; };
-beforeEach(async () => { jest.clearAllMocks(); await i18n.changeLanguage("en"); getResourceBySlug.mockResolvedValue(reply()); });
+beforeEach(async () => { jest.clearAllMocks(); window.matchMedia = jest.fn().mockReturnValue({ matches: false }); await i18n.changeLanguage("en"); getResourceBySlug.mockResolvedValue(reply()); });
 
 test("detail owns content, heading focus, attribution and exact practice route without modal behavior", async () => {
   const onNavigate = jest.fn();
@@ -75,4 +75,43 @@ test("late old-slug and old-locale responses cannot replace current detail", asy
   await act(async () => { oldSlug.resolve(reply({ title: "Old slug" })); oldLocale.resolve(reply({ title: "Old locale" })); });
   expect(screen.queryByText("Old slug")).toBeNull(); expect(screen.queryByText("Old locale")).toBeNull();
   expect(getResourceBySlug).toHaveBeenLastCalledWith("privacy", { locale: "ms" });
+});
+
+test("section navigation scrolls to guide content and respects reduced motion", async () => {
+  window.matchMedia = jest.fn().mockReturnValue({ matches: true });
+  Element.prototype.scrollIntoView = jest.fn();
+  render(<ResourceReaderPage slug="phishing" />);
+  const nav = await screen.findByRole("navigation", { name: "In this guide" });
+  await userEvent.click(within(nav).getByRole("button", { name: "Read the guide" }));
+  expect(Element.prototype.scrollIntoView).toHaveBeenCalledWith({ behavior: "auto", block: "start" });
+  expect(screen.getByRole("region", { name: "Read the guide" })).toHaveFocus();
+  expect(within(nav).getByRole("button", { name: "Read the guide" })).toHaveAttribute("aria-current", "location");
+  expect(getResourceBySlug).toHaveBeenCalledTimes(1);
+});
+
+test("mobile page navigation expands and collapses after section selection", async () => {
+  Element.prototype.scrollIntoView = jest.fn();
+  render(<ResourceReaderPage slug="phishing" />);
+  const summary = await screen.findByText("On this page");
+  const disclosure = summary.closest("details");
+  expect(disclosure).not.toHaveAttribute("open");
+  await userEvent.click(summary);
+  expect(disclosure).toHaveAttribute("open");
+  await userEvent.click(within(disclosure).getByRole("button", { name: "Sources & next steps" }));
+  expect(disclosure).not.toHaveAttribute("open");
+  expect(screen.getByRole("link", { name: /View external source/ })).toHaveAttribute("href", resource.sourceUrl);
+});
+
+test("scroll spy follows sections and disconnects when leaving the reader", async () => {
+  let observeSection;
+  const disconnect = jest.fn();
+  window.IntersectionObserver = jest.fn(callback => { observeSection = callback; return { observe: jest.fn(), disconnect }; });
+  const { unmount } = render(<ResourceReaderPage slug="phishing" />);
+  const nav = await screen.findByRole("navigation", { name: "In this guide" });
+  const section = screen.getByRole("region", { name: "Read the guide" });
+  act(() => observeSection([{ isIntersecting: true, target: section }]));
+  expect(within(nav).getByRole("button", { name: "Read the guide" })).toHaveAttribute("aria-current", "location");
+  unmount();
+  expect(disconnect).toHaveBeenCalled();
+  delete window.IntersectionObserver;
 });

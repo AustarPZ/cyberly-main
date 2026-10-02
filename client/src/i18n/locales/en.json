@@ -788,6 +788,11 @@
   },
   "resources": {
     "reader": {
+      "inGuide": "In this guide",
+      "onPage": "On this page",
+      "introduction": "Introduction",
+      "readGuide": "Read the guide",
+      "sourcesNext": "Sources & next steps",
       "back": "Back to Resources",
       "externalSource": "View external source",
       "practice": "Put the idea into practice",
