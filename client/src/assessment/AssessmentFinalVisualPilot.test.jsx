@@ -207,15 +207,15 @@ describe("Assessment final visual migration", () => {
 
   test("presents the pending assessment as one checkpoint briefing without the legacy banner", async () => {
     const { container } = render(<App />);
-    const heading = await screen.findByRole("heading", { level: 1, name: i18n.t("assessment.title") });
-    const hero = heading.closest(".assessment-checkpoint-hero");
+    await screen.findByRole("button", { name: i18n.t("assessment.start") });
+    const heading = screen.getByRole("heading", { level: 1, name: i18n.t("assessment.title") });
+    const summary = heading.closest(".assessment-intro, .assessment-result-summary");
 
     expect(screen.getAllByRole("main")).toHaveLength(1);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    expect(hero).toBeInTheDocument();
-    expect(within(hero).getByText(i18n.t("assessment.baselineLabel"))).toHaveClass("cy-page-identity-label");
-    expect(hero.querySelector(".assessment-checkpoint-visual").closest(".cy-explorer-hero-visual"))
-      .toHaveAttribute("aria-hidden", "true");
+    expect(summary).toBeInTheDocument();
+    expect(container.querySelector(".assessment-checkpoint-hero")).not.toBeInTheDocument();
+    expect(within(summary).getByText(i18n.t("assessment.baselineLabel"))).toBeVisible();
     expect(container.querySelector(".assessment-legacy-banner")).not.toBeInTheDocument();
     await waitFor(() => expect(container.querySelector(".assessment-intro")).toBeInTheDocument());
     expect(screen.getByText(i18n.t("assessment.introduction"))).toBeVisible();
@@ -251,6 +251,8 @@ describe("Assessment final visual migration", () => {
     expect(screen.getAllByRole("main")).toHaveLength(1);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
     expect(heading.closest(".assessment-question-card")).toBeInTheDocument();
+    expect(within(heading.closest(".assessment-question-card")).getByText(i18n.t("assessment.baselineLabel"))).toBeVisible();
+    expect(container.querySelector(".assessment-checkpoint-hero")).not.toBeInTheDocument();
     expect(container.querySelector(".assessment-question-shell")).toBeInTheDocument();
     expect(screen.getByText(questions[0].topicLabel)).toBeVisible();
     expect(screen.getByText(i18n.t("assessment.questionProgress", { current: 1, total: 2 }))).toBeVisible();
@@ -270,13 +272,14 @@ describe("Assessment final visual migration", () => {
 
     const { container } = render(<App />);
     const heading = await screen.findByRole("heading", { level: 1, name: i18n.t("assessment.completed") });
-    const hero = heading.closest(".assessment-checkpoint-hero");
+    const summary = heading.closest(".assessment-intro, .assessment-result-summary");
 
     expect(screen.getAllByRole("main")).toHaveLength(1);
     expect(screen.getAllByRole("heading", { level: 1 })).toHaveLength(1);
-    expect(hero).toBeInTheDocument();
+    expect(summary).toBeInTheDocument();
+    expect(container.querySelector(".assessment-checkpoint-hero")).not.toBeInTheDocument();
     expect(container.querySelector(".assessment-result-summary")).toBeInTheDocument();
-    expect(screen.getAllByText(i18n.t("assessment.resultSummary", { score: 8, maxScore: 12 }))).toHaveLength(2);
+    expect(screen.getAllByText(i18n.t("assessment.resultSummary", { score: 8, maxScore: 12 }))).toHaveLength(1);
     expect(screen.getByText(i18n.t("assessment.resultNextStep"))).toBeVisible();
     expect(screen.getByText(i18n.t("assessment.measuredLevel"))).toBeVisible();
     expect(screen.getByText("Developing")).toBeVisible();

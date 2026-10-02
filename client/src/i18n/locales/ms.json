@@ -518,7 +518,7 @@
       "backToAssessment": "Kembali ke Penilaian"
     },
     "title": "Penilaian Awal Kesihatan Siber",
-    "introduction": "Penilaian ringkas 12 soalan ini memberi Cyberly gambaran awal tentang pengetahuan kesejahteraan siber anda sekarang, supaya cadangan topik lebih sesuai dengan perkara yang mungkin anda perlukan seterusnya.",
+    "introduction": "Semakan ringkas tentang risiko dalam talian membantu Cyberly mencadangkan pembelajaran seterusnya.",
     "start": "Mulakan penilaian",
     "resume": "Sambung penilaian",
     "questionProgress": "Soalan {{current}} daripada {{total}}",
@@ -563,7 +563,7 @@
     "allTopicsMetThreshold": "Semua topik memenuhi ambang kekuatan semasa.",
     "baselineLabel": "Penilaian Tahap Asas",
     "measurementNote": "Keputusan anda ialah asas permulaan berdasarkan jawapan ini sahaja, bukan label kekal. AI tidak digunakan untuk soalan, pemarkahan atau maklum balas.",
-    "doLaterDescription": "Anda boleh melakukannya kemudian. Anda akan kembali ke Papan Pemuka, tempat Penilaian Awal kekal tersedia, dan aktiviti pembelajaran lain masih boleh digunakan.",
+    "doLaterDescription": "Buat kemudian membawa anda ke Papan Pemuka. Penilaian ini dan aktiviti pembelajaran lain kekal tersedia.",
     "doLater": "Lakukan kemudian",
     "stats": {
       "questions": "soalan pilihan tunggal",

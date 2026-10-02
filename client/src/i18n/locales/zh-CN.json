@@ -518,7 +518,7 @@
       "backToAssessment": "返回评估"
     },
     "title": "网络健康初始测评",
-    "introduction": "这项简短的 12 题测评让 Cyberly 初步了解你目前的网络健康知识，从而根据你接下来可能需要的内容提供更贴切的主题建议。",
+    "introduction": "简短了解日常网络风险，帮助 Cyberly 推荐下一步学习内容。",
     "start": "开始测评",
     "resume": "继续测评",
     "questionProgress": "第 {{current}} 题，共 {{total}} 题",
@@ -563,7 +563,7 @@
     "allTopicsMetThreshold": "所有主题都已达到当前优势阈值。",
     "baselineLabel": "基础水平测评",
     "measurementNote": "结果只是根据本次作答形成的起始基线，不是永久标签。题目、评分和反馈均不使用 AI。",
-    "doLaterDescription": "你可以稍后再做。你会返回仪表板，之后仍可找到“初始测评”，其他学习活动也不会受限。",
+    "doLaterDescription": "稍后再做将返回仪表板。本测评和其他学习活动仍可随时使用。",
     "doLater": "稍后完成",
     "stats": {
       "questions": "道单选题",

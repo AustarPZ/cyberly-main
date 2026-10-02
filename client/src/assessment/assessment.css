@@ -413,3 +413,19 @@
 .assessment-page .scenario-result-recommendation {
   margin-block-end: 1.5rem;
 }
+
+/* V2 keeps orientation, facts and actions together on task surfaces. */
+.assessment-compact-heading { max-width: 48rem; margin-bottom: 1.25rem; }
+.assessment-compact-heading h1 { font: inherit; font-weight: 750; font-size: clamp(1.6rem, 3vw, 2.4rem); line-height: 1.2; color: var(--text-primary); margin-block: .75rem; overflow-wrap: anywhere; }
+.assessment-compact-heading p { color: var(--text-secondary); line-height: 1.7; margin: 0; }
+.assessment-task-topbar { display: flex; align-items: center; justify-content: space-between; flex-wrap: wrap; gap: .5rem; margin-bottom: 1rem; }
+.assessment-task-topbar .assessment-task-identity { margin: 0; }
+.assessment-task-topbar button { margin: 0; }
+.assessment-result-score { font-size: 1.05rem; color: var(--text-secondary); line-height: 1.6; }
+.assessment-result-summary { border-top: 3px solid var(--color-brand-primary); }
+.assessment-briefing-stat { background: transparent; border: 0; border-inline-start: 2px solid var(--border-default); padding: .5rem .75rem; text-align: start; }
+@media (max-width: 47.99rem) {
+  .assessment-page { padding-block: .75rem 6rem; }
+  .assessment-intro, .assessment-question-card, .assessment-result-summary { padding: 1rem; }
+  .assessment-briefing-grid { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+}

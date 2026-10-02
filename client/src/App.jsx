@@ -47,7 +47,6 @@ import DashboardProgressShortcut from "./dashboard/DashboardProgressShortcut";
 import DashboardNextStepArea, { isActionableDashboardRecommendation } from "./dashboard/DashboardNextStepArea";
 import { dashboardGuidanceInput, dashboardGuidanceStamp } from "./guidance/dashboardGuidance";
 import { resolveGuidance } from "./guidance/resolveGuidance";
-import AssessmentCheckpointVisual from "./assessment/AssessmentCheckpointVisual";
 import ScenarioDecisionVisual from "./scenario/ScenarioDecisionVisual";
 import PageIdentity from "./design-system/visual/PageIdentity";
 import Surface from "./design-system/primitives/Surface";
@@ -7148,19 +7147,12 @@ function AssessmentPage() {
     setConfirmAction(null);
   }
 
-  function renderCheckpointHero(title, description) {
-    return (
-      <PageContainer>
-        <ExplorerHeroSurface
-          identity={t("assessment.baselineLabel")}
-          icon="⌖"
-          visual={<AssessmentCheckpointVisual />}
-          className="assessment-checkpoint-hero"
-        >
-          <CompactHeader title={title} description={description} />
-        </ExplorerHeroSurface>
-      </PageContainer>
-    );
+  function renderAssessmentHeader(title, description) {
+    return <header className="assessment-compact-heading">
+      <PageIdentity label={t("assessment.baselineLabel")} icon="⌖" />
+      <h1>{title}</h1>
+      {description && <p>{description}</p>}
+    </header>;
   }
 
   function renderTaskHeader() {
@@ -7174,11 +7166,12 @@ function AssessmentPage() {
   function renderIntro() {
     return (
       <>
-        {renderCheckpointHero(assessment?.title || t("assessment.title"), t("assessment.introduction"))}
         <PageContainer width="reading" className="assessment-content">
           <PageSection>
             <PageBackButton />
             <Surface className="assessment-intro">
+              {renderAssessmentHeader(assessment?.title || t("assessment.title"), t("assessment.introduction"))}
+              <p className="assessment-measurement-note">{t("assessment.measurementNote")}</p>
               <div className="assessment-briefing-grid">
                 {[
                   { value: "12", labelKey: "assessment.stats.questions" },
@@ -7192,14 +7185,13 @@ function AssessmentPage() {
                   </div>
                 ))}
               </div>
-              <p className="assessment-measurement-note">{t("assessment.measurementNote")}</p>
-              <p className="assessment-measurement-note">{t("assessment.doLaterDescription")}</p>
               <div className="assessment-actions">
                 <Button variant="primary" onClick={start} disabled={loading}>
                   {attempt ? t("assessment.resume") : t("assessment.start")}
                 </Button>
                 <Button variant="quiet" onClick={() => go("dashboard")}>{t("assessment.doLater")}</Button>
               </div>
+              <p className="assessment-measurement-note">{t("assessment.doLaterDescription")}</p>
             </Surface>
           </PageSection>
         </PageContainer>
@@ -7216,9 +7208,8 @@ function AssessmentPage() {
     return (
       <PageContainer width="reading" className="assessment-question-shell">
         <PageSection>
-          {renderTaskHeader()}
-          <PageBackButton />
           <Surface className="assessment-question-card">
+          <div className="assessment-task-topbar">{renderTaskHeader()}<PageBackButton /></div>
           <div className="auth-progress assessment-question-progress">
             <div className="auth-progress-track">
               <div className="auth-progress-fill" style={{ width: `${progress}%` }} />
@@ -7267,16 +7258,12 @@ function AssessmentPage() {
     const improvements = (result?.topicScores || []).filter(topic => topic.classification === "improvement");
     return (
       <>
-        {renderCheckpointHero(t("assessment.completed"), t("assessment.resultSummary", {
-          score: attemptResult?.totalScore,
-          maxScore: attemptResult?.maximumScore,
-        }))}
         <PageContainer className="assessment-content">
           <PageSection>
             <PageBackButton />
             <Surface className="assessment-result-summary">
-          <div className="assessment-result-label">{t("assessment.result")}</div>
-          <p className="section-sub">
+          {renderAssessmentHeader(t("assessment.completed"))}
+          <p className="assessment-result-score">
             {t("assessment.resultSummary", {
               score: attemptResult?.totalScore,
               maxScore: attemptResult?.maximumScore,
@@ -7376,7 +7363,7 @@ function AssessmentPage() {
       )}
       {loading ? (
         <>
-          {renderCheckpointHero(t("assessment.title"), t("assessment.loading"))}
+          <PageContainer width="reading">{renderAssessmentHeader(t("assessment.title"), t("assessment.loading"))}</PageContainer>
           <PageContainer width="reading" className="assessment-content">
             <PageState title={t("assessment.loadingTitle")} message={t("assessment.loading")} />
           </PageContainer>
