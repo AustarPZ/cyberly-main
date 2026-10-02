@@ -38,8 +38,13 @@ describe("Resources responsive CSS contract", () => {
     expect(css).not.toMatch(/overflow(?:-x)?:\s*(?:hidden|clip)/);
   });
 
-  test("reader is centered with narrow measure, wrapping and no modal dependency", () => {
-    expect(css).toMatch(/\.resources-reader\s*\{[^}]*max-width:\s*48rem[^}]*margin-inline:\s*auto/);
+  test("reader centers its navigation workspace while keeping a narrow article measure", () => {
+    expect(css).toMatch(/\.resources-reader\s*\{[^}]*max-width:\s*72rem[^}]*margin-inline:\s*auto/);
+    expect(css).toMatch(/\.resources-reader-workspace\s*\{[^}]*grid-template-columns:\s*minmax\(10rem,\s*14rem\)\s*minmax\(0,\s*46rem\)/);
+    const mobileCss = extractMediaBlock(css, /@media\s*\(max-width:\s*63\.99rem\)/);
+    expect(mobileCss).toMatch(/\.resources-reader article\s*\{[^}]*max-width:\s*46rem[^}]*margin-inline:\s*auto/);
+    expect(mobileCss).toMatch(/\.resources-reader-nav\s*\{[^}]*display:\s*none/);
+    expect(mobileCss).toMatch(/\.resources-reader-mobile-nav\s*\{[^}]*display:\s*block/);
     expect(css).toMatch(/\.resources-source-link\s*\{[^}]*max-width:\s*100%[^}]*overflow-wrap:\s*anywhere/);
     expect(css).not.toContain("resources-dialog");
     expect(css).not.toMatch(/position:\s*fixed/);
