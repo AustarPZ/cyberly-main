@@ -4,6 +4,37 @@ Cyberly is deployable as a static React frontend plus a persistent Express backe
 
 **Deployment status note:** Local development remains the primary engineering mode. The external staging environment is provisioned with Render frontend/backend services, Cloudflare authoritative DNS, and an Aiven MySQL 8.4 database in Singapore. This staging baseline does not certify a production deployment or public launch.
 
+## Current Accepted Staging Runtime Baseline
+
+**2026-10-05 / R4-06 — Control Tower: PASS_WITH_ACCEPTED_SCOPE_LIMITATION.**
+
+**CYBERLY_R4_STAGING_RUNTIME_ACCEPTED_BASELINE = 91a052736dda7d37c05ac315e9738b4c29937622**
+
+| Authority | Accepted current state |
+| --- | --- |
+| Web | srv-d9tj5hu5djic73a0auk0; dep-db1kkcegekts73e9r6ug; LIVE at the exact baseline SHA |
+| API | srv-d9tiop942hec738b3org; dep-db1kimdg1s2s73akmku0; LIVE at the exact baseline SHA |
+| Node | 24.21.0 via root .node-version; Web build and API build/runtime verified |
+| Web acceptance | PASS_WITH_KNOWN_ACCEPTED_WARNINGS; page load / representative guest UI PASS |
+| API acceptance | Render Linux install and bcrypt LOAD / HASH / COMPARE PASS; health, resource API and phishing resource HTTP 200 |
+| DB | 001–033 accepted historical state; R4-06 migration delta NONE; CATEGORY 0 — NO DATABASE CHANGE; no migration performed |
+| Service configuration | Both branches master; autoDeploy OFF; rootDir empty / repository root; unchanged |
+| Frozen Git master / R3 recovery | f76195d76fd44be5f1bed5e0ef7b33dd997f449b; r3-staging-accepted-2026-10-03 unchanged |
+| R4 baseline tag | r4-platform-baseline-2026-10-05 must be annotated and point to the runtime baseline SHA, not the later documentation commit |
+| Production | SUSPENDED / NOT CERTIFIED; R10 and explicit Owner authorization required |
+| Live providers | NOT CERTIFIED; AI provider calls 0; SMTP 0; no live-provider authorization |
+| Authenticated R4-06 smoke | NOT_RUN_BY_SCOPE / ACCEPTED_LIMITATION; deferred to a separately authorized authenticated Gate |
+
+The accepted R4 runtime was deployed by exact commit. Service branches remain master while Git master remains the frozen R3 baseline; documentation persistence on develop must not redeploy or change service configuration.
+
+Successful login establishes/saves a MySQL-backed session; authenticated /api/auth/me also saves the session. Such checks would create/update staging session records and violate R4-06 zero-DB-mutation authorization. Control Tower does not require authenticated smoke for R4-06 because the exact runtime delta changes neither auth/account source nor migrations. Runtime risks were covered by Linux dependency installation, mysql2-backed health/resource paths, Node build/runtime, native bcrypt, API startup/health, Web build/load, guest smoke and prior accepted full local/client/server regressions. Authenticated session behavior was not freshly exercised on this runtime; a later authenticated staging Gate requires explicit bounded test-session DB-write authorization. This is an accepted scope limitation, not a failed test.
+
+No backup, migration, restore or staging DB mutation was authorized or performed by R4-06. DB state above is accepted historical authority, not a new DB inspection. No provider AUTH_VALID, HEALTH_PASS, CHAT_PASS, TOOL_NORMALIZATION_PASS or PRODUCTION_READY state is established by this phase.
+
+R4_REPOSITORY_AND_OPERATIONS_BASELINE_READY = PASS. R4_STAGING_RUNTIME_INTEGRATION_ACCEPTED = PASS_WITH_ACCEPTED_SCOPE_LIMITATION. R4_PLATFORM_BASELINE_LOCKED = PENDING FINAL CONTROL TOWER PERSISTENCE VERIFICATION. Final R4 closure is not declared here.
+
+Older PB-OPS sections below are historical acceptance records and do not override this current-state section. See the [staging runbook](staging-operations-runbook.md) for operational boundaries.
+
 ## Current Shape
 
 - Frontend: build `client/` as static React assets.

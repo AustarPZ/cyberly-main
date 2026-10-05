@@ -1,22 +1,22 @@
 # Staging Operations Runbook
 
-**R4-05 Staging Operations Runbook was independently reviewed and accepted by Control Tower on 2026-10-05 (Asia/Kuala_Lumpur).** This acceptance validates the document as the combined staging operational reference. It does not itself authorize deployment, migration, backup, restore, provider calls or production action. R4-05 remains pending final persistence verification until this exact document is committed and confirmed on origin/develop. This document describes future operations; writing or reading it authorizes no deploy, migration, backup, restore, provider call or production action. Codex executes only explicitly authorized scope; Control Tower independently reviews evidence and Gate decisions; Project Owner authorizes external operations and production actions. R4-01/02/03/03A/04/04A closure is Owner / Control Tower supplied authority. R4-05 does not self-close.
+**R4-05 Staging Operations Runbook was independently reviewed and accepted by Control Tower on 2026-10-05 (Asia/Kuala_Lumpur).** This acceptance validates the document as the combined staging operational reference. It does not itself authorize deployment, migration, backup, restore, provider calls or production action. R4-05 repository and operations readiness is PASS under the subsequent Control Tower R4-06 ruling. R4-06 runtime integration is accepted with the scope limitation below; final baseline persistence verification remains with Control Tower. This document describes future operations; writing or reading it authorizes no deploy, migration, backup, restore, provider call or production action. Codex executes only explicitly authorized scope; Control Tower independently reviews evidence and Gate decisions; Project Owner authorizes external operations and production actions. R4-01/02/03/03A/04/04A closure is Owner / Control Tower supplied authority. R4-05 does not self-close.
 
 ## 1. Current authority: read before operating
 
-| Authority | Accepted value at preparation | Operational meaning |
+| Authority | Current accepted value (2026-10-05 / R4-06) | Operational meaning |
 | --- | --- | --- |
 | Repository | C:/Users/AsusT/Documents/Codex/cyberly-main-ui-v2-account-center-r1 | Canonical workspace; preserve it and its evidence |
 | Local branch | ui-v2-account-center-r1 | Branch name alone is not release authority |
-| HEAD / fresh origin develop | 1d0a17a280e0b5ceaea712f0ec4c2478a6af5ae8 | Post-R3 development line; not automatically staging approved |
-| Frozen origin master / accepted R3 staging SHA | f76195d76fd44be5f1bed5e0ef7b33dd997f449b | CYBERLY_R3_STAGING_ACCEPTED_BASELINE; changes require separately Owner-approved promotion |
+| Accepted R4 runtime candidate / pre-persistence develop | 91a052736dda7d37c05ac315e9738b4c29937622 | CYBERLY_R4_STAGING_RUNTIME_ACCEPTED_BASELINE; later docs-only develop commits do not change deployed runtime authority |
+| Frozen origin master / R3 recovery baseline SHA | f76195d76fd44be5f1bed5e0ef7b33dd997f449b | CYBERLY_R3_STAGING_ACCEPTED_BASELINE; changes require separately Owner-approved promotion |
 | Recovery tag | r3-staging-accepted-2026-10-03 | Must peel to the full R3 SHA above; do not move, delete or force-update |
-| Repository Node authority | Root .node-version = 24.21.0 | Persisted R4 authority for future approved Web/API builds |
-| Current accepted staging Node | 24.14.1 Render default | Accepted R3 runtime; R4 pin is not yet deployed |
+| Repository Node authority | Root .node-version = 24.21.0 | Persisted repository authority; selected by accepted R4 Web/API builds |
+| Current accepted staging Node | 24.21.0 via root .node-version | R4-06 Web build and API build/runtime VERIFIED |
 | Staging DB | 001–033 applied; 033_repair_verified_resource_sources.sql APPLIED; RF01 PASS | Accepted historical state; recheck before future operations |
 | Legacy production | cyberly / cyberly-api: SUSPENDED / NOT CERTIFIED | Requires separate R10 Production Certification and explicit Owner authorization |
 
-Fresh Git refs were checked for this document. Deployment, DB and runtime states above are supplied accepted R3/R4 authority, not freshly queried or re-certified by R4-05. Local remote-tracking refs can be stale; use fresh remote refs before action.
+Current runtime authority reflects Control Tower accepted R4-06 evidence. DB 001–033 remains accepted historical state; R4-06 performed no DB inspection/mutation or migration. R3 recovery authority is unchanged. Local remote-tracking refs can be stale; use fresh remote refs before action.
 
 | Staging target | Web | API |
 | --- | --- | --- |
@@ -24,13 +24,14 @@ Fresh Git refs were checked for this document. Deployment, DB and runtime states
 | Service ID | srv-d9tj5hu5djic73a0auk0 | srv-d9tiop942hec738b3org |
 | URL | https://staging.cyberly.my | https://api-staging.cyberly.my |
 | Source branch / autoDeploy | master / OFF | master / OFF |
-| Accepted deployed SHA | f76195d76fd44be5f1bed5e0ef7b33dd997f449b | f76195d76fd44be5f1bed5e0ef7b33dd997f449b |
+| Accepted deployed SHA | 91a052736dda7d37c05ac315e9738b4c29937622 | 91a052736dda7d37c05ac315e9738b4c29937622 |
+| Accepted deploy ID | dep-db1kkcegekts73e9r6ug | dep-db1kimdg1s2s73akmku0 |
 | rootDir | empty / repository root | empty / repository root |
 | Build | npm --prefix client ci && npm --prefix client run build | npm --prefix server ci |
 | Start / publish | client/build | npm --prefix server start |
 | Health | Page load / scope smoke | GET /api/health |
 
-R4 develop includes governance closure, recovery reference, dependency audit, server dependency remediation, maintenance register and the Node pin. Runtime-impacting files include server/package.json, server/package-lock.json and .node-version. **None of these R4 runtime changes is currently accepted as deployed staging runtime.** Develop/master divergence is intentional; never automatically reconcile, promote or deploy it.
+R4 develop includes governance closure, recovery reference, dependency audit, server dependency remediation, maintenance register and the Node pin. Runtime-impacting files include server/package.json, server/package-lock.json and .node-version. **The exact R4 runtime candidate above is deployed and accepted by R4-06 with an accepted authenticated-smoke scope limitation.** Service branches still track master with autoDeploy OFF; exact-commit deployment does not promote Git master. Develop/master divergence is intentional; never automatically reconcile, promote or deploy it.
 
 ## 2. Canonical references and historical-document limits
 
@@ -90,7 +91,7 @@ git diff <DEPLOYED_SHA> <AUTHORIZED_CANDIDATE_SHA> -- server/migrations
 
 Both services must retain repository-root discovery. For the R4 candidate, acceptance requires Web build log and API build log showing **Using Node.js version 24.21.0**, plus independent API runtime evidence for **24.21.0** from authorized runtime/log inspection. Capture only the safe version, not process environment. A build log alone does not prove API runtime; absence of runtime evidence means HOLD. Do not add a public diagnostics endpoint or expose process.env just to obtain proof.
 
-If selected version differs, STOP acceptance; do not silently accept Render default, change the pin, add NODE_VERSION or auto-update. **NODE25_PLUS = SEPARATE_COMPATIBILITY_GATE_REQUIRED** due to Node24-bounded DEP0176/CRA debt. Future Node24 patches require fresh official release/security review and scoped compatibility validation, not an alias/floating range. Current R3 still uses default24.14.1 until separately deployed; an approved recovery to R3 must review its own code/runtime compatibility rather than assume the undeployed R4 pin exists there.
+If selected version differs, STOP acceptance; do not silently accept Render default, change the pin, add NODE_VERSION or auto-update. **NODE25_PLUS = SEPARATE_COMPATIBILITY_GATE_REQUIRED** due to Node24-bounded DEP0176/CRA debt. Future Node24 patches require fresh official release/security review and scoped compatibility validation, not an alias/floating range. The historical R3 runtime used default24.14.1; current accepted R4 staging uses 24.21.0. An approved recovery to R3 must review its own code/runtime compatibility rather than assume the R4 pin exists in R3.
 
 ## 6. Database classification, backup and migration
 
@@ -180,20 +181,22 @@ Legacy production services cyberly (srv-d9eg6prrjlhs73ccogu0) and cyberly-api (s
 
 ## 11. R4 integration requirement and final Gate semantics
 
-Before **R5 LIVE PROVIDER STAGING CERTIFICATION**, a separately authorized staging integration deployment/acceptance must prove Web Node24.21.0 selection, API Node24.21.0 build/runtime, server lockfile installation on Render Linux (including native bcrypt compatibility), API health PASS, Web build/load PASS and no unexpected regression. Windows isolated validation is useful evidence, not Linux runtime acceptance. This deployment is **not performed or authorized by R4-05**.
+Control Tower independently reviewed R4-06 on 2026-10-05: technical deployment PASS; staging runtime integration PASS_WITH_ACCEPTED_SCOPE_LIMITATION. The separately authorized exact candidate 91a052736dda7d37c05ac315e9738b4c29937622 is LIVE on Web dep-db1kkcegekts73e9r6ug and API dep-db1kimdg1s2s73akmku0. API acceptance preceded Web deployment. Render Linux dependency installation/native bcrypt, Web Node24.21.0 build/load, API Node24.21.0 build/runtime/start, health HTTP200 and bounded non-provider/guest representative smoke passed. No unexpected NODE_VERSION override or service configuration drift was found.
 
 R4-04A accepted local evidence: Node24.21.0/npm11.19.0 clean installs, build, 118 suites/1412 tests, server production audit0, safe tests, bcrypt/load checks and locales PASS. Keep W05 YAML invalid peer, CRA, DEP0176, Scenario lint and unused import under the existing maintenance dispositions; this runbook repairs none.
 
-| Gate | Meaning / current preparation state |
+| Gate | Current Control Tower ruling |
 | --- | --- |
-| R4_REPOSITORY_AND_OPERATIONS_BASELINE_READY | **Accepted by Control Tower, pending final R4-05 persistence verification** |
-| R4_STAGING_RUNTIME_INTEGRATION_ACCEPTED | R4 runtime changes actually deployed and verified on staging; **NO at runbook preparation** |
-| R4_PLATFORM_BASELINE_LOCKED | **HOLD**; cannot be declared until R4-06 successfully establishes R4_STAGING_RUNTIME_INTEGRATION_ACCEPTED |
+| R4_REPOSITORY_AND_OPERATIONS_BASELINE_READY | **PASS** |
+| R4_STAGING_RUNTIME_INTEGRATION_ACCEPTED | **PASS_WITH_ACCEPTED_SCOPE_LIMITATION** |
+| R4_PLATFORM_BASELINE_LOCKED | **PENDING FINAL CONTROL TOWER PERSISTENCE VERIFICATION** |
 
-**Formal required next stage: R4-06 — STAGING_RUNTIME_INTEGRATION_ACCEPTANCE. REQUIRED / NOT STARTED.** R4 develop contains server dependency remediation and the Node24.21.0 repository pin that are not yet deployed to staging. Windows/local/isolated checks do not establish Render Linux staging runtime acceptance. Control Tower has decided that staging integration is required before R4_PLATFORM_BASELINE_LOCKED can be declared.
+Authenticated smoke: **NOT_RUN_BY_SCOPE / ACCEPTED_LIMITATION**, not required for R4-06 and deferred to a separately authorized authenticated Gate. MySQL session creation/saving and authenticated /api/auth/me session saving would write staging records, conflicting with zero-DB-mutation authorization. The exact R4 runtime delta changes neither auth/account source nor migrations; runtime risks were covered by Linux install, mysql2 health/resource paths, Node/native/API/Web/guest evidence and prior accepted regressions. Residual limit: authenticated session behavior on this staging runtime was not freshly exercised. Test it before a later authenticated staging Gate with explicit bounded test-session DB-write authorization.
 
-R4-06 requires subsequent explicit Control Tower / Owner authorization of an exact R4 staging candidate. Minimum evidence: Web authorized exact SHA, successful Render build, Node24.21.0 selection, page load and bounded smoke; API authorized exact SHA, successful current dependency candidate installation on Render Linux, Node24.21.0 build and runtime, successful server start, /api/health HTTP200 and bounded non-provider smoke. Verify no unexpected NODE_VERSION override, no deployment/config drift and no DB migration delta unless separately authorized. No live AI provider call is permitted without separate authorization. R4-06 is staging-only; no automatic production promotion.
+Fresh exact f76195d76fd44be5f1bed5e0ef7b33dd997f449b -> 91a052736dda7d37c05ac315e9738b4c29937622 diff under server/migrations/ has no file changes: final **CATEGORY 0 — NO DATABASE CHANGE**. No backup, migration, restore or staging DB mutation was authorized or performed by R4-06. No DB command is permitted during this documentation persistence.
 
-Based on the currently reviewed R4 delta, R4-03A and R4-04A introduced no new migration. The expected R4-06 DB category is **likely CATEGORY 0 — NO DATABASE CHANGE**, not a final classification. R4-06 must freshly compare the deployed SHA against the authorized R4 candidate SHA under server/migrations/ before accepting Category 0. If any migration delta appears, **STOP and reclassify**. This statement authorizes no backup or migration action.
+R4 baseline reference: annotated **r4-platform-baseline-2026-10-05** must point exactly to the accepted runtime SHA above, not the later documentation commit. The R3 recovery tag remains r3-staging-accepted-2026-10-03 -> f76195d76fd44be5f1bed5e0ef7b33dd997f449b. Current R4 staging runtime and R3 recovery are separate authorities.
 
-R4-05 persistence follows separate Owner / Control Tower authorization and ends at **R4-05_PERSISTED_READY_FOR_FINAL_CONTROL_TOWER_VERIFICATION**. Final closure remains with Control Tower; no deployment, Render mutation, DB command, migration, backup, restore, provider call or production operation is authorized by this persistence. Do not start R4-06 here.
+AI provider calls 0; SMTP 0; LIVE_PROVIDER_AUTHORIZATION = NO; production remains SUSPENDED / NOT CERTIFIED and untouched. R4-06 establishes no provider AUTH_VALID, HEALTH_PASS, CHAT_PASS, TOOL_NORMALIZATION_PASS or PRODUCTION_READY certification. R5 live-provider staging certification and R10 production certification require their own authorization and evidence.
+
+This persistence ends at **R4-06_PERSISTED_READY_FOR_FINAL_CONTROL_TOWER_VERIFICATION**. No new deployment, Render mutation, DB command, backup, restore, provider call or production action is authorized. Do not self-declare R4-06 CLOSED, final R4 closure or R4_PLATFORM_BASELINE_LOCKED.
