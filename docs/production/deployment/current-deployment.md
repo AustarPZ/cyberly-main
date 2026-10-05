@@ -24,11 +24,17 @@ Cyberly is deployable as a static React frontend plus a persistent Express backe
 | Environment boundary | No NODE_VERSION override, AI_LIVE_GATE_AUTHORIZED key, linked environment group or new secret file added by R5-02A; secret values not exposed |
 | Immutable R4 baseline | Annotated r4-platform-baseline-2026-10-05 still peels to 91a052736dda7d37c05ac315e9738b4c29937622; API-only R5-02A advancement does not move this tag |
 | Frozen master / R3 recovery | f76195d76fd44be5f1bed5e0ef7b33dd997f449b; R3 tag unchanged; no new baseline tag |
-| Provider certification | OpenAI = ADAPTER_PRESENT / AUTH_VALID by Control Tower for exact R5-03 event; HEALTH_PASS HOLD / NOT ESTABLISHED; Gemini and ILMU = ADAPTER_PRESENT only; CHAT_PASS / TOOL_NORMALIZATION_PASS / PRODUCTION_READY NO |
+| Provider certification | OpenAI = ADAPTER_PRESENT / AUTH_VALID / HEALTH_PASS HOLD / NOT ESTABLISHED; R5-03C exact live result INVALID_HEALTH_RESPONSE / tested / valid / fail, only RAW_MODEL_MISMATCH; Gemini and ILMU = ADAPTER_PRESENT only; CHAT_PASS / TOOL_NORMALIZATION_PASS / PRODUCTION_READY NO |
 | External effects | R5-03B provider calls OpenAI/Gemini/ILMU 0 / 0 / 0; SMTP0; no DB change; production UNTOUCHED; acceptance persistence performs no new deployment or Render mutation |
-| Next Gate | R5-03B accepted, pending final persistence verification by Control Tower; any later bounded live provider call requires separate Owner authorization; no additional provider request authorized here |
+| Next Gate | R5-03C CONTROL TOWER REVIEWED / RESULT PENDING PERSISTENCE VERIFICATION; R5-03D MODEL IDENTITY / ALIAS-SNAPSHOT POLICY CORRECTIVE is the next offline policy-corrective candidate, NOT STARTED; no provider call authorized |
 
 The current staging split is intentional: R5-03B integrates the corrected harness on API only; client and migrations are unchanged and Web retains the R4 baseline. This documentation persistence performs no deployment, restart or Render configuration change. Final R5-03B closure remains Control Tower authority.
+
+### Current R5-03C Control Tower reviewed live result
+
+R5-03C-OWNER-20261005-OPENAI-01 authorized the exact single OpenAI call at runtime CURRENT_STAGING_API_SHA, Gate r5-03a-v1, timestamp 2026-10-05T14:57:46.604Z. Provider-capable command count1; logical authorized/actual1/1, transport authorized/actual1/1, outbound1; maxRetries0, retryCount0, unexpectedDuplicateAttempt false; OpenAI/Gemini/ILMU1/0/0. No retry, failover or second invocation. Result INVALID_HEALTH_RESPONSE / tested / valid / fail; corrected diagnostics identified only RAW_MODEL_MISMATCH (requested gpt-5.4-mini, returned gpt-5.4-mini-2026-03-17). Control Tower ruling: PASS_AS_EXECUTION_EVIDENCE / STRICT_HEALTH_GATE_FAIL_CLOSED; accounting and reachability PASS; root cause CONFIRMED_RAW_MODEL_MISMATCH.
+
+OPENAI_AUTH_VALID PASS; OPENAI_HEALTH_PASS HOLD / NOT ESTABLISHED; CHAT_PASS, TOOL_NORMALIZATION_PASS and PRODUCTION_READY NO. The documented snapshot identity is official context for future R5-03D review, not a permanent alias mapping or authorized equivalence policy; strict health policy is unchanged. Usage25/5/30; estimated US$0.00004125 within US$0.01; provider-reported cost null. See [canonical R5-03C result](../../ai/provider-live-result-r5-03c.md). API/Web SHAs and deploy IDs above are unchanged; no DB/SMTP/source/Render configuration/deploy mutation in the accepted event. This documentation push adds zero provider calls, DB operations, SMTP operations or deployments; production untouched. R5-03D NOT STARTED / no provider call authorized. Final R5-03C closure remains Control Tower authority.
 
 ### Historical R5-02A acceptance context (preserved)
 
