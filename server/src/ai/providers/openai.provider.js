@@ -152,7 +152,10 @@ async function mockGenerate(config, request) {
 function createOpenAiProvider(config = {}) {
   const apiKey = String(config.apiKey || '').trim();
   const model = String(config.model || '').trim();
-  const client = apiKey ? new OpenAI({ apiKey }) : null;
+  const clientOptions = { apiKey };
+  if (config.maxRetries !== undefined) clientOptions.maxRetries = config.maxRetries;
+  if (config.fetchImpl !== undefined) clientOptions.fetch = config.fetchImpl;
+  const client = apiKey ? new OpenAI(clientOptions) : null;
   const capabilities = {
     chat: true,
     structuredOutput: true,
@@ -196,7 +199,9 @@ function createOpenAiProvider(config = {}) {
         latencyMs: Date.now() - startedAt,
         finishReason: response.status || null,
         providerRequestId: response.id || null,
-        rawMetadata: { status: response.status || null },
+        providerResponseId: response.id || null,
+        httpRequestId: response._request_id || null,
+        rawMetadata: { status: response.status || null, model: response.model || null, usageAvailable: Number.isSafeInteger(response.usage?.input_tokens) && Number.isSafeInteger(response.usage?.output_tokens) },
       };
     } catch (error) {
       throw normalizeProviderError(error);

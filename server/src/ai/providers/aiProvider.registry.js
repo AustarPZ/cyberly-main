@@ -67,27 +67,17 @@ function runtimeDisabledProviders(env = process.env) {
 }
 
 function runtimeState(providerId, provider, env = process.env) {
+  const enabled = !runtimeDisabledProviders(env).has(providerId);
+  const certification = { enabled, testState: 'not_tested', authState: 'not_tested', healthState: 'not_tested' };
   if (!provider?.configured) {
-    return {
-      runtimeAvailable: false,
-      lastRuntimeStatus: 'not_configured',
-      lastRuntimeError: 'AI_PROVIDER_NOT_CONFIGURED',
-    };
+    return { ...certification, runtimeAvailable: false, lastRuntimeStatus: 'not_configured', lastRuntimeError: 'AI_PROVIDER_NOT_CONFIGURED' };
   }
-  if (runtimeDisabledProviders(env).has(providerId)) {
-    return {
-      runtimeAvailable: false,
-      lastRuntimeStatus: 'runtime_unavailable',
-      lastRuntimeError: 'AI_AUTH_FAILED',
-    };
+  if (!enabled) {
+    return { ...certification, runtimeAvailable: false, lastRuntimeStatus: 'runtime_disabled', lastRuntimeError: 'AI_RUNTIME_DISABLED' };
   }
-  return {
-    runtimeAvailable: true,
-    lastRuntimeStatus: 'runtime_ok',
-    lastRuntimeError: null,
-  };
+  // Eligibility for routing is not evidence of authentication or health.
+  return { ...certification, runtimeAvailable: true, lastRuntimeStatus: 'not_tested', lastRuntimeError: null };
 }
-
 function createProviderSelectionPolicy(env = process.env) {
   const defaultProvider = normalizedProviderId(env.AI_DEFAULT_PROVIDER || env.AI_PROVIDER || 'openai');
   const assignments = {
@@ -161,6 +151,10 @@ function createProviderRegistry({ env = process.env, overrides = {} } = {}) {
         return {
           id,
           configured: Boolean(provider.configured),
+          enabled: runtime.enabled,
+          testState: runtime.testState,
+          authState: runtime.authState,
+          healthState: runtime.healthState,
           runtimeAvailable: runtime.runtimeAvailable,
           lastRuntimeStatus: runtime.lastRuntimeStatus,
           lastRuntimeError: runtime.lastRuntimeError,

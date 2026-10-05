@@ -62,13 +62,14 @@ async function run() {
   assert.equal(status.providers.find(provider => provider.id === 'gemini').configured, true);
   assert.equal(status.providers.find(provider => provider.id === 'openai').runtimeAvailable, true);
   assert.equal(status.providers.find(provider => provider.id === 'gemini').runtimeAvailable, false);
-  assert.equal(status.providers.find(provider => provider.id === 'gemini').lastRuntimeStatus, 'runtime_unavailable');
-  assert.equal(status.providers.find(provider => provider.id === 'gemini').lastRuntimeError, 'AI_AUTH_FAILED');
+  assert.equal(status.providers.find(provider => provider.id === 'gemini').lastRuntimeStatus, 'runtime_disabled');
+  assert.equal(status.providers.find(provider => provider.id === 'gemini').lastRuntimeError, 'AI_RUNTIME_DISABLED');
   assert.throws(
     () => registry.resolveForPurpose('cyberguard_chat'),
     /AI provider gemini is not runtime available/
   );
   assert.equal(registry.resolveForPurpose('cyberguard_chat', { allowRuntimeUnavailable: true }).id, 'gemini');
+  assert.equal(status.providers.find(provider => provider.id === 'openai').lastRuntimeStatus, 'not_tested');
   assertNoSecrets(status);
 
   const missing = createProviderRegistry({ env: { NODE_ENV: 'test' } }).getSafeStatus();

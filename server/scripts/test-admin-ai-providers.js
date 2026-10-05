@@ -171,8 +171,8 @@ async function run() {
     assert.equal(result.json.providers.find(provider => provider.id === 'openai').configured, true);
     assert.equal(result.json.providers.find(provider => provider.id === 'gemini').configured, true);
     assert.equal(result.json.providers.find(provider => provider.id === 'gemini').runtimeAvailable, false);
-    assert.equal(result.json.providers.find(provider => provider.id === 'gemini').lastRuntimeStatus, 'runtime_unavailable');
-    assert.equal(result.json.providers.find(provider => provider.id === 'gemini').lastRuntimeError, 'AI_AUTH_FAILED');
+    assert.equal(result.json.providers.find(provider => provider.id === 'gemini').lastRuntimeStatus, 'runtime_disabled');
+    assert.equal(result.json.providers.find(provider => provider.id === 'gemini').lastRuntimeError, 'AI_RUNTIME_DISABLED');
     assert.equal(result.json.defaultProvider, 'openai');
     assert.equal(result.json.purposeAssignments.cyberguard_chat, 'openai');
     assert.equal(result.json.controlledAgenticRuntime.productionRouter, 'openai');
