@@ -1,7 +1,7 @@
 'use strict';
 // DB-free entry point. Never load dotenv or the server/service/registry layers.
 const { createOpenAiProvider } = require('../src/ai/providers/openai.provider');
-const GATE_VERSION = 'r5-02-v1';
+const GATE_VERSION = 'r5-03a-v1';
 const MODEL_PRICES = Object.freeze({ 'gpt-5.4-mini': { input: 0.75, output: 4.5 } });
 const SYSTEM = 'Cyberly internal provider health check. Reply with OK.';
 const USER = 'Reply with OK.';
@@ -43,10 +43,21 @@ function knownUsage(value) {
   if (!value || !['inputTokens','outputTokens','totalTokens'].every(key=>Number.isSafeInteger(value[key]) && value[key]>=0)) return null;
   return { inputTokens:value.inputTokens, outputTokens:value.outputTokens, totalTokens:value.totalTokens };
 }
+// Diagnostic values never include response text or normalized tool payloads.
+function healthDiagnostics(response, requestedModel, secret) {
+  const rawModel=response.rawMetadata?.model;
+  const available=rawModel!==undefined && rawModel!==null;
+  const safe=available ? typeof rawModel==='string' && /^[A-Za-z0-9_.:-]{1,128}$/.test(rawModel) && !rawModel.includes(secret) : null;
+  const toolCount=Array.isArray(response.toolCalls) ? response.toolCalls.length : 0;
+  const diagnostics={returnedModel:safe ? rawModel : null,returnedModelAvailable:available,returnedModelSafe:safe,requestedModelMatch:response.model===requestedModel,rawModelMatch:rawModel===requestedModel,finishReasonMatch:response.finishReason==='completed',responseTextMatch:String(response.text||'').trim()==='OK',toolCallCount:Math.min(toolCount,99),toolCallCountMatch:toolCount===0,failedHealthChecks:[]};
+  const checks=[['requestedModelMatch','REQUESTED_MODEL_MISMATCH'],['rawModelMatch','RAW_MODEL_MISMATCH'],['finishReasonMatch','FINISH_REASON_MISMATCH'],['responseTextMatch','RESPONSE_TEXT_MISMATCH'],['toolCallCountMatch','TOOL_CALL_MISMATCH']];
+  diagnostics.failedHealthChecks=checks.filter(([field])=>!diagnostics[field]).map(([,code])=>code);
+  return diagnostics;
+}
 async function runGate(argv, env = process.env, { fetchImpl = global.fetch } = {}) {
   const started=Date.now();
   const counters={logicalCallCount:0,transportInvocationCount:0,actualOutboundAttemptCount:0};
-  const result={gateVersion:GATE_VERSION,authorizationId:null,provider:null,model:null,purpose:'bounded_provider_health',candidateGitSha:null,configured:false,enabled:false,testState:'not_tested',authState:'not_tested',healthState:'not_tested',logicalCallsAuthorized:0,logicalCallsActual:0,transportAttemptsAuthorized:0,transportInvocationsActual:0,actualOutboundAttempts:0,maxOutputTokens:16,maxRetries:0,usage:null,estimatedCostUsd:null,providerReportedCostUsd:null,authorizedBudgetUsd:null,latencyMs:0,providerResponseId:null,providerResponseIdAvailable:false,httpRequestId:null,httpRequestIdAvailable:false,finishReason:null,resultCode:'NOT_AUTHORIZED',retryCount:0,unexpectedDuplicateAttempt:false,timestamp:null};
+  const result={gateVersion:GATE_VERSION,authorizationId:null,provider:null,model:null,purpose:'bounded_provider_health',candidateGitSha:null,configured:false,enabled:false,testState:'not_tested',authState:'not_tested',healthState:'not_tested',logicalCallsAuthorized:0,logicalCallsActual:0,transportAttemptsAuthorized:0,transportInvocationsActual:0,actualOutboundAttempts:0,maxOutputTokens:16,maxRetries:0,usage:null,estimatedCostUsd:null,providerReportedCostUsd:null,authorizedBudgetUsd:null,latencyMs:0,providerResponseId:null,providerResponseIdAvailable:false,httpRequestId:null,httpRequestIdAvailable:false,finishReason:null,healthDiagnostics:{returnedModel:null,returnedModelAvailable:null,returnedModelSafe:null,requestedModelMatch:null,rawModelMatch:null,finishReasonMatch:null,responseTextMatch:null,toolCallCount:null,toolCallCountMatch:null,failedHealthChecks:[]},resultCode:'NOT_AUTHORIZED',retryCount:0,unexpectedDuplicateAttempt:false,timestamp:null};
   let key='';
   try {
     const opts=parseArgs(argv);
@@ -81,6 +92,8 @@ async function runGate(argv, env = process.env, { fetchImpl = global.fetch } = {
     const logical=createLogicalGuard(counters);
     result.testState='tested';result.authState='unknown';result.healthState='fail';
     const response=await logical(()=>provider.generate({systemInstruction:SYSTEM,messages:[{role:'user',content:USER}],maxOutputTokens:16,tools:[],metadata:{purpose:result.purpose}}));
+    result.authState='valid';
+    result.healthDiagnostics=healthDiagnostics(response,result.model,key);
     if (counters.logicalCallCount!==1 || counters.actualOutboundAttemptCount!==1 || counters.transportInvocationCount!==1) throw guardError('CALL_ACCOUNTING_MISMATCH');
     result.providerResponseId=safeId(response.providerResponseId,'resp',key);result.httpRequestId=safeId(response.httpRequestId,'req',key);
     result.finishReason=['completed','incomplete','failed'].includes(response.finishReason)?response.finishReason:null;
@@ -89,8 +102,8 @@ async function runGate(argv, env = process.env, { fetchImpl = global.fetch } = {
       result.estimatedCostUsd=Number(((result.usage.inputTokens*prices.input+result.usage.outputTokens*prices.output)/1000000).toFixed(8));
       if (result.usage.outputTokens>16 || result.estimatedCostUsd>budget) throw guardError('BUDGET_OR_USAGE_EXCEEDED');
     }
-    if (response.model!==result.model || response.rawMetadata?.model!==result.model || response.finishReason!=='completed' || String(response.text||'').trim()!=='OK' || response.toolCalls?.length) throw guardError('INVALID_HEALTH_RESPONSE');
-    result.authState='valid';result.healthState='pass';result.resultCode='HEALTH_PASS';
+    if (result.healthDiagnostics.failedHealthChecks.length) throw guardError('INVALID_HEALTH_RESPONSE');
+    result.healthState='pass';result.resultCode='HEALTH_PASS';
   } catch (error) {
     const allowed=new Set(['NOT_AUTHORIZED','INVALID_ARGUMENTS','AUTHORIZATION_ID_REQUIRED','PROVIDER_REQUIRED','MODEL_REQUIRED','UNKNOWN_MODEL_PRICING','BUDGET_REQUIRED','CANDIDATE_SHA_INVALID','PROVIDER_NOT_YET_HARDENED','AI_PROVIDER_NOT_CONFIGURED','AI_RUNTIME_DISABLED','TRANSPORT_UNAVAILABLE','BUDGET_INSUFFICIENT','DESTINATION_REJECTED','TRANSPORT_ATTEMPT_LIMIT','LOGICAL_CALL_LIMIT','CALL_ACCOUNTING_MISMATCH','BUDGET_OR_USAGE_EXCEEDED','INVALID_HEALTH_RESPONSE','AI_AUTH_FAILED','AI_RATE_LIMITED','AI_PROVIDER_TIMEOUT','AI_PROVIDER_UNAVAILABLE','AI_REQUEST_FAILED']);
     const failureCode = counters.guardFailureCode || error.code;
