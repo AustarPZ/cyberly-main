@@ -24,13 +24,17 @@ Cyberly is deployable as a static React frontend plus a persistent Express backe
 | Environment boundary | No NODE_VERSION override, AI_LIVE_GATE_AUTHORIZED key, linked environment group or new secret file added by R5-02A; secret values not exposed |
 | Immutable R4 baseline | Annotated r4-platform-baseline-2026-10-05 still peels to 91a052736dda7d37c05ac315e9738b4c29937622; API-only R5-02A advancement does not move this tag |
 | Frozen master / R3 recovery | f76195d76fd44be5f1bed5e0ef7b33dd997f449b; R3 tag unchanged; no new baseline tag |
-| Provider certification | OpenAI = ADAPTER_PRESENT; Gemini = ADAPTER_PRESENT; ILMU = ADAPTER_PRESENT; no AUTH_VALID, HEALTH_PASS, CHAT_PASS, TOOL_NORMALIZATION_PASS or PRODUCTION_READY granted |
+| Provider certification | OpenAI = ADAPTER_PRESENT / AUTH_VALID by Control Tower for exact R5-03 event; HEALTH_PASS HOLD / NOT ESTABLISHED; Gemini and ILMU = ADAPTER_PRESENT only; CHAT_PASS / TOOL_NORMALIZATION_PASS / PRODUCTION_READY NO |
 | External effects | R5-02A provider calls 0 / 0 / 0; SMTP 0; production UNTOUCHED |
-| Next Gate | R5-03 NOT STARTED / NOT AUTHORIZED; separate Owner budget/live-call authorization required |
+| Next Gate | R5-03A offline corrective NOT STARTED / NOT AUTHORIZED by this persistence task; no additional provider request |
 
 The staging split is intentional: R5-02A advances API staging only, with no client change and no Web deployment. The R4 immutable platform baseline and historical R4 acceptance below remain unchanged. A documentation push to develop must not trigger deployment, restart or Render configuration changes.
 
 **ACCEPTED_NONBLOCKING_OBSERVABILITY_LIMITATION:** A supplemental current-instance error-log query encountered Render logging backend 503 / upstream 502 and was not retried. Successful build logs, start logs, LIVE deploy record, running-instance proof, HTTP smoke and inert Gate verification were independently available. **FULL_POST_START_ERROR_LOG_SCAN = NOT_AVAILABLE_DUE_RENDER_LOG_BACKEND_ERROR**; this does not establish absence of every possible runtime warning. No full post-start error-log scan PASS is claimed.
+
+### R5-03 Control Tower reviewed live result
+
+R5-03 executed exactly one OpenAI logical call / one transport invocation / one outbound attempt under R5-03-OWNER-20261005-OPENAI-01, gpt-5.4-mini, runtime candidate 1160b07780eb1cba5b6fe7a609311c901f1a0900, timestamp 2026-10-05T11:03:35.945Z. No retry or second invocation; Gemini/ILMU 0, SMTP 0; no deployment/configuration change. Raw result remains INVALID_HEALTH_RESPONSE / authState unknown / healthState fail. Control Tower accepts execution/call accounting/reachability and independently establishes OPENAI_AUTH_VALID = PASS from the completed official provider response, safe response/request IDs and usage; OPENAI_HEALTH_PASS = NOT ESTABLISHED / HOLD. R5-03-F01 diagnostics insufficient and R5-03-F02 auth-valid assignment coupled to strict health success are CONFIRMED; exact failed predicate remains UNDETERMINED_FROM_PRESERVED_OUTPUT. Estimate US$0.00004125 is below US$0.01 allowance; invoice unknown. See [canonical R5-03 result](../../ai/provider-live-result-r5-03.md). Three-document persistence is pending final Control Tower verification; no new provider calls or R5-03A implementation authorized.
 
 ## Historical R4-06 Accepted Staging Runtime Baseline
 

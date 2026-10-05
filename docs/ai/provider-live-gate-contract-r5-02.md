@@ -66,7 +66,7 @@ The initial R5-02 Owner authorization allowed commit/push of only the reviewed e
 
 The initial recommended next stage was **R5-02A HARNESS STAGING INTEGRATION**: separately authorized exact-candidate staging deployment with ZERO provider calls, Render Linux build/start, harness files present, Node 24.21.0, API health/ordinary bounded regression smoke, and inert Gate NOT_AUTHORIZED with zero outbound provider requests. This persistence task does not perform or authorize that deployment. Only after R5-02A passes may Control Tower prepare R5-03, which still needs separate Owner budget/live-call authorization.
 
-## R5-02A staging integration acceptance — 2026-10-05
+## Historical R5-02A staging integration acceptance — 2026-10-05
 
 Control Tower independent decision: **R5-02A_CONTROL_TOWER_REVIEW = PASS_WITH_ACCEPTED_OBSERVABILITY_LIMITATION; R5-02A_TECHNICAL_STAGING_INTEGRATION = PASS; R5-02_HARNESS_STAGING_READY = YES.** The R5-02 harness is **LOCAL/OFFLINE ACCEPTED / PERSISTED / API STAGING INTEGRATED**. R5-02A acceptance persistence remains pending final Control Tower verification; final closure is not declared here.
 
@@ -83,3 +83,11 @@ Provider certification remains **OpenAI = ADAPTER_PRESENT; Gemini = ADAPTER_PRES
 This task persists only accepted documentation to origin/develop: no deployment, restart, Render/environment change, provider call or DB action. See [canonical current deployment](../production/deployment/current-deployment.md) for current split staging truth. Raw R5-01/R5-02/R5-02A evidence remains preserved and untracked.
 
 **R5-02A pending final acceptance persistence verification. DO NOT DEPLOY. R5-03 NOT STARTED / NOT AUTHORIZED. Stop after persistence report; final closure belongs to Control Tower.**
+
+## R5-03 historical outcome — Control Tower reviewed
+
+R5-03 executed once on the authorized API candidate 1160b07780eb1cba5b6fe7a609311c901f1a0900 at 2026-10-05T11:03:35.945Z: strict result **INVALID_HEALTH_RESPONSE**, raw authState **unknown**, healthState **fail**; logical/transport/outbound **1/1/1**, retries **0**, duplicate **false**, no second invocation. Control Tower independently established **OPENAI_AUTH_VALID = PASS** from the successful completed provider response with safe response/request IDs and usage; **OPENAI_HEALTH_PASS = NOT ESTABLISHED / HOLD**. Immutable raw JSON remains unchanged.
+
+**R5-03-F01 STRICT_HEALTH_FAILURE_NOT_DIAGNOSTIC = CONFIRMED**; **R5-03-F02 AUTH_SUCCESS_MASKED_BY_POST_RESPONSE_VALIDATION = CONFIRMED** (auth-valid assignment coupled to strict health success). Root predicate **UNDETERMINED_FROM_PRESERVED_OUTPUT**; no confirmed model/text/tool mismatch. See [canonical R5-03 result](provider-live-result-r5-03.md) for exact accounting, certification ruling, cost boundary and hypothesis context.
+
+Next stage **R5-03A offline corrective — NOT STARTED / NOT AUTHORIZED by this persistence task**. No Gate redesign, relaxed model equivalence or new provider call here. Current certification: OpenAI ADAPTER_PRESENT / event-scoped AUTH_VALID / HEALTH_PASS HOLD; Gemini and ILMU ADAPTER_PRESENT only; no CHAT_PASS, TOOL_NORMALIZATION_PASS or PRODUCTION_READY. R5-03 result pending persistence verification; stop after documentation persistence report.
