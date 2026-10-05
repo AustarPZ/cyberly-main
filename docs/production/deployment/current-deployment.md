@@ -6,27 +6,33 @@ Cyberly is deployable as a static React frontend plus a persistent Express backe
 
 ## Current Accepted Split Staging State
 
-**2026-10-05 / R5-02A — Control Tower: PASS_WITH_ACCEPTED_OBSERVABILITY_LIMITATION.** R5-02A_TECHNICAL_STAGING_INTEGRATION = PASS; R5-02_HARNESS_STAGING_READY = YES. This records accepted staging integration, not live provider certification or production readiness. R5-02A final persistence verification remains Control Tower authority.
+**2026-10-05 / R5-03B — CONTROL TOWER REVIEW = PASS; TECHNICAL STAGING INTEGRATION = PASS; FINAL CLOSURE = PENDING PERSISTENCE VERIFICATION.** The R5-03A corrected harness is PERSISTED / API STAGING INTEGRATED. This acceptance does not establish live provider HEALTH_PASS or production readiness.
 
 **CURRENT_STAGING_WEB_SHA = 91a052736dda7d37c05ac315e9738b4c29937622**
 
-**CURRENT_STAGING_API_SHA = 1160b07780eb1cba5b6fe7a609311c901f1a0900**
+**CURRENT_STAGING_API_SHA = 65733d13ba50bbb085d1cbd491176f029a894e66**
 
 | Authority | Accepted current state |
 | --- | --- |
-| Web | srv-d9tj5hu5djic73a0auk0; dep-db1kkcegekts73e9r6ug; LIVE at CURRENT_STAGING_WEB_SHA; accepted R4 baseline retained; not deployed in R5-02A |
-| API | srv-d9tiop942hec738b3org; dep-db1nu4ou01pc73fbe5e0; LIVE at CURRENT_STAGING_API_SHA; R5-02 bounded live-gate harness DEPLOYED / STAGING INTEGRATED |
+| Web | srv-d9tj5hu5djic73a0auk0; dep-db1kkcegekts73e9r6ug; LIVE at CURRENT_STAGING_WEB_SHA; accepted R4 baseline retained; not deployed in R5-02A or R5-03B |
+| API | srv-d9tiop942hec738b3org; dep-db1qequgekts73f1ase0; LIVE at CURRENT_STAGING_API_SHA; R5-03A corrected harness PERSISTED / API STAGING INTEGRATED; R5-03B PASS |
 | Node | 24.21.0 both accepted deployed runtimes; Web accepted build evidence retained; API build 24.21.0 and running-instance v24.21.0 verified |
-| API integration | Render Linux PASS; bcrypt load/hash/compare PASS; build/start PASS; /api/health, /api/resources?locale=en and /api/resources/phishing?locale=en HTTP200 |
-| Inert Gate | Running-instance node server/scripts/ai-provider-live-gate.js without --execute or temporary authorization; NOT_AUTHORIZED; logicalCallsAuthorized/Actual, transportAttemptsAuthorized, transportInvocationsActual and actualOutboundAttempts all 0 |
-| DB | CATEGORY 0 — NO DATABASE CHANGE; fresh R4 API baseline to R5-02 candidate server/migrations and client deltas NONE; no backup, migration, restore or DB mutation |
+| API integration | R5-03B Render Linux build PASS; npm --prefix server ci PASS; server start PASS; build Node24.21.0; running-instance HEAD matches CURRENT_STAGING_API_SHA; /api/health HTTP200; prior R5-02A resource/native checks retained as historical evidence |
+| Inert Gate | Running-instance r5-03a-v1; node server/scripts/ai-provider-live-gate.js without --execute and without AI_LIVE_GATE_AUTHORIZED=1; NOT_AUTHORIZED; test/auth/health not_tested; logicalCallsAuthorized/Actual, transportAttemptsAuthorized, transportInvocationsActual and actualOutboundAttempts all 0; retryCount0, unexpectedDuplicateAttempt false |
+| DB | CATEGORY 0 — NO DATABASE CHANGE; fresh 1160b07780eb1cba5b6fe7a609311c901f1a0900 to 65733d13ba50bbb085d1cbd491176f029a894e66 server/migrations and client deltas NONE; no backup, migration, restore or DB mutation; no Web deployment |
 | API configuration | branch master; autoDeploy OFF; rootDir empty / repository root; build npm --prefix server ci; start npm --prefix server start; health GET /api/health; unchanged |
 | Environment boundary | No NODE_VERSION override, AI_LIVE_GATE_AUTHORIZED key, linked environment group or new secret file added by R5-02A; secret values not exposed |
 | Immutable R4 baseline | Annotated r4-platform-baseline-2026-10-05 still peels to 91a052736dda7d37c05ac315e9738b4c29937622; API-only R5-02A advancement does not move this tag |
 | Frozen master / R3 recovery | f76195d76fd44be5f1bed5e0ef7b33dd997f449b; R3 tag unchanged; no new baseline tag |
 | Provider certification | OpenAI = ADAPTER_PRESENT / AUTH_VALID by Control Tower for exact R5-03 event; HEALTH_PASS HOLD / NOT ESTABLISHED; Gemini and ILMU = ADAPTER_PRESENT only; CHAT_PASS / TOOL_NORMALIZATION_PASS / PRODUCTION_READY NO |
-| External effects | R5-02A provider calls 0 / 0 / 0; SMTP 0; production UNTOUCHED |
-| Next Gate | R5-03A offline corrective NOT STARTED / NOT AUTHORIZED by this persistence task; no additional provider request |
+| External effects | R5-03B provider calls OpenAI/Gemini/ILMU 0 / 0 / 0; SMTP0; no DB change; production UNTOUCHED; acceptance persistence performs no new deployment or Render mutation |
+| Next Gate | R5-03B accepted, pending final persistence verification by Control Tower; any later bounded live provider call requires separate Owner authorization; no additional provider request authorized here |
+
+The current staging split is intentional: R5-03B integrates the corrected harness on API only; client and migrations are unchanged and Web retains the R4 baseline. This documentation persistence performs no deployment, restart or Render configuration change. Final R5-03B closure remains Control Tower authority.
+
+### Historical R5-02A acceptance context (preserved)
+
+**2026-10-05 / R5-02A — Control Tower: PASS_WITH_ACCEPTED_OBSERVABILITY_LIMITATION.** R5-02A_TECHNICAL_STAGING_INTEGRATION = PASS; R5-02_HARNESS_STAGING_READY = YES. This records accepted staging integration, not live provider certification or production readiness. R5-02A final persistence verification remains Control Tower authority.
 
 The staging split is intentional: R5-02A advances API staging only, with no client change and no Web deployment. The R4 immutable platform baseline and historical R4 acceptance below remain unchanged. A documentation push to develop must not trigger deployment, restart or Render configuration changes.
 

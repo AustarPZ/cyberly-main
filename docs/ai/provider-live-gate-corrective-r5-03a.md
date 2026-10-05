@@ -69,3 +69,18 @@ No live HEALTH_PASS, CHAT_PASS, TOOL_NORMALIZATION_PASS or PRODUCTION_READY is e
 ## Next-stage recommendation
 
 After Control Tower independently reviews and the candidate is persisted, request separate authorization for R5-03B CORRECTED HARNESS STAGING INTEGRATION: API-only exact-candidate deployment, Render Linux build/start, Node24.21.0, /api/health, inert Gate with new version and zero outbound attempts. Only after R5-03B may Control Tower consider a second bounded OpenAI health call, requiring separate Owner authorization. Neither staging integration nor another live call is authorized by R5-03A. Manual browser verification is not needed for this local CLI corrective.
+
+
+## R5-03B corrected harness staging integration — Control Tower accepted
+
+**2026-10-05: R5-03A corrected harness PERSISTED / API STAGING INTEGRATED. R5-03B_CONTROL_TOWER_REVIEW = PASS; R5-03B_TECHNICAL_STAGING_INTEGRATION = PASS; R5-03B_FINAL_CLOSURE = PENDING PERSISTENCE VERIFICATION.** Final closure belongs to Control Tower.
+
+API srv-d9tiop942hec738b3org is LIVE at exact corrected commit 65733d13ba50bbb085d1cbd491176f029a894e66, deploy dep-db1qequgekts73f1ase0. Accepted Render Linux build and npm --prefix server ci PASS, server start PASS, build Node24.21.0, running Node v24.21.0, /api/health HTTP200. Web srv-d9tj5hu5djic73a0auk0 remains LIVE at 91a052736dda7d37c05ac315e9738b4c29937622, deploy dep-db1kkcegekts73e9r6ug; no Web deployment. Service branches remain master and autoDeploy OFF.
+
+Current running-instance proof: HEAD 65733d13ba50bbb085d1cbd491176f029a894e66, Node v24.21.0; node server/scripts/ai-provider-live-gate.js invoked exactly once without --execute or setting AI_LIVE_GATE_AUTHORIZED=1. Gate r5-03a-v1 returned NOT_AUTHORIZED; testState/authState/healthState not_tested; logicalCallsAuthorized0, logicalCallsActual0, transportAttemptsAuthorized0, transportInvocationsActual0, actualOutboundAttempts0, retryCount0, unexpectedDuplicateAttempt false. Logical/transport/outbound 0/0/0, OpenAI/Gemini/ILMU provider calls 0/0/0. NOT_AUTHORIZED intentionally exits nonzero; no rerun.
+
+Fresh Git preflight from 1160b07780eb1cba5b6fe7a609311c901f1a0900 to 65733d13ba50bbb085d1cbd491176f029a894e66: client delta NONE, server/migrations delta NONE; CATEGORY 0 — NO DATABASE CHANGE. No backup, migration, restore or DB mutation; SMTP0 and production UNTOUCHED. This acceptance persistence adds no provider call, Gate execution, DB operation, Render/environment mutation or deployment.
+
+Owner/Control Tower classified later local Windows PowerShell ParserError from pasted JSON as LOCAL_TRANSCRIPT_HANDLING_ERROR / NON_RUNTIME / NON_PROVIDER / NONBLOCKING. It did not rerun Gate, call a provider, mutate DB/Render or alter the accepted evidence.
+
+Strict health policy is unchanged. OpenAI remains ADAPTER_PRESENT / AUTH_VALID / HEALTH_PASS HOLD; Gemini and ILMU ADAPTER_PRESENT. No HEALTH_PASS, CHAT_PASS, TOOL_NORMALIZATION_PASS or PRODUCTION_READY is granted by inert staging integration. Any later live call requires separate Owner authorization; no additional provider request is authorized by this persistence task.
