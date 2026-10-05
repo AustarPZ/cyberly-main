@@ -4,7 +4,35 @@ Cyberly is deployable as a static React frontend plus a persistent Express backe
 
 **Deployment status note:** Local development remains the primary engineering mode. The external staging environment is provisioned with Render frontend/backend services, Cloudflare authoritative DNS, and an Aiven MySQL 8.4 database in Singapore. This staging baseline does not certify a production deployment or public launch.
 
-## Current Accepted Staging Runtime Baseline
+## Current Accepted Split Staging State
+
+**2026-10-05 / R5-02A — Control Tower: PASS_WITH_ACCEPTED_OBSERVABILITY_LIMITATION.** R5-02A_TECHNICAL_STAGING_INTEGRATION = PASS; R5-02_HARNESS_STAGING_READY = YES. This records accepted staging integration, not live provider certification or production readiness. R5-02A final persistence verification remains Control Tower authority.
+
+**CURRENT_STAGING_WEB_SHA = 91a052736dda7d37c05ac315e9738b4c29937622**
+
+**CURRENT_STAGING_API_SHA = 1160b07780eb1cba5b6fe7a609311c901f1a0900**
+
+| Authority | Accepted current state |
+| --- | --- |
+| Web | srv-d9tj5hu5djic73a0auk0; dep-db1kkcegekts73e9r6ug; LIVE at CURRENT_STAGING_WEB_SHA; accepted R4 baseline retained; not deployed in R5-02A |
+| API | srv-d9tiop942hec738b3org; dep-db1nu4ou01pc73fbe5e0; LIVE at CURRENT_STAGING_API_SHA; R5-02 bounded live-gate harness DEPLOYED / STAGING INTEGRATED |
+| Node | 24.21.0 both accepted deployed runtimes; Web accepted build evidence retained; API build 24.21.0 and running-instance v24.21.0 verified |
+| API integration | Render Linux PASS; bcrypt load/hash/compare PASS; build/start PASS; /api/health, /api/resources?locale=en and /api/resources/phishing?locale=en HTTP200 |
+| Inert Gate | Running-instance node server/scripts/ai-provider-live-gate.js without --execute or temporary authorization; NOT_AUTHORIZED; logicalCallsAuthorized/Actual, transportAttemptsAuthorized, transportInvocationsActual and actualOutboundAttempts all 0 |
+| DB | CATEGORY 0 — NO DATABASE CHANGE; fresh R4 API baseline to R5-02 candidate server/migrations and client deltas NONE; no backup, migration, restore or DB mutation |
+| API configuration | branch master; autoDeploy OFF; rootDir empty / repository root; build npm --prefix server ci; start npm --prefix server start; health GET /api/health; unchanged |
+| Environment boundary | No NODE_VERSION override, AI_LIVE_GATE_AUTHORIZED key, linked environment group or new secret file added by R5-02A; secret values not exposed |
+| Immutable R4 baseline | Annotated r4-platform-baseline-2026-10-05 still peels to 91a052736dda7d37c05ac315e9738b4c29937622; API-only R5-02A advancement does not move this tag |
+| Frozen master / R3 recovery | f76195d76fd44be5f1bed5e0ef7b33dd997f449b; R3 tag unchanged; no new baseline tag |
+| Provider certification | OpenAI = ADAPTER_PRESENT; Gemini = ADAPTER_PRESENT; ILMU = ADAPTER_PRESENT; no AUTH_VALID, HEALTH_PASS, CHAT_PASS, TOOL_NORMALIZATION_PASS or PRODUCTION_READY granted |
+| External effects | R5-02A provider calls 0 / 0 / 0; SMTP 0; production UNTOUCHED |
+| Next Gate | R5-03 NOT STARTED / NOT AUTHORIZED; separate Owner budget/live-call authorization required |
+
+The staging split is intentional: R5-02A advances API staging only, with no client change and no Web deployment. The R4 immutable platform baseline and historical R4 acceptance below remain unchanged. A documentation push to develop must not trigger deployment, restart or Render configuration changes.
+
+**ACCEPTED_NONBLOCKING_OBSERVABILITY_LIMITATION:** A supplemental current-instance error-log query encountered Render logging backend 503 / upstream 502 and was not retried. Successful build logs, start logs, LIVE deploy record, running-instance proof, HTTP smoke and inert Gate verification were independently available. **FULL_POST_START_ERROR_LOG_SCAN = NOT_AVAILABLE_DUE_RENDER_LOG_BACKEND_ERROR**; this does not establish absence of every possible runtime warning. No full post-start error-log scan PASS is claimed.
+
+## Historical R4-06 Accepted Staging Runtime Baseline
 
 **2026-10-05 / R4-06 — Control Tower: PASS_WITH_ACCEPTED_SCOPE_LIMITATION.**
 
