@@ -76,8 +76,8 @@
     "express": "^5.2.1",
     "express-session": "^1.19.0",
     "helmet": "^8.3.0",
-    "mysql2": "^3.22.5",
-    "nodemailer": "^9.0.3",
+    "mysql2": "^3.24.5",
+    "nodemailer": "^10.0.14",
     "openai": "^6.45.0"
   }
 }
