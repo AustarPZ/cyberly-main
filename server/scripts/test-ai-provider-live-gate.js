@@ -29,8 +29,8 @@ function response(status=200, text='OK') { return new Response(JSON.stringify(st
 // Only the HTTP boundary is replaced: installed SDK and unchanged adapter remain real.
 async function correctiveCases() {
   const failures=[];
-  const empty={returnedModel:null,returnedModelAvailable:null,returnedModelSafe:null,requestedModelMatch:null,rawModelMatch:null,finishReasonMatch:null,responseTextMatch:null,toolCallCount:null,toolCallCountMatch:null,failedHealthChecks:[]};
-  const healthy={returnedModel:'gpt-5.4-mini',returnedModelAvailable:true,returnedModelSafe:true,requestedModelMatch:true,rawModelMatch:true,finishReasonMatch:true,responseTextMatch:true,toolCallCount:0,toolCallCountMatch:true,failedHealthChecks:[]};
+  const empty={returnedModel:null,returnedModelAvailable:null,returnedModelSafe:null,requestedModelMatch:null,rawModelMatch:null,modelIdentityPolicyVersion:'openai-gpt-5.4-mini-r5-03d-v1',modelIdentityAccepted:null,approvedSnapshotMatch:null,finishReasonMatch:null,responseTextMatch:null,toolCallCount:null,toolCallCountMatch:null,failedHealthChecks:[]};
+  const healthy={returnedModel:'gpt-5.4-mini',returnedModelAvailable:true,returnedModelSafe:true,requestedModelMatch:true,rawModelMatch:true,modelIdentityPolicyVersion:'openai-gpt-5.4-mini-r5-03d-v1',modelIdentityAccepted:true,approvedSnapshotMatch:false,finishReasonMatch:true,responseTextMatch:true,toolCallCount:0,toolCallCountMatch:true,failedHealthChecks:[]};
   const tool={type:'function_call',id:'fc_private_fixture',call_id:'call_private_fixture',name:'fixture_private_tool',arguments:'{"private":"fixture_tool_argument"}',status:'completed'};
   async function check(name, task) {
     cases++;
@@ -48,16 +48,21 @@ async function correctiveCases() {
     assert.equal(result.testState,'tested');assert.equal(result.authState,'valid');assert.equal(result.healthState,'fail');assert.equal(result.resultCode,'INVALID_HEALTH_RESPONSE');
     assert.deepEqual(result.healthDiagnostics,{...healthy,...expected});
   }
-  await check('strict success diagnostics',async()=>{const r=await fixture();assert.equal(r.resultCode,'HEALTH_PASS');assert.equal(r.authState,'valid');assert.deepEqual(r.healthDiagnostics,healthy);assert.equal(r.gateVersion,'r5-03a-v1');});
+  await check('strict success diagnostics',async()=>{const r=await fixture();assert.equal(r.resultCode,'HEALTH_PASS');assert.equal(r.authState,'valid');assert.deepEqual(r.healthDiagnostics,healthy);assert.equal(r.gateVersion,'r5-03d-v1');});
   await check('F02 text mismatch retains valid auth',async()=>{
     const r=await fixture({output:[{type:'message',role:'assistant',content:[{type:'output_text',text:'private_response_marker',annotations:[]}]}]});
     invalid(r,{responseTextMatch:false,failedHealthChecks:['RESPONSE_TEXT_MISMATCH']});assert.equal(JSON.stringify(r).includes('private_response_marker'),false);
   });
   await check('F01 snapshot raw model diagnostic',async()=>{
     const r=await fixture({model:'gpt-5.4-mini-2026-03-17'});
-    assert.deepEqual(r.healthDiagnostics?.failedHealthChecks,['RAW_MODEL_MISMATCH']);
-    invalid(r,{returnedModel:'gpt-5.4-mini-2026-03-17',rawModelMatch:false,failedHealthChecks:['RAW_MODEL_MISMATCH']});
+    assert.equal(r.resultCode,'HEALTH_PASS');assert.equal(r.authState,'valid');assert.deepEqual(r.healthDiagnostics,{...healthy,returnedModel:'gpt-5.4-mini-2026-03-17',rawModelMatch:false,approvedSnapshotMatch:true});
   });
+  for(const model of ['gpt-5.4-mini-2026-03-18','gpt-5.4-mini-2099-01-01','gpt-5.4-mini-extra','gpt-5.4-mini-2026-03-170','gpt-5.4','gpt-5.4-nano','gpt-5.4-mini-latest']) await check(`explicit identity refusal ${model}`,async()=>{invalid(await fixture({model}),{returnedModel:model,rawModelMatch:false,modelIdentityAccepted:false,failedHealthChecks:['MODEL_IDENTITY_POLICY_MISMATCH']});});
+  for(const [name,patch,expected] of [
+    ['text',{output:[{type:'message',role:'assistant',content:[{type:'output_text',text:'different',annotations:[]}]}]},{responseTextMatch:false,failedHealthChecks:['RESPONSE_TEXT_MISMATCH']}],
+    ['tool',{output:[...(await response().json()).output,tool]},{toolCallCount:1,toolCallCountMatch:false,failedHealthChecks:['TOOL_CALL_MISMATCH']}],
+    ['finish',{status:'incomplete'},{finishReasonMatch:false,failedHealthChecks:['FINISH_REASON_MISMATCH']}]
+  ]) await check(`approved snapshot independent ${name} failure`,async()=>{invalid(await fixture({model:'gpt-5.4-mini-2026-03-17',...patch}),{returnedModel:'gpt-5.4-mini-2026-03-17',rawModelMatch:false,approvedSnapshotMatch:true,...expected});});
   await check('F01 actual SDK adapter function_call diagnostic',async()=>{
     const base=await response().json();const r=await fixture({output:[...base.output,tool]});
     assert.deepEqual(r.healthDiagnostics?.failedHealthChecks,['TOOL_CALL_MISMATCH']);
@@ -67,25 +72,26 @@ async function correctiveCases() {
   await check('incomplete finish diagnostic',async()=>{const r=await fixture({status:'incomplete'});invalid(r,{finishReasonMatch:false,failedHealthChecks:['FINISH_REASON_MISMATCH']});assert.equal(r.finishReason,'incomplete');});
   await check('ordered simultaneous mismatches',async()=>{
     const r=await fixture({model:'snapshot',status:'incomplete',output:[{type:'message',role:'assistant',content:[{type:'output_text',text:'different',annotations:[]}]},tool]});
-    invalid(r,{returnedModel:'snapshot',rawModelMatch:false,finishReasonMatch:false,responseTextMatch:false,toolCallCount:1,toolCallCountMatch:false,failedHealthChecks:['RAW_MODEL_MISMATCH','FINISH_REASON_MISMATCH','RESPONSE_TEXT_MISMATCH','TOOL_CALL_MISMATCH']});
+    invalid(r,{returnedModel:'snapshot',rawModelMatch:false,modelIdentityAccepted:false,finishReasonMatch:false,responseTextMatch:false,toolCallCount:1,toolCallCountMatch:false,failedHealthChecks:['MODEL_IDENTITY_POLICY_MISMATCH','FINISH_REASON_MISMATCH','RESPONSE_TEXT_MISMATCH','TOOL_CALL_MISMATCH']});
   });
-  const unsafe=['model\u4e2d','x'.repeat(129),'prefix:'+fixtureSecret,'https://model.example','bad/model','bad\\model','bad model','bad\nmodel','bad\x00model','bad\tmodel','bad-final-newline\n'];
-  for(let i=0;i<unsafe.length;i++) await check(`unsafe model identifier ${i+1}`,async()=>{const r=await fixture({model:unsafe[i]});invalid(r,{returnedModel:null,returnedModelAvailable:true,returnedModelSafe:false,rawModelMatch:false,failedHealthChecks:['RAW_MODEL_MISMATCH']});assert.equal(JSON.stringify(r).includes(JSON.stringify(unsafe[i]).slice(1,-1)),false);});
-  await check('missing raw model',async()=>{const r=await fixture({model:null});invalid(r,{returnedModel:null,returnedModelAvailable:false,returnedModelSafe:null,rawModelMatch:false,failedHealthChecks:['RAW_MODEL_MISMATCH']});});
-  await check('safe model identifier maximum length',async()=>{const value='A_0.-:'.repeat(21)+'Ab';const r=await fixture({model:value});invalid(r,{returnedModel:value,rawModelMatch:false,failedHealthChecks:['RAW_MODEL_MISMATCH']});});
+  const unsafe=['model\u4e2d','x'.repeat(129),'prefix:'+fixtureSecret,'https://model.example','gpt-5.4-mini/2026-03-17','bad/model','bad\\model','bad model','bad\nmodel','bad\x00model','bad\tmodel','bad-final-newline\n'];
+  for(let i=0;i<unsafe.length;i++) await check(`unsafe model identifier ${i+1}`,async()=>{const r=await fixture({model:unsafe[i]});invalid(r,{returnedModel:null,returnedModelAvailable:true,returnedModelSafe:false,rawModelMatch:false,modelIdentityAccepted:false,failedHealthChecks:['MODEL_IDENTITY_POLICY_MISMATCH']});assert.equal(JSON.stringify(r).includes(JSON.stringify(unsafe[i]).slice(1,-1)),false);});
+  await check('missing raw model',async()=>{const r=await fixture({model:null});invalid(r,{returnedModel:null,returnedModelAvailable:false,returnedModelSafe:null,rawModelMatch:false,modelIdentityAccepted:false,failedHealthChecks:['MODEL_IDENTITY_POLICY_MISMATCH']});});
+  await check('safe model identifier maximum length',async()=>{const value='A_0.-:'.repeat(21)+'Ab';const r=await fixture({model:value});invalid(r,{returnedModel:value,rawModelMatch:false,modelIdentityAccepted:false,failedHealthChecks:['MODEL_IDENTITY_POLICY_MISMATCH']});});
   await check('normalized tool count capped at 99',async()=>{const base=await response().json();const r=await fixture({output:[...base.output,...Array.from({length:100},(_,i)=>({...tool,id:`fc_${i}`,call_id:`call_${i}`}))]});invalid(r,{toolCallCount:99,toolCallCountMatch:false,failedHealthChecks:['TOOL_CALL_MISMATCH']});});
   for(const status of [401,403,429,500,503]) await check(`HTTP ${status} unevaluated diagnostics`,async()=>{const r=await runGate(args,env,{fetchImpl:async()=>response(status)});assert.equal(r.authState,status===401||status===403?'invalid':'unknown');assert.equal(r.healthState,'fail');assert.deepEqual(r.healthDiagnostics,empty);assert.equal(r.actualOutboundAttempts,1);assert.equal(r.retryCount,0);});
   for(const [name,error] of [['timeout',Object.assign(new Error(fixtureSecret),{name:'AbortError'})],['network',new Error(fixtureSecret)]]) await check(`${name} unevaluated diagnostics`,async()=>{const r=await runGate(args,env,{fetchImpl:async()=>{throw error;}});assert.equal(r.authState,'unknown');assert.equal(r.healthState,'fail');assert.deepEqual(r.healthDiagnostics,empty);assert.equal(r.actualOutboundAttempts,1);assert.equal(r.retryCount,0);});
   await check('preflight refusal unevaluated diagnostics',async()=>{const r=await runGate([],{}, {fetchImpl:blocked});assert.equal(r.authState,'not_tested');assert.equal(r.healthState,'not_tested');assert.equal(r.actualOutboundAttempts,0);assert.deepEqual(r.healthDiagnostics,empty);});
   // Configuration-derived adapter model cannot mismatch through the real HTTP path.
   // Wrap the real adapter only for this isolated adversarial predicate case.
-  await check('all five mismatches ordered including adapter model',async()=>{
+  for(const onlyRequested of [true,false]) await check(onlyRequested?'requested mismatch independent of accepted snapshot':'all five mismatches ordered including adapter model',async()=>{
     const providerPath=require.resolve('../src/ai/providers/openai.provider');const oldProvider=require.cache[providerPath];const oldGate=require.cache[gatePath];
     try {
       require.cache[providerPath]={...oldProvider,exports:{...oldProvider.exports,createOpenAiProvider(config){const provider=oldProvider.exports.createOpenAiProvider(config);return {...provider,async generate(request){return {...await provider.generate(request),model:'adapter-model-mismatch'};}};}}};
       delete require.cache[gatePath];const alteredGate=require(gatePath).runGate;
-      const r=await alteredGate(args,env,{fetchImpl:async()=>{const body=await response().json();return new Response(JSON.stringify({...body,model:'snapshot',status:'incomplete',output:[{type:'message',role:'assistant',content:[{type:'output_text',text:'different',annotations:[]}]},tool]}),{headers:{'content-type':'application/json'}});}});
-      invalid(r,{returnedModel:'snapshot',requestedModelMatch:false,rawModelMatch:false,finishReasonMatch:false,responseTextMatch:false,toolCallCount:1,toolCallCountMatch:false,failedHealthChecks:['REQUESTED_MODEL_MISMATCH','RAW_MODEL_MISMATCH','FINISH_REASON_MISMATCH','RESPONSE_TEXT_MISMATCH','TOOL_CALL_MISMATCH']});
+      const r=await alteredGate(args,env,{fetchImpl:async()=>{const body=await response().json();return new Response(JSON.stringify(onlyRequested?{...body,model:'gpt-5.4-mini-2026-03-17'}:{...body,model:'snapshot',status:'incomplete',output:[{type:'message',role:'assistant',content:[{type:'output_text',text:'different',annotations:[]}]},tool]}),{headers:{'content-type':'application/json'}});}});
+      if(onlyRequested) invalid(r,{returnedModel:'gpt-5.4-mini-2026-03-17',requestedModelMatch:false,rawModelMatch:false,approvedSnapshotMatch:true,failedHealthChecks:['REQUESTED_MODEL_MISMATCH']});
+      else invalid(r,{returnedModel:'snapshot',requestedModelMatch:false,rawModelMatch:false,modelIdentityAccepted:false,finishReasonMatch:false,responseTextMatch:false,toolCallCount:1,toolCallCountMatch:false,failedHealthChecks:['REQUESTED_MODEL_MISMATCH','MODEL_IDENTITY_POLICY_MISMATCH','FINISH_REASON_MISMATCH','RESPONSE_TEXT_MISMATCH','TOOL_CALL_MISMATCH']});
     } finally {require.cache[providerPath]=oldProvider;require.cache[gatePath]=oldGate;}
   });
   if(failures.length) {console.log(JSON.stringify({result:'RED',failures,unexpectedRealNetworkAttempts:unexpectedNetwork,liveProviderCalls:{openai:0,gemini:0,ilmu:0}}));throw new Error(`${failures.length} corrective expectations failed`);}

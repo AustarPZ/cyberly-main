@@ -1,7 +1,12 @@
 'use strict';
 // DB-free entry point. Never load dotenv or the server/service/registry layers.
 const { createOpenAiProvider } = require('../src/ai/providers/openai.provider');
-const GATE_VERSION = 'r5-03a-v1';
+const GATE_VERSION = 'r5-03d-v1';
+const MODEL_IDENTITY_POLICY_VERSION = 'openai-gpt-5.4-mini-r5-03d-v1';
+// Explicit reviewed identities only; frozen, private and independent of environment.
+const MODEL_IDENTITIES = Object.freeze({
+  'gpt-5.4-mini': Object.freeze(['gpt-5.4-mini', 'gpt-5.4-mini-2026-03-17'])
+});
 const MODEL_PRICES = Object.freeze({ 'gpt-5.4-mini': { input: 0.75, output: 4.5 } });
 const SYSTEM = 'Cyberly internal provider health check. Reply with OK.';
 const USER = 'Reply with OK.';
@@ -48,16 +53,18 @@ function healthDiagnostics(response, requestedModel, secret) {
   const rawModel=response.rawMetadata?.model;
   const available=rawModel!==undefined && rawModel!==null;
   const safe=available ? typeof rawModel==='string' && /^[A-Za-z0-9_.:-]{1,128}$/.test(rawModel) && !rawModel.includes(secret) : null;
+  const modelIdentityAccepted=Boolean(safe && Object.hasOwn(MODEL_IDENTITIES,requestedModel) && MODEL_IDENTITIES[requestedModel].includes(rawModel));
+  const approvedSnapshotMatch=modelIdentityAccepted && rawModel!==requestedModel;
   const toolCount=Array.isArray(response.toolCalls) ? response.toolCalls.length : 0;
-  const diagnostics={returnedModel:safe ? rawModel : null,returnedModelAvailable:available,returnedModelSafe:safe,requestedModelMatch:response.model===requestedModel,rawModelMatch:rawModel===requestedModel,finishReasonMatch:response.finishReason==='completed',responseTextMatch:String(response.text||'').trim()==='OK',toolCallCount:Math.min(toolCount,99),toolCallCountMatch:toolCount===0,failedHealthChecks:[]};
-  const checks=[['requestedModelMatch','REQUESTED_MODEL_MISMATCH'],['rawModelMatch','RAW_MODEL_MISMATCH'],['finishReasonMatch','FINISH_REASON_MISMATCH'],['responseTextMatch','RESPONSE_TEXT_MISMATCH'],['toolCallCountMatch','TOOL_CALL_MISMATCH']];
+  const diagnostics={returnedModel:safe ? rawModel : null,returnedModelAvailable:available,returnedModelSafe:safe,requestedModelMatch:response.model===requestedModel,rawModelMatch:rawModel===requestedModel,modelIdentityPolicyVersion:MODEL_IDENTITY_POLICY_VERSION,modelIdentityAccepted,approvedSnapshotMatch,finishReasonMatch:response.finishReason==='completed',responseTextMatch:String(response.text||'').trim()==='OK',toolCallCount:Math.min(toolCount,99),toolCallCountMatch:toolCount===0,failedHealthChecks:[]};
+  const checks=[['requestedModelMatch','REQUESTED_MODEL_MISMATCH'],['modelIdentityAccepted','MODEL_IDENTITY_POLICY_MISMATCH'],['finishReasonMatch','FINISH_REASON_MISMATCH'],['responseTextMatch','RESPONSE_TEXT_MISMATCH'],['toolCallCountMatch','TOOL_CALL_MISMATCH']];
   diagnostics.failedHealthChecks=checks.filter(([field])=>!diagnostics[field]).map(([,code])=>code);
   return diagnostics;
 }
 async function runGate(argv, env = process.env, { fetchImpl = global.fetch } = {}) {
   const started=Date.now();
   const counters={logicalCallCount:0,transportInvocationCount:0,actualOutboundAttemptCount:0};
-  const result={gateVersion:GATE_VERSION,authorizationId:null,provider:null,model:null,purpose:'bounded_provider_health',candidateGitSha:null,configured:false,enabled:false,testState:'not_tested',authState:'not_tested',healthState:'not_tested',logicalCallsAuthorized:0,logicalCallsActual:0,transportAttemptsAuthorized:0,transportInvocationsActual:0,actualOutboundAttempts:0,maxOutputTokens:16,maxRetries:0,usage:null,estimatedCostUsd:null,providerReportedCostUsd:null,authorizedBudgetUsd:null,latencyMs:0,providerResponseId:null,providerResponseIdAvailable:false,httpRequestId:null,httpRequestIdAvailable:false,finishReason:null,healthDiagnostics:{returnedModel:null,returnedModelAvailable:null,returnedModelSafe:null,requestedModelMatch:null,rawModelMatch:null,finishReasonMatch:null,responseTextMatch:null,toolCallCount:null,toolCallCountMatch:null,failedHealthChecks:[]},resultCode:'NOT_AUTHORIZED',retryCount:0,unexpectedDuplicateAttempt:false,timestamp:null};
+  const result={gateVersion:GATE_VERSION,authorizationId:null,provider:null,model:null,purpose:'bounded_provider_health',candidateGitSha:null,configured:false,enabled:false,testState:'not_tested',authState:'not_tested',healthState:'not_tested',logicalCallsAuthorized:0,logicalCallsActual:0,transportAttemptsAuthorized:0,transportInvocationsActual:0,actualOutboundAttempts:0,maxOutputTokens:16,maxRetries:0,usage:null,estimatedCostUsd:null,providerReportedCostUsd:null,authorizedBudgetUsd:null,latencyMs:0,providerResponseId:null,providerResponseIdAvailable:false,httpRequestId:null,httpRequestIdAvailable:false,finishReason:null,healthDiagnostics:{returnedModel:null,returnedModelAvailable:null,returnedModelSafe:null,requestedModelMatch:null,rawModelMatch:null,modelIdentityPolicyVersion:MODEL_IDENTITY_POLICY_VERSION,modelIdentityAccepted:null,approvedSnapshotMatch:null,finishReasonMatch:null,responseTextMatch:null,toolCallCount:null,toolCallCountMatch:null,failedHealthChecks:[]},resultCode:'NOT_AUTHORIZED',retryCount:0,unexpectedDuplicateAttempt:false,timestamp:null};
   let key='';
   try {
     const opts=parseArgs(argv);
