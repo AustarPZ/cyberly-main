@@ -1,8 +1,8 @@
 # R5-03D
 
-**R5-03D CONTROL TOWER ACCEPTED / PENDING FINAL PERSISTENCE VERIFICATION**
+**R5-03D CLOSED / PERSISTED / LIVE VALIDATED BY R5-03F**
 
-R5-03D was independently reviewed and accepted by Control Tower on 2026-10-06. The exact reviewed four-file candidate is accepted for persistence. This acceptance does NOT establish OpenAI HEALTH_PASS. It does NOT authorize deployment or any provider call. Final R5-03D closure remains Control Tower authority after persistence verification.
+R5-03D was independently reviewed and accepted by Control Tower on 2026-10-06. The exact reviewed four-file candidate is accepted for persistence. This acceptance does NOT establish OpenAI HEALTH_PASS. It does NOT authorize deployment or any provider call. R5-03D was subsequently closed by Control Tower after persistence verification; R5-03F live validation does not broaden the mapping.
 
 ## Purpose and accepted input
 
@@ -68,13 +68,13 @@ Additional fixtures cover latest lookalike, 12 unsafe identities, capped tool co
 
 OpenAI/Gemini/ILMU **0/0/0**; unexpected real network attempts **0**; SMTP **0**. No dotenv loading, DB connection/mutation, migration, backup, Render mutation, deployment, commit, push, fetch or local ref update. Production untouched. No provider adapters/config/registry/package/client/gateway/migration changes. Evidence stays untracked under review-evidence/r5-03d; all prior evidence is preserved. No browser/client/build/DB-backed suite is needed for this DB-free offline scope.
 
-Certification remains OpenAI ADAPTER_PRESENT / AUTH_VALID / HEALTH_PASS HOLD; Gemini and ILMU ADAPTER_PRESENT; CHAT_PASS NO; TOOL_NORMALIZATION_PASS NO; PRODUCTION_READY NO. Fixture HEALTH_PASS establishes no live certification.
+At the R5-03D offline-candidate stage, certification remained OpenAI ADAPTER_PRESENT / AUTH_VALID / HEALTH_PASS HOLD; Gemini and ILMU ADAPTER_PRESENT; CHAT_PASS NO; TOOL_NORMALIZATION_PASS NO; PRODUCTION_READY NO. Fixture HEALTH_PASS by itself established no live certification.
 
 After independent review and separate persistence, the expected separately authorized next stage is R5-03E MODEL IDENTITY POLICY STAGING INTEGRATION: API-only exact candidate, Render Linux/Node24.21.0, /api/health, inert Gate r5-03d-v1, zero provider calls/outbound. Only after R5-03E may Control Tower consider another separately authorized bounded health call. No staging action or live call is authorized here.
 
 ## R5-03E staging-integration record — 2026-10-06
 
-R5-03D policy: **PERSISTED**. R5-03E: **CONTROL TOWER TECHNICAL PASS / PENDING FINAL PERSISTENCE VERIFICATION**.
+R5-03D policy: **PERSISTED**. R5-03E: **CLOSED BY CONTROL TOWER FINAL VERIFICATION**.
 
 API staging LIVE @ 55dd42dd605c1567d3401e0e174c087357fdc0d3, deploy dep-db258qcs728c73b522tg. Render Linux exact build PASS; build Node 24.21.0; runtime v24.21.0; /api/health HTTP 200. Running Gate r5-03d-v1 records model identity policy openai-gpt-5.4-mini-r5-03d-v1.
 
@@ -83,3 +83,15 @@ Accepted running-instance inert check: NOT_AUTHORIZED; test/auth/health not_test
 Provider calls OpenAI/Gemini/ILMU: 0 / 0 / 0. DB: CATEGORY 0 / NO CHANGE; server/migrations and client deltas NONE from 65733d13ba50bbb085d1cbd491176f029a894e66 to the API SHA above; no backup, migration, restore or DB mutation. SMTP: 0. Web: UNCHANGED @ 91a052736dda7d37c05ac315e9738b4c29937622; no Web deployment. Production: UNTOUCHED.
 
 R5-03E staging integration does NOT establish OpenAI HEALTH_PASS. No new live provider call is authorized by this record. Model identity mapping and health policy remain unchanged. Final closure remains Control Tower authority.
+
+## R5-03F live validation — 2026-10-06
+
+The explicit R5-03D model identity policy was live-validated by the single authorized R5-03F call on API staging runtime `55dd42dd605c1567d3401e0e174c087357fdc0d3`, Gate `r5-03d-v1`.
+
+R5-03F returned `HEALTH_PASS`. Requested model was `gpt-5.4-mini`; the provider returned `gpt-5.4-mini-2026-03-17`. `rawModelMatch` remained false, while `modelIdentityAccepted` and `approvedSnapshotMatch` were true. `requestedModelMatch`, `finishReasonMatch`, `responseTextMatch`, and `toolCallCountMatch` were true; tool-call count was 0 and `failedHealthChecks` was `[]`.
+
+Call accounting was logical / transport / outbound **1 / 1 / 1**, with `maxRetries=0`, retry count 0, no duplicate, and OpenAI/Gemini/ILMU calls **1 / 0 / 0**. The event therefore confirms that the current explicit snapshot mapping works under real provider execution without weakening exact raw identity diagnostics.
+
+The mapping is unchanged and remains exact-set only. No future snapshot, prefix, wildcard, regex family or additional identity is accepted by this record.
+
+Certification after this exact bounded event: OpenAI `ADAPTER_PRESENT / AUTH_VALID / HEALTH_PASS`. `CHAT_PASS`, `TOOL_NORMALIZATION_PASS`, and `PRODUCTION_READY` remain NO. No additional provider call is authorized by this persistence record.

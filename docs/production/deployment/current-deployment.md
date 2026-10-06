@@ -6,7 +6,7 @@ Cyberly is deployable as a static React frontend plus a persistent Express backe
 
 ## Current Accepted Split Staging State
 
-**2026-10-06 / R5-03E — CONTROL TOWER REVIEW = PASS; TECHNICAL STAGING INTEGRATION = PASS; FINAL CLOSURE = PENDING PERSISTENCE VERIFICATION.** The R5-03D explicit model identity policy is PERSISTED / API STAGING INTEGRATED. This acceptance does not establish live provider HEALTH_PASS or production readiness.
+**2026-10-06 / R5-03F — CONTROL TOWER REVIEW = PASS; OPENAI BOUNDED HEALTH = HEALTH_PASS; FINAL CLOSURE = PENDING PERSISTENCE VERIFICATION.** R5-03E is CLOSED by Control Tower final verification. The R5-03D explicit model identity policy remains PERSISTED / API STAGING INTEGRATED. This live result establishes OpenAI HEALTH_PASS for the exact bounded staging scope below; it does not establish CHAT_PASS or production readiness.
 
 **CURRENT_STAGING_WEB_SHA = 91a052736dda7d37c05ac315e9738b4c29937622**
 
@@ -14,21 +14,27 @@ Cyberly is deployable as a static React frontend plus a persistent Express backe
 
 | Authority | Accepted current state |
 | --- | --- |
-| Web | srv-d9tj5hu5djic73a0auk0; dep-db1kkcegekts73e9r6ug; LIVE at CURRENT_STAGING_WEB_SHA; unchanged in R5-03E; no Web deployment |
-| API | srv-d9tiop942hec738b3org; dep-db258qcs728c73b522tg; LIVE at CURRENT_STAGING_API_SHA; R5-03D explicit model identity policy PERSISTED / API STAGING INTEGRATED; R5-03E technical PASS / pending final persistence verification |
+| Web | srv-d9tj5hu5djic73a0auk0; dep-db1kkcegekts73e9r6ug; LIVE at CURRENT_STAGING_WEB_SHA; unchanged by R5-03F |
+| API | srv-d9tiop942hec738b3org; dep-db258qcs728c73b522tg; LIVE at CURRENT_STAGING_API_SHA; R5-03D policy persisted and R5-03E API staging integration closed |
 | Node | API build 24.21.0 and running-instance v24.21.0 verified; Web accepted build evidence retained |
-| API integration | R5-03E Render Linux exact build PASS; exact checkout and running-instance HEAD 55dd42dd605c1567d3401e0e174c087357fdc0d3; npm --prefix server ci PASS; npm --prefix server start PASS; build Node24.21.0; running Node v24.21.0; server port 10000; /api/health HTTP200 / {"ok":true} |
-| Inert Gate | Running-instance r5-03d-v1; model identity policy openai-gpt-5.4-mini-r5-03d-v1; executed exactly once without --execute and without AI_LIVE_GATE_AUTHORIZED=1 (runtime key ABSENT); NOT_AUTHORIZED; test/auth/health not_tested; logicalCallsAuthorized/Actual, transportAttemptsAuthorized, transportInvocationsActual and actualOutboundAttempts all 0; maxRetries0, retryCount0, unexpectedDuplicateAttempt false; modelIdentityAccepted null; approvedSnapshotMatch null; timestamp 2026-10-06T01:55:24.827Z |
-| DB | CATEGORY 0 / NO DATABASE CHANGE; fresh 65733d13ba50bbb085d1cbd491176f029a894e66 to 55dd42dd605c1567d3401e0e174c087357fdc0d3 server/migrations delta NONE; client delta NONE; no backup, migration, restore or DB mutation; no Web deployment |
-| API configuration | branch master; autoDeploy OFF; rootDir empty / repository root; build npm --prefix server ci; start npm --prefix server start; health GET /api/health; unchanged |
-| Environment boundary | No NODE_VERSION override, AI_LIVE_GATE_AUTHORIZED key, linked environment group or new secret file added by R5-02A; secret values not exposed |
-| Immutable R4 baseline | Annotated r4-platform-baseline-2026-10-05 still peels to 91a052736dda7d37c05ac315e9738b4c29937622; API-only staging advancement does not move this tag |
-| Frozen master / R3 recovery | f76195d76fd44be5f1bed5e0ef7b33dd997f449b; R3 tag unchanged; no new baseline tag |
-| Provider certification | OpenAI = ADAPTER_PRESENT / AUTH_VALID / HEALTH_PASS HOLD / NOT ESTABLISHED; historical R5-03C exact live result INVALID_HEALTH_RESPONSE / tested / valid / fail, only RAW_MODEL_MISMATCH; Gemini and ILMU = ADAPTER_PRESENT only; CHAT_PASS / TOOL_NORMALIZATION_PASS / PRODUCTION_READY NO |
-| External effects | R5-03E provider calls OpenAI/Gemini/ILMU 0 / 0 / 0; SMTP0; no DB change; production UNTOUCHED; acceptance persistence performs no new Gate invocation, deployment or Render mutation |
-| Next possible action | After R5-03E persistence, a separately authorized bounded OpenAI health call using r5-03d-v1 may be considered; NEXT_LIVE_HEALTH_AUTHORIZATION = NOT GRANTED; this persistence task authorizes no live provider call |
+| API integration | R5-03E Render Linux exact build/start PASS; running-instance HEAD matches CURRENT_STAGING_API_SHA; /api/health HTTP200; no new deployment in R5-03F |
+| R5-03E inert Gate | Running-instance r5-03d-v1; policy openai-gpt-5.4-mini-r5-03d-v1; NOT_AUTHORIZED; logical / transport / outbound all 0; retry0; duplicate false |
+| R5-03F live health | HEALTH_PASS / tested / valid / pass; one logical call, one transport invocation and one outbound attempt; maxRetries0; retry0; duplicate false; returned gpt-5.4-mini-2026-03-17; rawModelMatch false; modelIdentityAccepted true; approvedSnapshotMatch true; finish/text/zero-tool predicates pass; failedHealthChecks []; usage25/5/30; estimated US$0.00004125 within US$0.01 |
+| DB | CATEGORY 0 / NO DATABASE CHANGE; no DB access/mutation, migration, backup or restore in R5-03F |
+| API configuration | branch master; autoDeploy OFF; rootDir repository root; build npm --prefix server ci; start npm --prefix server start; health GET /api/health; unchanged |
+| Immutable R4 baseline | Annotated r4-platform-baseline-2026-10-05 still peels to 91a052736dda7d37c05ac315e9738b4c29937622 |
+| Frozen master / R3 recovery | f76195d76fd44be5f1bed5e0ef7b33dd997f449b; R3 tag unchanged |
+| Provider certification | OpenAI = ADAPTER_PRESENT / AUTH_VALID / HEALTH_PASS; Gemini = ADAPTER_PRESENT; ILMU = ADAPTER_PRESENT; CHAT_PASS / TOOL_NORMALIZATION_PASS / PRODUCTION_READY = NO |
+| External effects | R5-03F provider calls OpenAI/Gemini/ILMU 1 / 0 / 0; SMTP0; no DB, source, Git, Render config or deployment mutation; production UNTOUCHED |
+| Next provider action | NEXT_PROVIDER_CERTIFICATION_ACTION = NOT AUTHORIZED; no additional health call or higher certification is implied |
 
-The current staging split is intentional: R5-03E integrates the R5-03D model identity policy on API only; client and migrations are unchanged and Web retains the R4 baseline. This documentation persistence performs no deployment, restart or Render configuration change. Final R5-03E closure remains Control Tower authority.
+The current staging split remains intentional: API runs the R5-03D policy runtime while Web retains the R4 baseline. R5-03F validates only the bounded OpenAI health contract. This documentation persistence performs no provider call, Gate invocation, deployment, restart, DB action, SMTP action or Render configuration change. Final R5-03F closure remains Control Tower authority.
+
+### R5-03F Control Tower reviewed live HEALTH_PASS
+
+`R5-03F-OWNER-20261006-OPENAI-01` authorized exactly one OpenAI bounded health call on runtime `55dd42dd605c1567d3401e0e174c087357fdc0d3`, Gate `r5-03d-v1`. The call completed at `2026-10-06T02:50:55.830Z` with HEALTH_PASS, valid authentication and passing health. OpenAI resolved `gpt-5.4-mini` to the explicitly accepted `gpt-5.4-mini-2026-03-17`; exact raw equality remained false while `modelIdentityAccepted` and `approvedSnapshotMatch` were true. All remaining strict health predicates passed and `failedHealthChecks` was empty.
+
+Call accounting was 1 logical / 1 transport / 1 outbound, maxRetries0, retry0 and no duplicate; Gemini/ILMU calls were 0. Usage was 25 input / 5 output / 30 total, with estimated cost US$0.00004125 against the US$0.01 authorization. No second invocation occurred. See [canonical R5-03F result](../../ai/provider-live-result-r5-03f.md).
 
 ### Historical R5-03C Control Tower reviewed live result
 
