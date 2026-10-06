@@ -5,7 +5,9 @@ const {
   createProviderRegistry,
   createProviderSelectionPolicy,
   healthCheckMaxOutputTokens,
+  providerConfig,
 } = require('../src/ai/providers/aiProvider.registry');
+const { createAiConfig } = require('../src/ai/ai.config');
 const {
   createProviderError,
   normalizeProviderError,
@@ -17,7 +19,7 @@ const {
   normalizeToolDeclarations,
   normalizeReturnedToolCalls,
 } = require('../src/ai/providers/aiProvider.tools');
-const { buildResponsesInput } = require('../src/ai/providers/openai.provider');
+const { buildResponsesInput, createOpenAiProvider } = require('../src/ai/providers/openai.provider');
 const { buildGeminiContents } = require('../src/ai/providers/gemini.provider');
 const { createIlmuProvider } = require('../src/ai/providers/ilmu.provider');
 
@@ -30,6 +32,46 @@ function assertNoSecrets(value) {
 
 async function run() {
   assert.deepEqual(AI_PROVIDER_IDS, ['openai', 'gemini', 'ilmu']);
+
+  for (const [name, value, expected] of [
+    ['unset', undefined, false],
+    ['empty', '', false],
+    ['zero', '0', false],
+    ['true string', 'true', false],
+    ['yes', 'yes', false],
+    ['zero-one', '01', false],
+    ['padded one', ' 1 ', false],
+    ['exact one', '1', true],
+  ]) {
+    const live = createAiConfig({ AI_CYBERGUARD_LIVE_ENABLED: value });
+    assert.equal(live.cyberguardLiveEnabled, expected, `live flag ${name}`);
+    const agentic = createAiConfig({ AI_CYBERGUARD_AGENTIC_ENABLED: value });
+    assert.equal(agentic.cyberguardAgenticEnabled, expected, `agentic flag ${name}`);
+  }
+
+  const openAiProductConfig = providerConfig('openai', {
+    OPENAI_API_KEY: 'sk-test-openai',
+    OPENAI_MODEL: 'gpt-test',
+  });
+  assert.equal(openAiProductConfig.maxRetries, 0);
+
+  let openAiFailureAttempts = 0;
+  const noRetryProvider = createOpenAiProvider({
+    ...openAiProductConfig,
+    fetchImpl: async () => {
+      openAiFailureAttempts += 1;
+      throw new Error('fixture transport failure');
+    },
+  });
+  await assert.rejects(
+    () => noRetryProvider.generate({
+      systemInstruction: 'system',
+      messages: [{ role: 'user', content: 'ping' }],
+      maxOutputTokens: 8,
+      tools: [],
+    })
+  );
+  assert.equal(openAiFailureAttempts, 1);
 
   const registry = createProviderRegistry({
     env: {

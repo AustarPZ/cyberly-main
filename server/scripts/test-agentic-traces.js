@@ -67,6 +67,8 @@ function startServer() {
       OPENAI_API_KEY: 'test-openai-secret',
       OPENAI_MODEL: 'gpt-test',
       AI_TEST_MOCK_PROVIDER: 'success',
+      AI_CYBERGUARD_LIVE_ENABLED: '1',
+      AI_CYBERGUARD_AGENTIC_ENABLED: '1',
       AI_TEST_ACTION_PROPOSAL: 'open_resource',
       AI_TEST_ACTION_PROPOSAL_RESOURCE_SLUG: `${PREFIX}-resource`,
       ACTION_PROPOSAL_TTL_SECONDS: '1',
@@ -102,8 +104,8 @@ async function stopServer(child) {
 async function createUser(pool, email, role = 'user') {
   const passwordHash = await bcrypt.hash(PASSWORD, 10);
   const [result] = await pool.query(
-    `INSERT INTO users (email, username, display_name, age, age_group, password_hash, role, account_status)
-     VALUES (?, ?, ?, 16, 'teen', ?, ?, 'active')`,
+    `INSERT INTO users (email, username, display_name, age, age_group, password_hash, role, account_status, email_verified_at)
+     VALUES (?, ?, ?, 16, 'teen', ?, ?, 'active', CURRENT_TIMESTAMP)`,
     [email, email, email, passwordHash, role]
   );
   return result.insertId;

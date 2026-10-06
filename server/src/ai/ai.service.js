@@ -290,7 +290,19 @@ function mapGeneration(row) {
   };
 }
 
-function buildAgenticAudit(agenticPlanning = {}) {
+function buildCyberGuardCallLimits(config = {}, agenticPlanning = {}) {
+  const liveEnabled = config.cyberguardLiveEnabled === true;
+  const agenticEnabled = liveEnabled && config.cyberguardAgenticEnabled === true;
+  return {
+    maxModelCalls: liveEnabled ? (agenticEnabled ? 2 : 1) : 0,
+    maxToolExecutions: agenticEnabled ? 1 : 0,
+    maxProposalsPerResponse: agenticEnabled ? 1 : 0,
+    modelRequestCount: agenticPlanning.modelRequestCount || 0,
+    toolExecutionCount: agenticPlanning.toolExecutionCount || 0,
+  };
+}
+
+function buildAgenticAudit(agenticPlanning = {}, config = {}) {
   return {
     requestClassification: {
       controlledAgenticEligible: agenticPlanning.agenticEligible === true,
@@ -318,13 +330,7 @@ function buildAgenticAudit(agenticPlanning = {}) {
       latencyMs: agenticPlanning.toolLatencyMs || null,
       readOnly: true,
     },
-    limits: {
-      maxModelCalls: 2,
-      maxToolExecutions: 1,
-      maxProposalsPerResponse: 1,
-      modelRequestCount: agenticPlanning.modelRequestCount || 0,
-      toolExecutionCount: agenticPlanning.toolExecutionCount || 0,
-    },
+    limits: buildCyberGuardCallLimits(config, agenticPlanning),
     performance: {
       plannerLatencyMs: agenticPlanning.plannerLatencyMs || null,
       toolLatencyMs: agenticPlanning.toolLatencyMs || null,
@@ -413,6 +419,29 @@ function createAiService(repository, provider, config, options = {}) {
   }
 
   async function buildControlledAgenticPlanning(userId, userMessage, messages, locale, input = {}, plannerTargetContext = null, traceId = null, requestId = null) {
+    if (config.cyberguardAgenticEnabled !== true) {
+      return {
+        agenticEligible: false,
+        agenticUsed: false,
+        fallbackReason: 'runtime_disabled',
+        plannerProvider: null,
+        plannerModel: null,
+        proposedTool: null,
+        toolExecuted: false,
+        toolStatus: null,
+        safeErrorCode: null,
+        plannerLatencyMs: null,
+        toolLatencyMs: null,
+        modelRequestCount: 0,
+        toolExecutionCount: 0,
+        contextText: null,
+        actionProposal: null,
+        adaptiveUsed: false,
+        adaptiveStatus: null,
+        adaptiveSignalQuality: null,
+        adaptiveFallbackReason: null,
+      };
+    }
     if (!controlledAgenticService) return { contextText: null, actionProposal: null };
     try {
       const plannerMessages = plannerTargetContext
@@ -451,6 +480,7 @@ function createAiService(repository, provider, config, options = {}) {
   }
 
   async function createTrustedProposalSafely({ actionProposal, userId, locale, input, trustedTargets, requestId, traceId }) {
+    if (config.cyberguardAgenticEnabled !== true) return null;
     if (!actionProposal || !actionProposalService) return null;
     const resolvedProposal = resolveImplicitRecommendationProposal(actionProposal, trustedTargets);
     if (!isTrustedActionProposal(resolvedProposal, trustedTargets, locale)) {
@@ -518,11 +548,7 @@ function createAiService(repository, provider, config, options = {}) {
           reasonCode: scope.reasonCode,
           redirectUsed: false,
         },
-        limits: {
-          maxModelCalls: 2,
-          maxToolExecutions: 1,
-          maxProposalsPerResponse: 1,
-        },
+        limits: buildCyberGuardCallLimits(config),
       });
     }
 
@@ -603,6 +629,16 @@ function createAiService(repository, provider, config, options = {}) {
           proposal: null,
         },
       };
+    }
+
+    if (config.cyberguardLiveEnabled !== true) {
+      generation = await repository.markGenerationFailed(generation.id, ERROR_CODES.AI_RUNTIME_DISABLED, 0);
+      if (agenticTraceService && trace?.traceId) {
+        await agenticTraceService.markFailedSafely(trace.traceId, ERROR_CODES.AI_RUNTIME_DISABLED, 'cyberguard_runtime_disabled').catch(() => {});
+      }
+      throw httpError(503, ERROR_CODES.AI_RUNTIME_DISABLED, 'CyberGuard responses are temporarily disabled.', {
+        generation: mapGeneration(generation),
+      });
     }
 
     if (!(provider.configured || configured(config))) {
@@ -704,7 +740,7 @@ function createAiService(repository, provider, config, options = {}) {
       const plannerTargetContext = buildControlledPlannerTargetContext({ actionData, ragSources, learningRoute });
       const agenticPlanning = await buildControlledAgenticPlanning(userId, target.userMessage, messages, locale, input, plannerTargetContext, trace?.traceId || null, requestId);
       if (agenticTraceService && trace?.traceId) {
-        await agenticTraceService.updateTrace(trace.traceId, buildAgenticAudit(agenticPlanning)).catch(() => {});
+        await agenticTraceService.updateTrace(trace.traceId, buildAgenticAudit(agenticPlanning, config)).catch(() => {});
       }
       const combinedRouteContext = [
         wellnessContext,

@@ -27,6 +27,7 @@
     "test:assessment": "node scripts/test-assessment.js",
     "test:chat": "node scripts/test-chat.js",
     "test:ai": "node scripts/test-ai.js",
+    "test:cyberguard-live-activation": "node scripts/test-cyberguard-live-activation.js",
     "test:ai-provider-unit": "node scripts/test-ai-provider-unit.js",
     "gate:ai-provider-live": "node scripts/ai-provider-live-gate.js",
     "test:ai-provider-live-gate": "node scripts/test-ai-provider-live-gate.js",

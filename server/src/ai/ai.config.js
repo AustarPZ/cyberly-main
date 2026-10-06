@@ -18,6 +18,10 @@ function numberFromEnv(value, fallback, { min = 0, max = Number.MAX_SAFE_INTEGER
   return Math.min(max, Math.max(min, parsed));
 }
 
+function enabledByExactOne(value) {
+  return value === '1';
+}
+
 function createAiConfig(env = process.env) {
   const provider = String(env.AI_PROVIDER_CYBERGUARD || env.AI_DEFAULT_PROVIDER || env.AI_PROVIDER || DEFAULT_PROVIDER).trim().toLowerCase() || DEFAULT_PROVIDER;
   const model = String(env.AI_DEFAULT_MODEL || env.AI_MODEL || env.OPENAI_MODEL || DEFAULT_MODEL).trim() || DEFAULT_MODEL;
@@ -27,6 +31,8 @@ function createAiConfig(env = process.env) {
     provider,
     model,
     defaultProvider: String(env.AI_DEFAULT_PROVIDER || env.AI_PROVIDER || DEFAULT_PROVIDER).trim().toLowerCase() || DEFAULT_PROVIDER,
+    cyberguardLiveEnabled: enabledByExactOne(env.AI_CYBERGUARD_LIVE_ENABLED),
+    cyberguardAgenticEnabled: enabledByExactOne(env.AI_CYBERGUARD_AGENTIC_ENABLED),
     openAiApiKey: String(env.OPENAI_API_KEY || '').trim(),
     timeoutMs: numberFromEnv(env.AI_TIMEOUT_MS, DEFAULT_TIMEOUT_MS, { min: 100, max: 120000 }),
     maxOutputTokens: numberFromEnv(env.AI_MAX_OUTPUT_TOKENS, DEFAULT_MAX_OUTPUT_TOKENS, { min: 1, max: 4096 }),

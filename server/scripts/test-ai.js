@@ -70,6 +70,8 @@ function startServer(port, extraEnv = {}) {
       CLIENT_ORIGIN: 'http://localhost:3000',
       NODE_ENV: 'test',
       AI_MODEL: 'gpt-5.4-mini',
+      AI_CYBERGUARD_LIVE_ENABLED: '1',
+      AI_CYBERGUARD_AGENTIC_ENABLED: '1',
       AI_TIMEOUT_MS: '200',
       AI_MAX_OUTPUT_TOKENS: '800',
       AI_CONTEXT_MESSAGE_LIMIT: '12',

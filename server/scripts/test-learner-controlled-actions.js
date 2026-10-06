@@ -66,6 +66,8 @@ function startServer() {
       OPENAI_API_KEY: 'test-openai-secret',
       OPENAI_MODEL: 'gpt-test',
       AI_TEST_MOCK_PROVIDER: 'success',
+      AI_CYBERGUARD_LIVE_ENABLED: '1',
+      AI_CYBERGUARD_AGENTIC_ENABLED: '1',
       AI_TEST_ACTION_PROPOSAL: 'open_resource',
       AI_TEST_ACTION_PROPOSAL_RESOURCE_SLUG: `${PREFIX}-published-resource`,
       ACTION_PROPOSAL_TTL_SECONDS: '1',

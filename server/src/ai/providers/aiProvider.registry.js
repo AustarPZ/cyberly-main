@@ -47,7 +47,11 @@ function providerConfig(id, env = process.env) {
       baseUrl: String(env.ILMU_BASE_URL || 'https://api.ilmu.ai/v1').trim(),
     };
   }
-  return { ...common, apiKey: String(env.OPENAI_API_KEY || '').trim() };
+  return {
+    ...common,
+    apiKey: String(env.OPENAI_API_KEY || '').trim(),
+    maxRetries: 0,
+  };
 }
 
 function healthCheckMaxOutputTokens(providerId) {

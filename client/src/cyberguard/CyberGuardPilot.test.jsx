@@ -327,6 +327,7 @@ describe("CyberGuard public beta pilot baseline", () => {
   test.each([
     ["AI_AUTH_FAILED", /cannot connect to its AI service right now/i, false],
     ["AI_CONTEXT_LIMIT", /conversation is too long/i, false],
+    ["AI_RUNTIME_DISABLED", /responses are temporarily disabled/i, false],
     ["AI_REQUEST_FAILED", /could not send this request/i, true],
     ["AI_PROVIDER_UNAVAILABLE", /temporarily unavailable/i, true],
   ])("failed generation uses safe category copy and retry contract for %s", async (code, copyPattern, retryable) => {
