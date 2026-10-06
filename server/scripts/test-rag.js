@@ -2,6 +2,7 @@ const assert = require('node:assert/strict');
 const { createPool } = require('../src/database/pool');
 const { createRagRepository } = require('../src/rag/rag.repository');
 const { createRagService } = require('../src/rag/rag.service');
+const { isRetrievableDocument } = require('../src/rag/rag.policy');
 const {
   MAX_ENRICHED_QUERY_LENGTH,
   createRagQueryIntent,
@@ -193,6 +194,30 @@ async function run() {
       sourceLabel: 'Sumber Semakan Cyberly',
     });
 
+    const governanceQuery = 'r5governancemarker';
+    const ineligibleResources = [];
+    for (const fixture of [
+      { slug: 'rag-test-needs-review', reviewStatus: 'needs_review', ragReady: true },
+      { slug: 'rag-test-rag-disabled', reviewStatus: 'approved', ragReady: false },
+    ]) {
+      ineligibleResources.push({
+        slug: fixture.slug,
+        id: await insertResource(pool, {
+          ...fixture,
+          title: `${governanceQuery} ${fixture.slug}`,
+          summary: `${governanceQuery} strong matching resource`,
+          body: `${governanceQuery} `.repeat(20),
+        }),
+      });
+    }
+    const demotionSlug = 'rag-test-governance-demotion';
+    const demotionId = await insertResource(pool, {
+      slug: demotionSlug,
+      title: `${governanceQuery} reviewed demotion fixture`,
+      summary: `${governanceQuery} strong matching eligible resource`,
+      body: `${governanceQuery} `.repeat(20),
+    });
+
     const firstIngest = await service.ingestPublishedResources();
     assert.equal(firstIngest.documents >= 2, true);
     assert.equal(firstIngest.chunks > 0, true);
@@ -205,6 +230,40 @@ async function run() {
     assert.equal(docCountAfterSecond.count, docCountAfterFirst.count);
     assert.equal(chunkCountAfterSecond.count, chunkCountAfterFirst.count);
     assert.equal(secondIngest.documents >= firstIngest.documents, true);
+
+    // A generic unique query avoids scam ranking/relevance masking governance.
+    const beforeDemotion = await service.retrieveReviewedChunks({
+      query: governanceQuery, locale: 'en', limit: 8,
+    });
+    for (const resource of ineligibleResources) {
+      assert.equal(beforeDemotion.some(item => item.internalTarget?.resourceSlug === resource.slug), false);
+      assert.equal(await repository.countRetrievableChunksForResource(resource.id), 0);
+      const documents = await repository.listDocumentsForResource(resource.id);
+      assert.equal(documents.some(isRetrievableDocument), false);
+    }
+    assert.equal(beforeDemotion.some(item => item.internalTarget?.resourceSlug === demotionSlug), true);
+    assert.equal(await repository.countRetrievableChunksForResource(demotionId) > 0, true);
+    const documentsBeforeDemotion = await repository.listDocumentsForResource(demotionId);
+    assert.equal(documentsBeforeDemotion.length > 0, true);
+    const physicalChunksBefore = documentsBeforeDemotion.reduce((total, doc) => total + Number(doc.chunk_count), 0);
+    assert.equal(physicalChunksBefore > 0, true);
+
+    await pool.query('UPDATE resource_articles SET rag_ready = 0 WHERE id = ?', [demotionId]);
+    const demotionSync = await service.syncResource(demotionId);
+    assert.equal(demotionSync.found, true);
+    assert.equal(demotionSync.effectiveRagEligible, false);
+    assert.equal(demotionSync.reasons.includes('resource_rag_disabled'), true);
+    assert.equal(demotionSync.chunks, 0);
+    assert.equal(await repository.countRetrievableChunksForResource(demotionId), 0);
+    const documentsAfterDemotion = await repository.listDocumentsForResource(demotionId);
+    assert.equal(documentsAfterDemotion.length, documentsBeforeDemotion.length);
+    assert.equal(documentsAfterDemotion.some(isRetrievableDocument), false);
+    assert.equal(documentsAfterDemotion.every(doc => Number(doc.rag_ready) === 0), true);
+    assert.equal(documentsAfterDemotion.reduce((total, doc) => total + Number(doc.chunk_count), 0), physicalChunksBefore);
+    const afterDemotion = await service.retrieveReviewedChunks({
+      query: governanceQuery, locale: 'en', limit: 8,
+    });
+    assert.equal(afterDemotion.some(item => item.internalTarget?.resourceSlug === demotionSlug), false);
 
     const [chunkRows] = await pool.query(
       `SELECT rd.title, rc.heading, rc.chunk_text
