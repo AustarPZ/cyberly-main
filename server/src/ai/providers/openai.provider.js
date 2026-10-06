@@ -4,6 +4,7 @@ const { createProviderError, normalizeProviderError, PROVIDER_ERROR_CODES } = re
 const { normalizeReturnedToolCalls, toOpenAiTools } = require('./aiProvider.tools');
 
 let mockFailOnceUsed = false;
+let mockContextCallCount = 0;
 
 function delay(ms) {
   return new Promise(resolve => setTimeout(resolve, ms));
@@ -84,7 +85,11 @@ async function mockGenerate(config, request) {
     throw createProviderError(PROVIDER_ERROR_CODES.AI_PROVIDER_UNAVAILABLE, 'Mock fail once.', 503);
   }
   if (mode === 'context') {
+    mockContextCallCount += 1;
     const messages = request.messages || [];
+    const assistantHistory = messages.slice(0, -1).filter(message => message.role === 'assistant');
+    const roleSequence = messages.map(message => ['user', 'assistant', 'system'].includes(message.role)
+      ? message.role : 'other').join('>');
     const chars = messages.reduce((sum, message) => sum + String(message.content || '').length, 0);
     const context = request.learnerContext || {};
     const ragContext = String(request.ragContext || '');
@@ -118,6 +123,12 @@ async function mockGenerate(config, request) {
         `recommendation=${recommendation}`,
         `nonJudgmental=${nonJudgmental}`,
         `messageCount=${messages.length}`,
+        `roleSequence=${roleSequence}`,
+        `assistantHistoryCount=${assistantHistory.length}`,
+        `priorAssistantHistory=${assistantHistory.length > 0}`,
+        `priorAssistantContentSeen=${assistantHistory.some(message => /(?:^|\s)sourceCount=\d+(?:\s|$)/.test(String(message.content || '')))}`,
+        `currentUserLast=${messages.at(-1)?.role === 'user'}`,
+        `mockContextCallIndex=${mockContextCallCount}`,
         `sourceCount=${sourceCount}`,
         `hasReviewedSources=${/Reviewed Cyberly Sources:/.test(ragContext)}`,
         `hasChunkId=${/chunkId=/i.test(ragContext)}`,

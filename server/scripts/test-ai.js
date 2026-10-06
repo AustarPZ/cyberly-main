@@ -447,6 +447,172 @@ async function run() {
 
     await cleanup(pool);
 
+    // R5-08: dedicated fresh process; exactly two final mock calls, Agentic OFF.
+    await withServer({
+      OPENAI_API_KEY: 'test-key',
+      AI_TEST_MOCK_OPENAI: 'context',
+      AI_CYBERGUARD_LIVE_ENABLED: '1',
+      AI_CYBERGUARD_AGENTIC_ENABLED: '0',
+      AI_PER_USER_MINUTE_LIMIT: '20',
+    }, async (baseUrl) => {
+      const userA = await register(pool, baseUrl, USER_A_EMAIL, 'Phase 8B2 A');
+      await seedLearnerContextEvidence(pool, userA.json.user.id);
+      await ensureRagContent(pool);
+      const created = await createConversation(baseUrl, userA.cookieHeader,
+        'How do I spot a phishing message with a suspicious link?', 'en');
+      const conversationId = created.conversation.id;
+      const generateBody = { locale: 'en' };
+      const first = await generate(baseUrl, userA.cookieHeader, conversationId, created.message.id, generateBody);
+      assert.equal(first.response.status, 201);
+      assert.match(first.json.assistantMessage.content, /(?:^| )mockContextCallIndex=1(?: |$)/);
+      assert.match(first.json.assistantMessage.content, /(?:^| )roleSequence=user(?: |$)/);
+
+      const secondUser = await addUserMessage(baseUrl, userA.cookieHeader, conversationId,
+        'What should I check next about that suspicious link in the phishing message?');
+      const second = await generate(baseUrl, userA.cookieHeader, conversationId, secondUser.id, generateBody);
+      assert.equal(second.response.status, 201);
+      const secondContent = second.json.assistantMessage.content;
+      for (const diagnostic of ['roleSequence=user>assistant>user', 'assistantHistoryCount=1',
+        'priorAssistantHistory=true', 'priorAssistantContentSeen=true', 'currentUserLast=true',
+        'mockContextCallIndex=2']) {
+        assert.ok(secondContent.split(' ').includes(diagnostic), diagnostic);
+      }
+      assert.equal(secondContent.includes(first.json.assistantMessage.content), false);
+      assert.equal(Number(secondContent.match(/messageCount=(\d+)/)[1]), 3);
+      assert.equal(Number(secondContent.match(/chars=(\d+)/)[1]),
+        created.message.content.length + first.json.assistantMessage.content.length + secondUser.content.length);
+
+      const turns = [first.json, second.json];
+      const userIds = [created.message.id, secondUser.id];
+      const assistantIds = turns.map(turn => turn.assistantMessage.id);
+      assert.notEqual(userIds[0], userIds[1]);
+      assert.notEqual(assistantIds[0], assistantIds[1]);
+      assert.notEqual(first.json.generation.id, second.json.generation.id);
+      for (const [index, turn] of turns.entries()) {
+        assert.equal(turn.conversation.id, conversationId);
+        assert.equal(turn.userMessage.id, userIds[index]);
+        assert.equal(turn.assistantMessage.replyToMessageId, userIds[index]);
+        assert.equal(turn.generation.status, 'completed');
+        assert.equal(turn.generation.conversationId, conversationId);
+        assert.equal(turn.generation.userMessageId, userIds[index]);
+        assert.equal(turn.generation.assistantMessageId, assistantIds[index]);
+        assert.ok(turn.actions.length > 0 && turn.actions.length <= 3);
+        turn.actions.forEach(assertSafeAction);
+        assert.ok(turn.sources.length > 0 && turn.sources.length <= 4);
+        turn.sources.forEach(assertSafeSource);
+        const content = turn.assistantMessage.content;
+        for (const diagnostic of ['locale=en', 'ageBand=13-17', 'learnerLevel=L3', 'confidence=Medium',
+          'schoolStage=Form 3', 'primaryFocus=phishing_and_scams', 'secondaryCount=2', 'focusCount=3',
+          'recommendation=phishing_and_scams:developing:weak_topic', 'nonJudgmental=true',
+          'hasReviewedSources=true', 'currentUserLast=true']) {
+          assert.ok(content.includes(diagnostic), diagnostic);
+        }
+        const sourceCount = Number(content.match(/sourceCount=(\d+)/)[1]);
+        assert.ok(sourceCount > 0 && sourceCount <= 4);
+        assert.equal(sourceCount, turn.sources.length);
+        assert.ok(Number(content.match(/messageCount=(\d+)/)[1]) <= 12);
+        assert.ok(Number(content.match(/chars=(\d+)/)[1]) <= 8000);
+        for (const privateMarker of [USER_A_EMAIL, 'Private Nickname', 'selectedOptionKey',
+          'selected_option_key', 'rawAnswers', 'raw_answers', 'rawDecisions', 'raw_decisions',
+          'OPENAI_API_KEY', 'test-key', 'chunkId=']) {
+          assert.equal(content.includes(privateMarker), false, 'private data must not enter diagnostics');
+        }
+      }
+
+      const detail = await request(baseUrl, 'GET', `/api/chat/conversations/${conversationId}`, undefined, userA.cookieHeader);
+      assert.equal(detail.response.status, 200);
+      assert.equal(detail.json.conversation.id, conversationId);
+      assert.deepEqual(detail.json.messages.map(message => message.role), ['user', 'assistant', 'user', 'assistant']);
+      assert.deepEqual(detail.json.messages.map(message => message.id),
+        [userIds[0], assistantIds[0], userIds[1], assistantIds[1]]);
+      assert.equal(detail.json.messages[1].replyToMessageId, userIds[0]);
+      assert.equal(detail.json.messages[3].replyToMessageId, userIds[1]);
+      for (const turn of turns) {
+        const actionGroup = detail.json.actions.find(group => group.messageId === turn.assistantMessage.id);
+        const sourceGroup = detail.json.sources.find(group => group.messageId === turn.assistantMessage.id);
+        assert.ok(actionGroup);
+        assert.ok(sourceGroup);
+        assert.deepEqual(actionGroup.actions.map(action => action.id), turn.actions.map(action => action.id));
+        assert.deepEqual(sourceGroup.sources.map(source => source.id), turn.sources.map(source => source.id));
+      }
+
+      const [[ownedConversation]] = await pool.query('SELECT user_id FROM chat_conversations WHERE id = ?', [conversationId]);
+      assert.equal(ownedConversation.user_id, userA.json.user.id);
+      // Output snapshots deliberately exclude request/audit traces, which may grow on replay.
+      async function snapshotOutputs() {
+        const [messages] = await pool.query(
+          'SELECT * FROM chat_messages WHERE conversation_id = ? ORDER BY id', [conversationId]);
+        const [generations] = await pool.query(
+          `SELECT *
+           FROM chat_message_generations WHERE conversation_id = ? ORDER BY id`, [conversationId]);
+        const [actions] = await pool.query(
+          `SELECT * FROM chat_message_actions
+           WHERE conversation_id = ? ORDER BY message_id, display_order, id`, [conversationId]);
+        const [sources] = await pool.query(
+          `SELECT * FROM chat_message_sources
+           WHERE conversation_id = ? ORDER BY message_id, citation_order, id`, [conversationId]);
+        return { messages, generations, actions, sources };
+      }
+      const beforeReplay = await snapshotOutputs();
+      assert.equal(beforeReplay.messages.length, 4);
+      assert.equal(beforeReplay.generations.length, 2);
+      for (const [index, turn] of turns.entries()) {
+        const generation = beforeReplay.generations.find(row => row.user_message_id === userIds[index]);
+        assert.ok(generation);
+        assert.equal(generation.id, turn.generation.id);
+        assert.equal(generation.status, 'completed');
+        assert.equal(generation.assistant_message_id, assistantIds[index]);
+        assert.equal(generation.conversation_id, conversationId);
+        const assistants = beforeReplay.messages.filter(row => row.role === 'assistant' && row.reply_to_message_id === userIds[index]);
+        assert.equal(assistants.length, 1);
+        assert.equal(assistants[0].id, assistantIds[index]);
+        for (const [kind, outputs] of [['actions', turn.actions], ['sources', turn.sources]]) {
+          const rows = beforeReplay[kind].filter(row => row.message_id === assistantIds[index]);
+          assert.deepEqual(rows.map(row => row.id), outputs.map(output => output.id));
+          for (const output of outputs) {
+            const row = beforeReplay[kind].find(item => item.id === output.id);
+            assert.equal(row.message_id, assistantIds[index]);
+            assert.equal(row.conversation_id, conversationId);
+          }
+        }
+      }
+      assert.ok(beforeReplay.actions.every(row => assistantIds.includes(row.message_id)));
+      assert.ok(beforeReplay.sources.every(row => assistantIds.includes(row.message_id)));
+
+      if (await tableExists(pool, 'agentic_execution_traces')) {
+        const [traces] = await pool.query(
+          `SELECT trace_json FROM agentic_execution_traces
+           WHERE conversation_id = ? AND message_id = ? ORDER BY id DESC LIMIT 1`, [conversationId, secondUser.id]);
+        assert.equal(traces.length, 1, 'turn-2 Agentic OFF decision must have existing audit evidence');
+        const trace = typeof traces[0].trace_json === 'string' ? JSON.parse(traces[0].trace_json) : traces[0].trace_json;
+        assert.equal(trace.planning.used, false);
+        assert.equal(trace.planning.fallbackReason, 'runtime_disabled');
+        assert.equal(trace.toolExecution.toolName, null);
+        assert.equal(trace.limits.maxToolExecutions, 0);
+        assert.equal(trace.limits.toolExecutionCount, 0);
+        assert.equal(trace.limits.modelRequestCount, 0);
+      }
+
+      const secondActionIds = second.json.actions.map(action => action.id);
+      const secondSourceIds = second.json.sources.map(source => source.id);
+      const beforeCounts = Object.fromEntries(Object.entries(beforeReplay).map(([kind, rows]) => [kind, rows.length]));
+      const replay = await generate(baseUrl, userA.cookieHeader, conversationId, secondUser.id, generateBody);
+      assert.equal(replay.response.status, 200);
+      assert.equal(replay.json.assistantMessage.id, assistantIds[1]);
+      assert.equal(replay.json.generation.id, second.json.generation.id);
+      assert.equal(replay.json.generation.status, 'completed');
+      assert.deepEqual(replay.json.actions.map(action => action.id), secondActionIds);
+      assert.deepEqual(replay.json.sources.map(source => source.id), secondSourceIds);
+      assert.equal(replay.json.assistantMessage.content, secondContent);
+      assert.match(replay.json.assistantMessage.content, /(?:^| )mockContextCallIndex=2(?: |$)/);
+      const afterReplay = await snapshotOutputs();
+      assert.deepEqual(Object.fromEntries(Object.entries(afterReplay).map(([kind, rows]) => [kind, rows.length])), beforeCounts);
+      assert.deepEqual(afterReplay, beforeReplay);
+      console.log('R5-08 two-turn mock pipeline and completed replay assertions passed.');
+    });
+
+    await cleanup(pool);
+
     await withServer({ OPENAI_API_KEY: 'test-key', AI_TEST_MOCK_OPENAI: 'context' }, async (baseUrl) => {
       const userA = await register(pool, baseUrl, USER_A_EMAIL, 'Phase 8B2 A');
       await seedLearnerContextEvidence(pool, userA.json.user.id);
