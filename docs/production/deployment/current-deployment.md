@@ -6,35 +6,35 @@ Cyberly is deployable as a static React frontend plus a persistent Express backe
 
 ## Current Accepted Split Staging State
 
-**2026-10-05 / R5-03B — CONTROL TOWER REVIEW = PASS; TECHNICAL STAGING INTEGRATION = PASS; FINAL CLOSURE = PENDING PERSISTENCE VERIFICATION.** The R5-03A corrected harness is PERSISTED / API STAGING INTEGRATED. This acceptance does not establish live provider HEALTH_PASS or production readiness.
+**2026-10-06 / R5-03E — CONTROL TOWER REVIEW = PASS; TECHNICAL STAGING INTEGRATION = PASS; FINAL CLOSURE = PENDING PERSISTENCE VERIFICATION.** The R5-03D explicit model identity policy is PERSISTED / API STAGING INTEGRATED. This acceptance does not establish live provider HEALTH_PASS or production readiness.
 
 **CURRENT_STAGING_WEB_SHA = 91a052736dda7d37c05ac315e9738b4c29937622**
 
-**CURRENT_STAGING_API_SHA = 65733d13ba50bbb085d1cbd491176f029a894e66**
+**CURRENT_STAGING_API_SHA = 55dd42dd605c1567d3401e0e174c087357fdc0d3**
 
 | Authority | Accepted current state |
 | --- | --- |
-| Web | srv-d9tj5hu5djic73a0auk0; dep-db1kkcegekts73e9r6ug; LIVE at CURRENT_STAGING_WEB_SHA; accepted R4 baseline retained; not deployed in R5-02A or R5-03B |
-| API | srv-d9tiop942hec738b3org; dep-db1qequgekts73f1ase0; LIVE at CURRENT_STAGING_API_SHA; R5-03A corrected harness PERSISTED / API STAGING INTEGRATED; R5-03B PASS |
-| Node | 24.21.0 both accepted deployed runtimes; Web accepted build evidence retained; API build 24.21.0 and running-instance v24.21.0 verified |
-| API integration | R5-03B Render Linux build PASS; npm --prefix server ci PASS; server start PASS; build Node24.21.0; running-instance HEAD matches CURRENT_STAGING_API_SHA; /api/health HTTP200; prior R5-02A resource/native checks retained as historical evidence |
-| Inert Gate | Running-instance r5-03a-v1; node server/scripts/ai-provider-live-gate.js without --execute and without AI_LIVE_GATE_AUTHORIZED=1; NOT_AUTHORIZED; test/auth/health not_tested; logicalCallsAuthorized/Actual, transportAttemptsAuthorized, transportInvocationsActual and actualOutboundAttempts all 0; retryCount0, unexpectedDuplicateAttempt false |
-| DB | CATEGORY 0 — NO DATABASE CHANGE; fresh 1160b07780eb1cba5b6fe7a609311c901f1a0900 to 65733d13ba50bbb085d1cbd491176f029a894e66 server/migrations and client deltas NONE; no backup, migration, restore or DB mutation; no Web deployment |
+| Web | srv-d9tj5hu5djic73a0auk0; dep-db1kkcegekts73e9r6ug; LIVE at CURRENT_STAGING_WEB_SHA; unchanged in R5-03E; no Web deployment |
+| API | srv-d9tiop942hec738b3org; dep-db258qcs728c73b522tg; LIVE at CURRENT_STAGING_API_SHA; R5-03D explicit model identity policy PERSISTED / API STAGING INTEGRATED; R5-03E technical PASS / pending final persistence verification |
+| Node | API build 24.21.0 and running-instance v24.21.0 verified; Web accepted build evidence retained |
+| API integration | R5-03E Render Linux exact build PASS; exact checkout and running-instance HEAD 55dd42dd605c1567d3401e0e174c087357fdc0d3; npm --prefix server ci PASS; npm --prefix server start PASS; build Node24.21.0; running Node v24.21.0; server port 10000; /api/health HTTP200 / {"ok":true} |
+| Inert Gate | Running-instance r5-03d-v1; model identity policy openai-gpt-5.4-mini-r5-03d-v1; executed exactly once without --execute and without AI_LIVE_GATE_AUTHORIZED=1 (runtime key ABSENT); NOT_AUTHORIZED; test/auth/health not_tested; logicalCallsAuthorized/Actual, transportAttemptsAuthorized, transportInvocationsActual and actualOutboundAttempts all 0; maxRetries0, retryCount0, unexpectedDuplicateAttempt false; modelIdentityAccepted null; approvedSnapshotMatch null; timestamp 2026-10-06T01:55:24.827Z |
+| DB | CATEGORY 0 / NO DATABASE CHANGE; fresh 65733d13ba50bbb085d1cbd491176f029a894e66 to 55dd42dd605c1567d3401e0e174c087357fdc0d3 server/migrations delta NONE; client delta NONE; no backup, migration, restore or DB mutation; no Web deployment |
 | API configuration | branch master; autoDeploy OFF; rootDir empty / repository root; build npm --prefix server ci; start npm --prefix server start; health GET /api/health; unchanged |
 | Environment boundary | No NODE_VERSION override, AI_LIVE_GATE_AUTHORIZED key, linked environment group or new secret file added by R5-02A; secret values not exposed |
-| Immutable R4 baseline | Annotated r4-platform-baseline-2026-10-05 still peels to 91a052736dda7d37c05ac315e9738b4c29937622; API-only R5-02A advancement does not move this tag |
+| Immutable R4 baseline | Annotated r4-platform-baseline-2026-10-05 still peels to 91a052736dda7d37c05ac315e9738b4c29937622; API-only staging advancement does not move this tag |
 | Frozen master / R3 recovery | f76195d76fd44be5f1bed5e0ef7b33dd997f449b; R3 tag unchanged; no new baseline tag |
-| Provider certification | OpenAI = ADAPTER_PRESENT / AUTH_VALID / HEALTH_PASS HOLD / NOT ESTABLISHED; R5-03C exact live result INVALID_HEALTH_RESPONSE / tested / valid / fail, only RAW_MODEL_MISMATCH; Gemini and ILMU = ADAPTER_PRESENT only; CHAT_PASS / TOOL_NORMALIZATION_PASS / PRODUCTION_READY NO |
-| External effects | R5-03B provider calls OpenAI/Gemini/ILMU 0 / 0 / 0; SMTP0; no DB change; production UNTOUCHED; acceptance persistence performs no new deployment or Render mutation |
-| Next Gate | R5-03C CONTROL TOWER REVIEWED / RESULT PENDING PERSISTENCE VERIFICATION; R5-03D MODEL IDENTITY / ALIAS-SNAPSHOT POLICY CORRECTIVE is the next offline policy-corrective candidate, NOT STARTED; no provider call authorized |
+| Provider certification | OpenAI = ADAPTER_PRESENT / AUTH_VALID / HEALTH_PASS HOLD / NOT ESTABLISHED; historical R5-03C exact live result INVALID_HEALTH_RESPONSE / tested / valid / fail, only RAW_MODEL_MISMATCH; Gemini and ILMU = ADAPTER_PRESENT only; CHAT_PASS / TOOL_NORMALIZATION_PASS / PRODUCTION_READY NO |
+| External effects | R5-03E provider calls OpenAI/Gemini/ILMU 0 / 0 / 0; SMTP0; no DB change; production UNTOUCHED; acceptance persistence performs no new Gate invocation, deployment or Render mutation |
+| Next possible action | After R5-03E persistence, a separately authorized bounded OpenAI health call using r5-03d-v1 may be considered; NEXT_LIVE_HEALTH_AUTHORIZATION = NOT GRANTED; this persistence task authorizes no live provider call |
 
-The current staging split is intentional: R5-03B integrates the corrected harness on API only; client and migrations are unchanged and Web retains the R4 baseline. This documentation persistence performs no deployment, restart or Render configuration change. Final R5-03B closure remains Control Tower authority.
+The current staging split is intentional: R5-03E integrates the R5-03D model identity policy on API only; client and migrations are unchanged and Web retains the R4 baseline. This documentation persistence performs no deployment, restart or Render configuration change. Final R5-03E closure remains Control Tower authority.
 
-### Current R5-03C Control Tower reviewed live result
+### Historical R5-03C Control Tower reviewed live result
 
-R5-03C-OWNER-20261005-OPENAI-01 authorized the exact single OpenAI call at runtime CURRENT_STAGING_API_SHA, Gate r5-03a-v1, timestamp 2026-10-05T14:57:46.604Z. Provider-capable command count1; logical authorized/actual1/1, transport authorized/actual1/1, outbound1; maxRetries0, retryCount0, unexpectedDuplicateAttempt false; OpenAI/Gemini/ILMU1/0/0. No retry, failover or second invocation. Result INVALID_HEALTH_RESPONSE / tested / valid / fail; corrected diagnostics identified only RAW_MODEL_MISMATCH (requested gpt-5.4-mini, returned gpt-5.4-mini-2026-03-17). Control Tower ruling: PASS_AS_EXECUTION_EVIDENCE / STRICT_HEALTH_GATE_FAIL_CLOSED; accounting and reachability PASS; root cause CONFIRMED_RAW_MODEL_MISMATCH.
+R5-03C-OWNER-20261005-OPENAI-01 authorized the exact single OpenAI call at runtime 65733d13ba50bbb085d1cbd491176f029a894e66, Gate r5-03a-v1, timestamp 2026-10-05T14:57:46.604Z. Provider-capable command count1; logical authorized/actual1/1, transport authorized/actual1/1, outbound1; maxRetries0, retryCount0, unexpectedDuplicateAttempt false; OpenAI/Gemini/ILMU1/0/0. No retry, failover or second invocation. Result INVALID_HEALTH_RESPONSE / tested / valid / fail; corrected diagnostics identified only RAW_MODEL_MISMATCH (requested gpt-5.4-mini, returned gpt-5.4-mini-2026-03-17). Control Tower ruling: PASS_AS_EXECUTION_EVIDENCE / STRICT_HEALTH_GATE_FAIL_CLOSED; accounting and reachability PASS; root cause CONFIRMED_RAW_MODEL_MISMATCH.
 
-OPENAI_AUTH_VALID PASS; OPENAI_HEALTH_PASS HOLD / NOT ESTABLISHED; CHAT_PASS, TOOL_NORMALIZATION_PASS and PRODUCTION_READY NO. The documented snapshot identity is official context for future R5-03D review, not a permanent alias mapping or authorized equivalence policy; strict health policy is unchanged. Usage25/5/30; estimated US$0.00004125 within US$0.01; provider-reported cost null. See [canonical R5-03C result](../../ai/provider-live-result-r5-03c.md). API/Web SHAs and deploy IDs above are unchanged; no DB/SMTP/source/Render configuration/deploy mutation in the accepted event. This documentation push adds zero provider calls, DB operations, SMTP operations or deployments; production untouched. R5-03D NOT STARTED / no provider call authorized. Final R5-03C closure remains Control Tower authority.
+OPENAI_AUTH_VALID PASS; OPENAI_HEALTH_PASS HOLD / NOT ESTABLISHED; CHAT_PASS, TOOL_NORMALIZATION_PASS and PRODUCTION_READY NO. At that event, the documented snapshot identity was official context for subsequent R5-03D review; the historical strict health result is unchanged by the now-persisted R5-03D policy. Usage25/5/30; estimated US$0.00004125 within US$0.01; provider-reported cost null. See [canonical R5-03C result](../../ai/provider-live-result-r5-03c.md). API/Web SHAs and deploy IDs were unchanged by that event; no DB/SMTP/source/Render configuration/deploy mutation in the accepted event. This documentation push adds zero provider calls, DB operations, SMTP operations or deployments; production untouched. R5-03D policy is now PERSISTED / API STAGING INTEGRATED under R5-03E; no new provider call authorized. Final R5-03C closure remains Control Tower authority.
 
 ### Historical R5-02A acceptance context (preserved)
 
