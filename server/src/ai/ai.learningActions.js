@@ -253,7 +253,7 @@ function hasEvidence(learnerContext = {}) {
     learnerContext.currentRecommendation ||
     learnerContext.primaryFocus ||
     learnerContext.secondaryFocus?.length ||
-    learnerContext.learnerLevel?.confidence !== 'Low'
+    (learnerContext.learnerLevel?.confidence || 'Low') !== 'Low'
   );
 }
 

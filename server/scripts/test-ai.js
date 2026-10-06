@@ -602,6 +602,7 @@ async function run() {
       const content = result.json.assistantMessage.content;
       assert.match(content, /locale=en/);
       assert.match(content, /ageBand=13-17/);
+      assert.match(content, /learnerLevel=unknown/);
       assert.match(content, /confidence=Low/);
       assert.match(content, /primaryFocus=none/);
       assert.doesNotMatch(content, /phase8b2\.ai\.a@example\.com/);

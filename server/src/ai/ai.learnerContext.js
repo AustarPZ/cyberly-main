@@ -18,8 +18,17 @@ const SCHOOL_STAGE_LABELS = {
   form_5: 'Form 5',
 };
 
+function numericScore(score) {
+  // Missing evidence must stay distinct from a genuine zero score.
+  if (typeof score !== 'number' && typeof score !== 'string') return null;
+  if (typeof score === 'string' && !score.trim()) return null;
+  const value = Number(score);
+  return Number.isFinite(value) ? value : null;
+}
+
 function learnerLevelForScore(score, confidence) {
-  const value = Number.isFinite(Number(score)) ? Number(score) : 0;
+  const value = numericScore(score);
+  if (value === null) return null;
   const level = LEARNER_LEVELS.find(item => value >= item.min) || LEARNER_LEVELS[LEARNER_LEVELS.length - 1];
   return {
     code: level.code,
@@ -30,19 +39,21 @@ function learnerLevelForScore(score, confidence) {
 }
 
 function average(values) {
-  const safe = values.map(Number).filter(Number.isFinite);
+  const safe = values.map(numericScore).filter(Number.isFinite);
   if (!safe.length) return null;
   return Math.round(safe.reduce((sum, value) => sum + value, 0) / safe.length);
 }
 
 function weightedScore(assessmentPercentage, scenarioPercentage) {
-  const hasAssessment = Number.isFinite(Number(assessmentPercentage));
-  const hasScenario = Number.isFinite(Number(scenarioPercentage));
+  const assessment = numericScore(assessmentPercentage);
+  const scenario = numericScore(scenarioPercentage);
+  const hasAssessment = assessment !== null;
+  const hasScenario = scenario !== null;
   if (hasAssessment && hasScenario) {
-    return Math.round((Number(assessmentPercentage) * 0.55) + (Number(scenarioPercentage) * 0.45));
+    return Math.round((assessment * 0.55) + (scenario * 0.45));
   }
-  if (hasAssessment) return Number(assessmentPercentage);
-  if (hasScenario) return Number(scenarioPercentage);
+  if (hasAssessment) return assessment;
+  if (hasScenario) return scenario;
   return null;
 }
 
