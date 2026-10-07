@@ -10,7 +10,7 @@
 
 **Spec:** `docs/superpowers/specs/2026-10-07-cyberguard-controlled-agentic-live-r5-10-design.md`
 
-**Status: CONTROL TOWER WORKING DESIGN / OWNER ROUTINE EXECUTION AUTHORITY**
+**Status: CONTROL TOWER ACCEPTED / CONTROLLED_AGENTIC_LIVE_PASS**
 
 ## Global constraints
 
@@ -129,10 +129,7 @@ Raw local R5-10B artifact SHA256 (deployed raw-byte hash must be measured separa
 
 ## R5-10B corrective rebase and handoff
 
-**R5-10A PRODUCT BLOCKERS: RESOLVED. CONTROL TOWER HARNESS REACCEPTANCE: PENDING.
-FUTURE LIVE EXECUTION READINESS: PENDING harness reacceptance, persistence, exact
-staging deploy/inert verification, then separately authorized bounded live execution.
-CONTROLLED_AGENTIC_LIVE_PASS: NOT ESTABLISHED.**
+**R5-10A PRODUCT BLOCKERS: RESOLVED.`r`nCONTROL TOWER HARNESS REACCEPTANCE: PASS.`r`nEXACT STAGING DEPLOY / INERT VERIFICATION: PASS.`r`nBOUNDED LIVE EXECUTION: PASS.`r`nCONTROLLED_AGENTIC_LIVE_PASS: ESTABLISHED.**
 
 Accepted corrective `cc8739a1f6ea5a419c40ffaa1e6183d8cca5b688` resolves both
 pre-corrective findings. `ai.service.js` preserves the full `planAndExecute` result
@@ -177,3 +174,23 @@ verification is needed for this offline harness phase. DB-dependent/full backend
 suites were not run: they import/use database setup outside this offline phase.
 The future runtime assertion branch, Render configuration, deployed candidate,
 staging schema/data, live provider behavior and billed costs remain unverified.
+
+## Final live execution record
+
+Control Tower completed the previously pending steps:
+
+1. Persisted rebased five-file harness at `1f17d4250a16dbaa92fbfbab18932ddf1e2a4a96`.
+2. Deployed exact API candidate as `dep-db2qtmnlk1mc738e5fh0`; build/start/health PASS.
+3. Inert job `job-db2qucflk1mc738e7hhg` returned `NOT_AUTHORIZED` with zero Provider/tool/DB/network counters and proved deployed harness SHA `e60a4ad19815fedd4e8521885f403f4092bf43f55e4bc19c6574a9c5b6026b9c`.
+4. Single bounded live job `job-db2quku7bikc73alt7cg` returned `R5_10_PRODUCT_PASS_PENDING_CONTROL_TOWER_REVIEW`.
+5. Control Tower independently accepted the result:
+   - Provider calls `2`, planner/final `1/1`, OpenAI only
+   - tool executions `1`, exact tool `get_learning_progress`
+   - retries/fallback/proposals/unexpected fetch `0/0/0/0`
+   - trace assertions PASS
+   - learning state unchanged PASS
+   - replay unchanged PASS
+   - cost `US$0.0030135` <= `US$0.02`
+   - health `200 -> 200`
+
+Final state: `CONTROLLED_AGENTIC_LIVE_PASS = YES`; `PRODUCTION_READY = NO`.

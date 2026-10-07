@@ -167,3 +167,20 @@ R5-05E — one bounded authenticated product-live certification
 ```
 
 Only a passing R5-05E may grant `CYBERGUARD_PROVIDER_INTEGRATION_PASS`.
+
+## Current Certification State (R5-10)
+
+The earlier R5-05 sections above describe the activation boundary at that phase. Subsequent accepted Gates have now established:
+
+- `PROVIDER_INTEGRATION_PASS`
+- `LEARNER_CONTEXT_CONTRACT_PASS`
+- `RAG_CONTRACT_PASS`
+- `FULL_CONVERSATION_PIPELINE_LIVE_PASS_WITH_AUDIT_LIMITATION`
+- `TOOL_NORMALIZATION_PASS` (offline cross-provider wire/canonical contract)
+- `CONTROLLED_AGENTIC_LIVE_PASS` for the exact OpenAI `gpt-5.4-mini` bounded certification path
+
+R5-10 live evidence used exactly one planner call, one `get_learning_progress` read-only tool execution, and one final model call, with zero retry, zero Provider fallback, zero proposal attempt, unchanged learner learning-state records, and successful completed-generation replay.
+
+Public staging configuration remains `AI_CYBERGUARD_LIVE_ENABLED != "1"` and `AI_CYBERGUARD_AGENTIC_ENABLED != "1"`; live certification used process-local enablement in a bounded Render one-off job only.
+
+`PRODUCTION_READY` remains **NO**. Production is untouched and requires a separate production-readiness/release-candidate assessment.

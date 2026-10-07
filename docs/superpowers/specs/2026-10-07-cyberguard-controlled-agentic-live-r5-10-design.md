@@ -1,6 +1,6 @@
 # CyberGuard Controlled Agentic Live R5-10 design
 
-**Status: CONTROL TOWER WORKING DESIGN / OWNER ROUTINE EXECUTION AUTHORITY**
+**Status: CONTROL TOWER ACCEPTED / CONTROLLED_AGENTIC_LIVE_PASS**
 
 ## Scope and authority
 
@@ -20,10 +20,7 @@ production, historical review-evidence and unrelated untracked files remain unto
 
 ## Resolved R5-10A product corrective
 
-**Both prior product blockers: RESOLVED by
-`cc8739a1f6ea5a419c40ffaa1e6183d8cca5b688`. Future live readiness: PENDING
-Control Tower harness reacceptance, persistence, exact staging deploy/inert
-verification, then separately authorized bounded live execution.**
+**Both prior product blockers: RESOLVED by`r`n`cc8739a1f6ea5a419c40ffaa1e6183d8cca5b688`.`r`nControl Tower independently reaccepted the rebased harness, persisted it at`r`n`1f17d4250a16dbaa92fbfbab18932ddf1e2a4a96`, deployed that exact API artifact,`r`nverified inert behavior, and accepted the single bounded live execution.`r`n`CONTROLLED_AGENTIC_LIVE_PASS = YES`.**
 
 The accepted R5-10A corrective changed only the two runtime files below and their
 two regression tests. The owner reports independent Control Tower test acceptance;
@@ -181,3 +178,26 @@ by persistence and exact staging deploy/inert verification before bounded live
 execution. Future live authority and exact deployed-candidate adjudication remain
 separate. Passing offline tests prove the harness guards and corrective fixture
 behavior; they do not establish the requested live success predicates.
+
+## Final Control Tower live closure
+
+Control Tower accepted R5-10 on 2026-10-07 after exact-candidate staging verification.
+
+- Product baseline: `cc8739a1f6ea5a419c40ffaa1e6183d8cca5b688`
+- Harness commit: `1f17d4250a16dbaa92fbfbab18932ddf1e2a4a96`
+- API deploy: `dep-db2qtmnlk1mc738e5fh0`
+- Inert job: `job-db2qucflk1mc738e7hhg` -> `NOT_AUTHORIZED`, all execution counters zero
+- Live job: `job-db2quku7bikc73alt7cg`
+- Planner / final Provider calls: `1 / 1`
+- Physical OpenAI responses: `2`
+- Controlled tool executions: exactly `1` (`get_learning_progress`)
+- Retries / Provider fallback / proposal attempts / unexpected fetches: `0 / 0 / 0 / 0`
+- Transport tokens: `2818` input / `200` output
+- Estimated transport cost: `US$0.0030135` <= `US$0.02`
+- Persisted trace assertions: PASS
+- Learning state unchanged: PASS
+- Completed replay unchanged: PASS
+- Public health before / after: `200 / 200`
+- Public service Live / Agentic policies remain OFF; enablement occurred only inside the authorized one-off process
+
+R5-10 grants `CONTROLLED_AGENTIC_LIVE_PASS`. It does not grant `PRODUCTION_READY`.
