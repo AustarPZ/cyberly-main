@@ -5,9 +5,9 @@ const { createPool } = require('../src/database/pool');
 const { listMigrationFiles } = require('../src/database/migration-utils');
 
 const CONTENT_CONTRACT = Object.freeze({
-  repositoryMigrationCount: 29,
+  repositoryMigrationCount: 34,
   allowedPendingMigrationFiles: Object.freeze([
-    '029_add_session_version_to_users.sql',
+    '034_remove_legacy_user_credentials.sql',
   ]),
   locales: Object.freeze(['en', 'ms', 'zh-CN']),
   assessment: Object.freeze({

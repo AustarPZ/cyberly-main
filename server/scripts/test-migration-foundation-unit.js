@@ -13,6 +13,7 @@ const {
 const {
   listMigrationFilesThrough,
 } = require('../src/database/migration-runner');
+const { splitSqlStatements } = require('../src/database/migration-utils');
 const {
   columnExists,
   foreignKeyExists,
@@ -100,7 +101,7 @@ function runMigrationOrderingTests() {
   const migrationsDir = path.resolve(__dirname, '../migrations');
   const all = listMigrationFilesThrough({ migrationsDir });
   assert.equal(all[0], '001_create_schema_migrations.sql');
-  assert.equal(all[all.length - 1], '033_repair_verified_resource_sources.sql');
+  assert.equal(all[all.length - 1], '034_remove_legacy_user_credentials.sql');
 
   const sessionVersionMigration = fs.readFileSync(
     path.join(migrationsDir, '029_add_session_version_to_users.sql'),
@@ -134,6 +135,38 @@ function runMigrationOrderingTests() {
   );
 }
 
+function runLegacyCredentialRemovalTests() {
+  const migrationPath = path.resolve(__dirname, '../migrations/034_remove_legacy_user_credentials.sql');
+  assert.ok(fs.existsSync(migrationPath), 'legacy credential removal migration must exist');
+  const statements = splitSqlStatements(fs.readFileSync(migrationPath, 'utf8'));
+
+  assert.equal(statements.length, 3, 'validation, trigger removal, and column removal must be separate ordered statements');
+  assert.match(
+    statements[0],
+    /^ALTER TABLE users\s+ADD CONSTRAINT chk_users_legacy_credentials_empty\s+CHECK\s*\(\s*\(username IS NULL OR TRIM\(username\) = ''\)\s+AND\s+\(password IS NULL OR TRIM\(password\) = ''\)\s*\)\s+ENFORCED$/i,
+    'database-enforced validation must reject non-empty legacy credentials before any removal'
+  );
+  assert.doesNotMatch(statements[0], /\bDROP\b/i, 'validation must not drop either column or trigger');
+  assert.match(
+    statements[1],
+    /^DROP TRIGGER IF EXISTS users_before_insert_legacy_defaults$/i,
+    'only the legacy insert compatibility trigger may be removed after validation'
+  );
+  assert.match(
+    statements[2],
+    /^ALTER TABLE users\s+DROP CHECK chk_users_legacy_credentials_empty,\s+DROP COLUMN username,\s+DROP COLUMN password$/i,
+    'one ALTER must remove the temporary check and only the two legacy columns'
+  );
+
+  const executableSql = statements.join('\n');
+  const droppedColumns = [...executableSql.matchAll(/\bDROP\s+COLUMN\s+(\w+)/gi)].map((match) => match[1]);
+  assert.deepEqual(droppedColumns, ['username', 'password'], 'no other user columns may be dropped');
+  const droppedTriggers = [...executableSql.matchAll(/\bDROP\s+TRIGGER\s+(?:IF\s+EXISTS\s+)?(\w+)/gi)].map((match) => match[1]);
+  assert.deepEqual(droppedTriggers, ['users_before_insert_legacy_defaults'], 'no other triggers may be removed');
+  assert.doesNotMatch(executableSql, /\b(?:password_hash|users_before_update_age_group)\b/i);
+  assert.doesNotMatch(executableSql, /\b(?:SELECT|UPDATE|INSERT|DELETE|PREPARE|EXECUTE|PROCEDURE|CALL)\b/i);
+}
+
 async function runSchemaHelperTests() {
   const calls = [];
   const connection = {
@@ -165,6 +198,7 @@ async function runSchemaHelperTests() {
 (async () => {
   runSafetyTests();
   runMigrationOrderingTests();
+  runLegacyCredentialRemovalTests();
   await runSchemaHelperTests();
   console.log('Migration foundation unit tests passed.');
 })().catch((error) => {

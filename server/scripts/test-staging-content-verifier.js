@@ -21,31 +21,32 @@ function runReadOnlyContractTests() {
 
 function runContentContractTests() {
   const repositoryMigrations = listMigrationFiles();
-  const migrationsThrough028 = repositoryMigrations.slice(0, -1);
+  const migrationsThrough033 = repositoryMigrations.slice(0, -1);
 
-  assert.equal(CONTENT_CONTRACT.repositoryMigrationCount, 29);
-  assert.equal(repositoryMigrations.length, 29);
+  assert.equal(CONTENT_CONTRACT.repositoryMigrationCount, 34);
+  assert.equal(repositoryMigrations.length, 34);
   assert.deepEqual(CONTENT_CONTRACT.allowedPendingMigrationFiles, [
-    '029_add_session_version_to_users.sql',
+    '034_remove_legacy_user_credentials.sql',
   ]);
 
-  const preMigrationState = verifyMigrationState(migrationsThrough028, repositoryMigrations);
-  assert.equal(preMigrationState.repositoryCount, 29);
-  assert.equal(preMigrationState.appliedCount, 28);
-  assert.equal(preMigrationState.highestApplied, '028_add_avatar_preset_to_learner_profiles.sql');
-  assert.deepEqual(preMigrationState.pending, ['029_add_session_version_to_users.sql']);
+  const preMigrationState = verifyMigrationState(migrationsThrough033, repositoryMigrations);
+  assert.equal(preMigrationState.repositoryCount, 34);
+  assert.equal(preMigrationState.appliedCount, 33);
+  assert.equal(preMigrationState.highestApplied, '033_repair_verified_resource_sources.sql');
+  assert.deepEqual(preMigrationState.pending, ['034_remove_legacy_user_credentials.sql']);
 
   const postMigrationState = verifyMigrationState(repositoryMigrations, repositoryMigrations);
-  assert.equal(postMigrationState.appliedCount, 29);
-  assert.equal(postMigrationState.highestApplied, '029_add_session_version_to_users.sql');
+  assert.equal(postMigrationState.repositoryCount, 34);
+  assert.equal(postMigrationState.appliedCount, 34);
+  assert.equal(postMigrationState.highestApplied, '034_remove_legacy_user_credentials.sql');
   assert.deepEqual(postMigrationState.pending, []);
 
   assert.throws(
-    () => verifyMigrationState([...repositoryMigrations, '030_untracked.sql'], repositoryMigrations),
+    () => verifyMigrationState([...repositoryMigrations, '035_untracked.sql'], repositoryMigrations),
     /more applied migrations than repository migrations/
   );
   assert.throws(
-    () => verifyMigrationState([...migrationsThrough028, migrationsThrough028[27]], repositoryMigrations),
+    () => verifyMigrationState([...migrationsThrough033, migrationsThrough033[32]], repositoryMigrations),
     /duplicate applied migration/
   );
   assert.throws(
@@ -53,7 +54,7 @@ function runContentContractTests() {
     /applied migration sequence does not match repository order/
   );
   assert.throws(
-    () => verifyMigrationState([...migrationsThrough028.slice(0, -1), repositoryMigrations[28]], repositoryMigrations),
+    () => verifyMigrationState([...migrationsThrough033.slice(0, -1), repositoryMigrations[33]], repositoryMigrations),
     /applied migration sequence does not match repository order/
   );
   assert.throws(
@@ -70,7 +71,7 @@ function runContentContractTests() {
   assert.deepEqual(CONTENT_CONTRACT.locales, ['en', 'ms', 'zh-CN']);
 
   const result = verifyContentRows({
-    migrationFiles: migrationsThrough028,
+    migrationFiles: migrationsThrough033,
     assessment: {
       definitions: 1,
       questions: 12,
@@ -123,7 +124,7 @@ function runContentContractTests() {
   assert.deepEqual(result.migrations, preMigrationState);
 
   assert.throws(() => verifyContentRows({
-    migrationFiles: migrationsThrough028,
+    migrationFiles: migrationsThrough033,
     assessment: {
       definitions: 1,
       questions: 11,
