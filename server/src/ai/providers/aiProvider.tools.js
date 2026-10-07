@@ -1,3 +1,5 @@
+const { createProviderError, PROVIDER_ERROR_CODES } = require('./aiProvider.errors');
+
 const PROHIBITED_TOOL_NAMES = new Set([
   'execute_sql',
   'modify_assessment_score',
@@ -36,12 +38,34 @@ function normalizeToolDeclarations(tools = []) {
 
 function normalizeReturnedToolCalls(provider, calls = []) {
   if (!Array.isArray(calls)) return [];
-  return calls.map((call, index) => ({
-    callId: String(call.callId || call.id || `${provider}-tool-call-${index + 1}`),
-    toolName: String(call.toolName || call.name || call.function?.name || ''),
-    arguments: call.arguments || call.args || call.function?.arguments || {},
-    provider,
-  })).filter(call => call.toolName && !PROHIBITED_TOOL_NAMES.has(call.toolName));
+  return calls.flatMap((call, index) => {
+    const toolName = String(call.toolName || call.name || call.function?.name || '').trim();
+    if (!toolName || PROHIBITED_TOOL_NAMES.has(toolName)) return [];
+    const args = call.arguments !== undefined ? call.arguments
+      : call.args !== undefined ? call.args
+        : call.function?.arguments !== undefined ? call.function.arguments : {};
+    return [{
+      callId: String(call.callId || call.call_id || call.id || `${provider}-tool-call-${index + 1}`),
+      toolName,
+      arguments: normalizeToolArguments(args),
+      provider,
+    }];
+  });
+}
+
+function normalizeToolArguments(args) {
+  const invalidArguments = () => createProviderError(
+    PROVIDER_ERROR_CODES.AI_TOOL_CALL_INVALID,
+    'Tool call arguments must be a plain object.'
+  );
+  if (typeof args === 'string') {
+    if (!args.trim()) return {};
+    try { args = JSON.parse(args); } catch { throw invalidArguments(); }
+  }
+  if (!args || typeof args !== 'object' || Array.isArray(args)) throw invalidArguments();
+  const prototype = Object.getPrototypeOf(args);
+  if (prototype !== Object.prototype && prototype !== null) throw invalidArguments();
+  return args;
 }
 
 function toOpenAiTools(tools = []) {
@@ -50,6 +74,17 @@ function toOpenAiTools(tools = []) {
     name: tool.name,
     description: tool.description,
     parameters: tool.inputSchema,
+  }));
+}
+
+function toChatCompletionsTools(tools = []) {
+  return normalizeToolDeclarations(tools).map(tool => ({
+    type: 'function',
+    function: {
+      name: tool.name,
+      description: tool.description,
+      parameters: tool.inputSchema,
+    },
   }));
 }
 
@@ -67,5 +102,6 @@ module.exports = {
   normalizeToolDeclarations,
   normalizeReturnedToolCalls,
   toOpenAiTools,
+  toChatCompletionsTools,
   toGeminiTools,
 };

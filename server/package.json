@@ -31,6 +31,7 @@
     "test:ai-learner-context": "node scripts/test-ai-learner-context.js",
     "test:cyberguard-live-activation": "node scripts/test-cyberguard-live-activation.js",
     "test:ai-provider-unit": "node scripts/test-ai-provider-unit.js",
+    "test:ai-tool-normalization": "node scripts/test-ai-tool-normalization.js",
     "gate:ai-provider-live": "node scripts/ai-provider-live-gate.js",
     "test:ai-provider-live-gate": "node scripts/test-ai-provider-live-gate.js",
     "test:ai-providers-live": "node scripts/test-ai-providers-live.js",

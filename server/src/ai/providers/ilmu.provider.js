@@ -1,5 +1,5 @@
 const { createProviderError, normalizeProviderError, PROVIDER_ERROR_CODES } = require('./aiProvider.errors');
-const { normalizeReturnedToolCalls, toOpenAiTools } = require('./aiProvider.tools');
+const { normalizeReturnedToolCalls, toChatCompletionsTools } = require('./aiProvider.tools');
 
 function trimBaseUrl(baseUrl) {
   return String(baseUrl || 'https://api.ilmu.ai/v1').trim().replace(/\/+$/, '');
@@ -27,16 +27,6 @@ function usageFromChatCompletion(response) {
     outputTokens,
     totalTokens: usage.total_tokens || inputTokens + outputTokens,
   };
-}
-
-function extractToolCalls(choice) {
-  return (choice?.message?.tool_calls || []).map(call => ({
-    id: call.id,
-    name: call.function?.name,
-    args: (() => {
-      try { return JSON.parse(call.function?.arguments || '{}'); } catch { return {}; }
-    })(),
-  }));
 }
 
 function createIlmuProvider(config = {}) {
@@ -87,7 +77,7 @@ function createIlmuProvider(config = {}) {
           messages: buildChatMessages(request),
           max_tokens: request.maxOutputTokens || config.maxOutputTokens,
           temperature: request.temperature,
-          tools: request.tools?.length ? toOpenAiTools(request.tools) : undefined,
+          tools: request.tools?.length ? toChatCompletionsTools(request.tools) : undefined,
           tool_choice: request.toolChoice,
         }),
         signal: controller.signal,
@@ -111,7 +101,7 @@ function createIlmuProvider(config = {}) {
         provider: 'ilmu',
         model,
         text,
-        toolCalls: normalizeReturnedToolCalls('ilmu', extractToolCalls(choice)),
+        toolCalls: normalizeReturnedToolCalls('ilmu', choice?.message?.tool_calls),
         usage,
         latencyMs: Date.now() - startedAt,
         finishReason: choice?.finish_reason || null,
