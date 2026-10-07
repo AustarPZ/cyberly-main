@@ -176,6 +176,7 @@ async function runServiceCase({
   providerConfigured = true,
   providerReply = 'CyberGuard can help you stay safe online.',
   providerActionProposal = null,
+  plannerResultOverrides = {},
   optionsOverrides = {},
 } = {}) {
   const counters = {
@@ -240,6 +241,7 @@ async function runServiceCase({
         adaptiveStatus: null,
         adaptiveSignalQuality: null,
         adaptiveFallbackReason: null,
+        ...plannerResultOverrides,
       };
     },
   };
@@ -416,6 +418,66 @@ async function run() {
   assert.equal(planningAudit.payload.limits.maxProposalsPerResponse, 0);
   assert.equal(planningAudit.payload.limits.modelRequestCount, 0);
   assert.equal(planningAudit.payload.limits.toolExecutionCount, 0);
+
+  const requestToolSuccess = await runServiceCase({
+    message: 'Can you check my learning progress?',
+    configOverrides: {
+      cyberguardLiveEnabled: true,
+      cyberguardAgenticEnabled: true,
+    },
+    plannerResultOverrides: {
+      agenticEligible: true,
+      agenticUsed: true,
+      fallbackReason: null,
+      plannerProvider: 'openai',
+      plannerModel: 'gpt-5.4-mini',
+      proposedTool: 'get_learning_progress',
+      toolExecuted: true,
+      toolStatus: 'success',
+      safeErrorCode: null,
+      modelRequestCount: 1,
+      toolExecutionCount: 1,
+      contextText: 'Controlled Agentic Tool Result: fixture learning progress.',
+      actionProposal: null,
+    },
+  });
+  assert.equal(requestToolSuccess.error, null);
+  assert.equal(requestToolSuccess.result.statusCode, 201);
+  assert.equal(requestToolSuccess.counters.plannerCalls, 1);
+  const requestToolAudit = requestToolSuccess.traceEvents.find(event =>
+    event.method === 'updateTrace' && event.payload?.planning
+  );
+  assert.ok(requestToolAudit, 'Request-tool success must update the Agentic trace.');
+  const audit = requestToolAudit.payload;
+  assert.deepEqual({
+    controlledAgenticEligible: audit.requestClassification.controlledAgenticEligible,
+    planningUsed: audit.planning.used,
+    planningProvider: audit.planning.provider,
+    planningModel: audit.planning.model,
+    planningDecision: audit.planning.decision,
+    planningFallbackReason: audit.planning.fallbackReason,
+    toolName: audit.toolExecution.toolName,
+    toolStatus: audit.toolExecution.status,
+    toolReadOnly: audit.toolExecution.readOnly,
+    maxModelCalls: audit.limits.maxModelCalls,
+    maxToolExecutions: audit.limits.maxToolExecutions,
+    modelRequestCount: audit.limits.modelRequestCount,
+    toolExecutionCount: audit.limits.toolExecutionCount,
+  }, {
+    controlledAgenticEligible: true,
+    planningUsed: true,
+    planningProvider: 'openai',
+    planningModel: 'gpt-5.4-mini',
+    planningDecision: 'request_tool',
+    planningFallbackReason: null,
+    toolName: 'get_learning_progress',
+    toolStatus: 'success',
+    toolReadOnly: true,
+    maxModelCalls: 2,
+    maxToolExecutions: 1,
+    modelRequestCount: 1,
+    toolExecutionCount: 1,
+  }, 'Request-tool audit metadata and call counters must survive ai.service planning.');
 
   // Both model-origin proposal sources remain available only with Agentic ON.
   for (const providerActionProposal of [null, {

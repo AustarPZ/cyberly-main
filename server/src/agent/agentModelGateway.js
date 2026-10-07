@@ -129,7 +129,7 @@ function createAgentModelGateway({ providerRegistry, timeoutMs = DEFAULT_TIMEOUT
       });
     }
 
-    const tools = context.preferActionProposal === true ? [] : listControlledToolDeclarations();
+    const tools = listControlledToolDeclarations();
     let result;
     try {
       result = await Promise.race([

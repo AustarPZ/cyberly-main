@@ -119,6 +119,40 @@ async function runGatewayTests() {
   assert.equal(plan.toolCall.toolName, 'search_published_resources');
   assert.deepEqual(plan.toolCall.arguments, { query: 'phishing', locale: 'en', limit: 2 });
 
+  let preferredProposalToolNames = null;
+  const preferredProposalGateway = createAgentModelGateway({
+    providerRegistry: fakeRegistry(fakeProvider({
+      generate: async request => {
+        preferredProposalToolNames = request.tools.map(tool => tool.name).sort();
+        return {
+          provider: 'openai',
+          model: 'gpt-test',
+          text: '',
+          toolCalls: [{
+            callId: 'call-progress',
+            toolName: 'get_learning_progress',
+            arguments: {},
+            provider: 'openai',
+          }],
+          finishReason: 'tool_call',
+        };
+      },
+    })),
+  });
+  plan = await preferredProposalGateway.planToolUse({
+    messages: [{ role: 'user', content: 'Can you check my progress?' }],
+    context: secureContext({ preferActionProposal: true }),
+  });
+  assert.deepEqual(preferredProposalToolNames, [
+    'get_current_recommendations',
+    'get_learner_profile',
+    'get_learning_progress',
+    'list_recommended_scenarios',
+    'search_published_resources',
+  ], 'Trusted action targets must not suppress the five controlled read-only tools.');
+  assert.equal(plan.decision, 'request_tool');
+  assert.equal(plan.toolCall.toolName, 'get_learning_progress');
+
   const multiGateway = createAgentModelGateway({
     providerRegistry: fakeRegistry(fakeProvider({
       generate: async () => ({
@@ -152,20 +186,23 @@ async function runGatewayTests() {
 
   const actionProposalGateway = createAgentModelGateway({
     providerRegistry: fakeRegistry(fakeProvider({
-      generate: async () => ({
-        provider: 'openai',
-        model: 'gpt-test',
-        text: 'I can prepare this action for you.',
-        actionProposal: {
-          actionType: 'open_resource',
-          arguments: { resourceSlug: 'phishing' },
-        },
-      }),
+      generate: async request => {
+        assert.deepEqual(request.tools, listControlledToolDeclarations());
+        return {
+          provider: 'openai',
+          model: 'gpt-test',
+          text: 'I can prepare this action for you.',
+          actionProposal: {
+            actionType: 'open_resource',
+            arguments: { resourceSlug: 'phishing' },
+          },
+        };
+      },
     })),
   });
   plan = await actionProposalGateway.planToolUse({
     messages: [{ role: 'user', content: 'Show me a resource about phishing.' }],
-    context: secureContext(),
+    context: secureContext({ preferActionProposal: true }),
   });
   assert.equal(plan.decision, 'propose_action');
   assert.deepEqual(plan.actionProposal, {

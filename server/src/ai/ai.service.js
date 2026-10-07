@@ -467,6 +467,7 @@ function createAiService(repository, provider, config, options = {}) {
         },
       });
       return {
+        ...result,
         contextText: result?.contextText || null,
         actionProposal: result?.actionProposal || null,
       };
