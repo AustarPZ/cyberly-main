@@ -199,18 +199,16 @@ async function run() {
          MAX(role = 'user') AS is_user,
          MAX(age_group = 'teen') AS is_teen,
          MAX(password_hash IS NOT NULL) AS has_hash,
-         MAX(password_hash <> ?) AS hash_not_plaintext,
-         MAX(password IS NULL OR password <> ?) AS legacy_password_not_plaintext
+         MAX(password_hash <> ?) AS hash_not_plaintext
        FROM users
        WHERE email = ?`,
-      [TEST_PASSWORD, TEST_PASSWORD, TEST_EMAIL]
+      [TEST_PASSWORD, TEST_EMAIL]
     );
     assert.equal(storedUser.count, 1);
     assert.equal(Number(storedUser.is_user), 1);
     assert.equal(Number(storedUser.is_teen), 1);
     assert.equal(Number(storedUser.has_hash), 1);
     assert.equal(Number(storedUser.hash_not_plaintext), 1);
-    assert.equal(Number(storedUser.legacy_password_not_plaintext), 1);
 
     result = await request('GET', '/api/auth/me', undefined, cookieHeader);
     assert.equal(result.response.status, 200);

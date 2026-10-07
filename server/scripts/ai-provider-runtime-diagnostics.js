@@ -90,9 +90,9 @@ async function stopServer(child) {
 async function createAdmin(pool) {
   const passwordHash = await bcrypt.hash(PASSWORD, 10);
   await pool.query(
-    `INSERT INTO users (email, username, display_name, age, age_group, password_hash, role, account_status)
-     VALUES (?, ?, 'Runtime Diagnostics Admin', 18, 'young_adult', ?, 'admin', 'active')`,
-    [EMAIL, EMAIL, passwordHash]
+    `INSERT INTO users (email, display_name, age, age_group, password_hash, role, account_status)
+     VALUES (?, 'Runtime Diagnostics Admin', 18, 'young_adult', ?, 'admin', 'active')`,
+    [EMAIL, passwordHash]
   );
 }
 

@@ -78,9 +78,9 @@ async function tableExists(pool, tableName) {
 async function createLiveUser(pool) {
   const passwordHash = await bcrypt.hash(PASSWORD, 10);
   const [result] = await pool.query(
-    `INSERT INTO users (username, email, display_name, age, age_group, password_hash, role, account_status)
-     VALUES (?, ?, ?, 16, 'teen', ?, 'user', 'active')`,
-    [PREFIX, EMAIL, 'Adaptive Live Learner', passwordHash]
+    `INSERT INTO users (email, display_name, age, age_group, password_hash, role, account_status)
+     VALUES (?, ?, 16, 'teen', ?, 'user', 'active')`,
+    [EMAIL, 'Adaptive Live Learner', passwordHash]
   );
   return result.insertId;
 }
@@ -233,7 +233,7 @@ function compareSnapshots(before, after) {
 }
 
 async function cleanup(pool) {
-  const [users] = await pool.query('SELECT id FROM users WHERE email = ? OR username = ?', [EMAIL, PREFIX]);
+  const [users] = await pool.query('SELECT id FROM users WHERE email = ?', [EMAIL]);
   for (const user of users) {
     await pool.query(
       `DELETE FROM sessions
@@ -241,7 +241,7 @@ async function cleanup(pool) {
       [user.id]
     ).catch(() => {});
   }
-  await pool.query('DELETE FROM users WHERE email = ? OR username = ?', [EMAIL, PREFIX]);
+  await pool.query('DELETE FROM users WHERE email = ?', [EMAIL]);
 }
 
 function classifyResult(prompt, result) {

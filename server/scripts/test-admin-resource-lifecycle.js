@@ -102,9 +102,9 @@ async function waitForHealth(child) {
 async function createUser(pool, email, role = 'user') {
   const passwordHash = await bcrypt.hash(PASSWORD, 10);
   const [result] = await pool.query(
-    `INSERT INTO users (email, username, display_name, age, age_group, password_hash, role, account_status)
-     VALUES (?, ?, ?, 16, 'teen', ?, ?, 'active')`,
-    [email, email, email, passwordHash, role]
+    `INSERT INTO users (email, display_name, age, age_group, password_hash, role, account_status)
+     VALUES (?, ?, 16, 'teen', ?, ?, 'active')`,
+    [email, email, passwordHash, role]
   );
   return result.insertId;
 }
@@ -213,9 +213,9 @@ async function createRagDocument(pool, resourceId, slug, options = {}) {
 
 async function createChatSource(pool, resourceId, documentId) {
   const [userResult] = await pool.query(
-    `INSERT INTO users (email, username, display_name, age, age_group, password_hash, role, account_status)
-     VALUES (?, ?, ?, 16, 'teen', ?, 'user', 'active')`,
-    [`${PREFIX}.chat.${resourceId}@example.com`, `${PREFIX}.chat.${resourceId}@example.com`, `${PREFIX}.chat.${resourceId}`, await bcrypt.hash(PASSWORD, 10)]
+    `INSERT INTO users (email, display_name, age, age_group, password_hash, role, account_status)
+     VALUES (?, ?, 16, 'teen', ?, 'user', 'active')`,
+    [`${PREFIX}.chat.${resourceId}@example.com`, `${PREFIX}.chat.${resourceId}`, await bcrypt.hash(PASSWORD, 10)]
   );
   const userId = userResult.insertId;
   const [conversationResult] = await pool.query(

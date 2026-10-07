@@ -23,8 +23,8 @@ async function cleanup(pool) {
 
 async function createUser(pool) {
   const [result] = await pool.query(
-    `INSERT INTO users (email, username, display_name, password, password_hash, age, age_group, role, account_status)
-     VALUES (?, 'Agent Test', 'Agent Test', 'not-used', 'not-used', 16, 'teen', 'user', 'active')`,
+    `INSERT INTO users (email, display_name, password_hash, age, age_group, role, account_status)
+     VALUES (?, 'Agent Test', 'not-used', 16, 'teen', 'user', 'active')`,
     [USER_EMAIL]
   );
   return result.insertId;
