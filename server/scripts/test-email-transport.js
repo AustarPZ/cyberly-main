@@ -227,6 +227,221 @@ async function assertMessageConstructionAndFailureSafety() {
   }
 }
 
+async function assertBrevoTransport() {
+  const { createMailTransport } = require('../src/email/mailTransport');
+  const { createEmailVerificationSender } = require('../src/auth/emailVerificationEmail.service');
+  const { createPasswordResetSender } = require('../src/auth/passwordResetEmail.service');
+  const options = {
+    transport: 'brevo', brevoApiKey: 'fake-brevo-key', fromName: 'Cyberly',
+    fromAddress: 'sender@example.test', clientBaseUrl: 'https://app.example.test',
+  };
+  const message = {
+    fromName: 'Cyberly', fromAddress: 'sender@example.test', to: 'learner@example.test',
+    subject: 'Offline subject', html: '<p>Offline body</p>', text: 'Offline body',
+    verificationUrl: 'fake-private-link', locale: 'ms', learnerName: 'private-name',
+  };
+  let cases = 0;
+  const check = async (label, callback) => { await callback(); cases += 1; };
+
+  await check('fixed endpoint, headers, HTML preference, safe success', async () => {
+    const calls = [];
+    const sender = createMailTransport({ ...options, endpoint: 'https://invalid.example.test', fetchImpl: async (...args) => {
+      calls.push(args);
+      return { status: 201, json: async () => ({ messageId: 'fake-private-message-id', extra: 'private-response' }) };
+    } });
+    assert.deepEqual(await sender.send(message), { ok: true, disabled: false });
+    assert.equal(calls.length, 1);
+    const [url, request] = calls[0];
+    assert.equal(url, 'https://api.brevo.com/v3/smtp/email');
+    assert.equal(request.method, 'POST');
+    assert.equal(request.redirect, 'error');
+    assert.deepEqual(request.headers, { 'api-key': 'fake-brevo-key', 'content-type': 'application/json', accept: 'application/json' });
+    assert.ok(request.signal instanceof AbortSignal);
+    assert.deepEqual(JSON.parse(request.body), {
+      sender: { name: 'Cyberly', email: 'sender@example.test' }, to: [{ email: 'learner@example.test' }],
+      subject: 'Offline subject', htmlContent: '<p>Offline body</p>',
+    });
+  });
+  await check('text fallback', async () => {
+    let body;
+    const sender = createMailTransport({ ...options, fetchImpl: async (_url, request) => {
+      body = JSON.parse(request.body); return { status: 201, json: async () => ({ messageId: 'fake-id' }) };
+    } });
+    assert.deepEqual(await sender.send({ ...message, html: '' }), { ok: true, disabled: false });
+    assert.equal(body.textContent, 'Offline body');
+    assert.equal(Object.hasOwn(body, 'htmlContent'), false);
+  });
+  for (const patch of [
+    { brevoApiKey: '' }, { brevoApiKey: 'fake\nkey' }, { fromAddress: '' },
+    { fromAddress: 'invalid' }, { clientBaseUrl: '' }, { clientBaseUrl: 'invalid' },
+  ]) {
+    await check('invalid configuration fails before fetch', async () => {
+      let calls = 0;
+      const sender = createMailTransport({ ...options, ...patch, fetchImpl: async () => { calls += 1; } });
+      assert.deepEqual(await sender.send(message), { ok: false, disabled: false });
+      assert.equal(calls, 0);
+    });
+  }
+  for (const patch of [{ to: '' }, { to: 'invalid' }, { subject: '' }, { html: '', text: '' }]) {
+    await check('invalid message fails before fetch', async () => {
+      let calls = 0;
+      const sender = createMailTransport({ ...options, fetchImpl: async () => { calls += 1; } });
+      assert.deepEqual(await sender.send({ ...message, ...patch }), { ok: false, disabled: false });
+      assert.equal(calls, 0);
+    });
+  }
+  for (const status of [200, 202, 301, 400, 401, 403, 429, 500, 503]) {
+    await check(`HTTP ${status} fails closed without retry or response logging`, async () => {
+      let calls = 0;
+      let bodyReads = 0;
+      const sender = createMailTransport({ ...options, fetchImpl: async () => {
+        calls += 1;
+        return { status, json: async () => { bodyReads += 1; throw new Error('fake-private-provider-error'); } };
+      } });
+      assert.deepEqual(await sender.send(message), { ok: false, disabled: false });
+      assert.equal(calls, 1);
+      assert.equal(bodyReads, 0);
+    });
+  }
+  for (const payload of [null, {}, { messageId: '' }, { messageId: '   ' }, { messageId: 123 }, { messageId: ['fake-id'] }]) {
+    await check('malformed 201 fails closed', async () => {
+      let calls = 0;
+      const sender = createMailTransport({ ...options, fetchImpl: async () => {
+        calls += 1; return { status: 201, json: async () => payload };
+      } });
+      assert.deepEqual(await sender.send(message), { ok: false, disabled: false });
+      assert.equal(calls, 1);
+    });
+  }
+  for (const mode of ['network', 'abort', 'malformed-json', 'fetch-timeout', 'body-timeout', 'ignores-abort']) {
+    await check(`${mode} sanitizes and never retries`, async () => {
+      let calls = 0;
+      let signal;
+      const fakeError = Object.assign(new Error('fake-brevo-key fake-private-link learner@example.test fake-provider-error'), { name: mode === 'abort' ? 'AbortError' : 'Error' });
+      const sender = createMailTransport({ ...options, brevoTimeoutMs: 15, fetchImpl: async (_url, request) => {
+        calls += 1; signal = request.signal;
+        if (mode === 'network' || mode === 'abort') throw fakeError;
+        if (mode === 'malformed-json') return { status: 201, json: async () => { throw fakeError; } };
+        if (mode === 'ignores-abort') return new Promise(() => {});
+        const pending = () => new Promise((_resolve, reject) => signal.addEventListener('abort', () => reject(fakeError), { once: true }));
+        return mode === 'body-timeout' ? { status: 201, json: pending } : pending();
+      } });
+      const started = Date.now();
+      assert.deepEqual(await sender.send(message), { ok: false, disabled: false });
+      assert.equal(calls, 1);
+      assert.ok(Date.now() - started < 1000);
+      if (mode.includes('timeout') || mode === 'ignores-abort') assert.equal(signal.aborted, true);
+    });
+  }
+  for (const transport of ['disabled', 'test', 'test-success', 'test-fail']) {
+    await check('legacy mode never fetches', async () => {
+      let calls = 0;
+      const sender = createMailTransport({ ...options, transport, fetchImpl: async () => { calls += 1; } });
+      const result = await sender.send(message);
+      assert.deepEqual(result, { ok: transport !== 'test-fail', disabled: transport === 'disabled' });
+      assert.equal(calls, 0);
+    });
+  }
+  for (const [requested, expected] of [[undefined, 10000], [60000, 10000], [0, 10000], [-1, 10000], [NaN, 10000], [Infinity, 10000], [15, 15]]) {
+    await check('timeout defaults and maximum remain bounded', async () => {
+      const originalSetTimeout = global.setTimeout;
+      const originalClearTimeout = global.clearTimeout;
+      const handle = {};
+      let calls = 0;
+      let cleared = 0;
+      let signal;
+      global.setTimeout = (callback, delay) => {
+        assert.equal(delay, expected);
+        queueMicrotask(callback);
+        return handle;
+      };
+      global.clearTimeout = value => { assert.equal(value, handle); cleared += 1; };
+      try {
+        const sender = createMailTransport({ ...options, brevoTimeoutMs: requested, fetchImpl: async (_url, request) => {
+          calls += 1; signal = request.signal; return new Promise(() => {});
+        } });
+        assert.deepEqual(await sender.send(message), { ok: false, disabled: false });
+        assert.equal(signal.aborted, true);
+        assert.equal(calls, 1);
+        assert.equal(cleared, 1);
+      } finally {
+        global.setTimeout = originalSetTimeout;
+        global.clearTimeout = originalClearTimeout;
+      }
+    });
+  }
+  await check('completed success clears its deadline', async () => {
+    const originalClearTimeout = global.clearTimeout;
+    let cleared = 0;
+    let signal;
+    global.clearTimeout = timer => { if (timer) cleared += 1; originalClearTimeout(timer); };
+    try {
+      const sender = createMailTransport({ ...options, fetchImpl: async (_url, request) => {
+        signal = request.signal; return { status: 201, json: async () => ({ messageId: 'fake-id' }) };
+      } });
+      assert.deepEqual(await sender.send(message), { ok: true, disabled: false });
+      assert.equal(cleared, 1);
+      assert.equal(signal.aborted, false);
+    } finally { global.clearTimeout = originalClearTimeout; }
+  });
+  await check('explicit environment opt-in uses injected fetch only', async () => {
+    await withEnv({ EMAIL_TRANSPORT: 'brevo', BREVO_API_KEY: 'fake-brevo-key', EMAIL_FROM_ADDRESS: 'sender@example.test', CLIENT_BASE_URL: 'https://app.example.test' }, async () => {
+      let calls = 0;
+      const sender = createMailTransport({ fetchImpl: async () => { calls += 1; return { status: 201, json: async () => ({ messageId: 'fake-id' }) }; } });
+      assert.equal(sender.transport, 'brevo');
+      assert.deepEqual(await sender.send(message), { ok: true, disabled: false });
+      assert.equal(calls, 1);
+    });
+  });
+  await check('unavailable built-in fetch fails closed', async () => {
+    const originalFetch = global.fetch;
+    global.fetch = undefined;
+    try {
+      assert.deepEqual(await createMailTransport(options).send(message), { ok: false, disabled: false });
+    } finally { global.fetch = originalFetch; }
+  });
+  await check('key alone never enables transport', async () => {
+    await withEnv({ EMAIL_TRANSPORT: undefined, BREVO_API_KEY: 'fake-brevo-key' }, async () => {
+      const sender = createMailTransport({ fetchImpl: async () => { throw new Error('must not fetch'); } });
+      assert.equal(sender.transport, 'disabled');
+      assert.deepEqual(await sender.send(message), { ok: true, disabled: true });
+    });
+  });
+  for (const factory of [createEmailVerificationSender, createPasswordResetSender]) {
+    for (const status of [201, 429]) {
+      for (const locale of ['en', 'ms', 'zh-CN']) {
+        await check('sender integration preserves safe shapes and localized static body', async () => {
+          let calls = 0;
+          let body;
+          const sender = factory({ ...options, fetchImpl: async (_url, request) => {
+            calls += 1; body = JSON.parse(request.body);
+            return { status, json: async () => ({ messageId: 'fake-private-message-id' }) };
+          } });
+          const input = { recipientEmail: 'learner@example.test', verificationUrl: 'https://app.example.test/#/verify-email?token=fake', resetUrl: 'https://app.example.test/#/reset-password?token=fake', locale };
+          const result = sender.sendEmailVerification
+            ? await sender.sendEmailVerification(input) : await sender.sendPasswordReset(input);
+          assert.equal(calls, 1);
+          if (status === 201) assert.deepEqual(result, { ok: true, disabled: false });
+          else {
+            assert.equal(result.ok, false);
+            assert.equal(result.error.code, 'EMAIL_SEND_FAILED');
+            assert.equal(result.error.category, 'email_transport_failed');
+            assert.deepEqual(Object.keys(result).sort(), sender.sendEmailVerification ? ['error', 'ok'] : ['disabled', 'error', 'ok']);
+          }
+          assert.equal(JSON.stringify(result).includes('fake'), false);
+          assert.equal(JSON.stringify(result).includes('@'), false);
+          assert.ok(body.htmlContent.includes('Cyberly'));
+          assert.equal(Object.hasOwn(body, 'textContent'), false);
+          if (sender.sendPasswordReset) {
+            assert.equal(body.subject, { en: 'Reset your Cyberly password', ms: 'Tetapkan semula kata laluan Cyberly anda', 'zh-CN': '重设您的 Cyberly 密码' }[locale]);
+          } else assert.equal(body.subject, 'Verify your Cyberly email');
+        });
+      }
+    }
+  }
+  console.log(`Brevo offline transport tests passed: ${cases} cases.`);
+}
+
 function assertAuthResponseMetadataContract() {
   const serverSource = fs.readFileSync(path.join(__dirname, '..', 'server.js'), 'utf8');
   assert.match(
@@ -258,6 +473,7 @@ function assertRuntimeDocumentationContract() {
   await assertTransportSelection();
   await assertSmtpConfigurationValidation();
   await assertMessageConstructionAndFailureSafety();
+  await assertBrevoTransport();
   assertAuthResponseMetadataContract();
   assertRuntimeDocumentationContract();
   console.log('Email transport verification passed.');

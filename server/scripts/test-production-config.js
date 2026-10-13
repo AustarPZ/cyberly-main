@@ -7,7 +7,9 @@ const {
   validateProductionUrl,
   validateSessionSecret,
 } = require('../src/config/productionConfig');
-const { getDatabaseConfig } = require('../src/database/pool');
+// Offline email preparation must not load dotenv, a DB module, or start the server.
+const offlineEmailOnly = process.argv.includes('--offline-email');
+const getDatabaseConfig = offlineEmailOnly ? null : require('../src/database/pool').getDatabaseConfig;
 
 const VALID_SECRET = '0123456789abcdef0123456789abcdef';
 const FAKE_CA = '-----BEGIN CERTIFICATE-----\nFAKE_TEST_CA\n-----END CERTIFICATE-----';
@@ -17,6 +19,7 @@ const SECRET_VALUES = {
   DB_SSL_CA: '-----BEGIN CERTIFICATE-----\nSECRET_CA_CONTENT_MUST_NOT_APPEAR\n-----END CERTIFICATE-----',
   SMTP_PASSWORD: 'smtp-password-that-must-never-appear',
   OPENAI_API_KEY: 'openai-key-that-must-never-appear',
+  BREVO_API_KEY: 'fake-brevo-key-that-must-never-appear',
 };
 
 function validProductionEnv(overrides = {}) {
@@ -118,14 +121,16 @@ function runValidationCases() {
   assert.equal(result.clientBaseUrl, 'https://app.example.com');
   assert.equal(result.sessionCookieSameSite, 'lax');
 
-  const previousEnvironment = process.env;
-  process.env = { ...validProductionEnv(), DB_SSL_CA: FAKE_CA.replace(/\n/g, '\\n') };
-  try {
-    const databaseConfig = getDatabaseConfig();
-    assert.equal(databaseConfig.ssl.ca, FAKE_CA);
-    assert.equal(databaseConfig.ssl.rejectUnauthorized, true);
-  } finally {
-    process.env = previousEnvironment;
+  if (!offlineEmailOnly) {
+    const previousEnvironment = process.env;
+    process.env = { ...validProductionEnv(), DB_SSL_CA: FAKE_CA.replace(/\n/g, '\\n') };
+    try {
+      const databaseConfig = getDatabaseConfig();
+      assert.equal(databaseConfig.ssl.ca, FAKE_CA);
+      assert.equal(databaseConfig.ssl.rejectUnauthorized, true);
+    } finally {
+      process.env = previousEnvironment;
+    }
   }
 
   const secretEnv = validProductionEnv({ ...SECRET_VALUES, EMAIL_TRANSPORT: 'smtp' });
@@ -141,6 +146,47 @@ function runValidationCases() {
 
   assert.deepEqual(validateProductionConfig({ NODE_ENV: 'development' }), { isProduction: false });
   assert.deepEqual(validateProductionConfig({ NODE_ENV: 'test' }), { isProduction: false });
+}
+
+function runBrevoValidationCases() {
+  const base = { EMAIL_TRANSPORT: 'brevo', BREVO_API_KEY: 'fake-brevo-key', EMAIL_FROM_ADDRESS: 'sender@example.test' };
+  let cases = 0;
+  assert.doesNotThrow(() => validateProductionConfig(validProductionEnv(base)));
+  cases += 1;
+  for (const key of [undefined, '', '   ', 'fake\nheader', 'fake\u0000key']) {
+    assertInvalid({ ...base, BREVO_API_KEY: key }, 'BREVO_API_KEY');
+    cases += 1;
+  }
+  for (const address of [undefined, '', 'invalid', 'sender@example.test\nInjected: value']) {
+    assertInvalid({ ...base, EMAIL_FROM_ADDRESS: address }, 'EMAIL_FROM_ADDRESS');
+    cases += 1;
+  }
+  for (const url of [
+    undefined, '', 'not-a-url', 'http://app.example.test', 'https://localhost',
+    'https://app.example.test?token=fake', 'https://app.example.test/#fake',
+    'https://fake-user:fake-password@app.example.test', 'https://[::1]',
+  ]) {
+    assertInvalid({ ...base, CLIENT_BASE_URL: url }, 'CLIENT_BASE_URL');
+    cases += 1;
+  }
+  assert.doesNotThrow(() => validateProductionConfig(validProductionEnv({ EMAIL_TRANSPORT: undefined, BREVO_API_KEY: 'fake-unused-key' })));
+  cases += 1;
+  let error;
+  try {
+    validateProductionConfig(validProductionEnv({ ...base, BREVO_API_KEY: SECRET_VALUES.BREVO_API_KEY, EMAIL_FROM_ADDRESS: 'invalid' }));
+  } catch (caught) { error = caught; }
+  assert.ok(error);
+  assert.equal(error.code, 'INVALID_PRODUCTION_CONFIGURATION');
+  assert.equal(JSON.stringify(error).includes(SECRET_VALUES.BREVO_API_KEY), false);
+  assert.equal(error.message.includes(SECRET_VALUES.BREVO_API_KEY), false);
+  cases += 1;
+  console.log(`Brevo production configuration tests passed: ${cases} cases.`);
+  assert.doesNotThrow(() => validateProductionConfig(validProductionEnv({
+    EMAIL_TRANSPORT: 'smtp', SMTP_HOST: 'smtp.example.test', SMTP_PORT: '587',
+    SMTP_SECURE: 'false', SMTP_USER: 'sender@example.test', SMTP_PASSWORD: 'fake-smtp-password',
+    EMAIL_FROM_ADDRESS: 'sender@example.test',
+  })));
+  console.log('Legacy SMTP production configuration passed: 1 valid case.');
 }
 
 assert.throws(
@@ -186,5 +232,7 @@ function runStartupGuardCases() {
 }
 
 runValidationCases();
-runStartupGuardCases();
+runBrevoValidationCases();
+if (!offlineEmailOnly) runStartupGuardCases();
+else console.log('Offline email mode: DB module and server startup tests skipped.');
 console.log('Production configuration verification passed.');

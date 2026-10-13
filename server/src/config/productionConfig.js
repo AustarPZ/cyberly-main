@@ -1,7 +1,8 @@
 const { validateSmtpConfiguration } = require('../auth/emailVerificationEmail.service');
+const { validateBrevoConfiguration } = require('../email/mailTransport');
 
 const DEVELOPMENT_SESSION_SECRET = 'development-only-session-secret-change-me';
-const VALID_EMAIL_TRANSPORTS = new Set(['disabled', 'test', 'test-success', 'test-fail', 'smtp']);
+const VALID_EMAIL_TRANSPORTS = new Set(['disabled', 'test', 'test-success', 'test-fail', 'smtp', 'brevo']);
 const VALID_SAME_SITE_VALUES = new Set(['lax', 'strict', 'none']);
 
 function configurationError(fields) {
@@ -82,6 +83,15 @@ function validateDatabaseTlsConfig(env) {
 function validateEmailConfig(env, clientBaseUrl) {
   const transport = String(env.EMAIL_TRANSPORT || 'disabled').trim().toLowerCase();
   if (!VALID_EMAIL_TRANSPORTS.has(transport)) throw configurationError(['EMAIL_TRANSPORT']);
+  if (transport === 'brevo') {
+    const result = validateBrevoConfiguration({
+      brevoApiKey: env.BREVO_API_KEY || '',
+      fromAddress: env.EMAIL_FROM_ADDRESS || '',
+      clientBaseUrl: clientBaseUrl || '',
+    });
+    if (!result.ok) throw configurationError(result.fields);
+    return { transport };
+  }
   if (transport !== 'smtp') return { transport };
 
   const result = validateSmtpConfiguration({
