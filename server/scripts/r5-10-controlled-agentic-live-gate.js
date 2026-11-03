@@ -21,7 +21,9 @@ const TOOL_NAMES = Object.freeze([
   'get_learner_profile', 'get_learning_progress', 'get_current_recommendations',
   'search_published_resources', 'list_recommended_scenarios',
 ]);
-// SHA256 of exact baseline Git blobs. Only CRLF -> LF is canonicalized.
+// SHA256 of exact Git blobs. Only CRLF -> LF is canonicalized.
+// All entries are the R5-10 product baseline except productionConfig.js, whose
+// blob is bdcbfe27f57cd25c348c5f0dbda187d1fbe7d8f0 (Brevo transport validation).
 const SOURCE_HASHES = Object.freeze({
   'server/server.js': '0dc8f440df8b2004587530c4efb0a6e109a98ea785cdf9ee1504037c56542d3b',
   'server/src/database/pool.js': '52ea4a6b7c1120cb5a98bad8b3fa144ada7e89cc1787996d2b77de1895c6b858',
@@ -45,7 +47,7 @@ const SOURCE_HASHES = Object.freeze({
   'server/src/adaptive/adaptiveLearning.service.js': '70edfea9cda93b8b602ff70b6572fc03457026ebc5ef82cf76005df0ed0d5f0b',
   'server/src/ai/ai.learnerContext.js': 'bd88c02029d07aa06fe1b7077a199ca5e5121ef761bb49c57f6651af7dd0cf12',
   'server/src/agent/actions/actionProposal.service.js': 'f915b043c4044dcd460be678cb800c849127c977f3819b023bf50d3f2da0a95b',
-  'server/src/config/productionConfig.js': 'e439f47ac81896775b85d2218a40fe0332d835dc66bbce3b3683cae00d52779f',
+  'server/src/config/productionConfig.js': 'caf77f85486fe0ab9852a70ec43412c047df7d4cac6847afbb101cd377c5b9b3',
   'server/src/agent/audit/agenticTrace.service.js': '116f9845802cd11d0609d284ba3ef563a51b2cfb54c8d816c289c1ed7c43aa5c',
   'server/src/agent/audit/agenticTrace.constants.js': 'd169df9b4f5e9f2076b511ea9d1a796a223a5ea77812d9badfac0c67fa95eef1',
   'server/src/agent/agent.policy.js': 'd992586bb804d15ef27c828f0c9242f25a781f5d1dc0f09ad6fecf7951d79b1a',
@@ -298,7 +300,7 @@ function selfTest() {
     assert.equal(checkDestination('http://127.0.0.1:51237/api/health', 'GET'), 'local');
   });
   for (const url of ['https://api.gemini.com', CONTRACT.endpoint + '?x=1', CONTRACT.endpoint + '#x',
-    'https://user:secret@api.openai.com/v1/responses', 'https://api.openai.com:444/v1/responses',
+    'https://user:pass@example.invalid/v1/responses', 'https://api.openai.com:444/v1/responses',
     'http://127.0.0.1:51238/api/health']) rejects('non_openai_destination', () => checkDestination(url, 'POST'));
   rejects('wrong_method', () => checkDestination(CONTRACT.endpoint, 'GET'));
   pass('normalized_call', () => checkNormalizedResult(normalized));

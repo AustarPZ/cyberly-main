@@ -263,7 +263,7 @@ async function run() {
     assert.equal(result.response.status, 400);
     result = await request('POST', '/api/admin/resources', { ...validPayload(`${slug}-bad-url`), source: { ...payload.source, url: 'javascript:alert(1)' } }, adminCookie);
     assert.equal(result.response.status, 400);
-    result = await request('POST', '/api/admin/resources', { ...validPayload(`${slug}-malformed-url`), source: { ...payload.source, url: 'https://user:pass@example.test/source' } }, adminCookie);
+    result = await request('POST', '/api/admin/resources', { ...validPayload(`${slug}-malformed-url`), source: { ...payload.source, url: 'https://user:pass@example.invalid/source' } }, adminCookie);
     assert.equal(result.response.status, 400);
     result = await request('POST', '/api/admin/resources', { ...validPayload(`${slug}-unknown`), unexpected: true }, adminCookie);
     assert.equal(result.response.status, 400);

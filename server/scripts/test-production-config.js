@@ -164,7 +164,7 @@ function runBrevoValidationCases() {
   for (const url of [
     undefined, '', 'not-a-url', 'http://app.example.test', 'https://localhost',
     'https://app.example.test?token=fake', 'https://app.example.test/#fake',
-    'https://fake-user:fake-password@app.example.test', 'https://[::1]',
+    'https://user:pass@example.invalid', 'https://[::1]',
   ]) {
     assertInvalid({ ...base, CLIENT_BASE_URL: url }, 'CLIENT_BASE_URL');
     cases += 1;

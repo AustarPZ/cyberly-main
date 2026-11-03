@@ -49,6 +49,10 @@ if (require.main === module || path.resolve(process.argv[1] || '') === __filenam
   const tests = [];
   const test = (name, run) => tests.push({ name, run });
   const baseline = 'cc8739a1f6ea5a419c40ffaa1e6183d8cca5b688';
+  // Later legitimate blob. The checkout must still match this exact commit, not the older baseline.
+  const sourceBlobRevisions = Object.freeze({
+    'server/src/config/productionConfig.js': 'bdcbfe27f57cd25c348c5f0dbda187d1fbe7d8f0',
+  });
   const prompt = 'Can you check my current learning progress and tell me which topic I should improve next? Please use my progress.';
   const requiredFiles = [
     'server/server.js', 'server/src/database/pool.js', 'server/src/ai/ai.service.js',
@@ -114,10 +118,11 @@ if (require.main === module || path.resolve(process.argv[1] || '') === __filenam
     for (const file of requiredFiles) assert.ok(Object.hasOwn(gate.SOURCE_HASHES, file), file);
     for (const [file, expected] of Object.entries(gate.SOURCE_HASHES)) {
       assert.match(expected, /^[a-f0-9]{64}$/);
-      const blob = spawnSync('git', ['show', baseline + ':' + file], { cwd: root, maxBuffer: 2e6 });
-      assert.equal(blob.status, 0);
-      const baselineBlob = blob.stdout.toString('utf8').replace(/\r\n/g, '\n');
-      assert.equal(hash(baselineBlob), expected, file + ' baseline');
+      const revision = sourceBlobRevisions[file] || baseline;
+      const blob = spawnSync('git', ['show', revision + ':' + file], { cwd: root, maxBuffer: 2e6 });
+      assert.equal(blob.status, 0, file);
+      const committedBlob = blob.stdout.toString('utf8').replace(/\r\n/g, '\n');
+      assert.equal(hash(committedBlob), expected, file + ' blob ' + revision);
       const checkout = fs.readFileSync(path.join(root, file), 'utf8').replace(/\r\n/g, '\n');
       assert.equal(hash(checkout), expected, file + ' checkout');
     }
