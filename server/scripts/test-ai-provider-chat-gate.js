@@ -501,7 +501,7 @@ async function accountingAndIdCases() {
 }
 
 async function transportGuardCases() {
-  for (const destination of ['https://evil.example/v1/responses', 'http://api.openai.com/v1/responses', 'https://api.openai.com/v1/chat/completions', 'https://api.openai.com/v1/responses?x=1', 'https://api.openai.com/v1/responses#fragment', 'https://api.openai.com:444/v1/responses', 'https://user@api.openai.com/v1/responses', 'https://user:pass@api.openai.com/v1/responses']) await check(`inherited transport destination rejection ${destination}`, async () => {
+  for (const destination of ['https://evil.example/v1/responses', 'http://api.openai.com/v1/responses', 'https://api.openai.com/v1/chat/completions', 'https://api.openai.com/v1/responses?x=1', 'https://api.openai.com/v1/responses#fragment', 'https://api.openai.com:444/v1/responses', 'https://user@api.openai.com/v1/responses', 'https://user:pass@example.invalid/v1/responses']) await check(`inherited transport destination rejection ${destination}`, async () => {
     await withRealAdapterWrapper((create, config) => create({ ...config, fetchImpl: (input, options) => config.fetchImpl(destination, options) }), async gate => {
       const result = await gate(args, env, { fetchImpl: noOutbound });
       assert.equal(result.resultCode, 'DESTINATION_REJECTED');

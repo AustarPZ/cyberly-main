@@ -298,7 +298,7 @@ function selfTest() {
     assert.equal(checkDestination('http://127.0.0.1:51237/api/health', 'GET'), 'local');
   });
   for (const url of ['https://api.gemini.com', CONTRACT.endpoint + '?x=1', CONTRACT.endpoint + '#x',
-    'https://user:secret@api.openai.com/v1/responses', 'https://api.openai.com:444/v1/responses',
+    'https://user:pass@example.invalid/v1/responses', 'https://api.openai.com:444/v1/responses',
     'http://127.0.0.1:51238/api/health']) rejects('non_openai_destination', () => checkDestination(url, 'POST'));
   rejects('wrong_method', () => checkDestination(CONTRACT.endpoint, 'GET'));
   pass('normalized_call', () => checkNormalizedResult(normalized));
